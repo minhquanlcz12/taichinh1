@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thanh Long Work - Quản lý Gia đình & Công việc</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body class="dark-theme">
+
+    <!-- Auth Overlay -->
+    <div id="auth-overlay" class="auth-overlay">
+        <div class="auth-card glass-card">
+            <div style="text-align: center; margin-bottom: 24px;">
+                <h2 style="color: var(--primary); font-size: 24px; margin-bottom: 8px;">
+                    <i class="fa-solid fa-dragon"></i> Thanh Long Work
+                </h2>
+                <p style="color: var(--text-secondary);">Quản lý công việc thông minh</p>
+            </div>
+
+            <!-- Login Form -->
+            <form class="auth-form" id="login-form">
+                <div class="form-group">
+                    <label>Tên đăng nhập</label>
+                    <input type="text" id="login-user" required autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label>Mật khẩu</label>
+                    <input type="password" id="login-pass" required autocomplete="current-password">
+                </div>
+                <div id="login-error"
+                    style="color: var(--danger); font-size: 13px; margin-bottom: 16px; text-align: center;"></div>
+                <button type="submit" class="btn btn-primary"
+                    style="width: 100%; margin-bottom: 16px; padding: 14px; font-size: 16px;">Đăng
+                    nhập</button>
+                <div style="text-align: center; font-size: 14px; color: var(--text-secondary);">
+                    Chưa có tài khoản? <a href="#" id="go-to-reg" style="color: var(--primary); font-weight: 600;">Đăng
+                        ký ngay</a>
+                </div>
+            </form>
+
+            <!-- Register Form -->
+            <form class="auth-form" id="register-form" style="display: none;">
+                <div class="form-group">
+                    <label>Tên đăng nhập mới</label>
+                    <input type="text" id="reg-user" required autocomplete="new-password">
+                    <!-- prevent autofill conflict -->
+                </div>
+                <div class="form-group">
+                    <label>Mật khẩu</label>
+                    <input type="password" id="reg-pass" required autocomplete="new-password">
+                </div>
+                <div class="form-group">
+                    <label>Xác nhận mật khẩu</label>
+                    <input type="password" id="reg-confirm" required autocomplete="new-password">
+                </div>
+                <div id="reg-error"
+                    style="color: var(--danger); font-size: 13px; margin-bottom: 16px; text-align: center;"></div>
+                <button type="submit" class="btn btn-success"
+                    style="width: 100%; margin-bottom: 16px; padding: 14px; font-size: 16px;">Tạo tài
+                    khoản</button>
+                <div style="text-align: center; font-size: 14px; color: var(--text-secondary);">
+                    Đã có tài khoản? <a href="#" id="go-to-login" style="color: var(--primary); font-weight: 600;">Đăng
+                        nhập</a>
+                </div>
+            </form>
+
+            <div
+                style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--glass-border); text-align: center; font-size: 12px; color: var(--text-secondary); line-height: 1.6;">
+                Khó khăn đăng nhập? Liên hệ:<br>
+                Hỗ trợ: <strong style="color: var(--primary);">Admin ĐÀO THANH LONG</strong><br>
+                Hotline: <strong style="color: var(--primary);">0886 46 2345</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-container" style="display: none;">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar glass-panel">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fa-solid fa-dragon"></i>
+                    <span style="font-size: 20px;">Thanh Long Work</span>
+                </div>
+            </div>
+
+            <ul class="nav-links">
+                <li class="nav-item active" data-target="dashboard-view">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Tổng quan</span>
+                </li>
+                <li class="nav-item" data-target="finance-view">
+                    <i class="fa-solid fa-wallet"></i>
+                    <span>Tài chính</span>
+                </li>
+                <li class="nav-item" data-target="work-view">
+                    <i class="fa-solid fa-briefcase"></i>
+                    <span>Công việc & Lịch</span>
+                </li>
+                <li class="nav-item" data-target="settings-view">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Cài đặt</span>
+                </li>
+            </ul>
+
+            <div class="theme-toggle" id="theme-toggle-btn">
+                <i class="fa-solid fa-moon"></i>
+                <span>Giao diện Tối</span>
+            </div>
+
+            <div
+                style="margin-top: auto; padding: 16px; font-size: 11px; color: var(--text-secondary); text-align: center; border-top: 1px solid var(--glass-border); line-height: 1.6;">
+                Hỗ trợ hệ thống:<br>
+                <strong style="color: var(--primary);">ĐÀO THANH LONG</strong><br>
+                Hotline: <strong style="color: var(--primary);">0886 46 2345</strong>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Topbar -->
+            <header class="topbar glass-panel">
+                <div class="welcome-message">
+                    <h2 id="view-title">Tổng quan</h2>
+                    <p id="view-subtitle">Chào mừng trở lại, hôm nay là một ngày tuyệt vời!</p>
+                </div>
+                <div class="user-profile">
+                    <div class="avatar" onclick="Auth.showProfileModal()" style="cursor: pointer;"
+                        title="Chỉnh sửa hồ sơ">Admin</div>
+                </div>
+            </header>
+
+            <!-- Dynamic View Container -->
+            <div class="view-container">
+                <!-- Dashboard View -->
+                <div id="dashboard-view" class="view active">
+                    <div class="dashboard-grid">
+                        <!-- Summary Cards -->
+                        <div class="summary-card glass-card gradient-primary">
+                            <i class="fa-solid fa-coins bg-icon"></i>
+                            <h3>Số dư khả dụng</h3>
+                            <h2 class="amount" id="dash-balance">0 ₫</h2>
+                        </div>
+                        <div class="summary-card glass-card gradient-success">
+                            <i class="fa-solid fa-arrow-trend-up bg-icon"></i>
+                            <h3>Tổng Thu (Tháng)</h3>
+                            <h2 class="amount" id="dash-income">0 ₫</h2>
+                        </div>
+                        <div class="summary-card glass-card gradient-danger">
+                            <i class="fa-solid fa-arrow-trend-down bg-icon"></i>
+                            <h3>Tổng Chi (Tháng)</h3>
+                            <h2 class="amount" id="dash-expense">0 ₫</h2>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-content-grid">
+                        <div class="todays-tasks glass-card">
+                            <div class="card-header">
+                                <h3>Công việc hôm nay</h3>
+                                <button class="btn-text" onclick="app.navigateTo('work-view')">Chi tiết</button>
+                            </div>
+                            <div class="task-list" id="dash-task-list">
+                                <!-- Trống -->
+                            </div>
+                        </div>
+
+                        <div class="recent-transactions glass-card">
+                            <div class="card-header">
+                                <h3>Giao dịch gần đây</h3>
+                                <button class="btn-text" onclick="app.navigateTo('finance-view')">Xem tất cả</button>
+                            </div>
+                            <div class="transaction-list" id="dash-transaction-list">
+                                <!-- Trống -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Finance View Placeholder -->
+                <div id="finance-view" class="view">
+                    <!-- Sẽ được inject bởi finance.js -->
+                </div>
+
+                <!-- Work View Placeholder -->
+                <div id="work-view" class="view">
+                    <!-- Sẽ được inject bởi work.js -->
+                </div>
+
+                <!-- Settings View Placeholder -->
+                <div id="settings-view" class="view">
+                    <div class="glass-card">
+                        <h3>Cài đặt ứng dụng</h3>
+                        <p>Chức năng đang được phát triển...</p>
+                        <button class="btn btn-danger" id="clear-data-btn" style="margin-top: 20px;">
+                            Xóa toàn bộ dữ liệu (Reset)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals Overlay -->
+    <div class="modal-overlay" id="modal-overlay"></div>
+
+    <!-- Profile Modal Overlay -->
+    <div class="modal-overlay" id="profile-modal-overlay" onclick="if(event.target===this) Auth.closeProfileModal()">
+        <div class="modal" id="profile-modal">
+            <div class="modal-header">
+                <h3>Hồ sơ Cá nhân</h3>
+                <button class="btn-close" onclick="Auth.closeProfileModal()"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="profile-form">
+                    <div class="form-group" style="text-align: center;">
+                        <label>Ảnh đại diện</label>
+                        <div style="margin-bottom: 12px;">
+                            <img id="profile-preview-img" src=""
+                                style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary); display: none; margin: 0 auto;">
+                        </div>
+                        <input type="file" id="profile-img-upload" accept="image/*" class="form-control"
+                            onchange="Auth.handleProfileImageUpload(event)">
+                        <input type="hidden" id="profile-img-base64">
+                    </div>
+                    <div class="form-group">
+                        <label>Họ tên</label>
+                        <input type="text" id="profile-fullname" class="form-control" placeholder="Nhập họ và tên">
+                    </div>
+                    <div class="form-group">
+                        <label>Ngày sinh</label>
+                        <input type="date" id="profile-dob" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Số điện thoại</label>
+                        <input type="tel" id="profile-phone" class="form-control" placeholder="Ví dụ: 0987123456">
+                    </div>
+                    <div class="form-group">
+                        <label>Nơi ở</label>
+                        <input type="text" id="profile-address" class="form-control" placeholder="Địa chỉ hiện tại">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-text" onclick="Auth.closeProfileModal()">Đóng</button>
+                <button class="btn btn-primary" onclick="Auth.saveProfile()">Lưu Hồ sơ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/finance.js"></script>
+    <script src="js/work.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>
