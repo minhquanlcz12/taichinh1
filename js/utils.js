@@ -49,21 +49,19 @@ const Utils = {
         const serialNumber = Number(excelDateCode);
         if (isNaN(serialNumber) || serialNumber <= 0) return '';
 
-        // Excel epoch is Jan 1, 1900.
-        // Javascript epoch is Jan 1, 1970.
-        // 1900 was treated as a leap year in Lotus 1-2-3, retained by Excel. So we subtract 25569 to get JS days
+        // Excel epoch is Jan 1, 1900. JS epoch is Jan 1, 1970.
+        // Difference is 25569 days (which includes the Lotus 1-2-3 leap year bug).
         const msPerDay = 86400000;
-        const jsDateCode = (serialNumber - (25569 + 1)) * msPerDay; // 25569 diff from 1900 to 1970 + 1 for Lotus leap year bug
+        const jsDateCode = Math.round((serialNumber - 25569) * msPerDay);
 
-        // Handle timezone offset simply 
-        const date = new Date(jsDateCode + (new Date().getTimezoneOffset() * 60000));
+        // Use UTC methods to avoid time zone offset shifting
+        const date = new Date(jsDateCode);
 
-        // format as DD/MM/YYYY
-        const d = String(date.getDate()).padStart(2, '0');
-        const m = String(date.getMonth() + 1).padStart(2, '0');
-        const y = date.getFullYear();
+        const day = String(date.getUTCDate()).padStart(2, '0');
+        const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+        const year = date.getUTCFullYear();
 
-        return `${d}/${m}/${y}`;
+        return `${day}/${month}/${year}`;
     },
 
     generateId: () => {
