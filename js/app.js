@@ -158,7 +158,11 @@ const app = {
                         <i class="fa-solid ${isCompleted ? 'fa-check' : 'fa-bullhorn'}"></i>
                     </div>
                     <div class="task-content" style="cursor: pointer;" onclick="WorkModule.goToProject(this.dataset.project)" data-project="${task.project}">
-                        <h4>${task.mucTieu || task.tieuDe || 'Công việc không tên'}</h4>
+                        <h4>
+                            ${task.mucTieu || task.tieuDe || 'Công việc không tên'}
+                            <span class="badge badge-orange" style="font-size:10px; margin-left: 8px;"><i class="fa-solid fa-user"></i> ${task.owner || 'admin'}</span>
+                            ${isCompleted ? '<span style="color: var(--success); font-weight: 600; font-size: 11px; margin-left: 8px;"><i class="fa-solid fa-check-circle"></i> Đã hoàn thành</span>' : ''}
+                        </h4>
                         <p><i class="fa-regular fa-folder"></i> ${task.project} &nbsp;&bull;&nbsp; <i class="fa-regular fa-clock"></i> ${task.deadline}</p>
                     </div>
                     <div class="task-checkbox" onclick="WorkModule.toggleTaskStatus('${task.id}')">

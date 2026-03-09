@@ -79,9 +79,7 @@ const WorkModule = {
         const todayStr = `${d}/${m}/${y}`;
 
         return tasks.filter(t => {
-            const isNotDone = t.trangThai && t.trangThai.toLowerCase() !== 'done';
-            const isToday = t.ngayDang === todayStr || t.deadline === todayStr;
-            return isNotDone && isToday;
+            return t.ngayDang === todayStr || t.deadline === todayStr;
         });
     },
 
