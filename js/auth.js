@@ -78,6 +78,7 @@ const Auth = {
         if (found) {
             Auth.currentUser = { username: found.username, role: found.role, profile: found.profile || {} };
             Utils.storage.set(Auth.currentUserKey, Auth.currentUser); // Keep current user locally for session
+            Utils.showToast('Đăng nhập thành công!', 'success');
             Auth.showApp();
         } else {
             document.getElementById('login-error').textContent = 'Tên đăng nhập hoặc mật khẩu không đúng.';

@@ -243,6 +243,7 @@ const FinanceModule = {
             });
 
             await FinanceModule.save();
+            Utils.showToast('Thêm giao dịch thành công!', 'success');
             return true; // OK to close
         }, 'Lưu Giao dịch');
 
@@ -316,6 +317,7 @@ const FinanceModule = {
             });
 
             await FinanceModule.save();
+            Utils.showToast('Cập nhật giao dịch thành công!', 'success');
             return true; // OK to close
         }, 'Lưu Thay đổi');
 
@@ -346,6 +348,7 @@ const FinanceModule = {
         if (confirm('Bạn có chắc muốn xóa giao dịch này?')) {
             FinanceModule.data.transactions = FinanceModule.data.transactions.filter(t => t.id !== id);
             await FinanceModule.save();
+            Utils.showToast('Đã xoá giao dịch!', 'success');
         }
     }
 };
