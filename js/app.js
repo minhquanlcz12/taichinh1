@@ -98,6 +98,16 @@ const app = {
             // sync active state in sidebar just in case triggered by code
             document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
             document.querySelector('.nav-item[data-target="finance-view"]').classList.add('active');
+        } else if (viewId === 'work-view') {
+            if (typeof WorkModule !== 'undefined') {
+                const timeFilterEl = document.getElementById('work-time-filter');
+                if (timeFilterEl) timeFilterEl.value = 'today';
+                WorkModule.currentFilterTime = 'today';
+                WorkModule.render();
+            }
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            const workNav = document.querySelector('.nav-item[data-target="work-view"]');
+            if (workNav) workNav.classList.add('active');
         }
     },
 
@@ -147,7 +157,7 @@ const app = {
                     <div class="task-icon-wrapper">
                         <i class="fa-solid ${isCompleted ? 'fa-check' : 'fa-bullhorn'}"></i>
                     </div>
-                    <div class="task-content">
+                    <div class="task-content" style="cursor: pointer;" onclick="WorkModule.goToProject(this.dataset.project)" data-project="${task.project}">
                         <h4>${task.mucTieu || task.tieuDe || 'Công việc không tên'}</h4>
                         <p><i class="fa-regular fa-folder"></i> ${task.project} &nbsp;&bull;&nbsp; <i class="fa-regular fa-clock"></i> ${task.deadline}</p>
                     </div>

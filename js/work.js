@@ -7,6 +7,7 @@ const WorkModule = {
         tasks: []
     },
     expandedProjects: null, // Track open folders
+    currentFilterTime: 'today', // Default to today
 
     init: async () => {
         await WorkModule.renderPlaceholder();
@@ -38,16 +39,30 @@ const WorkModule = {
 
         let displayTasks = WorkModule.data.tasks;
 
-        // If not admin,        let displayTasks = WorkModule.data.tasks;
-
         if (currentUser.role === 'admin') {
             const filterEl = document.getElementById('work-user-filter');
             if (filterEl && filterEl.value !== 'all') {
-                displayTasks = WorkModule.data.tasks.filter(t => t.owner === filterEl.value || (!t.owner && filterEl.value === 'admin'));
+                displayTasks = displayTasks.filter(t => t.owner === filterEl.value || (!t.owner && filterEl.value === 'admin'));
             }
         } else {
             // If not admin, only show tasks owned by this user
-            displayTasks = WorkModule.data.tasks.filter(t => t.owner === currentUser.username);
+            displayTasks = displayTasks.filter(t => t.owner === currentUser.username);
+        }
+
+        // Apply time filter
+        if (WorkModule.currentFilterTime === 'today') {
+            const today = new Date();
+            const d = String(today.getDate()).padStart(2, '0');
+            const m = String(today.getMonth() + 1).padStart(2, '0');
+            const y = today.getFullYear();
+            const todayStr = `${d}/${m}/${y}`;
+
+            displayTasks = displayTasks.filter(t => t.ngayDang === todayStr || t.deadline === todayStr);
+            const dateDisplay = document.getElementById('work-date-display');
+            if (dateDisplay) dateDisplay.textContent = 'Kế hoạch Hôm nay (' + todayStr + ')';
+        } else {
+            const dateDisplay = document.getElementById('work-date-display');
+            if (dateDisplay) dateDisplay.textContent = 'Tất cả Kế hoạch';
         }
 
         WorkModule.renderList(displayTasks);
@@ -78,14 +93,19 @@ const WorkModule = {
         const currentUser = Auth.currentUser;
         const isAdmin = currentUser && currentUser.role === 'admin';
 
-        let filterHtml = '';
+        let filterHtml = `
+            <select class="form-control" id="work-time-filter" style="width: auto; display: inline-block; margin-right: 12px; height: 38px;" onchange="WorkModule.currentFilterTime = this.value; WorkModule.filterByRole()">
+                <option value="today">Hôm nay</option>
+                <option value="all">Tất cả thời gian</option>
+            </select>
+        `;
         if (isAdmin) {
             const accounts = await Auth.getAccounts();
             let opts = `<option value="all">Tất cả nhân viên</option>`;
             accounts.forEach(a => {
                 opts += `<option value="${a.username}">${a.username} (${a.role})</option>`;
             });
-            filterHtml = `
+            filterHtml += `
                 <select class="form-control" id="work-user-filter" style="width: auto; display: inline-block; margin-right: 12px; height: 38px;" onchange="WorkModule.filterByRole()">
                     ${opts}
                 </select>
@@ -232,6 +252,41 @@ const WorkModule = {
             event.target.value = '';
         };
         reader.readAsArrayBuffer(file);
+    },
+
+    goToProject: (projectName) => {
+        // 1. Chuyển hướng giao diện về Kế hoạch công việc
+        if (app.state.currentView !== 'work-view') {
+            app.navigateTo('work-view');
+        }
+
+        // 2. Ép buộc mở Folder
+        if (WorkModule.expandedProjects === null) {
+            WorkModule.expandedProjects = new Set();
+        }
+        WorkModule.expandedProjects.add(projectName);
+        WorkModule.filterByRole();
+
+        // 3. Chờ DOM render xong rồi cuộn mượt đến thẳng dự án
+        setTimeout(() => {
+            const folderHeaders = document.querySelectorAll('.folder-title');
+            for (let header of folderHeaders) {
+                if (header.textContent.includes(projectName)) {
+                    const group = header.closest('.folder-group');
+                    group.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                    // Highlight hiệu ứng nhấp nháy 2 giây
+                    const oldTransition = group.style.transition;
+                    group.style.transition = 'box-shadow 0.3s ease';
+                    group.style.boxShadow = '0 0 25px var(--primary)';
+                    setTimeout(() => {
+                        group.style.boxShadow = '';
+                        setTimeout(() => group.style.transition = oldTransition, 300);
+                    }, 1500);
+                    break;
+                }
+            }
+        }, 100);
     },
 
     toggleFolder: (folderId, projName) => {
