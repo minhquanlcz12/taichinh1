@@ -144,12 +144,15 @@ const app = {
                 const isCompleted = task.trangThai && task.trangThai.toLowerCase().includes('done');
                 return `
                 <div class="task-item ${isCompleted ? 'completed' : ''}">
-                    <div class="task-checkbox" onclick="WorkModule.toggleTaskStatus('${task.id}')">
-                        <i class="fa-solid fa-check"></i>
+                    <div class="task-icon-wrapper">
+                        <i class="fa-solid ${isCompleted ? 'fa-check' : 'fa-bullhorn'}"></i>
                     </div>
                     <div class="task-content">
                         <h4>${task.mucTieu || task.tieuDe || 'Công việc không tên'}</h4>
-                        <p>${task.project} • ${task.deadline}</p>
+                        <p><i class="fa-regular fa-folder"></i> ${task.project} &nbsp;&bull;&nbsp; <i class="fa-regular fa-clock"></i> ${task.deadline}</p>
+                    </div>
+                    <div class="task-checkbox" onclick="WorkModule.toggleTaskStatus('${task.id}')">
+                        <i class="fa-solid fa-check"></i>
                     </div>
                 </div>
             `}).join('');

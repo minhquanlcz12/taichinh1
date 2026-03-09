@@ -1270,3 +1270,206 @@ body.dark-theme .avatar-preview-box {
     font-size: 14px;
     font-weight: 500;
 }
+
+/* =========================================================================
+   DASHBOARD TASK LIST STYLES (CÔNG VIỆC HÔM NAY)
+   ========================================================================= */
+.task-item {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    margin-bottom: 12px;
+    border: 1px solid var(--glass-border);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    gap: 16px;
+    position: relative;
+    overflow: hidden;
+}
+
+.task-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--primary);
+    opacity: 0.5;
+    transition: all 0.3s;
+}
+
+.task-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+}
+
+.task-item:hover::before {
+    opacity: 1;
+}
+
+.task-item.completed {
+    opacity: 0.5;
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+}
+
+.task-item.completed::before {
+    background: var(--success);
+    opacity: 0.3;
+}
+
+.task-item.completed:hover {
+    transform: none;
+}
+
+.task-item.completed .task-content h4 {
+    text-decoration: line-through;
+    color: var(--text-secondary);
+}
+
+.task-icon-wrapper {
+    width: 45px;
+    height: 45px;
+    border-radius: 12px;
+    background: rgba(0, 201, 167, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.task-icon-wrapper::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 12px;
+    box-shadow: 0 0 15px rgba(0, 201, 167, 0.3);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.task-item:hover .task-icon-wrapper::after {
+    opacity: 1;
+}
+
+.task-item:not(.completed) .task-icon-wrapper i {
+    color: var(--primary);
+    font-size: 20px;
+    animation: ringX 2.5s ease infinite;
+    transform-origin: center top;
+}
+
+.task-item.completed .task-icon-wrapper {
+    background: rgba(46, 204, 113, 0.1);
+}
+
+.task-item.completed .task-icon-wrapper i {
+    color: var(--success);
+    font-size: 20px;
+    animation: none;
+}
+
+@keyframes ringX {
+    0% {
+        transform: rotate(0);
+    }
+
+    5% {
+        transform: rotate(15deg);
+    }
+
+    10% {
+        transform: rotate(-10deg);
+    }
+
+    15% {
+        transform: rotate(5deg);
+    }
+
+    20% {
+        transform: rotate(-5deg);
+    }
+
+    25% {
+        transform: rotate(0);
+    }
+
+    100% {
+        transform: rotate(0);
+    }
+}
+
+.task-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.task-content h4 {
+    margin: 0 0 4px 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.4;
+}
+
+.task-content p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.task-content p i {
+    font-size: 11px;
+    opacity: 0.7;
+}
+
+.task-checkbox {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 2px solid var(--border-color);
+    background: var(--bg-body);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    color: transparent;
+    flex-shrink: 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.task-checkbox i {
+    font-size: 16px;
+    position: relative;
+    z-index: 2;
+    transition: all 0.3s;
+    transform: scale(0.5);
+}
+
+.task-item.completed .task-checkbox {
+    background: var(--success);
+    border-color: var(--success);
+    color: white;
+}
+
+.task-item.completed .task-checkbox i {
+    transform: scale(1);
+}
+
+.task-item:not(.completed) .task-checkbox:hover {
+    border-color: var(--primary);
+    background: rgba(0, 201, 167, 0.1);
+}
