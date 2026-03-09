@@ -59,6 +59,10 @@ const WorkModule = {
             if (dateDisplay) dateDisplay.textContent = 'Tất cả Kế hoạch';
         }
 
+        if (app.state && app.state.currentView === 'dashboard-view') {
+            app.renderDashboard();
+        }
+
         WorkModule.renderList(displayTasks);
     },
 
@@ -72,14 +76,12 @@ const WorkModule = {
             }
         }
 
-        const today = new Date();
-        const d = String(today.getDate()).padStart(2, '0');
-        const m = String(today.getMonth() + 1).padStart(2, '0');
-        const y = today.getFullYear();
-        const todayStr = `${d}/${m}/${y}`;
+        const todayStr = Utils.getTodayString();
 
         return tasks.filter(t => {
-            return t.ngayDang === todayStr || t.deadline === todayStr;
+            const nd = (t.ngayDang || '').trim();
+            const dl = (t.deadline || '').trim();
+            return nd === todayStr || dl === todayStr;
         });
     },
 
