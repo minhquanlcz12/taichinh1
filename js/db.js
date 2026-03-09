@@ -20,6 +20,7 @@ const DB = {
     // --- LƯU TRỮ TÀI KHOẢN ---
     saveAccounts: async (accountsArray) => {
         try {
+            Utils.storage.set('backup_accounts', accountsArray); // Offline Fallback
             await db.collection("system").doc("accounts").set({
                 data: accountsArray
             });
@@ -32,18 +33,19 @@ const DB = {
     getAccounts: async () => {
         try {
             const doc = await db.collection("system").doc("accounts").get();
-            if (doc.exists) {
-                return doc.data().data || [];
+            if (doc.exists && doc.data().data && doc.data().data.length > 0) {
+                return doc.data().data;
             }
         } catch (e) {
-            console.error("Error getting accounts:", e);
+            console.error("Error getting accounts from Firebase, falling back to LocalStorage:", e);
         }
-        return [];
+        return Utils.storage.get('backup_accounts', []);
     },
 
     // --- LƯU TRỮ GIAO DỊCH TÀI CHÍNH ---
     saveFinanceData: async (financeDataObj) => {
         try {
+            Utils.storage.set('backup_finance', financeDataObj);
             await db.collection("finance").doc("main").set(financeDataObj);
         } catch (e) {
             console.error("Error saving finance data:", e);
@@ -53,18 +55,19 @@ const DB = {
     getFinanceData: async () => {
         try {
             const doc = await db.collection("finance").doc("main").get();
-            if (doc.exists) {
+            if (doc.exists && doc.data().transactions && doc.data().transactions.length > 0) {
                 return doc.data();
             }
         } catch (e) {
-            console.error("Error getting finance data:", e);
+            console.error("Error getting finance data tracking fallback:", e);
         }
-        return { transactions: [] };
+        return Utils.storage.get('backup_finance', { transactions: [] });
     },
 
     // --- LƯU TRỮ KẾ HOẠCH CÔNG VIỆC ---
     saveWorkData: async (workDataObj) => {
         try {
+            Utils.storage.set('backup_work', workDataObj);
             await db.collection("work").doc("main").set(workDataObj);
         } catch (e) {
             console.error("Error saving work data:", e);
@@ -74,18 +77,21 @@ const DB = {
     getWorkData: async () => {
         try {
             const doc = await db.collection("work").doc("main").get();
-            if (doc.exists) {
+            if (doc.exists && doc.data().tasks && doc.data().tasks.length > 0) {
                 return doc.data();
             }
         } catch (e) {
-            console.error("Error getting work data:", e);
+            console.error("Error getting work data tracking fallback:", e);
         }
-        return { tasks: [] };
+        return Utils.storage.get('backup_work', { tasks: [] });
     },
 
     // Xóa trắng dữ liệu thiết lập lại từ đầu
     clearAll: async () => {
         try {
+            Utils.storage.remove('backup_accounts');
+            Utils.storage.remove('backup_finance');
+            Utils.storage.remove('backup_work');
             await db.collection("system").doc("accounts").delete();
             await db.collection("finance").doc("main").delete();
             await db.collection("work").doc("main").delete();

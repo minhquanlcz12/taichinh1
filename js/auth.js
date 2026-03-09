@@ -65,6 +65,7 @@ const Auth = {
         Auth.renderSettings();
 
         app.init(); // Boot the main app layout now that user is logged in
+        if (typeof ChatModule !== 'undefined') ChatModule.startListening();
     },
 
     login: async (e) => {
@@ -112,6 +113,7 @@ const Auth = {
     },
 
     logout: () => {
+        if (typeof ChatModule !== 'undefined') ChatModule.stopListening();
         Utils.storage.remove(Auth.currentUserKey);
         Auth.currentUser = null;
         location.reload(); // Reload context wholly
