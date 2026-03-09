@@ -125,11 +125,11 @@ const WorkModule = {
         WorkModule.filterByRole();
     },
 
-    handleExcelUpload: (event) => {
+    handleExcelUpload: async (event) => {
         const file = event.target.files[0];
         if (!file) return;
 
-        const projectName = prompt("Nhập tên Thư mục / Kế hoạch cho file excel này:", file.name.split('.')[0]);
+        const projectName = await Utils.showPrompt("Nhập tên Thư mục / Kế hoạch:", file.name.split('.')[0]);
         if (!projectName) {
             event.target.value = '';
             return;

@@ -131,6 +131,47 @@ const Utils = {
         });
     },
 
+    // Custom Prompt Modal (Returns Promise)
+    showPrompt: (title, defaultValue = '') => {
+        return new Promise((resolve) => {
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay active';
+            overlay.style.zIndex = '9999';
+            overlay.style.backdropFilter = 'blur(5px)';
+            overlay.innerHTML = `
+                <div class="modal glass-card" style="width: 90%; max-width: 450px; padding: 24px; animation: slideIn 0.3s ease;">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                        <i class="fa-solid fa-folder-plus" style="font-size: 24px; color: var(--primary);"></i>
+                        <h3 style="font-weight: 600; font-size: 18px; margin: 0;">${title}</h3>
+                    </div>
+                    <input type="text" id="custom-prompt-input" class="form-control" value="${defaultValue}" style="margin-bottom: 24px; width: 100%; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px; font-size: 15px;" autocomplete="off" spellcheck="false">
+                    <div style="display: flex; justify-content: flex-end; gap: 12px;">
+                        <button class="btn btn-text" id="custom-prompt-cancel" style="padding: 10px 20px;">Hủy bỏ</button>
+                        <button class="btn btn-primary" id="custom-prompt-ok" style="padding: 10px 24px;">Tiếp tục</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+
+            const input = document.getElementById('custom-prompt-input');
+            input.focus();
+            input.select();
+
+            const close = (val) => {
+                overlay.remove();
+                resolve(val);
+            };
+
+            document.getElementById('custom-prompt-cancel').onclick = () => close(null);
+            document.getElementById('custom-prompt-ok').onclick = () => close(input.value.trim());
+
+            input.onkeydown = (e) => {
+                if (e.key === 'Enter') close(input.value.trim());
+                if (e.key === 'Escape') close(null);
+            };
+        });
+    },
+
     // Toast Notification Builder
     showToast: (message, type = 'success') => {
         const container = document.getElementById('toast-container');
