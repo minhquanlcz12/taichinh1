@@ -7,24 +7,24 @@ const Auth = {
 
     currentUser: null,
 
-    init: () => {
+    init: async () => {
         // Initialize default admin if not exists
-        let accounts = Utils.storage.get(Auth.accountsKey, []);
+        let accounts = await DB.getAccounts();
         if (!accounts.find(a => a.username === 'admin')) {
             accounts.push(Auth.adminCreds);
-            Utils.storage.set(Auth.accountsKey, accounts);
+            await DB.saveAccounts(accounts);
         }
 
         Auth.checkLogin();
         Auth.setupListeners();
     },
 
-    getAccounts: () => {
-        return Utils.storage.get(Auth.accountsKey, []);
+    getAccounts: async () => {
+        return await DB.getAccounts();
     },
 
-    saveAccounts: (accounts) => {
-        Utils.storage.set(Auth.accountsKey, accounts);
+    saveAccounts: async (accounts) => {
+        await DB.saveAccounts(accounts);
     },
 
     checkLogin: () => {
@@ -62,30 +62,29 @@ const Auth = {
         }
         profileEl.setAttribute('title', `Role: ${Auth.currentUser.role}`);
 
-        // Render Settings specific to roles
         Auth.renderSettings();
 
         app.init(); // Boot the main app layout now that user is logged in
     },
 
-    login: (e) => {
+    login: async (e) => {
         e.preventDefault();
         const userIn = document.getElementById('login-user').value.trim();
         const passIn = document.getElementById('login-pass').value;
 
-        const accounts = Auth.getAccounts();
+        const accounts = await Auth.getAccounts();
         const found = accounts.find(a => a.username === userIn && a.password === passIn);
 
         if (found) {
-            Auth.currentUser = { username: found.username, role: found.role };
-            Utils.storage.set(Auth.currentUserKey, Auth.currentUser);
+            Auth.currentUser = { username: found.username, role: found.role, profile: found.profile || {} };
+            Utils.storage.set(Auth.currentUserKey, Auth.currentUser); // Keep current user locally for session
             Auth.showApp();
         } else {
             document.getElementById('login-error').textContent = 'Tên đăng nhập hoặc mật khẩu không đúng.';
         }
     },
 
-    register: (e) => {
+    register: async (e) => {
         e.preventDefault();
         const userIn = document.getElementById('reg-user').value.trim();
         const passIn = document.getElementById('reg-pass').value;
@@ -98,16 +97,16 @@ const Auth = {
             return;
         }
 
-        const accounts = Auth.getAccounts();
+        const accounts = await Auth.getAccounts();
         if (accounts.find(a => a.username === userIn)) {
             errorEl.textContent = 'Tên đăng nhập đã tồn tại.';
             return;
         }
 
-        accounts.push({ username: userIn, password: passIn, role: 'user' });
-        Auth.saveAccounts(accounts);
+        accounts.push({ username: userIn, password: passIn, role: 'user', profile: {} });
+        await Auth.saveAccounts(accounts);
 
-        alert('Đăng ký thành công! Vui lòng Đăng nhập.');
+        Utils.showToast('Đăng ký thành công! Vui lòng Đăng nhập.', 'success');
         Auth.showLogin();
     },
 
@@ -125,7 +124,7 @@ const Auth = {
         document.getElementById('go-to-login').addEventListener('click', Auth.showLogin);
     },
 
-    renderSettings: () => {
+    renderSettings: async () => {
         const settingsView = document.getElementById('settings-view');
 
         let html = `
@@ -143,13 +142,13 @@ const Auth = {
         `;
 
         if (Auth.currentUser.role === 'admin') {
-            const accounts = Auth.getAccounts();
+            const accounts = await Auth.getAccounts();
             html += `
                 <div class="glass-card" style="margin-bottom: 24px;">
                     <h3>Dữ liệu Hệ thống</h3>
-                    <p style="color:var(--text-secondary); margin-bottom: 20px;">Lưu ý: Xóa dữ liệu sẽ làm mất vĩnh viễn toàn bộ giao dịch và kế hoạch.</p>
+                    <p style="color:var(--text-secondary); margin-bottom: 20px;">Lưu ý: Xóa dữ liệu sẽ làm mất vĩnh viễn toàn bộ giao dịch và kế hoạch trên toàn hệ thống.</p>
                     <button class="btn btn-danger" id="clear-data-btn">
-                        Xóa toàn bộ dữ liệu (Reset DB)
+                        Xóa toàn bộ dữ liệu (Reset DB Firebase)
                     </button>
                 </div>
 
@@ -171,6 +170,7 @@ const Auth = {
                                     <td>${acc.username}</td>
                                     <td><span class="badge ${acc.role === 'admin' ? 'badge-orange' : 'badge-blue'}">${acc.role}</span></td>
                                     <td style="text-align:right;">
+                                        <button class="btn-text" style="color:var(--primary); margin-right: 8px;" onclick="Auth.showViewProfileModal('${acc.username}')"><i class="fa-solid fa-eye"></i> Xem</button>
                                         ${acc.username !== 'admin' ?
                     `<button class="btn-text text-danger" onclick="Auth.deleteUser('${acc.username}')"><i class="fa-solid fa-trash"></i> Xóa</button>` :
                     '<span style="color:var(--text-secondary); font-size:12px;">Không thể xóa Admin</span>'}
@@ -188,22 +188,23 @@ const Auth = {
         // re-bind clear data IF it exists
         const clearBtn = document.getElementById('clear-data-btn');
         if (clearBtn) {
-            clearBtn.addEventListener('click', () => {
+            clearBtn.addEventListener('click', async () => {
                 if (confirm('Bạn có chắc chắn muốn xóa tất cả dữ liệu (Của CẢ HỆ THỐNG)? Hành động này không thể hoàn tác.')) {
-                    Utils.storage.clearAll();
+                    await DB.clearAll();
+                    Utils.storage.clearAll(); // clear local session
                     location.reload();
                 }
             });
         }
     },
 
-    deleteUser: (username) => {
+    deleteUser: async (username) => {
         if (username === 'admin') return;
 
         if (confirm(`Bạn có chắc chắn xóa tài khoản "${username}" ? `)) {
-            let accounts = Auth.getAccounts();
+            let accounts = await Auth.getAccounts();
             accounts = accounts.filter(a => a.username !== username);
-            Auth.saveAccounts(accounts);
+            await Auth.saveAccounts(accounts);
             Auth.renderSettings();
         }
     },
@@ -253,7 +254,7 @@ const Auth = {
         reader.readAsDataURL(file);
     },
 
-    saveProfile: () => {
+    saveProfile: async () => {
         const profile = {
             fullname: document.getElementById('profile-fullname').value,
             dob: document.getElementById('profile-dob').value,
@@ -266,16 +267,70 @@ const Auth = {
         Utils.storage.set(Auth.currentUserKey, Auth.currentUser);
 
         // Update in accounts array too
-        const accounts = Auth.getAccounts();
+        const accounts = await Auth.getAccounts();
         const accIdx = accounts.findIndex(a => a.username === Auth.currentUser.username);
         if (accIdx > -1) {
             accounts[accIdx].profile = profile;
-            Auth.saveAccounts(accounts);
+            await Auth.saveAccounts(accounts);
         }
 
         Auth.closeProfileModal();
         Auth.showApp(); // Re-render avatar
-        alert("Đã lưu hồ sơ thành công!");
+        Utils.showToast("Đã lưu hồ sơ thành công!", "success");
+    },
+
+    // Admin View Profile Management
+    showViewProfileModal: async (username) => {
+        const accounts = await Auth.getAccounts();
+        const acc = accounts.find(a => a.username === username);
+        if (!acc) return;
+
+        const profile = acc.profile || {};
+        const avatarSrc = profile.avatar || '';
+        const hasAvatar = !!avatarSrc;
+
+        const contentHtml = `
+            <div style="text-align: center; margin-bottom: 24px;">
+                <div style="width: 100px; height: 100px; border-radius: 50%; margin: 0 auto; overflow: hidden; border: 3px solid var(--primary); background: var(--bg-card); display: flex; align-items: center; justify-content: center;">
+                    ${hasAvatar ? `<img src="${avatarSrc}" style="width: 100%; height: 100%; object-fit: cover;">` : `<i class="fa-solid fa-user" style="font-size: 40px; color: var(--text-secondary);"></i>`}
+                </div>
+                <h4 style="margin-top: 12px; font-size: 18px;">${profile.fullname || acc.username}</h4>
+                <div style="color: var(--text-secondary); font-size: 13px;">Vai trò: <span style="text-transform: capitalize;">${acc.role}</span></div>
+            </div>
+            
+            <div class="glass-card" style="padding: 16px;">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color);">
+                    <i class="fa-regular fa-calendar" style="color: var(--primary); width: 20px; text-align: center;"></i>
+                    <div style="flex: 1;">
+                        <div style="font-size: 11px; color: var(--text-secondary);">Ngày sinh</div>
+                        <div style="font-weight: 500;">${profile.dob ? Utils.formatDate(profile.dob) : 'Chưa cập nhật'}</div>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color);">
+                    <i class="fa-solid fa-phone" style="color: var(--primary); width: 20px; text-align: center;"></i>
+                    <div style="flex: 1;">
+                        <div style="font-size: 11px; color: var(--text-secondary);">Số điện thoại</div>
+                        <div style="font-weight: 500;">${profile.phone || 'Chưa cập nhật'}</div>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <i class="fa-solid fa-location-dot" style="color: var(--primary); width: 20px; text-align: center;"></i>
+                    <div style="flex: 1;">
+                        <div style="font-size: 11px; color: var(--text-secondary);">Nơi ở</div>
+                        <div style="font-weight: 500; line-height: 1.4;">${profile.address || 'Chưa cập nhật'}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('view-profile-content').innerHTML = contentHtml;
+        document.getElementById('view-profile-modal-overlay').classList.add('active');
+        document.getElementById('view-profile-modal').style.display = 'block';
+    },
+
+    closeViewProfileModal: () => {
+        document.getElementById('view-profile-modal-overlay').classList.remove('active');
+        document.getElementById('view-profile-modal').style.display = 'none';
     }
 };
 

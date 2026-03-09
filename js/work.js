@@ -7,13 +7,13 @@ const WorkModule = {
         tasks: []
     },
 
-    init: () => {
-        WorkModule.renderPlaceholder();
-        WorkModule.load(); // Load data and filter by role
+    init: async () => {
+        await WorkModule.renderPlaceholder();
+        await WorkModule.load(); // Load data and filter by role
     },
 
-    load: () => {
-        const d = Utils.storage.get('work_data');
+    load: async () => {
+        const d = await DB.getWorkData();
         if (d && d.tasks) {
             WorkModule.data = d;
         } else {
@@ -23,8 +23,8 @@ const WorkModule = {
         WorkModule.filterByRole();
     },
 
-    save: () => {
-        Utils.storage.set('work_data', WorkModule.data);
+    save: async () => {
+        await DB.saveWorkData(WorkModule.data);
         WorkModule.filterByRole();
     },
 
@@ -73,13 +73,13 @@ const WorkModule = {
         });
     },
 
-    renderPlaceholder: () => {
+    renderPlaceholder: async () => {
         const currentUser = Auth.currentUser;
         const isAdmin = currentUser && currentUser.role === 'admin';
 
         let filterHtml = '';
         if (isAdmin) {
-            const accounts = Auth.getAccounts();
+            const accounts = await Auth.getAccounts();
             let opts = `<option value="all">Tất cả nhân viên</option>`;
             accounts.forEach(a => {
                 opts += `<option value="${a.username}">${a.username} (${a.role})</option>`;
@@ -121,6 +121,10 @@ const WorkModule = {
         // renderList is now called by filterByRole
     },
 
+    render: () => {
+        WorkModule.filterByRole();
+    },
+
     handleExcelUpload: (event) => {
         const file = event.target.files[0];
         if (!file) return;
@@ -132,7 +136,7 @@ const WorkModule = {
         }
 
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = async (e) => {
             try {
                 const data = new Uint8Array(e.target.result);
                 const workbook = XLSX.read(data, { type: 'array' });
@@ -143,36 +147,72 @@ const WorkModule = {
                 const rawJson = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
 
                 let importedCount = 0;
+                let headerRowIndex = -1;
+                let colMap = {};
 
-                // Usually headers are on row 1 or 2. We will look for data rows that start with STT number or start parsing from row 2.
-                let dataStartIndex = 1; // Assuming row 0 is header
+                // 1. Find Header Row dynamically (scan first 20 rows)
+                for (let i = 0; i < Math.min(20, rawJson.length); i++) {
+                    const row = rawJson[i];
+                    if (!row || row.length === 0) continue;
 
-                for (let i = dataStartIndex; i < rawJson.length; i++) {
+                    const rowStr = row.map(c => String(c).toLowerCase()).join(' ');
+                    if (rowStr.includes('stt') || rowStr.includes('ngày đăng') || rowStr.includes('tiêu đề') || rowStr.includes('mục tiêu')) {
+                        headerRowIndex = i;
+                        // Build mapping dictionary
+                        row.forEach((colName, idx) => {
+                            if (!colName) return;
+                            const name = String(colName).toLowerCase().trim();
+                            if (name === 'stt') colMap.stt = idx;
+                            else if (name.includes('ngày đăng')) colMap.ngayDang = idx;
+                            else if (name.includes('thứ')) colMap.thu = idx;
+                            else if (name.includes('mục tiêu') || name.includes('mục đích')) colMap.mucTieu = idx;
+                            else if (name.includes('trụ cột')) colMap.truCot = idx;
+                            else if (name.includes('tiêu đề')) colMap.tieuDe = idx;
+                            else if (name.includes('nội dung chi tiết') || name === 'nội dung' || name.includes('caption')) colMap.noiDung = idx;
+                            else if (name.includes('định dạng')) colMap.dinhDang = idx;
+                            else if (name.includes('đặt hàng') || name.includes('order brief') || name.includes('nội dung order') || name.includes('order thiết kế')) colMap.orderBrief = idx;
+                            else if (name.includes('deadline')) colMap.deadline = idx;
+                            else if (name.includes('trạng thái')) colMap.trangThai = idx;
+                            else if (name.includes('ghi chú')) colMap.ghiChu = idx;
+                            else if (name.includes('ảnh gợi ý')) colMap.anhGoiY = idx;
+                        });
+                        break;
+                    }
+                }
+
+                if (headerRowIndex === -1) {
+                    Utils.showToast("Không tìm thấy dòng tiêu đề chuẩn (STT, Ngày đăng, Tiêu đề...) trong file Excel.", 'error');
+                    return;
+                }
+
+                // 2. Extract Data using dynamic ColMap
+                for (let i = headerRowIndex + 1; i < rawJson.length; i++) {
                     const row = rawJson[i];
 
                     // Basic validation: skip completely empty rows
                     if (!row || row.length === 0 || row.every(cell => !cell || cell.toString().trim() === '')) continue;
 
-                    // Parse mapping (assuming standard 13 columns as described)
-                    const stt = row[0]?.toString() || '';
-                    if (stt.toLowerCase() === 'stt' || stt.toLowerCase() === 'ngày đăng') continue; // double ensure we skip headers
+                    const sttVal = colMap.stt !== undefined ? row[colMap.stt] : '';
+                    if (String(sttVal).toLowerCase() === 'stt' || String(sttVal).toLowerCase() === 'ngày đăng') continue;
+
+                    const safeGet = (colIndex) => colIndex !== undefined && row[colIndex] !== undefined && row[colIndex] !== null ? row[colIndex].toString() : '';
 
                     const taskObj = {
                         id: Utils.generateId(),
                         project: projectName,
-                        stt: stt,
-                        ngayDang: Utils.convertExcelDate(row[1]) || '',
-                        thu: row[2]?.toString() || '',
-                        mucTieu: row[3]?.toString() || '',
-                        truCot: row[4]?.toString() || '',
-                        tieuDe: row[5]?.toString() || '',
-                        noiDung: row[6]?.toString() || '',
-                        dinhDang: row[7]?.toString() || '',
-                        orderBrief: row[8]?.toString() || '',
-                        deadline: Utils.convertExcelDate(row[9]) || '',
-                        trangThai: row[10]?.toString() || 'Planned',
-                        ghiChu: row[11]?.toString() || '',
-                        anhGoiY: row[12]?.toString() || '',
+                        stt: safeGet(colMap.stt),
+                        ngayDang: colMap.ngayDang !== undefined ? Utils.convertExcelDate(row[colMap.ngayDang]) : '',
+                        thu: safeGet(colMap.thu),
+                        mucTieu: safeGet(colMap.mucTieu),
+                        truCot: safeGet(colMap.truCot),
+                        tieuDe: safeGet(colMap.tieuDe),
+                        noiDung: safeGet(colMap.noiDung),
+                        dinhDang: safeGet(colMap.dinhDang),
+                        orderBrief: safeGet(colMap.orderBrief),
+                        deadline: colMap.deadline !== undefined ? Utils.convertExcelDate(row[colMap.deadline]) : '',
+                        trangThai: safeGet(colMap.trangThai) || 'Planned',
+                        ghiChu: safeGet(colMap.ghiChu),
+                        anhGoiY: safeGet(colMap.anhGoiY),
                         owner: Auth.currentUser ? Auth.currentUser.username : 'admin'
                     };
 
@@ -180,12 +220,12 @@ const WorkModule = {
                     importedCount++;
                 }
 
-                alert(`Đã nhập thành công ${importedCount} công việc vào kế hoạch "${projectName}".`);
-                WorkModule.save();
+                Utils.showToast(`Đã nhập thành công ${importedCount} công việc vào kế hoạch "${projectName}".`, 'success');
+                await WorkModule.save();
 
             } catch (err) {
                 console.error(err);
-                alert("Đã xảy ra lỗi khi đọc file Excel. Vui lòng đảm bảo định dạng các cột (13 cột) chuẩn.");
+                Utils.showToast("Đã xảy ra lỗi khi đọc file Excel. Vui lòng đảm bảo định dạng các cột (13 cột) chuẩn.", 'error');
             }
 
             event.target.value = '';
@@ -200,11 +240,11 @@ const WorkModule = {
         }
     },
 
-    deleteProject: (projectName, event) => {
+    deleteProject: async (projectName, event) => {
         event.stopPropagation(); // prevent toggling accordion
         if (confirm(`Bạn có chắc chắn muốn xóa toàn bộ kế hoạch "${projectName}"? Hành động này không thể hoàn tác.`)) {
             WorkModule.data.tasks = WorkModule.data.tasks.filter(t => t.project !== projectName);
-            WorkModule.save();
+            await WorkModule.save();
         }
     },
 
@@ -358,11 +398,11 @@ const WorkModule = {
         container.innerHTML = html;
     },
 
-    changeTaskStatus: (id, newStatus) => {
+    changeTaskStatus: async (id, newStatus) => {
         const task = WorkModule.data.tasks.find(t => t.id === id);
         if (task) {
             task.trangThai = newStatus;
-            WorkModule.save();
+            await WorkModule.save();
         }
     },
 
@@ -380,19 +420,19 @@ const WorkModule = {
 
         // Ensure it's an image
         if (!file.type.startsWith('image/')) {
-            alert('Vui lòng chọn một tập tin hình ảnh.');
+            Utils.showToast('Vui lòng chọn một tập tin hình ảnh.', 'error');
             return;
         }
 
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = async (e) => {
             const base64Data = e.target.result;
 
             // Find task and save image data
             const task = WorkModule.data.tasks.find(t => t.id === WorkModule.activeImageTaskId);
             if (task) {
                 task.anhData = base64Data;
-                WorkModule.save();
+                await WorkModule.save();
             }
 
             WorkModule.activeImageTaskId = null;
@@ -401,10 +441,10 @@ const WorkModule = {
 
         reader.readAsDataURL(file);
     },
-    deleteTask: (id) => {
+    deleteTask: async (id) => {
         if (confirm('Bạn có chắc muốn xóa dòng công việc này?')) {
             WorkModule.data.tasks = WorkModule.data.tasks.filter(t => t.id !== id);
-            WorkModule.save();
+            await WorkModule.save();
         }
     }
 };

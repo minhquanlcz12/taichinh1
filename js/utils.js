@@ -39,13 +39,15 @@ const Utils = {
 
     // Fix for Excel Serial dates (e.g. 45082)
     convertExcelDate: (excelDateCode) => {
+        if (!excelDateCode) return '';
+
         // If it's already a standard string, return it
-        if (typeof excelDateCode !== 'number' && isNaN(Number(excelDateCode))) {
+        if (typeof excelDateCode === 'string' && isNaN(Number(excelDateCode))) {
             return excelDateCode;
         }
 
         const serialNumber = Number(excelDateCode);
-        if (serialNumber <= 0) return '';
+        if (isNaN(serialNumber) || serialNumber <= 0) return '';
 
         // Excel epoch is Jan 1, 1900.
         // Javascript epoch is Jan 1, 1970.
@@ -66,6 +68,23 @@ const Utils = {
 
     generateId: () => {
         return Date.now().toString(36) + Math.random().toString(36).substr(2);
+    },
+
+    // UI Animations
+    animateValue: (obj, start, end, duration, formatter) => {
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            // easeOutQuart
+            const easeProgress = 1 - Math.pow(1 - progress, 4);
+            const currentVal = Math.floor(easeProgress * (end - start) + start);
+            obj.textContent = formatter ? formatter(currentVal) : currentVal;
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            }
+        };
+        window.requestAnimationFrame(step);
     },
 
     // Modal Builder
@@ -112,5 +131,42 @@ const Utils = {
         overlay.addEventListener('click', (e) => {
             if (e.target === overlay) closeModal();
         });
+    },
+
+    // Toast Notification Builder
+    showToast: (message, type = 'success') => {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+
+        let iconClass = 'fa-check-circle';
+        if (type === 'error') iconClass = 'fa-circle-xmark';
+        if (type === 'info') iconClass = 'fa-circle-info';
+
+        toast.innerHTML = `
+            <i class="fa-solid ${iconClass} toast-icon"></i>
+            <div class="toast-content">
+                <div class="toast-message">${message}</div>
+            </div>
+        `;
+
+        container.appendChild(toast);
+
+        // Trigger animation
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                toast.classList.add('show');
+            });
+        });
+
+        // Auto remove
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => {
+                toast.remove();
+            }, 400); // Wait for transition finish
+        }, 3000);
     }
 };

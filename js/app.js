@@ -107,10 +107,10 @@ const app = {
         const recentTxs = FinanceModule.getRecentTransactions(5, filteredTransactions);
         const todaysTasks = WorkModule.getTodaysTasks();
 
-        // Update top cards
-        document.getElementById('dash-balance').textContent = Utils.formatCurrency(financeData.balance);
-        document.getElementById('dash-income').textContent = Utils.formatCurrency(financeData.income);
-        document.getElementById('dash-expense').textContent = Utils.formatCurrency(financeData.expense);
+        // Update top cards with animation
+        Utils.animateValue(document.getElementById('dash-balance'), 0, financeData.balance, 1000, Utils.formatCurrency);
+        Utils.animateValue(document.getElementById('dash-income'), 0, financeData.income, 1000, Utils.formatCurrency);
+        Utils.animateValue(document.getElementById('dash-expense'), 0, financeData.expense, 1000, Utils.formatCurrency);
 
         // Update Recent Transactions
         const txList = document.getElementById('dash-transaction-list');

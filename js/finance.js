@@ -10,21 +10,25 @@ const FinanceModule = {
         expense: ['Thực phẩm', 'Hóa đơn', 'Giải trí', 'Mua sắm', 'Sức khỏe', 'Giáo dục', 'Khác']
     },
 
-    init: () => {
-        FinanceModule.load();
-        FinanceModule.renderPlaceholder();
+    currentFilterMonth: new Date().toISOString().slice(0, 7), // YYYY-MM
+
+    init: async () => {
+        await FinanceModule.renderPlaceholder();
+        await FinanceModule.load();
     },
 
-    load: () => {
-        const d = Utils.storage.get('finance_data');
+    load: async () => {
+        const d = await DB.getFinanceData();
         if (d && d.transactions) {
-            FinanceModule.data.transactions = d.transactions;
+            FinanceModule.data = d;
+        } else {
+            FinanceModule.data.transactions = [];
         }
         FinanceModule.filterByRole();
     },
 
-    save: () => {
-        Utils.storage.set('finance_data', FinanceModule.data);
+    save: async () => {
+        await DB.saveFinanceData(FinanceModule.data);
         FinanceModule.filterByRole(); // Re-render with active filters
     },
 
@@ -48,7 +52,7 @@ const FinanceModule = {
         FinanceModule.renderList(displayTransactions);
     },
 
-    addTransaction: (type, amount, category, date, note) => {
+    addTransaction: async (type, amount, category, date, note) => {
         FinanceModule.data.transactions.push({
             id: Utils.generateId(),
             type,
@@ -58,7 +62,7 @@ const FinanceModule = {
             note,
             owner: Auth.currentUser.username
         });
-        FinanceModule.save();
+        await FinanceModule.save();
     },
 
     getSummary: (transactionsToSummarize) => {
@@ -103,13 +107,13 @@ const FinanceModule = {
             .slice(0, limit);
     },
 
-    renderPlaceholder: () => {
+    renderPlaceholder: async () => {
         const currentUser = Auth.currentUser;
         const isAdmin = currentUser && currentUser.role === 'admin';
 
         let filterHtml = '';
         if (isAdmin) {
-            const accounts = Auth.getAccounts();
+            const accounts = await Auth.getAccounts();
             let opts = `<option value="all">Tất cả nhân viên</option>`;
             accounts.forEach(a => {
                 opts += `<option value="${a.username}">${a.username} (${a.role})</option>`;
@@ -177,7 +181,7 @@ const FinanceModule = {
     },
 
     render: () => {
-        FinanceModule.renderList();
+        FinanceModule.filterByRole();
     },
 
     showAddModal: () => {
@@ -216,7 +220,7 @@ const FinanceModule = {
             </div>
         `;
 
-        Utils.showModal('Thêm Giao dịch Mới', content, () => {
+        Utils.showModal('Thêm Giao dịch Mới', content, async () => {
             const type = document.getElementById('tx-type').value;
             const amount = document.getElementById('tx-amount').value;
             const category = document.getElementById('tx-category').value;
@@ -224,7 +228,7 @@ const FinanceModule = {
             const note = document.getElementById('tx-note').value;
 
             if (!amount || amount <= 0) {
-                alert('Vui lòng nhập số tiền hợp lệ.');
+                Utils.showToast('Vui lòng nhập số tiền hợp lệ.', 'error');
                 return false; // Prevent close
             }
 
@@ -238,12 +242,86 @@ const FinanceModule = {
                 owner: Auth.currentUser ? Auth.currentUser.username : 'admin'
             });
 
-            FinanceModule.save();
+            await FinanceModule.save();
             return true; // OK to close
         }, 'Lưu Giao dịch');
 
         // Initialize categories for default 'expense'
         FinanceModule.updateCategories();
+    },
+
+    editTransaction: (id) => {
+        const tx = FinanceModule.data.transactions.find(t => t.id === id);
+        if (!tx) return;
+
+        const content = `
+            <div class="form-group">
+                <label>Loại Giao dịch</label>
+                <select class="form-control" id="tx-type" onchange="FinanceModule.updateCategories()">
+                    <option value="expense" ${tx.type === 'expense' ? 'selected' : ''}>Chi tiêu</option>
+                    <option value="income" ${tx.type === 'income' ? 'selected' : ''}>Thu nhập</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Số tiền (VNĐ)</label>
+                <input type="number" class="form-control" id="tx-amount" placeholder="VD: 500000" value="${tx.amount}" required>
+                <div style="display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap;">
+                    <button class="btn btn-outline" style="padding: 4px 8px; font-size: 12px;" onclick="FinanceModule.setFastAmount(50000)">50k</button>
+                    <button class="btn btn-outline" style="padding: 4px 8px; font-size: 12px;" onclick="FinanceModule.setFastAmount(100000)">100k</button>
+                    <button class="btn btn-outline" style="padding: 4px 8px; font-size: 12px;" onclick="FinanceModule.setFastAmount(200000)">200k</button>
+                    <button class="btn btn-outline" style="padding: 4px 8px; font-size: 12px;" onclick="FinanceModule.setFastAmount(500000)">500k</button>
+                    <button class="btn btn-outline" style="padding: 4px 8px; font-size: 12px;" onclick="FinanceModule.setFastAmount(1000000)">1000k</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Danh mục</label>
+                <select class="form-control" id="tx-category"></select>
+            </div>
+            <div class="form-group">
+                <label>Ngày</label>
+                <input type="date" class="form-control" id="tx-date" value="${tx.date}">
+            </div>
+            <div class="form-group">
+                <label>Ghi chú (Tùy chọn)</label>
+                <input type="text" class="form-control" id="tx-note" placeholder="Chi tiết giao dịch" value="${tx.note || ''}">
+            </div>
+        `;
+
+        Utils.showModal('Chỉnh sửa Giao dịch', content, async () => {
+            // For simplicity, modify the logic so we delete the old one if save is clicked
+            // This means the ID changes, but that's okay for localStorage/firebase.
+            const type = document.getElementById('tx-type').value;
+            const amount = document.getElementById('tx-amount').value;
+            const category = document.getElementById('tx-category').value;
+            const date = document.getElementById('tx-date').value;
+            const note = document.getElementById('tx-note').value;
+
+            if (!amount || amount <= 0) {
+                Utils.showToast('Vui lòng nhập số tiền hợp lệ.', 'error');
+                return false; // Prevent close
+            }
+
+            // Remove old
+            FinanceModule.data.transactions = FinanceModule.data.transactions.filter(t => t.id !== id);
+
+            // Add new replacement (keep old owner)
+            FinanceModule.data.transactions.push({
+                id: Utils.generateId(), // New ID for the updated transaction
+                type,
+                amount: parseFloat(amount),
+                category,
+                date,
+                note,
+                owner: tx.owner // Keep the original owner
+            });
+
+            await FinanceModule.save();
+            return true; // OK to close
+        }, 'Lưu Thay đổi');
+
+        // Initialize categories for the selected type and then set the category
+        FinanceModule.updateCategories();
+        document.getElementById('tx-category').value = tx.category;
     },
 
     setFastAmount: (amount) => {
@@ -264,10 +342,10 @@ const FinanceModule = {
         catControl.innerHTML = options.map(opt => `<option value="${opt}">${opt}</option>`).join('');
     },
 
-    deleteTransaction: (id) => {
+    deleteTransaction: async (id) => {
         if (confirm('Bạn có chắc muốn xóa giao dịch này?')) {
             FinanceModule.data.transactions = FinanceModule.data.transactions.filter(t => t.id !== id);
-            FinanceModule.save();
+            await FinanceModule.save();
         }
     }
 };
