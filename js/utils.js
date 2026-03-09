@@ -41,9 +41,18 @@ const Utils = {
     convertExcelDate: (excelDateCode) => {
         if (!excelDateCode) return '';
 
-        // If it's already a standard string, return it
+        // If it's already a standard string, normalize to DD/MM/YYYY
         if (typeof excelDateCode === 'string' && isNaN(Number(excelDateCode))) {
-            return excelDateCode;
+            let str = excelDateCode.trim();
+            let parts = str.split(/[\/\-]/);
+            if (parts.length >= 2 && parts.length <= 3) {
+                let d = String(parts[0]).padStart(2, '0');
+                let m = String(parts[1]).padStart(2, '0');
+                let y = parts.length === 3 ? parts[2] : new Date().getFullYear();
+                if (String(y).length === 2) y = '20' + y;
+                return `${d}/${m}/${y}`;
+            }
+            return str;
         }
 
         const serialNumber = Number(excelDateCode);
@@ -62,6 +71,14 @@ const Utils = {
         const year = date.getUTCFullYear();
 
         return `${day}/${month}/${year}`;
+    },
+
+    getTodayString: () => {
+        const today = new Date();
+        const d = String(today.getDate()).padStart(2, '0');
+        const m = String(today.getMonth() + 1).padStart(2, '0');
+        const y = today.getFullYear();
+        return `${d}/${m}/${y}`;
     },
 
     generateId: () => {
