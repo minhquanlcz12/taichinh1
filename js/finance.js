@@ -48,7 +48,7 @@ const FinanceModule = {
             displayTransactions = FinanceModule.data.transactions.filter(t => t.owner === currentUser.username);
         }
 
-        app.renderDashboard(displayTransactions); // Assuming app.renderDashboard can take transactions
+        app.renderDashboard(); // Dashboard always renders personal summary implicitly
         FinanceModule.renderList(displayTransactions);
     },
 
