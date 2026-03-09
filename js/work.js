@@ -6,6 +6,7 @@ const WorkModule = {
         // {id, stt, ngayDang, thu, mucTieu, truCot, tieuDe, noiDung, dinhDang, orderBrief, deadline, trangThai, ghiChu, anhGoiY, project, owner}
         tasks: []
     },
+    expandedProjects: null, // Track open folders
 
     init: async () => {
         await WorkModule.renderPlaceholder();
@@ -233,10 +234,17 @@ const WorkModule = {
         reader.readAsArrayBuffer(file);
     },
 
-    toggleFolder: (folderId) => {
+    toggleFolder: (folderId, projName) => {
         const folderEl = document.getElementById(folderId);
         if (folderEl) {
-            folderEl.classList.toggle('expanded');
+            const isExpanded = folderEl.classList.toggle('expanded');
+            if (WorkModule.expandedProjects !== null) {
+                if (isExpanded) {
+                    WorkModule.expandedProjects.add(projName);
+                } else {
+                    WorkModule.expandedProjects.delete(projName);
+                }
+            }
         }
     },
 
@@ -272,6 +280,11 @@ const WorkModule = {
             grouped[t.project].push(t);
         });
 
+        // Initialize expanded tracking on first load
+        if (WorkModule.expandedProjects === null) {
+            WorkModule.expandedProjects = new Set(Object.keys(grouped));
+        }
+
         let html = '';
 
         // Render each project folder
@@ -291,9 +304,11 @@ const WorkModule = {
                 adminBadgeHtml = `<span class="badge badge-orange" style="font-size: 11px; margin-left: 8px;"><i class="fa-solid fa-user"></i> ${ownerNames}</span>`;
             }
 
+            const isExpanded = WorkModule.expandedProjects.has(projName) ? 'expanded' : '';
+
             html += `
-                <div class="folder-group glass-card expanded" style="padding: 0; overflow:hidden;" id="${folderId}">
-                    <div class="folder-header" onclick="WorkModule.toggleFolder('${folderId}')">
+                <div class="folder-group glass-card ${isExpanded}" style="padding: 0; overflow:hidden;" id="${folderId}">
+                    <div class="folder-header" onclick="WorkModule.toggleFolder('${folderId}', '${projName}')">
                         <div class="folder-title">
                             <i class="fa-solid fa-folder-open"></i>
                             ${projName}
@@ -403,6 +418,17 @@ const WorkModule = {
         if (task) {
             task.trangThai = newStatus;
             await WorkModule.save();
+            Utils.showToast('Cập nhật trạng thái thành công!', 'success');
+        }
+    },
+
+    toggleTaskStatus: async (id) => {
+        const task = WorkModule.data.tasks.find(t => t.id === id);
+        if (task) {
+            const isDone = task.trangThai && task.trangThai.toLowerCase().includes('done');
+            task.trangThai = isDone ? 'Planned' : 'Done';
+            await WorkModule.save();
+            Utils.showToast('Cập nhật công việc trong ngày!', 'success');
         }
     },
 
