@@ -1644,6 +1644,86 @@ body.dark-theme .avatar-preview-box {
     background: rgba(0, 0, 0, 0.1);
 }
 
+/* Chat Tabs & Private List */
+.chat-tab {
+    flex: 1;
+    text-align: center;
+    padding: 10px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    transition: all 0.2s;
+    border-bottom: 2px solid transparent;
+}
+
+.chat-tab:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.chat-tab.active {
+    color: var(--primary);
+    border-bottom: 2px solid var(--primary);
+}
+
+.tab-badge {
+    background: var(--danger);
+    color: white;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin-left: 4px;
+}
+
+.p-user-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-bottom: 4px;
+    position: relative;
+}
+
+.p-user-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.p-user-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    margin-right: 12px;
+}
+
+.p-user-info {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.p-user-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.p-unread-badge {
+    background: var(--danger);
+    color: white;
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: bold;
+}
+
 @media (max-width: 480px) {
     .chat-window {
         bottom: 0;
