@@ -55,10 +55,9 @@ const ChatModule = {
             }
         });
 
-        // 2. Listen to Private Chats
+        // 2. Listen to Private Chats (Bỏ orderBy để tránh lỗi Indexing trên Firebase)
         const privateRef = db.collection('private_chats')
-            .where('participants', 'array-contains', Auth.currentUser.username)
-            .orderBy('timestamp', 'asc');
+            .where('participants', 'array-contains', Auth.currentUser.username);
 
         ChatModule.privateUnsubscribe = privateRef.onSnapshot(snapshot => {
             snapshot.docChanges().forEach(change => {
@@ -299,7 +298,11 @@ const ChatModule = {
         const relevantMsgs = ChatModule.privateMessages.filter(m =>
             (m.sender === Auth.currentUser.username && m.receiver === targetUsername) ||
             (m.sender === targetUsername && m.receiver === Auth.currentUser.username)
-        );
+        ).sort((a, b) => {
+            const timeA = a.timestamp ? a.timestamp.toMillis() : Date.now();
+            const timeB = b.timestamp ? b.timestamp.toMillis() : Date.now();
+            return timeA - timeB;
+        });
 
         if (relevantMsgs.length === 0) {
             privBody.innerHTML = '<p class="chat-placeholder" style="text-align:center; color: var(--text-secondary); font-size:13px; margin-top:20px;">Hãy gửi lời chào đầu tiên!</p>';
