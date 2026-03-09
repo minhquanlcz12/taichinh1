@@ -148,7 +148,15 @@ const app = {
         // Update Today's Tasks
         const taskList = document.getElementById('dash-task-list');
         if (todaysTasks.length === 0) {
-            taskList.innerHTML = '<p style="color:var(--text-secondary); padding: 16px;">Không có công việc nào cần hoàn thành hôm nay.</p>';
+            taskList.innerHTML = `
+                <div class="neon-empty-state">
+                    <div class="neon-empty-state-icon-wrapper">
+                        <i class="fa-solid fa-calendar-xmark"></i>
+                        <span class="neon-empty-state-badge">0</span>
+                    </div>
+                    <p style="color:var(--text-secondary); font-size: 14px;">Không có công việc nào cần hoàn thành hôm nay.</p>
+                </div>
+            `;
         } else {
             taskList.innerHTML = todaysTasks.map(task => {
                 const isCompleted = task.trangThai && task.trangThai.toLowerCase().includes('done');

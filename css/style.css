@@ -118,6 +118,96 @@ body {
     border: 1px solid var(--glass-border);
 }
 
+/* --- NEON AESTHETICS --- */
+.neon-text-green {
+    color: #88ffd1 !important;
+    /* Brighter Emerald green */
+    text-shadow: 0 0 5px rgba(136, 255, 209, 0.5),
+        0 0 10px rgba(16, 185, 129, 0.8),
+        0 0 20px rgba(16, 185, 129, 0.5);
+}
+
+.neon-card-base {
+    position: relative;
+    background: rgba(20, 24, 30, 0.85) !important;
+    backdrop-filter: blur(16px);
+    overflow: hidden;
+    border-radius: var(--radius-lg) !important;
+}
+
+/* Yellow/Gold Neon Card (SỐ DƯ) */
+.neon-card-yellow {
+    border: 1px solid rgba(250, 204, 21, 0.5) !important;
+    box-shadow: 0 0 15px rgba(250, 204, 21, 0.15), inset 0 0 25px rgba(250, 204, 21, 0.08) !important;
+}
+
+.neon-card-yellow .summary-value,
+.neon-card-yellow .summary-title {
+    color: #ffffff !important;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+}
+
+/* Green Neon Card (THU NHẬP) */
+.neon-card-green {
+    border: 1px solid rgba(52, 211, 153, 0.5) !important;
+    box-shadow: 0 0 15px rgba(52, 211, 153, 0.15), inset 0 0 25px rgba(52, 211, 153, 0.08) !important;
+}
+
+.neon-card-green .summary-value,
+.neon-card-green .summary-title {
+    color: #ffffff !important;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+}
+
+/* Red Neon Card (CHI TIÊU) */
+.neon-card-red {
+    border: 1px solid rgba(248, 113, 113, 0.5) !important;
+    box-shadow: 0 0 15px rgba(248, 113, 113, 0.15), inset 0 0 25px rgba(248, 113, 113, 0.08) !important;
+}
+
+.neon-card-red .summary-value,
+.neon-card-red .summary-title {
+    color: #ffffff !important;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+}
+
+/* Empty State Neon Desk */
+.neon-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+    background: transparent;
+}
+
+.neon-empty-state-icon-wrapper {
+    position: relative;
+    display: inline-block;
+    color: rgba(255, 255, 255, 0.6);
+    filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.2));
+    margin-bottom: 16px;
+}
+
+.neon-empty-state-icon-wrapper i {
+    font-size: 72px;
+}
+
+.neon-empty-state-badge {
+    position: absolute;
+    top: -5px;
+    right: -15px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 8px;
+    padding: 2px 8px;
+    font-size: 13px;
+    color: #fff;
+    backdrop-filter: blur(4px);
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+}
+
+
 @keyframes border-glow {
     0% {
         background-position: 0% 50%;
