@@ -33,7 +33,7 @@ const DB = {
     getAccounts: async () => {
         try {
             const doc = await db.collection("system").doc("accounts").get();
-            if (doc.exists && doc.data().data && doc.data().data.length > 0) {
+            if (doc.exists && doc.data() && doc.data().data) {
                 return doc.data().data;
             }
         } catch (e) {
@@ -55,7 +55,7 @@ const DB = {
     getFinanceData: async () => {
         try {
             const doc = await db.collection("finance").doc("main").get();
-            if (doc.exists && doc.data().transactions && doc.data().transactions.length > 0) {
+            if (doc.exists && doc.data() && doc.data().transactions) {
                 return doc.data();
             }
         } catch (e) {
@@ -77,7 +77,7 @@ const DB = {
     getWorkData: async () => {
         try {
             const doc = await db.collection("work").doc("main").get();
-            if (doc.exists && doc.data().tasks && doc.data().tasks.length > 0) {
+            if (doc.exists && doc.data() && doc.data().tasks) {
                 return doc.data();
             }
         } catch (e) {
