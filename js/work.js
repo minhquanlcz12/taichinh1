@@ -67,7 +67,9 @@ const WorkModule = {
         let tasks = WorkModule.data.tasks;
         const currentUser = Auth.currentUser;
         if (currentUser) {
-            tasks = tasks.filter(t => t.owner === currentUser.username || (!t.owner && currentUser.username === 'admin'));
+            if (currentUser.role !== 'admin') {
+                tasks = tasks.filter(t => t.owner === currentUser.username);
+            }
         }
 
         const today = new Date();
