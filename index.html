@@ -28,7 +28,11 @@
                 <h2
                     style="color: var(--primary); font-size: 24px; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; gap: 8px;">
                     <i class="fa-solid fa-dragon"></i> Thanh Long Work
-                    <span style="font-size: 18px;">🇻🇳</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" width="28" height="19"
+                        style="border-radius:2px; box-shadow: 0 1px 3px rgba(0,0,0,0.3);">
+                        <rect width="900" height="600" fill="#da251d" />
+                        <polygon points="450,120 353,419 607,235 293,235 547,419" fill="#ffcd00" />
+                    </svg>
                 </h2>
                 <p style="color: var(--text-secondary);">Quản lý công việc thông minh</p>
             </div>
@@ -95,8 +99,12 @@
             <div class="sidebar-header">
                 <div class="logo">
                     <i class="fa-solid fa-dragon"></i>
-                    <span style="font-size: 20px;">Thanh Long Work <span
-                            style="font-size: 16px; margin-left: 4px;">🇻🇳</span></span>
+                    <span style="font-size: 20px; display: flex; align-items: center; gap: 6px;">Thanh Long Work <svg
+                            xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" width="22" height="15"
+                            style="border-radius:2px; box-shadow: 0 1px 3px rgba(0,0,0,0.3);">
+                            <rect width="900" height="600" fill="#da251d" />
+                            <polygon points="450,120 353,419 607,235 293,235 547,419" fill="#ffcd00" />
+                        </svg></span>
                 </div>
             </div>
 
@@ -171,9 +179,17 @@
 
                     <div class="dashboard-content-grid">
                         <div class="todays-tasks glass-card">
-                            <div class="card-header">
-                                <h3>Công việc hôm nay</h3>
-                                <button class="btn-text" onclick="app.navigateTo('work-view')">Chi tiết</button>
+                            <div class="card-header"
+                                style="flex-direction: column; justify-content: center; text-align: center; gap: 8px; border-bottom: 1px solid var(--border-color); padding-bottom: 16px; margin-bottom: 16px;">
+                                <h3
+                                    style="font-size: 22px; color: var(--primary); text-transform: uppercase; letter-spacing: 1px;">
+                                    Công việc hôm nay</h3>
+                                <p
+                                    style="font-size: 13px; color: var(--text-secondary); font-style: italic; margin-bottom: 8px;">
+                                    "Cố lên sếp ơi, Deadline đang nhìn sếp đắm đuối kìa! 💪😆"</p>
+                                <button class="btn-text" onclick="app.navigateTo('work-view')"
+                                    style="margin: 0 auto; color: var(--primary); font-weight: 600;"><i
+                                        class="fa-solid fa-arrow-right"></i> Tới bảng Kế hoạch</button>
                             </div>
                             <div class="task-list" id="dash-task-list">
                                 <!-- Trống -->
