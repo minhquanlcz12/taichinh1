@@ -1492,7 +1492,7 @@ body.dark-theme .avatar-preview-box {
     font-size: 24px;
     cursor: pointer;
     box-shadow: 0 10px 25px rgba(0, 201, 167, 0.4);
-    z-index: 1000;
+    z-index: 9999;
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
@@ -1518,28 +1518,29 @@ body.dark-theme .avatar-preview-box {
 }
 
 .chat-window {
-    position: fixed;
-    bottom: 110px;
-    right: 30px;
-    width: 350px;
-    height: 500px;
+    position: fixed !important;
+    bottom: 110px !important;
+    right: 30px !important;
+    width: 350px !important;
+    max-width: 90vw;
+    height: 500px !important;
     max-height: calc(100vh - 150px);
     background: var(--bg-card);
     border: 1px solid var(--glass-border);
     border-radius: 16px;
-    display: flex;
+    display: none !important;
     flex-direction: column;
-    z-index: 999;
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+    z-index: 9998;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
     overflow: hidden;
     opacity: 0;
-    pointer-events: none;
     transform: translateY(20px) scale(0.95);
     transform-origin: bottom right;
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .chat-window.active {
+    display: flex !important;
     opacity: 1;
     pointer-events: all;
     transform: translateY(0) scale(1);

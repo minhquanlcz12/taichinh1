@@ -7,7 +7,7 @@ const WorkModule = {
         tasks: []
     },
     expandedProjects: null, // Track open folders
-    currentFilterTime: 'today', // Default to today
+    currentFilterTime: 'all', // Default to all
 
     init: async () => {
         await WorkModule.renderPlaceholder();
@@ -49,14 +49,8 @@ const WorkModule = {
             displayTasks = displayTasks.filter(t => t.owner === currentUser.username);
         }
 
-        // Apply time filter
         if (WorkModule.currentFilterTime === 'today') {
-            const today = new Date();
-            const d = String(today.getDate()).padStart(2, '0');
-            const m = String(today.getMonth() + 1).padStart(2, '0');
-            const y = today.getFullYear();
-            const todayStr = `${d}/${m}/${y}`;
-
+            const todayStr = Utils.getTodayString();
             displayTasks = displayTasks.filter(t => t.ngayDang === todayStr || t.deadline === todayStr);
             const dateDisplay = document.getElementById('work-date-display');
             if (dateDisplay) dateDisplay.textContent = 'Kế hoạch Hôm nay (' + todayStr + ')';
@@ -95,8 +89,8 @@ const WorkModule = {
 
         let filterHtml = `
             <select class="form-control" id="work-time-filter" style="width: auto; display: inline-block; margin-right: 12px; height: 38px;" onchange="WorkModule.currentFilterTime = this.value; WorkModule.filterByRole()">
-                <option value="today">Hôm nay</option>
                 <option value="all">Tất cả thời gian</option>
+                <option value="today">Hôm nay</option>
             </select>
         `;
         if (isAdmin) {
