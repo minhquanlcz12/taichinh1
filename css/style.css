@@ -62,6 +62,43 @@ body {
     overflow: hidden;
 }
 
+/* Auth Overlay Styles */
+.auth-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: var(--bg-color);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.auth-overlay.active {
+    display: flex;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 400px;
+    padding: 32px;
+    background: var(--card-bg);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+}
+
+.auth-form .form-group {
+    margin-bottom: 20px;
+}
+
 /* Glassmorphism Utilities */
 .glass-panel {
     background: var(--glass-bg);
