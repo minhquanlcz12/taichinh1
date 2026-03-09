@@ -86,6 +86,24 @@ const DB = {
         return Utils.storage.get('backup_work', { tasks: [] });
     },
 
+    listenWorkData: (callback) => {
+        try {
+            return db.collection("work").doc("main").onSnapshot((doc) => {
+                if (doc.exists && doc.data() && doc.data().tasks) {
+                    const data = doc.data();
+                    Utils.storage.set('backup_work', data);
+                    callback(data);
+                } else {
+                    callback({ tasks: [] });
+                }
+            }, (error) => {
+                console.error("Lỗi nghe work data realtime:", error);
+            });
+        } catch (e) {
+            console.error("Error setting up work data listener:", e);
+        }
+    },
+
     // Xóa trắng dữ liệu thiết lập lại từ đầu
     clearAll: async () => {
         try {

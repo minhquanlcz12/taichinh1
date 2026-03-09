@@ -14,15 +14,22 @@ const WorkModule = {
         await WorkModule.load(); // Load data and filter by role
     },
 
-    load: async () => {
-        const d = await DB.getWorkData();
-        if (d && d.tasks) {
-            WorkModule.data = d;
-        } else {
-            // If no data or old schema, initialize with empty tasks
-            WorkModule.data.tasks = [];
-        }
-        WorkModule.filterByRole();
+    load: () => {
+        return new Promise((resolve) => {
+            let initialLoad = true;
+            DB.listenWorkData((d) => {
+                if (d && d.tasks) {
+                    WorkModule.data = d;
+                } else {
+                    WorkModule.data.tasks = [];
+                }
+                WorkModule.filterByRole();
+                if (initialLoad) {
+                    initialLoad = false;
+                    resolve();
+                }
+            });
+        });
     },
 
     save: async () => {
