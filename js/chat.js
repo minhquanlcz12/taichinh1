@@ -11,7 +11,7 @@ const ChatModule = {
     },
 
     startListening: () => {
-        if (!typeof Auth !== 'undefined' && !Auth.currentUser) return;
+        if (typeof Auth === 'undefined' || !Auth.currentUser) return;
 
         // Listen to "chat" collection ordered by timestamp
         const chatRef = db.collection('chat').orderBy('timestamp', 'asc').limit(50);
