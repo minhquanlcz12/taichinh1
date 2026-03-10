@@ -69,10 +69,7 @@ body {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background-image: linear-gradient(rgba(4, 9, 20, 0.7), rgba(4, 9, 20, 0.85)), url('../assets/bg-login-v2.jpg');
-    background-position: center;
-    background-size: cover;
-    background-repeat: no-repeat;
+    background: linear-gradient(rgba(4, 9, 20, 0.7), rgba(4, 9, 20, 0.85)), url('../assets/bg-login-v2.jpg') center/cover no-repeat !important;
     display: none;
     align-items: center;
     justify-content: center;
