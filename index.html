@@ -16,95 +16,116 @@
     <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
 
     <!-- Local scripts imported end of body -->
-    <link rel="stylesheet" href="css/style.css?v=2.5">
+    <link rel="stylesheet" href="css/style.css?v=2.6">
 </head>
 
 <body class="dark-theme">
 
-    <!-- Boot Loading Screen -->
-    <div id="boot-screen" class="boot-screen">
-        <div class="boot-content">
-            <div class="boot-icon-wrapper">
-                <div class="boot-spinner"></div>
-                <i class="fa-solid fa-dragon neon-text-green boot-icon"></i>
-            </div>
-            <div class="boot-title">THIẾT LẬP KẾT NỐI BẢO MẬT</div>
-            <div class="boot-progress-container">
-                <div class="boot-progress-bar"></div>
-            </div>
-            <div class="boot-status">ĐANG TẢI DỮ LIỆU BỘ NHỚ LÕI...</div>
-        </div>
-    </div>
 
     <!-- Auth Overlay -->
     <div id="auth-overlay" class="auth-overlay">
         <div class="auth-card">
-            <div style="text-align: center; margin-bottom: 24px;">
-                <h2 style="color: var(--primary); font-size: 24px; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; gap: 8px;"
-                    class="neon-text-green">
-                    <i class="fa-solid fa-dragon neon-text-green"></i> Thanh Long Work
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" width="42" height="28"
-                        style="border-radius:2px; box-shadow: 0 1px 3px rgba(0,0,0,0.3);">
-                        <rect width="900" height="600" fill="#da251d" />
-                        <polygon points="450,120 353,419 607,235 293,235 547,419" fill="#ffcd00" />
-                    </svg>
-                </h2>
-                <p style="color: var(--text-secondary);">Quản lý công việc thông minh</p>
+
+            <!-- IN-CARD BOOT SCREEN GRAPHIC -->
+            <div id="incard-boot-screen" class="incard-boot-screen">
+                <div class="incard-header">
+                    <i class="fa-solid fa-dragon"></i>
+                    <span>Thanh Long Work <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" width="24"
+                            height="16" style="border-radius:2px; vertical-align: middle; margin-left:4px;">
+                            <rect width="900" height="600" fill="#da251d" />
+                            <polygon points="450,120 353,419 607,235 293,235 547,419" fill="#ffcd00" />
+                        </svg></span>
+                </div>
+                <div class="incard-subtitle">Quản lý công việc thông minh</div>
+
+                <!-- Vòng Rồng Loading Lớn -->
+                <div class="incard-dragon-ring">
+                    <div class="ring-outer"></div>
+                    <div class="ring-inner"></div>
+                    <i class="fa-solid fa-dragon ring-dragon-icon"></i>
+                </div>
+
+                <!-- Thanh Progress Loading Đứt Đoạn -->
+                <div class="incard-progress-container">
+                    <div class="incard-progress-track">
+                        <div class="incard-progress-fill"></div>
+                    </div>
+                    <div class="incard-status">ĐANG TẢI DỮ LIỆU...</div>
+                </div>
             </div>
 
-            <!-- Login Form -->
-            <form class="auth-form" id="login-form">
-                <div class="form-group">
-                    <label>Tên đăng nhập</label>
-                    <input type="text" id="login-user" required autocomplete="username">
+            <!-- Login Wrapper -->
+            <div id="login-wrapper" style="display: none;">
+                <div style="text-align: center; margin-bottom: 24px;">
+                    <h2 style="color: var(--primary); font-size: 24px; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; gap: 8px;"
+                        class="neon-text-green">
+                        <i class="fa-solid fa-dragon neon-text-green"></i> Thanh Long Work
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" width="42" height="28"
+                            style="border-radius:2px; box-shadow: 0 1px 3px rgba(0,0,0,0.3);">
+                            <rect width="900" height="600" fill="#da251d" />
+                            <polygon points="450,120 353,419 607,235 293,235 547,419" fill="#ffcd00" />
+                        </svg>
+                    </h2>
+                    <p style="color: var(--text-secondary);">Quản lý công việc thông minh</p>
                 </div>
-                <div class="form-group">
-                    <label>Mật khẩu</label>
-                    <input type="password" id="login-pass" required autocomplete="current-password">
-                </div>
-                <div id="login-error"
-                    style="color: var(--danger); font-size: 13px; margin-bottom: 16px; text-align: center;"></div>
-                <button type="submit" class="btn btn-primary"
-                    style="width: 100%; margin-bottom: 16px; padding: 14px; font-size: 16px;">Đăng
-                    nhập</button>
-                <div style="text-align: center; font-size: 14px; color: var(--text-secondary);">
-                    Chưa có tài khoản? <a href="#" id="go-to-reg" style="color: var(--primary); font-weight: 600;">Đăng
-                        ký ngay</a>
-                </div>
-            </form>
 
-            <!-- Register Form -->
-            <form class="auth-form" id="register-form" style="display: none;">
-                <div class="form-group">
-                    <label>Tên đăng nhập mới</label>
-                    <input type="text" id="reg-user" required autocomplete="new-password">
-                    <!-- prevent autofill conflict -->
-                </div>
-                <div class="form-group">
-                    <label>Mật khẩu</label>
-                    <input type="password" id="reg-pass" required autocomplete="new-password">
-                </div>
-                <div class="form-group">
-                    <label>Xác nhận mật khẩu</label>
-                    <input type="password" id="reg-confirm" required autocomplete="new-password">
-                </div>
-                <div id="reg-error"
-                    style="color: var(--danger); font-size: 13px; margin-bottom: 16px; text-align: center;"></div>
-                <button type="submit" class="btn btn-success"
-                    style="width: 100%; margin-bottom: 16px; padding: 14px; font-size: 16px;">Tạo tài
-                    khoản</button>
-                <div style="text-align: center; font-size: 14px; color: var(--text-secondary);">
-                    Đã có tài khoản? <a href="#" id="go-to-login" style="color: var(--primary); font-weight: 600;">Đăng
-                        nhập</a>
-                </div>
-            </form>
+                <!-- Login Form -->
+                <form class="auth-form" id="login-form">
+                    <div class="form-group">
+                        <label>Tên đăng nhập</label>
+                        <input type="text" id="login-user" required autocomplete="username">
+                    </div>
+                    <div class="form-group">
+                        <label>Mật khẩu</label>
+                        <input type="password" id="login-pass" required autocomplete="current-password">
+                    </div>
+                    <div id="login-error"
+                        style="color: var(--danger); font-size: 13px; margin-bottom: 16px; text-align: center;"></div>
+                    <button type="submit" class="btn btn-primary"
+                        style="width: 100%; margin-bottom: 16px; padding: 14px; font-size: 16px;">Đăng
+                        nhập</button>
+                    <div style="text-align: center; font-size: 14px; color: var(--text-secondary);">
+                        Chưa có tài khoản? <a href="#" id="go-to-reg"
+                            style="color: var(--primary); font-weight: 600;">Đăng
+                            ký ngay</a>
+                    </div>
+                </form>
 
-            <div
-                style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--glass-border); text-align: center; font-size: 12px; color: var(--text-secondary); line-height: 1.6;">
-                Khó khăn đăng nhập? Liên hệ:<br>
-                Hỗ trợ: <strong style="color: var(--primary);">Admin ĐÀO THANH LONG</strong><br>
-                Hotline: <strong style="color: var(--primary);">0886 46 2345</strong>
-            </div>
+                <!-- Register Form -->
+                <form class="auth-form" id="register-form" style="display: none;">
+                    <div class="form-group">
+                        <label>Tên đăng nhập mới</label>
+                        <input type="text" id="reg-user" required autocomplete="new-password">
+                        <!-- prevent autofill conflict -->
+                    </div>
+                    <div class="form-group">
+                        <label>Mật khẩu</label>
+                        <input type="password" id="reg-pass" required autocomplete="new-password">
+                    </div>
+                    <div class="form-group">
+                        <label>Xác nhận mật khẩu</label>
+                        <input type="password" id="reg-confirm" required autocomplete="new-password">
+                    </div>
+                    <div id="reg-error"
+                        style="color: var(--danger); font-size: 13px; margin-bottom: 16px; text-align: center;"></div>
+                    <button type="submit" class="btn btn-success"
+                        style="width: 100%; margin-bottom: 16px; padding: 14px; font-size: 16px;">Tạo tài
+                        khoản</button>
+                    <div style="text-align: center; font-size: 14px; color: var(--text-secondary);">
+                        Đã có tài khoản? <a href="#" id="go-to-login"
+                            style="color: var(--primary); font-weight: 600;">Đăng
+                            nhập</a>
+                    </div>
+                </form>
+
+                <div
+                    style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--glass-border); text-align: center; font-size: 12px; color: var(--text-secondary); line-height: 1.6;">
+                    Khó khăn đăng nhập? Liên hệ:<br>
+                    Hỗ trợ: <strong style="color: var(--primary);">Admin ĐÀO THANH LONG</strong><br>
+                    Hotline: <strong style="color: var(--primary);">0886 46 2345</strong>
+                </div>
+
+            </div> <!-- end #login-wrapper -->
         </div>
     </div>
 
@@ -344,13 +365,13 @@
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="js/utils.js?v=2.5"></script>
-    <script src="js/db.js?v=2.5"></script>
-    <script src="js/finance.js?v=2.5"></script>
-    <script src="js/work.js?v=2.5"></script>
-    <script src="js/chat.js?v=2.5"></script>
-    <script src="js/auth.js?v=2.5"></script>
-    <script src="js/app.js?v=2.5"></script>
+    <script src="js/utils.js?v=2.6"></script>
+    <script src="js/db.js?v=2.6"></script>
+    <script src="js/finance.js?v=2.6"></script>
+    <script src="js/work.js?v=2.6"></script>
+    <script src="js/chat.js?v=2.6"></script>
+    <script src="js/auth.js?v=2.6"></script>
+    <script src="js/app.js?v=2.6"></script>
 
     <!-- Toast Notification Container -->
     <div id="toast-container" class="toast-container"></div>

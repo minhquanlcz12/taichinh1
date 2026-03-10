@@ -36,15 +36,28 @@ const Auth = {
             Auth.showLogin();
         }
 
-        // --- Handle Boot Sequence ---
-        const bootScreen = document.getElementById('boot-screen');
-        if (bootScreen) {
+        // --- Handle Boot Sequence (In-Card HUD) ---
+        const bootScreen = document.getElementById('incard-boot-screen');
+        const loginWrapper = document.getElementById('login-wrapper');
+        const loginForm = document.getElementById('login-form');
+
+        if (bootScreen && loginWrapper && loginForm) {
+            // Hiển thị trạng thái Boot
+            bootScreen.style.display = 'flex';
+            loginWrapper.style.display = 'none';
+            loginForm.style.display = 'none';
+
             setTimeout(() => {
-                bootScreen.classList.add('hidden');
+                // Tắt trạng thái Boot, bật Form
+                bootScreen.style.opacity = '0';
                 setTimeout(() => {
                     bootScreen.style.display = 'none';
-                }, 500); // Đợi 500ms cho hiệu ứng mờ dần kết thúc
-            }, 1800); // Đợi 1.8s cho thanh Loading chạy hết
+                    loginWrapper.style.display = 'block';
+                    loginForm.style.display = 'block';
+                    // Hiệu ứng mờ dần vào cho Form
+                    loginWrapper.style.animation = 'fadeIn 0.5s ease';
+                }, 300); // Đợi opacity transition kết thúc
+            }, 1800); // Thời lượng nạp dữ liệu (CSS animation strip 1.8s)
         }
     },
 
