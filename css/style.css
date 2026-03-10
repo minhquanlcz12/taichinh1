@@ -69,7 +69,7 @@ body {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background-image: linear-gradient(rgba(4, 9, 20, 0.7), rgba(4, 9, 20, 0.85)), url('../assets/bg-dragon-neon.jpg');
+    background-image: linear-gradient(rgba(4, 9, 20, 0.7), rgba(4, 9, 20, 0.85)), url('../assets/bg-login-v2.jpg');
     background-position: center;
     background-size: cover;
     background-repeat: no-repeat;
@@ -112,7 +112,7 @@ body {
     border-top: 3px solid #88ffd1;
     border-left: 3px solid #88ffd1;
     border-radius: 26px 0 0 0;
-    box-shadow: -2px -2px 10px rgba(136, 255, 209, 0.5);
+    filter: drop-shadow(0 0 8px #88ffd1);
 }
 
 .auth-card::after {
@@ -121,7 +121,7 @@ body {
     border-bottom: 3px solid #88ffd1;
     border-right: 3px solid #88ffd1;
     border-radius: 0 0 26px 0;
-    box-shadow: 2px 2px 10px rgba(136, 255, 209, 0.5);
+    filter: drop-shadow(0 0 8px #88ffd1);
 }
 
 .auth-form {
