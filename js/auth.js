@@ -35,6 +35,17 @@ const Auth = {
         } else {
             Auth.showLogin();
         }
+
+        // --- Handle Boot Sequence ---
+        const bootScreen = document.getElementById('boot-screen');
+        if (bootScreen) {
+            setTimeout(() => {
+                bootScreen.classList.add('hidden');
+                setTimeout(() => {
+                    bootScreen.style.display = 'none';
+                }, 500); // Đợi 500ms cho hiệu ứng mờ dần kết thúc
+            }, 1800); // Đợi 1.8s cho thanh Loading chạy hết
+        }
     },
 
     showLogin: () => {

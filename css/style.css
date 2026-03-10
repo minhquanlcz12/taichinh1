@@ -62,6 +62,138 @@ body {
     overflow: hidden;
 }
 
+/* --- BOOT LOADING SCREEN --- */
+.boot-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: #040914;
+    z-index: 2001;
+    /* Trùm lên auth-overlay 2000 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
+}
+
+.boot-screen.hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.boot-content {
+    text-align: center;
+    width: 320px;
+}
+
+.boot-icon-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 120px;
+    height: 120px;
+    margin-bottom: 32px;
+}
+
+.boot-spinner {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border: 3px solid rgba(16, 185, 129, 0.15);
+    border-top: 3px solid #10b981;
+    border-radius: 50%;
+    animation: bootSpin 1s linear infinite;
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+}
+
+.boot-icon-wrapper .boot-icon {
+    font-size: 50px;
+    filter: drop-shadow(0 0 10px #10b981);
+    z-index: 1;
+}
+
+.boot-title {
+    color: #10b981;
+    font-weight: 700;
+    letter-spacing: 2px;
+    margin-bottom: 40px;
+    font-size: 15px;
+    text-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+}
+
+.boot-progress-container {
+    width: 100%;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 24px;
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
+    position: relative;
+}
+
+.boot-progress-bar {
+    height: 100%;
+    width: 0%;
+    background: #10b981;
+    box-shadow: 0 0 10px #10b981, 0 0 20px #10b981;
+    animation: bootLoad 1.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.boot-status {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    animation: bootBlink 1s infinite alternate;
+}
+
+@keyframes bootSpin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes bootLoad {
+    0% {
+        width: 0%;
+    }
+
+    20% {
+        width: 15%;
+    }
+
+    40% {
+        width: 40%;
+    }
+
+    70% {
+        width: 85%;
+    }
+
+    100% {
+        width: 100%;
+    }
+}
+
+@keyframes bootBlink {
+    from {
+        opacity: 0.3;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
 /* Auth Overlay Styles (Neon Dragon HUD) */
 .auth-overlay {
     position: fixed;
