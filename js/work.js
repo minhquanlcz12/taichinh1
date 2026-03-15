@@ -911,49 +911,130 @@ Chỉ xuất ra đúng chuỗi JSON, không giải thích hay bao bọc XML/HTML
                 const angles = ['Tập trung vào tính năng', 'Mang yếu tố hài hước', 'Chạm vào cảm xúc', 'So sánh trực diện'];
                 const randAngle = angles[Math.floor(Math.random() * angles.length)];
 
-                const mockupObj = {
-                    "tomTat": {
-                        "mucTieu": mucTieu || "Tạo độ phủ thương hiệu cực đỉnh",
-                        "dinhDang": dinhDang || "Video/Ảnh chất lượng cao",
-                        "chuDe": truCot || tieuDe || "Ra mắt bộ sưu tập mới",
-                        "phongCach": randStyle + " và tinh gọn",
-                        "tieuDe": (tieuDe || "Bí mật chuyên gia") + ` - Phiên bản ${Math.floor(Math.random() * 100)}`,
-                        "diemNhan": `Hướng tiếp cận: ${randAngle}. Thu hút sâu sắc tâm lý người xem.`,
-                        "cachTrienKhai": [
-                            "Brainstorm ý tưởng kịch bản chốt khoảnh khắc 3 giây đầu",
-                            "Setup ánh sáng nghệ thuật nổi bật chủ thể",
-                            "Edit nhịp độ nhanh (fast-pace) kết hợp nhạc trending"
+                const mockupList = [
+                    {
+                        "tomTat": {
+                            "mucTieu": mucTieu || "Tạo độ phủ thương hiệu, tăng chuyển đổi",
+                            "dinhDang": dinhDang || "Video/Ảnh chất lượng cao",
+                            "chuDe": truCot || tieuDe || "Định hình phong cách mới",
+                            "phongCach": "Sang trọng, Tối giản (Minimalism)",
+                            "tieuDe": (tieuDe || "Sự Tinh Tế Đích Thực") + " - Luxury Vibes",
+                            "diemNhan": "Hướng tiếp cận: Kể chuyện bằng hình ảnh, tập trung vào chi tiết đắt giá.",
+                            "cachTrienKhai": [
+                                "Brainstorm kịch bản quay cận cảnh (macro) sản phẩm",
+                                "Sử dụng ánh sáng ven (rim light) tạo chiều sâu",
+                                "Chỉnh màu tông ấm, trầm, mang lại cảm giác đắt tiền"
+                            ],
+                            "dauRa": ["3 ảnh macro xịn sò", "1 video Cinematic 15s", "Caption thả thính nhẹ nhàng"],
+                            "luuY": [
+                                "Không chèn text quá to lấn át hình ảnh",
+                                "Âm nhạc không lời, du dương, có điểm nhấn bass"
+                            ]
+                        },
+                        "kichBan": {
+                            "hook": "Cảnh: Góc quay chậm (slow-motion) lướt qua bề mặt sản phẩm.\\nLời thoại: Không cần lên tiếng để thể hiện đẳng cấp...",
+                            "noiDung": "Cảnh 1: Bối cảnh sang trọng, người mẫu tự tin xuất hiện.\\nCảnh 2: Sản phẩm là tâm điểm ánh nhìn.\\nText: Tinh hoa hội tụ.",
+                            "cta": "Cảnh: Đặt sản phẩm trang trọng trên mặt bàn kính.\\nLời thoại: Trải nghiệm sự hoàn mỹ tại link Bio.",
+                            "amNhac": "Strings & Piano (Cinematic)",
+                            "phongCachQuay": "Slow-motion, Gimbal mượt mà",
+                            "mauSac": "Đen trầm, Vàng Gold, Trắng ánh kim",
+                            "phuHopDang": "Reels, Instagram Stories"
+                        },
+                        "caption": [
+                            { "tieuDe": "Caption 1 - Branding", "noiDung": "Người tinh tế luôn biết cách chọn những điều nhỏ nhất để tỏa sáng. ✨ Khám phá bộ sưu tập mới nhất. #Luxury #Lifestyle" },
+                            { "tieuDe": "Caption 2 - Tự sự", "noiDung": "Đôi khi, câu trả lời nằm ở những chi tiết mà người vội vã dễ bỏ lỡ..." },
+                            { "tieuDe": "Caption 3 - Kêu gọi hành động ngắn", "noiDung": "Đẳng cấp không cần thiết kế rườm rà. 👉 Nhấn nhẹ để sở hữu." }
                         ],
-                        "dauRa": ["3-5 ảnh nét căng", "1 video tối ưu nền tảng dọc", "Caption nhiều sắc thái"],
-                        "luuY": [
-                            "Phải test A/B tiêu đề video",
-                            "Focus mạnh vào cảm xúc ngay từ âm thanh"
+                        "yTuong": [
+                            { "concept": "Cinematic Story", "boCuc": "Luật 1/3, đường dẫn góc ảnh", "mauSac": "Cyberpunk Neon", "camGiac": "Kịch tính" },
+                            { "concept": "Flat lay", "boCuc": "Cân bằng động học, không gian âm (negative space)", "mauSac": "Off-white", "camGiac": "Sạch sẽ, đáng tin" }
+                        ],
+                        "zalo": [
+                            { "tieuDe": "Mẫu cho Khách VIP", "noiDung": "Chào anh/chị, em xin phép gửi thông tin bản pre-order cực kỳ giới hạn bên em ạ. Anh chị kiểm tra nhé." }
                         ]
                     },
-                    "kichBan": {
-                        "hook": `Cảnh: Mở đầu góc quay siêu thực, zoom in chớp nhoáng.\\nLời thoại: "Đừng lướt qua nếu bạn chưa biết điều này! Mẫu ${Math.floor(Math.random() * 999)}..."`,
-                        "noiDung": `Cảnh 1: Hé lộ vấn đề muôn thuở.\\nCảnh 2: Khung hình chậm lại, giới thiệu giải pháp.\\nText: "${randAngle}"`,
-                        "cta": "Cảnh: Link bio rực sáng.\\nLời thoại: \"Đừng chờ đợi, trải nghiệm ngay!\"",
-                        "amNhac": "Nhạc Cinematic hoặc Lofi chill (phân khúc tùy tâm trạng)",
-                        "phongCachQuay": "Handheld / Dynamic",
-                        "mauSac": "Tương phản mạnh (High-contrast)",
-                        "phuHopDang": "TikTok, Trạng thái đa nền tảng"
+                    {
+                        "tomTat": {
+                            "mucTieu": mucTieu || "Trend bắt đáy, chốt đơn tức thì",
+                            "dinhDang": dinhDang || "Short Video/Tiktok",
+                            "chuDe": truCot || tieuDe || "Giải quyết nỗi đau khách hàng",
+                            "phongCach": "Hài hước, Năng động, Thẳng thắn",
+                            "tieuDe": (tieuDe || "Sự Thật Phũ Phàng") + " - POV Comedy",
+                            "diemNhan": "Hướng tiếp cận: Làm quá (exaggerate) sự bất tiện khi không có sản phẩm.",
+                            "cachTrienKhai": [
+                                "Viết hook sốc, ngược đời trong 2 giây đầu",
+                                "Diễn xuất lố, mảng miếng hài tình huống (POV)",
+                                "Text overlay siêu to khổng lồ"
+                            ],
+                            "dauRa": ["1 Video TikTok Viral 30s", "1 Meme ảnh chế", "Caption giật gân"],
+                            "luuY": [
+                                "Luôn có CTA chốt sale mạnh",
+                                "Năng lượng phải cao (high energy) suốt video"
+                            ]
+                        },
+                        "kichBan": {
+                            "hook": "Cảnh: Diễn viên vò đầu bứt tai ngã gục.\\nText to đùng: \"TÔI ĐÃ SAI MẤT RỒI...\"",
+                            "noiDung": "Cảnh 1: Kể khổ vì thói quen cũ.\\nCảnh 2: Quăng ngay sản phẩm vào mặt cam, âm thanh bùm chéo.\\nText: \"Giải pháp đâyyy!\"",
+                            "cta": "Cảnh: Chỉ thẳng vào vị trí nút giỏ hàng.\\nLời thoại: Mua ngay không hết deal hời!",
+                            "amNhac": "Nhạc trend TikTok dập bass mạnh hoặc Funny SFX",
+                            "phongCachQuay": "Selfie góc rộng hoặc zoom giật cục",
+                            "mauSac": "Rực rỡ, độ tương phản cao",
+                            "phuHopDang": "TikTok, Trạng thái đa nền tảng"
+                        },
+                        "caption": [
+                            { "tieuDe": "Caption 1 - Bắt Trend", "noiDung": "Ét o ét!!! Ai còn dùng cách cũ thì update liền nha. Xài đồ nhà em chỉ có nhàn cái thân thôi 😂 👉 Click ngay!" },
+                            { "tieuDe": "Caption 2 - Nỗi Đau Thực Tế", "noiDung": "Cứ thấy bảo khó, dùng thử cái này xong quên luôn khái niệm khó là gì." }
+                        ],
+                        "yTuong": [
+                            { "concept": "POV Thực Tế", "boCuc": "Cầm tay, rung lắc nhẹ (POV)", "mauSac": "Sặc sỡ", "camGiac": "Chân thật, Vui nhộn" },
+                            { "concept": "So Sánh Ngốc Nghếch", "boCuc": "Chia đôi màn hình Before/After lố bịch", "mauSac": "Tương phản mạnh", "camGiac": "So sánh mạnh" }
+                        ],
+                        "zalo": [
+                            { "tieuDe": "Mẫu cho gen Z/Trẻ hóa", "noiDung": "Sếp ơii, gửi sếp quả kịch bản hài ẻ vừa nung xong. Quả này không viral là do... lỗi của nền tảng nha 😂" }
+                        ]
                     },
-                    "caption": [
-                        { "tieuDe": "Caption 1 - Viral & Chốt sale", "noiDung": `🔥 Chấn động! Bí quyết đỉnh cao đã được hé lộ. Sở hữu ngay hôm nay chỉ với 1 click! 🚀 #Viral #TopSale` },
-                        { "tieuDe": "Caption 2 - Storytelling sâu lắng", "noiDung": `Hành trình dẫn đến sự hoàn mỹ không bao giờ dễ dàng. Nhưng hôm nay, chúng tôi mang nó đến cho bạn... Nhẹ nhàng tinh tế như phong cách ${randStyle}.` },
-                        { "tieuDe": "Caption 3 - Kêu gọi hành động ngắn", "noiDung": `Gọn gàng. Đẹp mắt. Bứt phá. 👉 Chốt nhanh ở link BIO!` }
-                    ],
-                    "yTuong": [
-                        { "concept": "Cinematic Story", "boCuc": "Luật 1/3, focus đôi mắt", "mauSac": "Cyberpunk Neon", "camGiac": "Kịch tính" },
-                        { "concept": "Minimial", "boCuc": "Chính diện, nền trơn mượt", "mauSac": "Off-white", "camGiac": "Sạch sẽ, đáng tin" },
-                        { "concept": "Behind the scene", "boCuc": "Quay lén tự nhiên", "mauSac": "Màu giả lập máy phim (Retro)", "camGiac": "Chân thật, gần gũi" }
-                    ],
-                    "zalo": [
-                        { "tieuDe": "Mẫu cho Đối tác/Khách VIP", "noiDung": "Dạ em gửi biểu mẫu concept chuẩn bị cho chiến dịch sắp tới. Góc độ này tụi em đã tinh chỉnh theo xu hướng mới nhất. Chờ anh/chị duyệt ạ." },
-                        { "tieuDe": "Mẫu báo cáo nhanh", "noiDung": `Ping cả nhà! Gói nội dung version ${Math.floor(Math.random()*100)} đã lên nòng, mọi người xem qua nhé 👌` }
-                    ]
-                };
+                    {
+                        "tomTat": {
+                            "mucTieu": mucTieu || "Cung cấp kiến thức chuyên sâu",
+                            "dinhDang": dinhDang || "Bài viết chuyên sâu kèm Đồ họa",
+                            "chuDe": truCot || tieuDe || "Đào tạo & Định hình tư duy",
+                            "phongCach": "Chuyên nghiệp, Học thuật, Rõ ràng",
+                            "tieuDe": (tieuDe || "Góc Nhìn Thực Tế") + " - Kiến thức nền tảng",
+                            "diemNhan": "Hướng tiếp cận: Liệt kê số liệu, minh chứng vòng lặp lý thuyết.",
+                            "cachTrienKhai": [
+                                "Chia nhỏ ý thành bullet point dễ đọc",
+                                "Sử dụng đồ thị / Infographic làm minh họa",
+                                "Dẫn nguồn thông tin uy tín"
+                            ],
+                            "dauRa": ["Infographic 5 trang", "Bài viết phân tích dài 800 chữ"],
+                            "luuY": [
+                                "Tránh sai sót chính tả và số liệu",
+                                "Đóng gói kiến thức bằng checklist cuối bài"
+                            ]
+                        },
+                        "kichBan": {
+                            "hook": "Cảnh: Số liệu thực tế bay lơ lửng trên màn hình.\\nLời thoại: 80% người dùng sai lầm trong việc...",
+                            "noiDung": "Cảnh 1: Giải thích nguyên nhân gốc rễ.\\nCảnh 2: Mô hình hóa cách giải quyết từng bước.",
+                            "cta": "Cảnh: Quét mã QR hiện trên màn hình.\\nLời thoại: Lưu lại ngay checklist đầy đủ ở đây.",
+                            "amNhac": "Corporate/Nhạc nền tin tức",
+                            "phongCachQuay": "Setup góc Podcast/Chuyên gia tĩnh",
+                            "mauSac": "Xanh dương, Trắng, Xanh lá cây (Tin cậy)",
+                            "phuHopDang": "LinkedIn, Facebook Group Chuyên môn"
+                        },
+                        "caption": [
+                            { "tieuDe": "Caption 1 - Chiều Sâu", "noiDung": "Bạn có biết? Số liệu chỉ ra rằng việc thay đổi tư duy quyết định đến 90% kết quả. Hãy cùng phân tích tại sao 🧐👇 [Link chi tiết]" },
+                            { "tieuDe": "Caption 2 - Dạng Checklist", "noiDung": "3 sai lầm lớn nhất thường mắc phải:\n1. Bỏ qua chi tiết\n2. Cẩu thả...\nCùng giải mã cách khắc phục triệt để." }
+                        ],
+                        "yTuong": [
+                            { "concept": "Chuyên gia phân tích", "boCuc": "Luật 1/3, có bảng/màn hình phụ minh họa", "mauSac": "Xanh blue navy, Trắng", "camGiac": "Tin cậy, Dày dặn kinh nghiệm" }
+                        ],
+                        "zalo": [
+                            { "tieuDe": "Lời gửi trang trọng", "noiDung": "Dạ em gửi anh chị chuyên đề nghiên cứu nội dung tuần này. Các số liệu đã được chuẩn hóa, mong anh chị kiểm duyệt." }
+                        ]
+                    }
+                ];
+
+                const mockupObj = mockupList[Math.floor(Math.random() * mockupList.length)];
 
                 document.getElementById('ai-tomtat').innerHTML = WorkModule.renderAITomTat(mockupObj.tomTat);
                 document.getElementById('ai-kichban').innerHTML = WorkModule.renderAIKichBan(mockupObj.kichBan);
