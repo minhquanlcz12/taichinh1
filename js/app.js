@@ -80,6 +80,7 @@ const app = {
             'dashboard-view': { title: 'Tổng quan', sub: 'Cập nhật tình hình gia đình bạn' },
             'finance-view': { title: 'Quản lý Tài chính', sub: 'Theo dõi thu chi chi tiết' },
             'work-view': { title: 'Công việc & Lịch', sub: 'Sắp xếp thời gian hiệu quả' },
+            'attendance-view': { title: 'Chấm Công Tự Động', sub: 'Quản lý ngày làm việc và chuyên cần' },
             'settings-view': { title: 'Cài đặt', sub: 'Tùy chỉnh hệ thống' }
         };
 
@@ -108,6 +109,11 @@ const app = {
             document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
             const workNav = document.querySelector('.nav-item[data-target="work-view"]');
             if (workNav) workNav.classList.add('active');
+        } else if (viewId === 'attendance-view') {
+            Attendance.render();
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            const attNav = document.querySelector('.nav-item[data-target="attendance-view"]');
+            if (attNav) attNav.classList.add('active');
         }
     },
 

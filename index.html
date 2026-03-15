@@ -187,6 +187,10 @@
                     <i class="fa-solid fa-briefcase"></i>
                     <span>Công việc & Lịch</span>
                 </li>
+                <li class="nav-item" data-target="attendance-view">
+                    <i class="fa-solid fa-clock"></i>
+                    <span>Chấm Công</span>
+                </li>
                 <li class="nav-item" data-target="settings-view">
                     <i class="fa-solid fa-gear"></i>
                     <span>Cài đặt</span>
@@ -319,6 +323,11 @@
                     <!-- Sẽ được inject bởi work.js -->
                 </div>
 
+                <!-- Attendance View -->
+                <div id="attendance-view" class="view">
+                    <div id="attendance-content-area"></div>
+                </div>
+
                 <!-- Settings View Placeholder -->
                 <div id="settings-view" class="view">
                     <div class="glass-card">
@@ -430,6 +439,7 @@
     <script src="js/db.js?v=3.3"></script>
     <script src="js/finance.js?v=3.3"></script>
     <script src="js/work.js?v=3.3"></script>
+    <script src="js/attendance.js"></script>
     <script src="js/chat.js?v=3.3"></script>
     <script src="js/auth.js?v=3.3"></script>
     <script src="js/app.js?v=3.3"></script>
