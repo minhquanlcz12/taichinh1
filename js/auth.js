@@ -87,14 +87,23 @@ const Auth = {
 
     showLogin: () => {
         document.getElementById('auth-overlay').style.display = 'flex';
+        document.getElementById('login-wrapper').style.display = 'block'; // Ensure the new wrapper is shown
         document.getElementById('login-form').style.display = 'block';
         document.getElementById('register-form').style.display = 'none';
         document.querySelector('.app-container').style.display = 'none';
+        
+        // Hide boot screen if we are just switching back to login
+        const bootScreen = document.getElementById('incard-boot-screen');
+        if (bootScreen) bootScreen.style.display = 'none';
     },
 
     showRegister: () => {
         document.getElementById('login-form').style.display = 'none';
         document.getElementById('register-form').style.display = 'block';
+        
+        // Hide boot screen if we are just switching to register
+        const bootScreen = document.getElementById('incard-boot-screen');
+        if (bootScreen) bootScreen.style.display = 'none';
     },
 
     showApp: () => {
