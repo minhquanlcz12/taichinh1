@@ -213,12 +213,7 @@ body {
     border: 1px dashed rgba(0, 240, 255, 0.5);
     animation: bootSpin 6s linear infinite reverse;
 }
-.ring-dragon-icon {
-    font-size: 85px;
-    color: #00f0ff;
-    filter: drop-shadow(0 0 25px rgba(0, 240, 255, 1));
-    animation: bootPulse 2s ease-in-out infinite alternate;
-}
+/* ring-dragon-icon removed as we use SVG */
 
 /* --- NEW CYBERPUNK VERTICAL PILL PROGRESS BAR --- */
 .cyber-progress-container {
