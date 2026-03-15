@@ -69,8 +69,8 @@ body {
     left: 0;
     width: 100vw;
     height: 100vh;
-    /* Tăng độ che phủ (opacity) của nền đen đè lên giao diện bên dưới để không lòi mờ mờ UI cũ */
-    background: linear-gradient(rgba(4, 9, 20, 0.95), rgba(4, 9, 20, 0.98)), url('../assets/bg-login-v2.jpg') center/cover no-repeat !important;
+    /* Giảm độ che phủ để hình rồng nền hiện ra rực rỡ */
+    background: linear-gradient(rgba(4, 9, 20, 0.4), rgba(4, 9, 20, 0.7)), url('../assets/bg-login-v2.jpg') center/cover no-repeat !important;
     display: none;
     align-items: center;
     justify-content: center;
@@ -205,51 +205,32 @@ body {
     width: 200px;
     height: 200px;
     z-index: 2;
-    /* Create a solid cyan block, then use the dragon image itself to cut out the shape based on its luma */
-    background-color: #ffffff;
-    -webkit-mask-image: url('../img/dragon.png');
-    mask-image: url('../img/dragon.png');
-    -webkit-mask-size: contain;
-    mask-size: contain;
-    -webkit-mask-position: center;
-    mask-position: center;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-    /* Use mask-type: luminance to tell it black=transparent, white=opaque (or vice versa, we'll invert the mask) */
-    mask-type: luminance;
-    -webkit-mask-box-image: luminance;
-    filter: drop-shadow(0 0 10px #00f0ff);
+    object-fit: contain;
+    /* Screen blend mode drops the pure black background. Brightness boosts the red, drop-shadow adds a fiery aura */
+    mix-blend-mode: screen;
+    filter: brightness(1.2) drop-shadow(0 0 20px rgba(255, 50, 50, 1));
 }
 .sidebar-dragon-img {
     width: 44px;
     height: 44px;
-    background-color: #88ffd1;
-    -webkit-mask-image: url('../img/dragon.png');
-    mask-image: url('../img/dragon.png');
-    -webkit-mask-size: contain;
-    mask-size: contain;
-    -webkit-mask-position: center;
-    mask-position: center;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-    mask-type: luminance;
-    -webkit-mask-box-image: luminance;
-    filter: drop-shadow(0 0 5px #88ffd1);
+    object-fit: contain;
+    mix-blend-mode: screen;
+    filter: brightness(1.2) drop-shadow(0 0 10px rgba(255, 50, 50, 1));
 }
 .ring-outer {
     position: absolute;
     inset: 0;
     border-radius: 50%;
-    border: 3px solid rgba(0, 240, 255, 0.1);
-    border-top-color: #00f0ff;
-    border-right-color: #00f0ff;
+    border: 3px solid rgba(255, 50, 50, 0.1);
+    border-top-color: #ff3333;
+    border-right-color: #ff3333;
     animation: bootSpin 3s linear infinite;
 }
 .ring-inner {
     position: absolute;
     inset: 15px;
     border-radius: 50%;
-    border: 1px dashed rgba(0, 240, 255, 0.5);
+    border: 1px dashed rgba(255, 50, 50, 0.5);
     animation: bootSpin 6s linear infinite reverse;
 }
 /* ring-dragon-icon removed as we use SVG */
@@ -264,7 +245,7 @@ body {
     margin-bottom: 20px;
 }
 .cyber-progress-bracket {
-    color: rgba(0, 240, 255, 0.6);
+    color: rgba(255, 50, 50, 0.6);
     font-size: 28px;
     font-family: monospace;
     font-weight: 300;
@@ -278,17 +259,17 @@ body {
 .cyber-pill {
     width: 6px;
     height: 100%;
-    background: rgba(0, 240, 255, 0.15);
+    background: rgba(255, 50, 50, 0.15);
     transform: skewX(-15deg);
     transition: background 0.1s ease, box-shadow 0.1s ease;
 }
 .cyber-pill.active {
-    background: #00f0ff;
-    box-shadow: 0 0 8px #00f0ff;
+    background: #ff3333;
+    box-shadow: 0 0 8px #ff3333;
 }
 
 .incard-status {
-    color: #00f0ff;
+    color: #ff3333;
     font-family: 'Courier New', monospace;
     font-size: 13px;
     letter-spacing: 2px;
