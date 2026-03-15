@@ -631,36 +631,54 @@ const WorkModule = {
         let dinhDang = (task.dinhDang || '').toLowerCase();
         const isVideo = dinhDang.includes('video') || dinhDang.includes('reels') || dinhDang.includes('tiktok') || dinhDang.includes('short');
 
+        // GET ACTIVE TAB
+        const activeTabElement = document.querySelector('.ai-tab-content.active');
+        const activeTabId = activeTabElement ? activeTabElement.id : 'tab-tomtat';
+
         // KIẾM TRA CLAUDE API KEY
         const claudeKey = Utils.storage.get('claude_api_key');
         
         if (claudeKey && claudeKey.trim() !== '') {
             Utils.showToast('Đang kết nối Claude AI (Vui lòng đợi vài giây)...', 'info');
             // Cập nhật giao diện (loading state)
-            const btn = document.querySelector('.btn-warning[onclick="WorkModule.generateAILocal()"]');
+            const btn = document.getElementById('btn-ai-generate') || document.querySelector('.btn-warning[onclick="WorkModule.generateAILocal()"]');
             const originalBtnHtml = btn.innerHTML;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ĐANG TẠO...';
             btn.disabled = true;
 
-            const prompt = `Bạn là một chuyên gia Marketing và lên kế hoạch cực kỳ giỏi.
-            Hãy viết các nội dung dựa trên những thông tin sau:
+            let prompt = `Bạn là một chuyên gia Marketing và lên kế hoạch cực kỳ giỏi.
+            Hãy viết nội dung dựa trên những thông tin sau:
             - Mục tiêu chiến dịch: ${mucTieu}
             - Chủ đề chính: ${truCot}
             - Tiêu đề mong muốn: ${tieuDe}
             - Định dạng yêu cầu: ${dinhDang}
             
-            Hãy trả về KẾT QUẢ THEO ĐÚNG CẤU TRÚC XML DƯỚI ĐÂY (không viết thêm bất kỳ text nào ngoài thẻ XML, để hệ thống phần mềm có thể parse tự động):
-            
-            <tomtat>Viết Phiếu tóm tắt công việc gọn gàng: Mục tiêu chính, nội dung trọng yếu, cách thức triển khai, và các đầu ra cần phải hoàn thành.</tomtat>
-            
-            <kichban>Hãy viết kịch bản chi tiết ${isVideo ? '(Video/Reels)' : '(Bài đăng)'}. Có Hook (thu hút mở đầu), Thân bài/Painpoint, Kêu gọi hành động (CTA). Lời thoại dễ hiểu, cuốn hút.</kichban>
-            
-            <caption_content>Viết 3 caption khác nhau: 1 caption bán hàng trực tiếp thúc giục, 1 caption kiểu kể chuyện branding nhẹ nhàng, 1 caption siêu ngắn gọn để ném lên Reel/Tiktok gọn lẹ.</caption_content>
-            
-            <ytuong>Gợi ý 3 Concept/Ý tưởng hình ảnh hoặc quay video chi tiết (màu sắc, góc máy, mood/cảm giác tổng thể).</ytuong>
-            
-            <zalo>Viết 2 mẫu tin nhắn Zalo gửi khách để báo cáo hoặc gửi kịch bản (1 mẫu Lịch sự chuyên nghiệp, 1 mẫu thân thiện ngắn gọn).</zalo>
             `;
+
+            let targetInputId = '';
+            
+            if (activeTabId === 'tab-tomtat') {
+                prompt += `Hãy trả về duy nhất 1 "Phiếu tóm tắt công việc" gọn gàng gồm: Mục tiêu chính, nội dung trọng yếu, cách triển khai, đầu ra cần hoàn thành.\n`;
+                targetInputId = 'ai-tomtat';
+            } else if (activeTabId === 'tab-kichban') {
+                prompt += `Hãy trả về duy nhất kịch bản chi tiết ${isVideo ? '(Video/Reels)' : '(Bài đăng)'}. Có Hook (thu hút mở đầu), Thân bài/Painpoint, Kêu gọi hành động (CTA). Lời thoại dễ hiểu, cuốn hút.\n`;
+                targetInputId = 'ai-kichban';
+            } else if (activeTabId === 'tab-caption') {
+                prompt += `Hãy trả về duy nhất 3 mẫu caption khác nhau:\n1. Bán hàng trực tiếp (kèm CTA/chốt sale)\n2. Kể chuyện branding nhẹ nhàng\n3. Caption siêu ngắn cho Video Reels/TikTok (tương tác cao)\n`;
+                targetInputId = 'ticket-noidung';
+            } else if (activeTabId === 'tab-ytuong') {
+                prompt += `Hãy đóng vai trò là Art Director, trả về gợi ý 3 Concept/Ý tưởng hình ảnh hoặc quay video chi tiết (màu sắc, góc máy, mood/cảm giác tổng thể, text đặt lên ảnh nếu có) để đưa cho đội Thiết kế thực thi.\n`;
+                targetInputId = 'ticket-order';
+            } else if (activeTabId === 'tab-zalo') {
+                prompt += `Hãy trả về duy nhất 2 mẫu tin nhắn Zalo gửi sếp hoặc gửi khách hàng để báo cáo/gửi kịch bản duyệt:\n1. Mẫu lịch sự, chuyên nghiệp.\n2. Mẫu thân thiện, ngắn gọn năng động.\n`;
+                targetInputId = 'ai-zalo';
+            } else {
+                btn.innerHTML = originalBtnHtml;
+                btn.disabled = false;
+                return;
+            }
+
+            prompt += `Lưu ý: Chỉ trả về nội dung trực tiếp, không vòng vo giải thích, không dùng thẻ XML.`;
 
             const activeModel = Utils.storage.get('claude_api_model') || 'claude-3-haiku-20240307';
             try {
@@ -688,27 +706,10 @@ const WorkModule = {
                 const data = await response.json();
                 const aiText = data.content[0].text;
                 
-                // Parse XML
-                const extractXml = (content, tag) => {
-                    const regex = new RegExp(`<${tag}>(.*?)</${tag}>`, 's');
-                    const match = content.match(regex);
-                    return match ? match[1].trim() : '';
-                };
-
-                const tomtat = extractXml(aiText, 'tomtat');
-                const kichban = extractXml(aiText, 'kichban');
-                const captions = extractXml(aiText, 'caption_content');
-                const ytuong = extractXml(aiText, 'ytuong');
-                const zalo = extractXml(aiText, 'zalo');
-
-                // Map vào form
-                if (tomtat) document.getElementById('ai-tomtat').value = tomtat;
-                if (kichban) document.getElementById('ai-kichban').value = kichban;
-                if (captions) document.getElementById('ticket-noidung').value = captions;
-                if (ytuong) document.getElementById('ticket-order').value = ytuong;
-                if (zalo) document.getElementById('ai-zalo').value = zalo;
+                // Map trực tiếp vào input tương ứng đang mở
+                document.getElementById(targetInputId).value = aiText.trim();
                 
-                Utils.showToast('Trích xuất thành công từ Claude AI sang các Tab!', 'success');
+                Utils.showToast('Tạo nội dung cho thẻ này thành công!', 'success');
             } catch (error) {
                 console.error("Claude API Error:", error);
                 Utils.showToast('Lỗi khi gọi API Claude (Sai Key hoặc lỗi Cors).', 'error');
@@ -726,37 +727,46 @@ const WorkModule = {
             // FALLBACK LOCAL MOCKUP NẾU CHƯA NHẬP KEY
             Utils.showToast('Chưa có API Key. Sử dụng Local Template (Trộn ngẫu nhiên).', 'info');
             
-            let draftTomTat = `[MẪU LOCAL] Tóm tắt công việc:
+            let fallbackContent = '';
+            let targetInputId = '';
+
+            if (activeTabId === 'tab-tomtat') {
+                targetInputId = 'ai-tomtat';
+                fallbackContent = `[MẪU LOCAL] Tóm tắt công việc:
 - Mục tiêu: ${mucTieu || 'Chưa rõ'}
 - Chủ đề: ${truCot || 'Chưa rõ'}
 - Định dạng: ${dinhDang || 'Chưa rõ'}
 => Cần hoàn thành nội dung thu hút và hình ảnh bắt mắt.`;
-            
-            let draftKichBan = '';
-            let draftCaption = '';
-            let draftYTuong = `[MẪU LOCAL] Ý TƯỞNG THIẾT KẾ:\n- Bố cục 1/3: Bên trái là chữ to rõ, bên phải là ảnh minh họa.\n- Tone màu chói/tương phản mạnh để hút mắt người lướt Feed.\n- Yêu cầu thêm: Làm nổi bật tiêu đề "${tieuDe}".`;
-            let draftZalo = `[MẪU 1 - CHUYÊN NGHIỆP]\nDạ em gửi anh chị kịch bản nháp cho bài "${tieuDe}". Anh chị xem và phản hồi giúp em nhé!\n\n[MẪU 2 - THÂN THIỆN]\nSếp ơi, em lên xong plan bài "${tieuDe}" rồi nè. Sếp check qua nha 😉`;
-
-            if (isVideo) {
-                const hooks = [`3 Góc khuất về ${tieuDe} mà không ai nói cho bạn biết! 😱`, `Sự thật ngã ngửa về ${tieuDe} - Xem ngay nhé!`];
-                const bodies = [`Lỗi sai phổ biến: Quá lạm dụng hoặc không chú ý tiểu tiết.\n- Cách khắc phục: Tập trung trải nghiệm.`, `Bạn chỉ cần 1 bí quyết: Đúng lúc + Đúng chỗ = Thành công!`];
-                const ctas = [`Thấy hay thì nhớ thả tim và Follow nha! ❤️`, `Bạn nghĩ sao về điều này? Comment phí dưới nhé! 👇`];
-                
-                draftKichBan = `🎬 KỊCH BẢN CHI TIẾT (VIDEO):\n\n⚡ 1. Hook (0-3s):\n▶️ Thoại: "${hooks[Math.floor(Math.random() * hooks.length)]}"\n\n😰 2. Nội dung chính:\n▶️ Thoại: "${bodies[Math.floor(Math.random() * bodies.length)]}"\n\n🔥 3. Kêu gọi hành động:\n▶️ Thoại: "${ctas[Math.floor(Math.random() * ctas.length)]}"\n\n🎥 HƯỚNG DẪN B-ROLL:\n- Quay cận cảnh sản phẩm, lồng nhạc trending giật beat mạnh.`;
-                draftCaption = `📌 Dùng tóm tắt kịch bản trên làm caption đăng kèm reels/tiktok. Thêm hashtag #viral #${tieuDe.replace(/\s+/g,'')}`;
-            } else {
-                const headlines = [`🔥 BẬT MÍ BÍ QUYẾT: ${tieuDe.toUpperCase()}`, `🌟 CƠ HỘI VÀNG: GIẢI MÃ ${tieuDe.toUpperCase()}`];
-                const contents = [`Nhiều anh/chị hay hỏi em tại sao. Đơn giản vì nó giúp TIẾT KIỆM 50% thời gian!`, `Chỉ với 3 thay đổi nhỏ mỗi ngày, thành quả sẽ khiến bạn bất ngờ! chờ xem nhé.`];
-                
-                draftKichBan = `(Với bài Text/Ảnh không có kịch bản Video. Vui lòng xem Tab Caption bên cạnh)`;
-                draftCaption = `[CAPTION 1 - BÁN HÀNG]\n🔥 ${headlines[0]}\n${contents[0]}\n👉 Inbox chốt đơn ngay!\n\n[CAPTION 2 - BRANDING]\n🌟 ${headlines[1]}\n${contents[1]}\n👉 Phù hợp mọi phong cách. Theo dõi trang để biết thêm!`;
+            } else if (activeTabId === 'tab-kichban') {
+                targetInputId = 'ai-kichban';
+                if (isVideo) {
+                    const hooks = [`3 Góc khuất về ${tieuDe} mà không ai nói cho bạn biết! 😱`, `Sự thật ngã ngửa về ${tieuDe} - Xem ngay nhé!`];
+                    const bodies = [`Lỗi sai phổ biến: Quá lạm dụng hoặc không chú ý tiểu tiết.\n- Cách khắc phục: Tập trung trải nghiệm.`, `Bạn chỉ cần 1 bí quyết: Đúng lúc + Đúng chỗ = Thành công!`];
+                    const ctas = [`Thấy hay thì nhớ thả tim và Follow nha! ❤️`, `Bạn nghĩ sao về điều này? Comment phí dưới nhé! 👇`];
+                    fallbackContent = `🎬 KỊCH BẢN CHI TIẾT (VIDEO):\n\n⚡ 1. Hook (0-3s):\n▶️ Thoại: "${hooks[Math.floor(Math.random() * hooks.length)]}"\n\n😰 2. Nội dung chính:\n▶️ Thoại: "${bodies[Math.floor(Math.random() * bodies.length)]}"\n\n🔥 3. Kêu gọi hành động:\n▶️ Thoại: "${ctas[Math.floor(Math.random() * ctas.length)]}"\n\n🎥 HƯỚNG DẪN B-ROLL:\n- Quay cận cảnh sản phẩm, lồng nhạc trending giật beat mạnh.`;
+                } else {
+                    fallbackContent = `(Với bài Text/Ảnh không có kịch bản Video. Vui lòng xem Tab Caption bên cạnh)`;
+                }
+            } else if (activeTabId === 'tab-caption') {
+                targetInputId = 'ticket-noidung';
+                if (isVideo) {
+                    fallbackContent = `📌 Dùng tóm tắt kịch bản trên làm caption đăng kèm reels/tiktok. Thêm hashtag #viral #${tieuDe.replace(/\s+/g,'')}`;
+                } else {
+                    const headlines = [`🔥 BẬT MÍ BÍ QUYẾT: ${tieuDe.toUpperCase()}`, `🌟 CƠ HỘI VÀNG: GIẢI MÃ ${tieuDe.toUpperCase()}`];
+                    const contents = [`Nhiều anh/chị hay hỏi em tại sao. Đơn giản vì nó giúp TIẾT KIỆM 50% thời gian!`, `Chỉ với 3 thay đổi nhỏ mỗi ngày, thành quả sẽ khiến bạn bất ngờ! chờ xem nhé.`];
+                    fallbackContent = `[CAPTION 1 - BÁN HÀNG]\n🔥 ${headlines[0]}\n${contents[0]}\n👉 Inbox chốt đơn ngay!\n\n[CAPTION 2 - BRANDING]\n🌟 ${headlines[1]}\n${contents[1]}\n👉 Phù hợp mọi phong cách. Theo dõi trang để biết thêm!`;
+                }
+            } else if (activeTabId === 'tab-ytuong') {
+                targetInputId = 'ticket-order';
+                fallbackContent = `[MẪU LOCAL] Ý TƯỞNG THIẾT KẾ:\n- Bố cục 1/3: Bên trái là chữ to rõ, bên phải là ảnh minh họa.\n- Tone màu chói/tương phản mạnh để hút mắt người lướt Feed.\n- Yêu cầu thêm: Làm nổi bật tiêu đề "${tieuDe}".`;
+            } else if (activeTabId === 'tab-zalo') {
+                targetInputId = 'ai-zalo';
+                fallbackContent = `[MẪU 1 - CHUYÊN NGHIỆP]\nDạ em gửi anh chị kịch bản nháp cho bài "${tieuDe}". Anh chị xem và phản hồi giúp em nhé!\n\n[MẪU 2 - THÂN THIỆN]\nSếp ơi, em lên xong plan bài "${tieuDe}" rồi nè. Sếp check qua nha 😉`;
             }
 
-            document.getElementById('ai-tomtat').value = draftTomTat;
-            document.getElementById('ai-kichban').value = draftKichBan;
-            document.getElementById('ticket-noidung').value = draftCaption;
-            document.getElementById('ticket-order').value = draftYTuong;
-            document.getElementById('ai-zalo').value = draftZalo;
+            if (targetInputId) {
+                document.getElementById(targetInputId).value = fallbackContent;
+            }
 
             Utils.showToast('Đã trộn ngẫu nhiên Template nội dung!', 'success');
         }
