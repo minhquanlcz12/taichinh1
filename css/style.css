@@ -96,16 +96,14 @@ body {
 .auth-card {
     width: 100%;
     padding: 30px 24px 20px 24px;
-    background: rgba(8, 12, 18, 0.85);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: rgba(4, 9, 20, 1); /* Nền ĐEN ĐẶC để che hoàn toàn form cũ đang trôi nổi bên dưới do trình duyệt cache */
     border: 1px solid rgba(0, 240, 255, 0.1);
     box-shadow: inset 0 0 40px rgba(0, 240, 255, 0.05);
 
     /* Vát góc (Notched corners) */
     clip-path: polygon(
         15px 0, 
-        calc(50% - 30px) 0, calc(50% - 20px) 15px, calc(50% + 20px) 15px, calc(50% + 30px) 0, 
+        calc(50% - 70px) 0, calc(50% - 60px) 15px, calc(50% + 60px) 15px, calc(50% + 70px) 0, 
         calc(100% - 15px) 0, 100% 15px, 
         100% calc(100% - 15px), calc(100% - 15px) 100%, 
         15px 100%, 0 calc(100% - 15px), 
@@ -147,15 +145,17 @@ body {
 .hud-title-box {
     display: flex;
     align-items: center;
-    border: 1px solid rgba(0, 240, 255, 0.4);
-    background: rgba(0, 240, 255, 0.05);
-    padding: 6px 6px 6px 16px;
+    border: 1px solid rgba(0, 240, 255, 0.3);
+    border-top: none;
+    background: rgba(4, 9, 20, 1); /* Nền đen để che thẻ */
+    padding: 4px 16px 8px 16px;
     position: absolute;
-    top: -20px;
+    top: 0;
     left: 50%;
     transform: translateX(-50%);
     z-index: 20;
     gap: 12px;
+    clip-path: polygon(0 0, 100% 0, calc(100% - 10px) 100%, 10px 100%);
 }
 .hud-title-text {
     font-family: 'Poppins', sans-serif;
@@ -189,8 +189,8 @@ body {
 
 .incard-dragon-ring {
     position: relative;
-    width: 150px;
-    height: 150px;
+    width: 180px;
+    height: 180px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -214,9 +214,9 @@ body {
     animation: bootSpin 6s linear infinite reverse;
 }
 .ring-dragon-icon {
-    font-size: 60px;
+    font-size: 85px;
     color: #00f0ff;
-    filter: drop-shadow(0 0 12px rgba(0, 240, 255, 0.8));
+    filter: drop-shadow(0 0 25px rgba(0, 240, 255, 1));
     animation: bootPulse 2s ease-in-out infinite alternate;
 }
 
@@ -262,10 +262,14 @@ body {
 }
 
 /* --- FORM CYBER STYLING --- */
+#login-wrapper {
+    background: transparent;
+    z-index: 10;
+}
 .auth-form {
     display: flex;
     flex-direction: column;
-    margin-top: 20px;
+    margin-top: 10px;
 }
 .auth-form .form-group {
     margin-bottom: 18px;
