@@ -17,6 +17,7 @@
 
     <!-- Local scripts imported end of body -->
     <link rel="stylesheet" href="css/style.css?v=4.2">
+    <link rel="stylesheet" href="css/ai_cards.css">
 </head>
 
 <body class="dark-theme">
@@ -486,40 +487,40 @@
                     <div style="display: flex; flex-direction: column; gap: 12px;">
                         <!-- AI GENERATOR BUTTON -->
                         <button type="button" id="btn-ai-generate" class="btn btn-warning" onclick="WorkModule.generateAILocal()" style="width: 100%; font-weight: bold; background: linear-gradient(135deg, #f1c40f 0%, #d35400 100%); color: #fff; border: none; box-shadow: 0 0 15px rgba(241, 196, 15, 0.4); margin-bottom: 8px;">
-                            <i class="fa-solid fa-wand-magic-sparkles"></i> TẠO AI CHO MỤC ĐANG MỞ
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> TẠO AI CHO CẢ 5 MỤC (TỰ ĐỘNG)
                         </button>
 
                         <div class="ai-tabs-container" style="flex: 1; display: flex; flex-direction: column; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden;">
                             <div class="ai-tabs-header" style="display: flex; overflow-x: auto; background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--border-color);">
-                                <button class="ai-tab-btn active" onclick="WorkModule.switchAITab('tab-tomtat')">1. Tóm tắt</button>
-                                <button class="ai-tab-btn" onclick="WorkModule.switchAITab('tab-kichban')">2. Kịch bản</button>
+                                <button class="ai-tab-btn active" onclick="WorkModule.switchAITab('tab-tomtat')">1. Phiếu tóm tắt</button>
+                                <button class="ai-tab-btn" onclick="WorkModule.switchAITab('tab-kichban')">2. Kịch bản video</button>
                                 <button class="ai-tab-btn" onclick="WorkModule.switchAITab('tab-caption')">3. Caption</button>
-                                <button class="ai-tab-btn" onclick="WorkModule.switchAITab('tab-ytuong')">4. Ý tưởng ảnh</button>
-                                <button class="ai-tab-btn" onclick="WorkModule.switchAITab('tab-zalo')">5. Mẫu Zalo</button>
+                                <button class="ai-tab-btn" onclick="WorkModule.switchAITab('tab-ytuong')">4. Ý tưởng ảnh/video</button>
+                                <button class="ai-tab-btn" onclick="WorkModule.switchAITab('tab-zalo')">5. Tin nhắn Zalo</button>
                             </div>
                             
-                            <div class="ai-tabs-body" style="flex: 1; position: relative;">
+                            <div class="ai-tabs-body" style="flex: 1; position: relative; overflow-y: auto;">
                                 <!-- Tab 1 -->
                                 <div id="tab-tomtat" class="ai-tab-content active">
-                                    <textarea id="ai-tomtat" class="ai-textarea" placeholder="Nội dung tóm tắt công việc..."></textarea>
+                                    <div id="ai-tomtat" class="ai-rich-content" contenteditable="true" data-placeholder="Nội dung tóm tắt công việc..."></div>
                                 </div>
                                 <!-- Tab 2 -->
                                 <div id="tab-kichban" class="ai-tab-content">
-                                    <textarea id="ai-kichban" class="ai-textarea" placeholder="Kịch bản video chi tiết..."></textarea>
+                                    <div id="ai-kichban" class="ai-rich-content" contenteditable="true" data-placeholder="Kịch bản video chi tiết..."></div>
                                 </div>
                                 <!-- Tab 3 -->
                                 <div id="tab-caption" class="ai-tab-content">
                                     <!-- Ánh xạ ngược về noiDung cũ để không mất data -->
-                                    <textarea id="ticket-noidung" class="ai-textarea" placeholder="Các mẫu caption bán hàng, branding..."></textarea>
+                                    <div id="ticket-noidung" class="ai-rich-content" contenteditable="true" data-placeholder="Các mẫu caption bán hàng, branding..."></div>
                                 </div>
                                 <!-- Tab 4 -->
                                 <div id="tab-ytuong" class="ai-tab-content">
                                     <!-- Ánh xạ ngược về orderBrief cũ -->
-                                    <textarea id="ticket-order" class="ai-textarea" placeholder="Gợi ý concept quay chụp, thiết kế..."></textarea>
+                                    <div id="ticket-order" class="ai-rich-content" contenteditable="true" data-placeholder="Gợi ý concept quay chụp, thiết kế..."></div>
                                 </div>
                                 <!-- Tab 5 -->
                                 <div id="tab-zalo" class="ai-tab-content">
-                                    <textarea id="ai-zalo" class="ai-textarea" placeholder="Tin nhắn chăm sóc khách hàng..."></textarea>
+                                    <div id="ai-zalo" class="ai-rich-content" contenteditable="true" data-placeholder="Tin nhắn chăm sóc khách hàng..."></div>
                                 </div>
                             </div>
                         </div>

@@ -1,0 +1,126 @@
+.ai-rich-content {
+    width: 100%;
+    min-height: 200px;
+    background: transparent;
+    padding: 16px;
+    outline: none;
+    overflow-y: auto;
+    color: var(--text-color);
+    font-size: 13px;
+}
+
+.ai-rich-content:empty:before {
+    content: attr(data-placeholder);
+    color: #888;
+}
+
+/* Common Card Styles */
+.ai-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #666;
+    margin-bottom: 8px;
+    display: block;
+    margin-top: 16px;
+}
+.ai-section-title:first-child {
+    margin-top: 0;
+}
+body.dark-theme .ai-section-title { color: #aaa; }
+
+.ai-card-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.ai-card {
+    background: #f4f5f5;
+    border-radius: 8px;
+    padding: 12px 16px;
+}
+body.dark-theme .ai-card { background: rgba(255,255,255,0.05); }
+
+.ai-card-title {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #888;
+    margin-bottom: 6px;
+}
+
+.ai-card-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: #111;
+}
+body.dark-theme .ai-card-value { color: #eee; }
+
+/* Blocks */
+.ai-block {
+    margin-bottom: 24px;
+}
+.ai-block-card {
+    background: #f4f5f5;
+    border-radius: 8px;
+    padding: 16px;
+    line-height: 1.6;
+    font-size: 13px;
+    color: #333;
+}
+body.dark-theme .ai-block-card { background: rgba(255,255,255,0.05); color: #ddd; }
+
+/* Tags */
+.ai-tag-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.ai-tag {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 12px;
+    display: inline-block;
+}
+.ai-tag.blue { background: #e3f2fd; color: #1565c0; }
+.ai-tag.green { background: #e8f5e9; color: #2e7d32; }
+.ai-tag.orange { background: #fff3e0; color: #e65100; }
+.ai-tag.red { background: #ffebee; color: #c62828; }
+
+body.dark-theme .ai-tag.blue { background: rgba(33, 150, 243, 0.15); color: #64b5f6; }
+body.dark-theme .ai-tag.green { background: rgba(76, 175, 80, 0.15); color: #81c784; }
+body.dark-theme .ai-tag.orange { background: rgba(255, 152, 0, 0.15); color: #ffb74d; }
+body.dark-theme .ai-tag.red { background: rgba(244, 67, 54, 0.15); color: #e57373; }
+
+/* Lists */
+.ai-list {
+    margin: 0;
+    padding-left: 20px;
+}
+.ai-list li {
+    margin-bottom: 8px;
+}
+
+/* Y Tuong Grid */
+.ai-ytuong-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+.ai-ytuong-card {
+    background: #f4f5f5;
+    border-radius: 8px;
+    padding: 16px;
+}
+body.dark-theme .ai-ytuong-card { background: rgba(255,255,255,0.05); }
+
+.ai-ytuong-number {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1976d2;
+    margin-bottom: 12px;
+}
+body.dark-theme .ai-ytuong-number { color: #64b5f6; }

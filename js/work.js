@@ -444,6 +444,14 @@ const WorkModule = {
                     }
                 }
 
+                // Clean HTML content for table view
+                const stripHtml = (html) => {
+                    if(!html) return '';
+                    let tmp = document.createElement("DIV");
+                    tmp.innerHTML = html;
+                    return tmp.textContent || tmp.innerText || "";
+                };
+
                 html += `
                     <tr class="${isCompleted ? 'row-completed' : ''}">
                         <td class="col-stt">${task.stt || ''}</td>
@@ -451,9 +459,9 @@ const WorkModule = {
                         <td class="col-deadline"><div class="${deadlineClass}" style="padding: 4px; border-radius: 4px; text-align: center; font-weight: bold;">${task.deadline || '--'}</div></td>
                         <td class="col-muctieu td-green"><span class="task-content-text">${task.mucTieu || ''}</span></td>
                         <td class="col-tieude td-green"><span class="task-content-text" style="font-weight: bold;">${task.tieuDe || ''}</span></td>
-                        <td class="col-noidung td-green"><span class="task-content-text" style="text-align:justify;">${task.noiDung || ''}</span></td>
+                        <td class="col-noidung td-green"><span class="task-content-text" style="text-align:justify;">${stripHtml(task.noiDung)}</span></td>
                         <td class="col-dinhdang"><span class="task-content-text">${task.dinhDang || ''}</span></td>
-                        <td class="col-order"><span class="task-content-text" style="text-align:justify;">${task.orderBrief || ''}</span></td>
+                        <td class="col-order"><span class="task-content-text" style="text-align:justify;">${stripHtml(task.orderBrief)}</span></td>
                         <td class="col-trangthai">
                             <select class="form-control ${statusClass}" style="font-size: 13px; font-weight:600; padding:4px 8px; border-radius:4px;" onchange="WorkModule.changeTaskStatus('${task.id}', this.value)">
                                 ${statusOptions}
@@ -580,11 +588,11 @@ const WorkModule = {
 
         // Fill Editable Fields
         document.getElementById('ticket-tieude').value = task.tieuDe || '';
-        document.getElementById('ticket-noidung').value = task.noiDung || '';
-        document.getElementById('ticket-order').value = task.orderBrief || '';
-        document.getElementById('ai-tomtat').value = task.aiTomTat || '';
-        document.getElementById('ai-kichban').value = task.aiKichBan || '';
-        document.getElementById('ai-zalo').value = task.aiZalo || '';
+        document.getElementById('ticket-noidung').innerHTML = task.noiDung || '';
+        document.getElementById('ticket-order').innerHTML = task.orderBrief || '';
+        document.getElementById('ai-tomtat').innerHTML = task.aiTomTat || '';
+        document.getElementById('ai-kichban').innerHTML = task.aiKichBan || '';
+        document.getElementById('ai-zalo').innerHTML = task.aiZalo || '';
 
         document.getElementById('ticket-trangthai').value = task.trangThai || 'Planned';
 
@@ -612,11 +620,11 @@ const WorkModule = {
         const task = WorkModule.data.tasks.find(t => t.id === WorkModule.activeTicketId);
         if (task) {
             task.tieuDe = document.getElementById('ticket-tieude').value;
-            task.noiDung = document.getElementById('ticket-noidung').value;
-            task.orderBrief = document.getElementById('ticket-order').value;
-            task.aiTomTat = document.getElementById('ai-tomtat').value;
-            task.aiKichBan = document.getElementById('ai-kichban').value;
-            task.aiZalo = document.getElementById('ai-zalo').value;
+            task.noiDung = document.getElementById('ticket-noidung').innerHTML;
+            task.orderBrief = document.getElementById('ticket-order').innerHTML;
+            task.aiTomTat = document.getElementById('ai-tomtat').innerHTML;
+            task.aiKichBan = document.getElementById('ai-kichban').innerHTML;
+            task.aiZalo = document.getElementById('ai-zalo').innerHTML;
 
             task.trangThai = document.getElementById('ticket-trangthai').value;
 
@@ -645,6 +653,136 @@ const WorkModule = {
     },
 
 // AI Local Simulator Logic
+// Helper renderers for AI structured output
+    renderAITomTat: (data) => {
+        if (!data) return '';
+        const tags = Array.isArray(data.dauRa) ? data.dauRa.map((d, i) => {
+            let color = 'blue';
+            if (i % 4 === 1) color = 'green';
+            if (i % 4 === 2) color = 'orange';
+            if (i % 4 === 3) color = 'red';
+            return `<span class="ai-tag ${color}">${d}</span>`;
+        }).join('') : '';
+
+        const trienKhai = Array.isArray(data.cachTrienKhai) ? data.cachTrienKhai.map(t => `<li>${t}</li>`).join('') : '';
+        const luuY = Array.isArray(data.luuY) ? data.luuY.map(t => `<li>${t}</li>`).join('') : '';
+
+        return `
+    <span class="ai-section-title">PHIẾU LÀM VIỆC — MARKETING</span>
+    <div class="ai-card-grid-2">
+      <div class="ai-card">
+        <div class="ai-card-title">MỤC TIÊU</div>
+        <div class="ai-card-value">${data.mucTieu || ''}</div>
+      </div>
+      <div class="ai-card">
+        <div class="ai-card-title">ĐỊNH DẠNG</div>
+        <div class="ai-card-value">${data.dinhDang || ''}</div>
+      </div>
+      <div class="ai-card">
+        <div class="ai-card-title">CHỦ ĐỀ</div>
+        <div class="ai-card-value">${data.chuDe || ''}</div>
+      </div>
+      <div class="ai-card">
+        <div class="ai-card-title">PHONG CÁCH THIẾT KẾ</div>
+        <div class="ai-card-value">${data.phongCach || ''}</div>
+      </div>
+    </div>
+
+    <span class="ai-section-title">NỘI DUNG CHÍNH</span>
+    <div class="ai-block-card ai-block">
+      <b>Tiêu đề:</b> ${data.tieuDe || ''}<br><br>
+      <b>Điểm nhấn:</b> ${data.diemNhan || ''}
+    </div>
+
+    <span class="ai-section-title">CÁCH TRIỂN KHAI</span>
+    <div class="ai-block-card ai-block">
+      <ol class="ai-list">${trienKhai}</ol>
+    </div>
+
+    <span class="ai-section-title">ĐẦU RA CẦN LÀM</span>
+    <div class="ai-tag-group ai-block">${tags}</div>
+
+    <span class="ai-section-title">LƯU Ý QUAN TRỌNG</span>
+    <div class="ai-block-card ai-block">
+      <ul class="ai-list" style="list-style-type: disc;">${luuY}</ul>
+    </div>`;
+    },
+
+    renderAIKichBan: (data) => {
+        if (!data) return '';
+        return `
+    <span class="ai-section-title">KỊCH BẢN VIDEO NGẮN — 20–30 GIÂY</span>
+    <div class="ai-block-card ai-block">
+      <b>🎬 HOOK (0–5 giây)</b><br>
+      ${(data.hook || '').replace(/\n/g, '<br>')}<br><br>
+      <b>📌 NỘI DUNG CHÍNH (5–22 giây)</b><br>
+      ${(data.noiDung || '').replace(/\n/g, '<br>')}<br><br>
+      <b>📣 CTA (22–30 giây)</b><br>
+      ${(data.cta || '').replace(/\n/g, '<br>')}
+    </div>
+
+    <span class="ai-section-title">GHI CHÚ SẢN XUẤT</span>
+    <div class="ai-card-grid-2">
+      <div class="ai-card">
+        <div class="ai-card-title">ÂM NHẠC</div>
+        <div class="ai-card-value">${data.amNhac || ''}</div>
+      </div>
+      <div class="ai-card">
+        <div class="ai-card-title">PHONG CÁCH QUAY</div>
+        <div class="ai-card-value">${data.phongCachQuay || ''}</div>
+      </div>
+      <div class="ai-card">
+        <div class="ai-card-title">MÀU SẮC CHỦ ĐẠO</div>
+        <div class="ai-card-value">${data.mauSac || ''}</div>
+      </div>
+      <div class="ai-card">
+        <div class="ai-card-title">PHÙ HỢP ĐĂNG</div>
+        <div class="ai-card-value">${data.phuHopDang || ''}</div>
+      </div>
+    </div>`;
+    },
+
+    renderAICaption: (data) => {
+        if (!data || !Array.isArray(data)) return '';
+        return data.map((cap, i) => `
+      <span class="ai-section-title" style="margin-top: ${i > 0 ? '16px' : '0'};">${(cap.tieuDe || '').toUpperCase()}</span>
+      <div class="ai-block-card ai-block">
+        ${(cap.noiDung || '').replace(/\n/g, '<br>')}
+      </div>
+    `).join('');
+    },
+
+    renderAIYTuong: (data) => {
+        if (!data || !Array.isArray(data)) return '';
+        const cards = data.map((yt, i) => `
+    <div class="ai-ytuong-card">
+      <div class="ai-ytuong-number">0${i + 1}</div>
+      <div class="ai-card-title">CONCEPT</div>
+      <div class="ai-card-value" style="margin-bottom:12px;">${yt.concept || ''}</div>
+      
+      <div class="ai-card-title">BỐ CỤC</div>
+      <div style="font-size: 13px; margin-bottom:12px;">${yt.boCuc || ''}</div>
+
+      <div class="ai-card-title">MÀU SẮC</div>
+      <div style="font-size: 13px; margin-bottom:12px;">${yt.mauSac || ''}</div>
+
+      <div class="ai-card-title">CẢM GIÁC</div>
+      <div style="font-size: 13px;">${yt.camGiac || ''}</div>
+    </div>`).join('');
+        return `<div class="ai-ytuong-grid">${cards}</div>`;
+    },
+
+    renderAIZalo: (data) => {
+        if (!data || !Array.isArray(data)) return '';
+        return data.map((z, i) => `
+      <span class="ai-section-title" style="margin-top: ${i > 0 ? '16px' : '0'};">${z.tieuDe || ''}</span>
+      <div class="ai-block-card ai-block">
+        ${(z.noiDung || '').replace(/\n/g, '<br>')}
+      </div>
+    `).join('');
+    },
+
+    // AI Local Simulator Logic
     generateAILocal: async () => {
         const task = WorkModule.data.tasks.find(t => t.id === WorkModule.activeTicketId);
         if (!task) return;
@@ -653,127 +791,55 @@ const WorkModule = {
         let mucTieu = task.mucTieu || '';
         let truCot = task.truCot || '';
         let dinhDang = (task.dinhDang || '').toLowerCase();
-        const isVideo = dinhDang.includes('video') || dinhDang.includes('reels') || dinhDang.includes('tiktok') || dinhDang.includes('short');
-
-        // GET ACTIVE TAB
-        const activeTabElement = document.querySelector('.ai-tab-content.active');
-        const activeTabId = activeTabElement ? activeTabElement.id : 'tab-tomtat';
-
+        
         // KIẾM TRA CLAUDE API KEY
         const claudeKey = Utils.storage.get('claude_api_key');
         
+        const btn = document.getElementById('btn-ai-generate') || document.querySelector('.btn-warning[onclick="WorkModule.generateAILocal()"]');
+        const originalBtnHtml = btn.innerHTML;
+
         if (claudeKey && claudeKey.trim() !== '') {
-            Utils.showToast('Đang kết nối Claude AI (Vui lòng đợi vài giây)...', 'info');
-            // Cập nhật giao diện (loading state)
-            const btn = document.getElementById('btn-ai-generate') || document.querySelector('.btn-warning[onclick="WorkModule.generateAILocal()"]');
-            const originalBtnHtml = btn.innerHTML;
+            Utils.showToast('Đang kết nối Claude AI tạo 5 mục (Vui lòng đợi 10-20 giây)...', 'info');
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ĐANG TẠO...';
             btn.disabled = true;
 
-            let prompt = `Bạn là một chuyên gia Marketing và lên kế hoạch cực kỳ giỏi.
-            Hãy viết nội dung dựa trên những thông tin sau:
-            - Mục tiêu chiến dịch: ${mucTieu}
-            - Chủ đề chính: ${truCot}
-            - Tiêu đề mong muốn: ${tieuDe}
-            - Định dạng yêu cầu: ${dinhDang}
-            
-            `;
+            const prompt = `Bạn là một chuyên gia Marketing siêu hạng. Hãy lập kế hoạch toàn diện cho một phi vụ truyền thông dựa trên:
+Mục tiêu chiến dịch: ${mucTieu}
+Chủ đề: ${truCot}
+Tiêu đề: ${tieuDe}
+Định dạng: ${dinhDang}
 
-            let targetInputId = '';
-            
-            if (activeTabId === 'tab-tomtat') {
-                prompt += `Hãy trả về "Phiếu làm việc — Marketing" chi tiết, bám sát form mẫu sau, điền thông tin phù hợp với chủ đề:
-Phiếu làm việc — Marketing
-Mục tiêu
-[Mục tiêu]
-Định dạng
-[Định dạng]
-Chủ đề
-[Chủ đề]
-Phong cách thiết kế
-[Gợi ý phong cách]
-Nội dung chính
-Tiêu đề: [Tiêu đề đề xuất]
-Điểm nhấn: [Giải thích điểm nhấn chi tiết]
-Cách triển khai
-1. [Bước 1]
-2. [Bước 2]
-3. [Bước 3]
-Đầu ra cần làm
-[Danh sách đầu ra]
-Lưu ý quan trọng
-• [Lưu ý 1]
-• [Lưu ý 2]\n`;
-                targetInputId = 'ai-tomtat';
-            } else if (activeTabId === 'tab-kichban') {
-                prompt += `Hãy trả về kịch bản video/bài đăng dựa trên chủ đề yêu cầu. Viết theo format chuẩn:
-Kịch bản video ngắn — 20–30 giây
-🎬 HOOK (0–5 giây)
-Cảnh: [Mô tả cảnh thu hút]
-Lời thoại / text overlay: "[Hook 1 câu cực cuốn]"
-
-📌 NỘI DUNG CHÍNH (5–22 giây)
-Cảnh 1: [Mô tả]
-Cảnh 2: [Mô tả]
-Text overlay: "[Text tương ứng]"
-
-📣 CTA (22–30 giây)
-Cảnh: [Mô tả]
-Text overlay: "[CTA text]"
-Lời thoại: "[Lời thoại chốt sale/kêu gọi]"
-
-Ghi chú sản xuất
-Âm nhạc: [Gợi ý]
-Phong cách quay: [Gợi ý]
-Màu sắc chủ đạo: [Gợi ý]
-Phù hợp đăng: [Nền tảng]\n`;
-                targetInputId = 'ai-kichban';
-            } else if (activeTabId === 'tab-caption') {
-                prompt += `Hãy viết 3 mẫu Caption theo format chính xác sau:
-Caption kiểu 1 — Bán hàng trực tiếp
-[Nội dung caption 1 chốt sale mạnh, đủ icon, hashtag]
-
-Caption kiểu 2 — Branding nhẹ
-[Nội dung caption 2 tập trung vào cảm xúc, thương hiệu, bay bổng tinh tế]
-
-Caption kiểu 3 — Ngắn gọn dễ đăng
-[Nội dung caption 3 siêu ngắn, giật gân, mồi tương tác nền tảng ngắn]\n`;
-                targetInputId = 'ticket-noidung';
-            } else if (activeTabId === 'tab-ytuong') {
-                prompt += `Hãy đóng vai trò là Art Director, gợi ý 3 Ý tưởng/Concept thiết kế theo định dạng sau:
-01
-Concept
-[Tên concept]
-Bố cục
-[Mô tả bố cục]
-Màu sắc
-[Gợi ý màu]
-Cảm giác
-[Tâm trạng, vibe mang lại]
-
-02
-Concept
-... (tt)
-
-03
-Concept
-... (tt)\n`;
-                targetInputId = 'ticket-order';
-            } else if (activeTabId === 'tab-zalo') {
-                prompt += `Hãy viết 2 mẫu tin nhắn Zalo gửi báo cáo hoặc gửi khách hàng để xin feedback. Format:
-Mẫu 1 — Lịch sự, chuyên nghiệp
-[Nội dung thân thiện, kính ngữ chuyên nghiệp, dài vừa phải]
-
-Mẫu 2 — Ngắn gọn, thân thiện
-[Nội dung nhí nhảnh hợp sếp/đồng nghiệp để báo cáo hoàn thành phiêu]\n`;
-                targetInputId = 'ai-zalo';
-            } else {
-                btn.innerHTML = originalBtnHtml;
-                btn.disabled = false;
-                return;
-            }
-
-            prompt += `Lưu ý: Chỉ trả về nội dung trực tiếp, không vòng vo giải thích, không dùng thẻ XML.`;
+HÃY TRẢ VỀ DUY NHẤT 1 CHUỖI JSON ĐÚNG ĐỊNH DẠNG (Không có text bên ngoài, không giải thích, không dùng markdown code block \`\`\`json). 
+Cấu trúc JSON bắt buộc phải chính xác như sau:
+{
+  "tomTat": {
+    "mucTieu": "...", "dinhDang": "...", "chuDe": "...", "phongCach": "...", "tieuDe": "...", "diemNhan": "...",
+    "cachTrienKhai": ["B1...", "B2...", "B3...", "B4..."],
+    "dauRa": ["3-5 ảnh...", "1 video...", "3 caption..."],
+    "luuY": ["Lưu ý 1...", "Lưu ý 2..."]
+  },
+  "kichBan": {
+    "hook": "Cảnh: ...\\nLời thoại: ...",
+    "noiDung": "Cảnh 1: ...\\nCảnh 2: ...\\nText: ...",
+    "cta": "Cảnh: ...\\nLời thoại: ...",
+    "amNhac": "...", "phongCachQuay": "...", "mauSac": "...", "phuHopDang": "..."
+  },
+  "caption": [
+    { "tieuDe": "Caption 1 - Bán hàng trực tiếp", "noiDung": "..." },
+    { "tieuDe": "Caption 2 - Branding nhẹ", "noiDung": "..." },
+    { "tieuDe": "Caption 3 - Ngắn gọn dễ đăng", "noiDung": "..." }
+  ],
+  "yTuong": [
+    { "concept": "...", "boCuc": "...", "mauSac": "...", "camGiac": "..." },
+    { "concept": "...", "boCuc": "...", "mauSac": "...", "camGiac": "..." },
+    { "concept": "...", "boCuc": "...", "mauSac": "...", "camGiac": "..." }
+  ],
+  "zalo": [
+    { "tieuDe": "Mẫu 1 - Lịch sự, chuyên nghiệp", "noiDung": "..." },
+    { "tieuDe": "Mẫu 2 - Ngắn gọn, thân thiện", "noiDung": "..." }
+  ]
+}
+Chỉ xuất ra đúng chuỗi JSON, không giải thích hay bao bọc XML/HTML.`;
 
             const activeModel = Utils.storage.get('claude_api_model') || 'claude-3-haiku-20240307';
             try {
@@ -787,7 +853,7 @@ Mẫu 2 — Ngắn gọn, thân thiện
                     },
                     body: JSON.stringify({
                         model: activeModel,
-                        max_tokens: 2048,
+                        max_tokens: 4096,
                         messages: [
                             { role: "user", content: prompt }
                         ]
@@ -799,147 +865,94 @@ Mẫu 2 — Ngắn gọn, thân thiện
                 }
 
                 const data = await response.json();
-                const aiText = data.content[0].text;
+                let aiText = data.content[0].text;
                 
-                // Map trực tiếp vào input tương ứng đang mở
-                document.getElementById(targetInputId).value = aiText.trim();
+                // Trích xuất JSON an toàn
+                aiText = aiText.replace(/```json/gi, '').replace(/```/g, '').trim();
+                const aiDataObj = JSON.parse(aiText);
+
+                // Gán vào giao diện
+                document.getElementById('ai-tomtat').innerHTML = WorkModule.renderAITomTat(aiDataObj.tomTat);
+                document.getElementById('ai-kichban').innerHTML = WorkModule.renderAIKichBan(aiDataObj.kichBan);
+                document.getElementById('ticket-noidung').innerHTML = WorkModule.renderAICaption(aiDataObj.caption);
+                document.getElementById('ticket-order').innerHTML = WorkModule.renderAIYTuong(aiDataObj.yTuong);
+                document.getElementById('ai-zalo').innerHTML = WorkModule.renderAIZalo(aiDataObj.zalo);
                 
-                Utils.showToast('Tạo nội dung cho thẻ này thành công!', 'success');
+                Utils.showToast('Đã tạo thành công đủ 5 mục bằng AI!', 'success');
             } catch (error) {
                 console.error("Claude API Error:", error);
-                Utils.showToast('Lỗi khi gọi API Claude (Sai Key hoặc lỗi Cors).', 'error');
-                // Khôi phục nút
-                btn.innerHTML = originalBtnHtml;
-                btn.disabled = false;
-                return;
+                Utils.showToast('Lỗi khi gọi API hoặc định dạng JSON không hợp lệ.', 'error');
             }
-
-            // Khôi phục nút
             btn.innerHTML = originalBtnHtml;
             btn.disabled = false;
 
         } else {
-            // FALLBACK LOCAL MOCKUP NẾU CHƯA NHẬP KEY
-            Utils.showToast('Chưa có API Key. Sử dụng Local Template (Trộn ngẫu nhiên).', 'info');
+            // FALLBACK LOCAL MOCKUP KHI KHÔNG CÓ API
+            Utils.showToast('Chưa có API Key. Sử dụng Local Template điền full 5 mục.', 'info');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ĐANG TẠO...';
+            btn.disabled = true;
             
-            let fallbackContent = '';
-            let targetInputId = '';
+            setTimeout(() => {
+                const mockupObj = {
+                    "tomTat": {
+                        "mucTieu": mucTieu || "Tăng nhận diện thương hiệu",
+                        "dinhDang": dinhDang || "Ảnh + Caption",
+                        "chuDe": truCot || tieuDe || "Sản phẩm chiến lược",
+                        "phongCach": "Sang, sạch, hiện đại",
+                        "tieuDe": tieuDe || "Mẫu thanh lịch dành cho dân văn phòng",
+                        "diemNhan": "Tập trung vào giải pháp tinh tế, giá trị cốt lõi sản phẩm.",
+                        "cachTrienKhai": [
+                            "Chụp ảnh sản phẩm: nền kem/trắng, góc 45 độ",
+                            "Thiết kế layout sạch — font tối giản, màu trung tính",
+                            "Lên lịch đăng báo vào giờ vàng: 7-9h"
+                        ],
+                        "dauRa": ["3-5 ảnh sản phẩm", "1 video reels", "3 phiên bản caption", "Lịch đăng"],
+                        "luuY": [
+                            "Hình ảnh nhất quán: sang - sạch - hiện đại",
+                            "CTA phải xuất hiện trong mọi phiên bản"
+                        ]
+                    },
+                    "kichBan": {
+                        "hook": "Cảnh: Cận cảnh chi tiết đắt giá nhất.\\nLời thoại / Text: \"Bí quyết chưa từng tiết lộ...\"",
+                        "noiDung": "Cảnh 1: Hiển thị vấn đề thường gặp.\\nCảnh 2: Sử dụng sản phẩm.\\nText overlay: \"Giải quyết trong 3 giây.\"",
+                        "cta": "Cảnh: Sản phẩm tỏa sáng, link bio.\\nLời thoại: \"Nhấn ngay góc trái để sở hữu!\"",
+                        "amNhac": "Lofi / Corporate nhẹ",
+                        "phongCachQuay": "Cận cảnh + Trung cảnh",
+                        "mauSac": "Trắng, kem, xám bạc",
+                        "phuHopDang": "TikTok, Reels, Shorts"
+                    },
+                    "caption": [
+                        { "tieuDe": "Caption 1 — Bán hàng trực tiếp", "noiDung": "✨ Đừng bỏ qua! Dân văn phòng đang 'phát sốt' vì độ tiện lợi siêu việt của bộ sản phẩm này. 👉 Click ngay link dưới để nhận tư vấn sớm nhất! #Trending" },
+                        { "tieuDe": "Caption 2 — Branding nhẹ", "noiDung": "Có những chi tiết nhỏ nhưng thay đổi hoàn toàn phong cách của bạn. Tôn vinh đẳng cấp từ bên trong, không cần ồn ào. 🔗 [Link bio]" },
+                        { "tieuDe": "Caption 3 — Ngắn gọn dễ đăng", "noiDung": "Nhẹ nhàng. Tinh tế. Xịn sò. 👓 Mua ngay tại inbox [Tên Cửa hàng]" }
+                    ],
+                    "yTuong": [
+                        { "concept": "Lifestyle — Hoàn hảo", "boCuc": "Góc chụp ngang qua vai, tập trung màn hình", "mauSac": "Trắng, be", "camGiac": "Tập trung, chuyên nghiệp" },
+                        { "concept": "Flat lay — Đắt giá", "boCuc": "Sản phẩm nằm giữa, phụ kiện bao quanh tinh xảo", "mauSac": "Xám trung tính, tương phản mạnh", "camGiac": "Sang trọng thuần khiết" },
+                        { "concept": "Before/After — Lột xác", "boCuc": "Sắp xếp cạnh nhau để so sánh độ tiện lợi", "mauSac": "Tươi sáng, khỏe khoắn", "camGiac": "Bất ngờ, kích thích" }
+                    ],
+                    "zalo": [
+                        { "tieuDe": "Mẫu 1 — Lịch sự, chuyên nghiệp", "noiDung": "Xin chào anh/chị, em xin gửi thông tin chương trình/chiến dịch mới nhất bên em. Anh chị rảnh xem qua góp ý giúp em nha. Em cảm ơn!" },
+                        { "tieuDe": "Mẫu 2 — Ngắn gọn, thân thiện", "noiDung": "Sếp ơi 👋 Nháp đã xong, sếp rảnh lướt nhanh cho em xin chỉ đạo tiến hành nhé! 🚀" }
+                    ]
+                };
 
-            if (activeTabId === 'tab-tomtat') {
-                targetInputId = 'ai-tomtat';
-                fallbackContent = `Phiếu làm việc — Marketing
-Mục tiêu
-${mucTieu || 'Tăng nhận diện thương hiệu'}
-Định dạng
-${dinhDang || 'Ảnh + Caption'}
-Chủ đề
-${truCot || 'Giới thiệu tính năng'}
-Phong cách thiết kế
-Sang trọng, sạch sẽ, hiện đại
-Nội dung chính
-Tiêu đề: ${tieuDe || 'Mẫu thiết kế thanh lịch cho dân văn phòng'}
+                document.getElementById('ai-tomtat').innerHTML = WorkModule.renderAITomTat(mockupObj.tomTat);
+                document.getElementById('ai-kichban').innerHTML = WorkModule.renderAIKichBan(mockupObj.kichBan);
+                document.getElementById('ticket-noidung').innerHTML = WorkModule.renderAICaption(mockupObj.caption);
+                document.getElementById('ticket-order').innerHTML = WorkModule.renderAIYTuong(mockupObj.yTuong);
+                document.getElementById('ai-zalo').innerHTML = WorkModule.renderAIZalo(mockupObj.zalo);
 
-Điểm nhấn: Tập trung giới thiệu cách mà sản phẩm giúp ích cho cuộc sống/công việc hàng ngày. Cách sử dụng dễ dàng và vô cùng chuyên nghiệp.
-Cách triển khai
-1. Chụp ảnh sản phẩm: nền trắng, ánh sáng trong, setup đơn giản
-2. Chụp lifestyle: người dùng đang trải nghiệm
-3. Thiết kế layout sạch: font tối giản, màu ấm
-4. Lên lịch đăng giờ vàng: 7-9h tối
-Đầu ra cần làm
-3 hình ảnh
-1 video reels
-3 mẫu caption
-Lưu ý quan trọng
-• Hình ảnh nhất quán: sang - sạch - hiện đại
-• Call-to-action phải xuất hiện ở ảnh cuối cùng và ở caption`;
-            } else if (activeTabId === 'tab-kichban') {
-                targetInputId = 'ai-kichban';
-                fallbackContent = `Kịch bản video ngắn — 20–30 giây
-🎬 HOOK (0–5 giây)
-Cảnh: Cú máy đi từ dưới lên, cận cảnh vào chi tiết đáng giá nhất của sản phẩm.
-Lời thoại / text overlay:
-"Bạn đã bỏ lỡ bí quyết này trong suốt ngần ấy năm!"
-
-📌 NỘI DUNG CHÍNH (5–22 giây)
-Cảnh 1: Một nhân vật đang gặp vấn đề quen thuộc, gương mặt mệt mỏi.
-Cảnh 2: Ứng dụng ngay "${tieuDe}" -> Cười rạng rỡ, thần thái đỉnh cao.
-Text overlay: "Giải pháp nhanh chóng — hiệu quả tức thì."
-
-📣 CTA (22–30 giây)
-Cảnh: Sản phẩm đặt giữa màn hình, vòng hào quang phía sau.
-Text overlay: "Sở hữu ngay hôm nay!"
-Lời thoại: "Click vào link dưới đây để chốt đơn với giá cực hời."
-
-Ghi chú sản xuất
-Âm nhạc
-Nhạc nền điện tử (EDM) giật beat mạnh hoặc lofi tùy tính chất sản phẩm
-Phong cách quay
-Chuyển cảnh nhanh để giữ chân người xem
-Màu sắc chủ đạo
-Môi trường sáng rõ, màu chủ thể nổi trội
-Phù hợp đăng
-TikTok, Instagram Reels, Youtube Shorts`;
-            } else if (activeTabId === 'tab-caption') {
-                targetInputId = 'ticket-noidung';
-                fallbackContent = `Caption kiểu 1 — Bán hàng trực tiếp
-✨ Bí kíp để công việc trôi chảy cả ngày dài! ${tieuDe} mang đến trải nghiệm tuyệt vời chưa từng có. 💼 Tự tin hơn, chuyên nghiệp hơn. Hơn 1.000+ người đã thử và hài lòng tuyệt đối! 👉 Nhắn tin inbox trực tiếp trên page để nhận tư vấn miễn phí + ưu đãi giảm 20% hôm nay. #SảnPhẩm #UuDai
-
-Caption kiểu 2 — Branding nhẹ
-Có những thứ nhỏ bé, nhưng thay đổi cả cách công việc vận hành. ${tieuDe} — tinh tế, thanh lịch và không phô trương. Vì phong cách không cần nói nhiều, chỉ cần đứng vào đúng chỗ là tự toả sáng. 🔗 Khám phá bộ sưu tập đầy đủ tại [link bio]
-
-Caption kiểu 3 — Ngắn gọn dễ đăng
-${tieuDe} — Nhẹ, Sang, Đỉnh cao xu hướng. 🕶️ Thử ngay để thấy sự khác biệt tại [Tên cửa hàng]! 📲 Inbox chốt đơn liền tay.`;
-            } else if (activeTabId === 'tab-ytuong') {
-                targetInputId = 'ticket-order';
-                fallbackContent = `01
-Concept
-Lifestyle — "Một ngày làm việc hoàn hảo"
-Bố cục
-Nhân vật đang ngồi ở một quán cafe sang chảnh, tập trung vào màn hình làm việc. Góc chụp ngang hoặc từ bên trên qua vai người mẫu.
-Màu sắc
-Tone kem, vàng nhạt, xám văn phòng. Ấm và sang trọng.
-Cảm giác
-Tự tin, điềm đạm, đẳng cấp
-
-02
-Concept
-Flat lay sản phẩm — "Chi tiết đắt giá"
-Bố cục
-Sản phẩm là nhân vật chính diện. Xung quanh trang trí một vài phụ kiện văn phòng: Macbook, đồng hồ, ly cafe.
-Màu sắc
-Tông tương phản sáng tối mạnh. Ánh sáng tạt.
-Cảm giác
-Sang trọng, chi tiết, tập trung
-
-03
-Concept
-Video Before/After — "Một bước lên mây"
-Bố cục
-Chia khung hình Split-screen để thấy sự đối lập giữa lúc chưa dùng và khi đã dùng "${tieuDe}".
-Màu sắc
-Tone sáng khỏe mạnh.
-Cảm giác
-Bất ngờ, giải trí, thỏa mãn thị giác`;
-            } else if (activeTabId === 'tab-zalo') {
-                targetInputId = 'ai-zalo';
-                fallbackContent = `Mẫu 1 — Lịch sự, chuyên nghiệp
-Xin chào anh/chị [Tên khách], Em là [Tên bạn] từ [Tên thương hiệu]. Em xin phép gửi anh/chị tham khảo nội dung kế hoạch bài "${tieuDe}". Anh/chị xem qua nếu cần chỉnh sửa thì phản hồi sớm giúp em để team bay vào sản xuất ạ. Em cảm ơn! Trân trọng.
-
-Mẫu 2 — Ngắn gọn, thân thiện
-Sếp ơi 👋 Em xong bản nháp Ticket "${tieuDe}" rồi ạ. Sếp đi ngang rảnh ngó qua Tab Caption với Kịch Bản cho em xin xíu góc nhìn nha. Oke là em bật máy quay luôn 📷 Mãi iu 🫰`;
-            }
-
-            if (targetInputId) {
-                document.getElementById(targetInputId).value = fallbackContent;
-            }
-
-            Utils.showToast('Đã trộn ngẫu nhiên Template nội dung!', 'success');
+                btn.innerHTML = originalBtnHtml;
+                btn.disabled = false;
+                Utils.showToast('Đã sinh thành công Templates!', 'success');
+            }, 1000);
         }
     },
 
     copyActiveZaloMessage: () => {
-        // Copy nội dung của Tab Zalo
-        const zaloContent = document.getElementById('ai-zalo').value.trim();
+        // Copy nội dung của Tab Zalo (Dùng innerText để giữ xuống dòng)
+        const zaloContent = document.getElementById('ai-zalo').innerText.trim();
         if (!zaloContent) {
             Utils.showToast('Vui lòng tạo nội dung AI mẫu trước hoặc điền tin nhắn Zalo!', 'warning');
             return;
