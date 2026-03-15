@@ -40,24 +40,48 @@ const Auth = {
         const bootScreen = document.getElementById('incard-boot-screen');
         const loginWrapper = document.getElementById('login-wrapper');
         const loginForm = document.getElementById('login-form');
+        const progressTrack = document.getElementById('cyber-progress-track');
 
-        if (bootScreen && loginWrapper && loginForm) {
+        if (bootScreen && loginWrapper && loginForm && progressTrack) {
             // Hiển thị trạng thái Boot
             bootScreen.style.display = 'flex';
             loginWrapper.style.display = 'none';
             loginForm.style.display = 'none';
+            progressTrack.innerHTML = ''; // reset
 
-            setTimeout(() => {
-                // Tắt trạng thái Boot, bật Form
-                bootScreen.style.opacity = '0';
-                setTimeout(() => {
-                    bootScreen.style.display = 'none';
-                    loginWrapper.style.display = 'block';
-                    loginForm.style.display = 'block';
-                    // Hiệu ứng mờ dần vào cho Form
-                    loginWrapper.style.animation = 'fadeIn 0.5s ease';
-                }, 300); // Đợi opacity transition kết thúc
-            }, 1800); // Thời lượng nạp dữ liệu (CSS animation strip 1.8s)
+            const NUM_PILLS = 24;
+            for (let i = 0; i < NUM_PILLS; i++) {
+                const pill = document.createElement('div');
+                pill.className = 'cyber-pill';
+                progressTrack.appendChild(pill);
+            }
+
+            // Simulate loading by activating pills one by one
+            const pills = progressTrack.querySelectorAll('.cyber-pill');
+            const progressText = document.getElementById('cyber-progress-text');
+            let currentPill = 0;
+            const loadInterval = setInterval(() => {
+                if (currentPill < pills.length) {
+                    pills[currentPill].classList.add('active');
+                    currentPill++;
+                    if (progressText) {
+                        const percent = Math.round((currentPill / pills.length) * 100);
+                        progressText.textContent = percent + '%';
+                    }
+                } else {
+                    clearInterval(loadInterval);
+                    // Loading finished, transition to form
+                    setTimeout(() => {
+                        bootScreen.style.opacity = '0';
+                        setTimeout(() => {
+                            bootScreen.style.display = 'none';
+                            loginWrapper.style.display = 'block';
+                            loginForm.style.display = 'block';
+                            loginWrapper.style.animation = 'fadeIn 0.5s ease';
+                        }, 300);
+                    }, 400); // small delay before fade
+                }
+            }, 60); // 60ms * 24 pills = ~1.44 seconds load time
         }
     },
 
