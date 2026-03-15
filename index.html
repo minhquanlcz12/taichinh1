@@ -535,9 +535,14 @@
                                 <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('ticket-hidden-upload').click()">
                                     <i class="fa-solid fa-upload"></i> Tải ảnh lên
                                 </button>
-                                <button type="button" class="btn btn-success btn-sm" onclick="WorkModule.copyActiveZaloMessage()" style="margin-left: auto; font-weight: bold;">
-                                    <i class="fa-solid fa-copy"></i> COPY ZALO
-                                </button>
+                                <div style="margin-left: auto; display: flex; gap: 8px;">
+                                    <button type="button" class="btn btn-outline btn-sm" onclick="WorkModule.copyActiveTabContent()" style="font-weight: bold;">
+                                        <i class="fa-solid fa-copy"></i> COPY THẺ NÀY
+                                    </button>
+                                    <button type="button" class="btn btn-success btn-sm" onclick="WorkModule.copyAllTabsContent()" style="font-weight: bold; background: linear-gradient(135deg, #10b981, #059669); border: none;">
+                                        <i class="fa-solid fa-layer-group"></i> COPY TOÀN BỘ 5 BẢNG
+                                    </button>
+                                </div>
                                 <input type="file" id="ticket-hidden-upload" accept="image/*" style="display: none;" onchange="WorkModule.handleTicketImageUpload(event)">
                             </div>
                         </div>
@@ -545,7 +550,7 @@
 
                 </div>
             </div>
-            <div class="modal-footer" style="border-top: 1px solid var(--border-color); background: rgba(4,9,20,0.9); position: sticky; bottom: 0; z-index: 10;">
+            <div class="modal-footer" style="border-top: 1px solid var(--border-color); background: rgba(4,9,20,0.9); position: sticky; bottom: 0; z-index: 10; display: flex; justify-content: center; gap: 16px;">
                 <button class="btn btn-text" onclick="WorkModule.closeTicketModal()">Hủy thay đổi</button>
                 <button class="btn btn-primary" onclick="WorkModule.saveTicketModal()"><i class="fa-solid fa-floppy-disk" style="margin-right: 8px;"></i>Lưu Phiếu Việc</button>
             </div>

@@ -957,19 +957,47 @@ Chỉ xuất ra đúng chuỗi JSON, không giải thích hay bao bọc XML/HTML
         }
     },
 
-    copyActiveZaloMessage: () => {
-        // Copy nội dung của Tab Zalo (Dùng innerText để giữ xuống dòng)
-        const zaloContent = document.getElementById('ai-zalo').innerText.trim();
-        if (!zaloContent) {
-            Utils.showToast('Vui lòng tạo nội dung AI mẫu trước hoặc điền tin nhắn Zalo!', 'warning');
+    copyActiveTabContent: () => {
+        const activeTabElement = document.querySelector('.ai-tab-content.active .ai-rich-content');
+        if (!activeTabElement) return;
+        
+        const content = activeTabElement.innerText.trim();
+        if (!content) {
+            Utils.showToast('Nội dung thẻ đang trống!', 'warning');
             return;
         }
 
-        navigator.clipboard.writeText(zaloContent).then(() => {
-            Utils.showToast("Đã copy tin nhắn Zalo vào bộ nhớ đệm!", "success");
+        navigator.clipboard.writeText(content).then(() => {
+            Utils.showToast("Đã copy nội dung thẻ đang xem!", "success");
         }).catch(err => {
             console.error('Không thể copy', err);
-            Utils.showToast("Không thể copy tự động, vui lòng copy tay.", "error");
+            Utils.showToast("Lỗi khi copy.", "error");
+        });
+    },
+
+    copyAllTabsContent: () => {
+        const tomtat = document.getElementById('ai-tomtat').innerText.trim();
+        const kichban = document.getElementById('ai-kichban').innerText.trim();
+        const caption = document.getElementById('ticket-noidung').innerText.trim();
+        const ytuong = document.getElementById('ticket-order').innerText.trim();
+        const zalo = document.getElementById('ai-zalo').innerText.trim();
+
+        if (!tomtat && !kichban && !caption && !ytuong && !zalo) {
+            Utils.showToast('Không có nội dung nào để copy!', 'warning');
+            return;
+        }
+
+        let fullContent = "=== 1. PHIẾU TÓM TẮT ===\n" + tomtat + "\n\n";
+        fullContent += "=== 2. KỊCH BẢN VIDEO ===\n" + kichban + "\n\n";
+        fullContent += "=== 3. CAPTION MẠNG XÃ HỘI ===\n" + caption + "\n\n";
+        fullContent += "=== 4. Ý TƯỞNG THIẾT KẾ & QUAY DỰNG ===\n" + ytuong + "\n\n";
+        fullContent += "=== 5. MẪU TIN NHẮN ZALO ===\n" + zalo + "\n";
+
+        navigator.clipboard.writeText(fullContent).then(() => {
+            Utils.showToast("Đã copy thành công TOÀN BỘ 5 BẢNG AI!", "success");
+        }).catch(err => {
+            console.error('Không thể copy', err);
+            Utils.showToast("Lỗi khi copy toàn bộ.", "error");
         });
     },
 
@@ -978,7 +1006,7 @@ Chỉ xuất ra đúng chuỗi JSON, không giải thích hay bao bọc XML/HTML
         if (!task) return;
 
         const dateStr = task.ngayDang || Utils.getTodayString();
-        const contentStr = document.getElementById('ticket-noidung').value || task.noiDung || "(Chưa có nội dung chi tiết)";
+        const contentStr = document.getElementById('ticket-noidung').innerText || task.noiDung || "(Chưa có nội dung chi tiết)";
 
         const message = `Em gửi anh/chị nội dung lên bài ngày ${dateStr} gồm:\n\n`
             + `👉 Chủ đề: ${task.tieuDe || task.truCot || 'N/A'}\n`
