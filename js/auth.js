@@ -248,6 +248,7 @@ const Auth = {
     renderSettings: async () => {
         const settingsView = document.getElementById('settings-view');
 
+        let currentKey = Utils.storage.get('claude_api_key') || '';
         let html = `
             <div class="glass-card" style="margin-bottom: 24px;">
                 <h3>Cài đặt ứng dụng</h3>
@@ -259,6 +260,16 @@ const Auth = {
                         <button class="btn btn-danger" onclick="Auth.logout()" style="margin-top: 8px;">Đăng xuất</button>
                     </div>
                 </div>
+            </div>
+            
+            <div class="glass-card" style="margin-bottom: 24px;">
+                <h3>🔗 Tích hợp AI (Claude API)</h3>
+                <p style="color:var(--text-secondary); margin-bottom: 16px;">Nhập mã API Anthropic của bạn để kích hoạt chức năng tự động viết Nội dung/Kịch bản ở cấp độ chuyên gia.</p>
+                <div class="form-group" style="display:flex; gap: 8px;">
+                    <input type="password" id="claude-api-key" class="form-control" placeholder="sk-ant-api03-..." value="${currentKey}" style="flex:1;">
+                    <button class="btn btn-primary" onclick="Auth.saveClaudeKey()"><i class="fa-solid fa-floppy-disk"></i> Lưu Key</button>
+                </div>
+                <small style="color: var(--text-secondary);"><i class="fa-solid fa-circle-info"></i> API Key chỉ lưu bảo mật trên trình duyệt máy tính của bạn, không gửi lên server.</small>
             </div>
         `;
 
@@ -307,7 +318,7 @@ const Auth = {
         settingsView.innerHTML = html;
 
         // re-bind clear data IF it exists
-        const clearBtn = document.getElementById('clear-data-btn');
+            const clearBtn = document.getElementById('clear-data-btn');
         if (clearBtn) {
             clearBtn.addEventListener('click', async () => {
                 if (confirm('Bạn có chắc chắn muốn xóa tất cả dữ liệu (Của CẢ HỆ THỐNG)? Hành động này không thể hoàn tác.')) {
@@ -317,6 +328,12 @@ const Auth = {
                 }
             });
         }
+    },
+
+    saveClaudeKey: () => {
+        const key = document.getElementById('claude-api-key').value.trim();
+        Utils.storage.set('claude_api_key', key);
+        Utils.showToast('Đã lưu mã Claude API an toàn tại trình duyệt!', 'success');
     },
 
     deleteUser: async (username) => {

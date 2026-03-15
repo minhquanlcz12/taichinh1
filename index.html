@@ -486,23 +486,46 @@
                     <div style="display: flex; flex-direction: column; gap: 12px;">
                         <!-- AI GENERATOR BUTTON -->
                         <button type="button" class="btn btn-warning" onclick="WorkModule.generateAILocal()" style="width: 100%; font-weight: bold; background: linear-gradient(135deg, #f1c40f 0%, #d35400 100%); color: #fff; border: none; box-shadow: 0 0 15px rgba(241, 196, 15, 0.4); margin-bottom: 8px;">
-                            <i class="fa-solid fa-wand-magic-sparkles"></i> AUTO-GENERATE AI CONTENT
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> CLAUDE AI TẠO NỘI DUNG TICKETS ĐA TẦNG
                         </button>
 
-                        <!-- 5. Nội Dung Chi Tiết -->
-                        <div class="form-group" style="flex: 1; display: flex; flex-direction: column;">
-                            <label style="color: var(--primary); font-size: 11px;">5. NỘI DUNG CHI TIẾT (Kịch bản/Caption)</label>
-                            <textarea id="ticket-noidung" class="form-control" style="flex: 1; min-height: 150px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); resize: vertical;"></textarea>
-                        </div>
-                        
-                        <!-- 7. Nội Dung Thiết Kế -->
-                        <div class="form-group" style="flex: 1; display: flex; flex-direction: column;">
-                            <label style="color: var(--primary); font-size: 11px;">7. NỘI DUNG THIẾT KẾ (Order Brief)</label>
-                            <textarea id="ticket-order" class="form-control" style="flex: 1; min-height: 100px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); resize: vertical;"></textarea>
+                        <div class="ai-tabs-container" style="flex: 1; display: flex; flex-direction: column; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden;">
+                            <div class="ai-tabs-header" style="display: flex; overflow-x: auto; background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--border-color);">
+                                <button class="ai-tab-btn active" onclick="WorkModule.switchAITab('tab-tomtat')">1. Tóm tắt</button>
+                                <button class="ai-tab-btn" onclick="WorkModule.switchAITab('tab-kichban')">2. Kịch bản</button>
+                                <button class="ai-tab-btn" onclick="WorkModule.switchAITab('tab-caption')">3. Caption</button>
+                                <button class="ai-tab-btn" onclick="WorkModule.switchAITab('tab-ytuong')">4. Ý tưởng ảnh</button>
+                                <button class="ai-tab-btn" onclick="WorkModule.switchAITab('tab-zalo')">5. Mẫu Zalo</button>
+                            </div>
+                            
+                            <div class="ai-tabs-body" style="flex: 1; position: relative;">
+                                <!-- Tab 1 -->
+                                <div id="tab-tomtat" class="ai-tab-content active">
+                                    <textarea id="ai-tomtat" class="ai-textarea" placeholder="Nội dung tóm tắt công việc..."></textarea>
+                                </div>
+                                <!-- Tab 2 -->
+                                <div id="tab-kichban" class="ai-tab-content">
+                                    <textarea id="ai-kichban" class="ai-textarea" placeholder="Kịch bản video chi tiết..."></textarea>
+                                </div>
+                                <!-- Tab 3 -->
+                                <div id="tab-caption" class="ai-tab-content">
+                                    <!-- Ánh xạ ngược về noiDung cũ để không mất data -->
+                                    <textarea id="ticket-noidung" class="ai-textarea" placeholder="Các mẫu caption bán hàng, branding..."></textarea>
+                                </div>
+                                <!-- Tab 4 -->
+                                <div id="tab-ytuong" class="ai-tab-content">
+                                    <!-- Ánh xạ ngược về orderBrief cũ -->
+                                    <textarea id="ticket-order" class="ai-textarea" placeholder="Gợi ý concept quay chụp, thiết kế..."></textarea>
+                                </div>
+                                <!-- Tab 5 -->
+                                <div id="tab-zalo" class="ai-tab-content">
+                                    <textarea id="ai-zalo" class="ai-textarea" placeholder="Tin nhắn chăm sóc khách hàng..."></textarea>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- 10. Nộp Kết Quả (Ảnh) -->
-                        <div class="form-group">
+                        <div class="form-group" style="margin-top: 12px; margin-bottom: 0;">
                             <label style="color: var(--primary); font-size: 11px;">10. Ô NỘP KẾT QUẢ / ẢNH GỢI Ý</label>
                             <div style="display: flex; gap: 12px; align-items: flex-end;">
                                 <div id="ticket-img-preview" style="width: 80px; height: 80px; border: 1px dashed var(--border-color); border-radius: 4px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: rgba(0,0,0,0.2);">
@@ -511,14 +534,12 @@
                                 <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('ticket-hidden-upload').click()">
                                     <i class="fa-solid fa-upload"></i> Tải ảnh lên
                                 </button>
+                                <button type="button" class="btn btn-success btn-sm" onclick="WorkModule.copyActiveZaloMessage()" style="margin-left: auto; font-weight: bold;">
+                                    <i class="fa-solid fa-copy"></i> COPY ZALO
+                                </button>
                                 <input type="file" id="ticket-hidden-upload" accept="image/*" style="display: none;" onchange="WorkModule.handleTicketImageUpload(event)">
                             </div>
                         </div>
-
-                        <!-- COPY ZALO BUTTON -->
-                        <button type="button" class="btn btn-success" onclick="WorkModule.copyZaloMessage()" style="width: 100%; margin-top: auto; font-weight: bold;">
-                            <i class="fa-solid fa-comment-sms"></i> COPY NHÁP GỬI ZALO (KHÁCH)
-                        </button>
                     </div>
 
                 </div>
@@ -533,14 +554,14 @@
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="js/utils.js?v=4.2"></script>
-    <script src="js/db.js?v=4.2"></script>
-    <script src="js/finance.js?v=4.2"></script>
-    <script src="js/work.js?v=4.2"></script>
-    <script src="js/attendance.js?v=4.2"></script>
-    <script src="js/chat.js?v=4.2"></script>
-    <script src="js/auth.js?v=4.2"></script>
-    <script src="js/app.js?v=4.2"></script>
+    <script src="js/utils.js?v=4.3"></script>
+    <script src="js/db.js?v=4.3"></script>
+    <script src="js/finance.js?v=4.3"></script>
+    <script src="js/work.js?v=4.3"></script>
+    <script src="js/attendance.js?v=4.3"></script>
+    <script src="js/chat.js?v=4.3"></script>
+    <script src="js/auth.js?v=4.3"></script>
+    <script src="js/app.js?v=4.3"></script>
 
     <!-- Toast Notification Container -->
     <div id="toast-container" class="toast-container"></div>

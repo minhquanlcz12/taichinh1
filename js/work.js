@@ -552,6 +552,15 @@ const WorkModule = {
         }
     },
 
+    // Tab Switching Logic
+    switchAITab: (tabId) => {
+        document.querySelectorAll('.ai-tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.ai-tab-content').forEach(c => c.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        const btn = document.querySelector(`button[onclick="WorkModule.switchAITab('${tabId}')"]`);
+        if (btn) btn.classList.add('active');
+    },
+
     // --- PHASE 2: TICKET VIEW MODULE & AUTOMATION ---
     activeTicketId: null,
 
@@ -573,7 +582,14 @@ const WorkModule = {
         document.getElementById('ticket-tieude').value = task.tieuDe || '';
         document.getElementById('ticket-noidung').value = task.noiDung || '';
         document.getElementById('ticket-order').value = task.orderBrief || '';
+        document.getElementById('ai-tomtat').value = task.aiTomTat || '';
+        document.getElementById('ai-kichban').value = task.aiKichBan || '';
+        document.getElementById('ai-zalo').value = task.aiZalo || '';
+
         document.getElementById('ticket-trangthai').value = task.trangThai || 'Planned';
+
+        // Reset về tab đầu tiên
+        WorkModule.switchAITab('tab-tomtat');
 
         // Fill Image Preview
         const imgPreview = document.getElementById('ticket-img-preview');
@@ -598,6 +614,10 @@ const WorkModule = {
             task.tieuDe = document.getElementById('ticket-tieude').value;
             task.noiDung = document.getElementById('ticket-noidung').value;
             task.orderBrief = document.getElementById('ticket-order').value;
+            task.aiTomTat = document.getElementById('ai-tomtat').value;
+            task.aiKichBan = document.getElementById('ai-kichban').value;
+            task.aiZalo = document.getElementById('ai-zalo').value;
+
             task.trangThai = document.getElementById('ticket-trangthai').value;
 
             await WorkModule.save();
@@ -625,90 +645,202 @@ const WorkModule = {
     },
 
 // AI Local Simulator Logic
-    generateAILocal: () => {
+    generateAILocal: async () => {
         const task = WorkModule.data.tasks.find(t => t.id === WorkModule.activeTicketId);
         if (!task) return;
 
         let tieuDe = document.getElementById('ticket-tieude').value || task.tieuDe || 'chủ đề này';
+        let mucTieu = task.mucTieu || '';
+        let truCot = task.truCot || '';
         let dinhDang = (task.dinhDang || '').toLowerCase();
-        
-        let draft = `[🔥 BẢN NHÁP TẠO TỰ ĐỘNG BẰNG AI SIMULATOR]\n\n`;
-        
         const isVideo = dinhDang.includes('video') || dinhDang.includes('reels') || dinhDang.includes('tiktok') || dinhDang.includes('short');
 
-        if (isVideo) {
-            // Random Hooks
-            const hooks = [
-                `3 Góc khuất về ${tieuDe} mà không ai nói cho bạn biết! 😱`,
-                `Sự thật ngã ngửa về ${tieuDe} - Xem ngay nhé!`,
-                `Đừng bỏ lỡ: Tuyệt chiêu xử lý ${tieuDe} trong 30 giây!`,
-                `Ai đang gặp khó với ${tieuDe} thì bơi ngay vào đây!`
-            ];
-            const randomHook = hooks[Math.floor(Math.random() * hooks.length)];
+        // KIẾM TRA CLAUDE API KEY
+        const claudeKey = Utils.storage.get('claude_api_key');
+        
+        if (claudeKey && claudeKey.trim() !== '') {
+            Utils.showToast('Đang kết nối Claude AI (Vui lòng đợi vài giây)...', 'info');
+            // Cập nhật giao diện (loading state)
+            const btn = document.querySelector('.btn-warning[onclick="WorkModule.generateAILocal()"]');
+            const originalBtnHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ĐANG TẠO...';
+            btn.disabled = true;
 
-            // Random Bodies
-            const bodies = [
-                `Lỗi sai phổ biến: Quá lạm dụng hoặc không chú ý tiểu tiết.\n   - Cách khắc phục: Tập trung trải nghiệm khách hàng trước tiên.`,
-                `Bước 1: Xác định rõ tệp khách hàng hướng tới.\n   - Bước 2: Tối ưu quy trình và ngân sách.`,
-                `Bạn chỉ cần 1 công thức đơn giản này: Đúng lúc + Đúng chỗ = Thành công!`
-            ];
-            const randomBody = bodies[Math.floor(Math.random() * bodies.length)];
+            const prompt = `Bạn là một chuyên gia Marketing và lên kế hoạch cực kỳ giỏi.
+            Hãy viết các nội dung dựa trên những thông tin sau:
+            - Mục tiêu chiến dịch: ${mucTieu}
+            - Chủ đề chính: ${truCot}
+            - Tiêu đề mong muốn: ${tieuDe}
+            - Định dạng yêu cầu: ${dinhDang}
+            
+            Hãy trả về KẾT QUẢ THEO ĐÚNG CẤU TRÚC XML DƯỚI ĐÂY (không viết thêm bất kỳ text nào ngoài thẻ XML, để hệ thống phần mềm có thể parse tự động):
+            
+            <tomtat>Viết Phiếu tóm tắt công việc gọn gàng: Mục tiêu chính, nội dung trọng yếu, cách thức triển khai, và các đầu ra cần phải hoàn thành.</tomtat>
+            
+            <kichban>Hãy viết kịch bản chi tiết ${isVideo ? '(Video/Reels)' : '(Bài đăng)'}. Có Hook (thu hút mở đầu), Thân bài/Painpoint, Kêu gọi hành động (CTA). Lời thoại dễ hiểu, cuốn hút.</kichban>
+            
+            <caption_content>Viết 3 caption khác nhau: 1 caption bán hàng trực tiếp thúc giục, 1 caption kiểu kể chuyện branding nhẹ nhàng, 1 caption siêu ngắn gọn để ném lên Reel/Tiktok gọn lẹ.</caption_content>
+            
+            <ytuong>Gợi ý 3 Concept/Ý tưởng hình ảnh hoặc quay video chi tiết (màu sắc, góc máy, mood/cảm giác tổng thể).</ytuong>
+            
+            <zalo>Viết 2 mẫu tin nhắn Zalo gửi khách để báo cáo hoặc gửi kịch bản (1 mẫu Lịch sự chuyên nghiệp, 1 mẫu thân thiện ngắn gọn).</zalo>
+            `;
 
-            // Random CTAs
-            const ctas = [
-                `Thấy hay thì nhớ thả tim và Follow cho kênh nha! ❤️`,
-                `Bạn nghĩ sao về điều này? Comment phí dưới nhé! 👇`,
-                `Inbox ngay để được team mình hướng dẫn chi tiết nhé! 📩`
-            ];
-            const randomCta = ctas[Math.floor(Math.random() * ctas.length)];
+            try {
+                const response = await fetch('https://api.anthropic.com/v1/messages', {
+                    method: 'POST',
+                    headers: {
+                        'x-api-key': claudeKey,
+                        'anthropic-version': '2023-06-01',
+                        'content-type': 'application/json',
+                        'anthropic-dangerous-direct-browser-access': 'true' // Bắt buộc cho trình duyệt
+                    },
+                    body: JSON.stringify({
+                        model: "claude-3-haiku-20240307", // Dùng models ưu tiên độ nhanh (Haiku/Sonnet)
+                        max_tokens: 2048,
+                        messages: [
+                            { role: "user", content: prompt }
+                        ]
+                    })
+                });
 
-            draft += `🎬 KỊCH BẢN CHI TIẾT (VIDEO):\n`;
-            draft += `━━━━━━━━━━━━━━━━━━━━━━\n`;
-            draft += `⚡ 1. Hook (0-3s): Nhịp độ video nhanh, text đập vào mắt.\n`;
-            draft += `   ▶️ Thoại: "${randomHook}"\n\n`;
-            draft += `😰 2. Nội dung chính (3-15s): Chuyển cảnh liên tục 3-5s/shot.\n`;
-            draft += `   ▶️ Thoại: "${randomBody}"\n\n`;
-            draft += `🔥 3. Kêu gọi hành động (15-20s): Logo thương hiệu nháy sáng.\n`;
-            draft += `   ▶️ Thoại: "${randomCta}"\n\n`;
-            draft += `🎥 HƯỚNG DẪN QUAY (B-ROLL):\n`;
-            draft += `- Quay cận cảnh sản phẩm/dịch vụ (Macro shot, slow motion).\n`;
-            draft += `- Lồng nhạc Trending giật beat mạnh ở khúc chuyển cảnh.\n`;
+                if (!response.ok) {
+                    throw new Error('API Request Failed: ' + response.statusText);
+                }
+
+                const data = await response.json();
+                const aiText = data.content[0].text;
+                
+                // Parse XML
+                const extractXml = (content, tag) => {
+                    const regex = new RegExp(`<${tag}>(.*?)</${tag}>`, 's');
+                    const match = content.match(regex);
+                    return match ? match[1].trim() : '';
+                };
+
+                const tomtat = extractXml(aiText, 'tomtat');
+                const kichban = extractXml(aiText, 'kichban');
+                const captions = extractXml(aiText, 'caption_content');
+                const ytuong = extractXml(aiText, 'ytuong');
+                const zalo = extractXml(aiText, 'zalo');
+
+                // Map vào form
+                if (tomtat) document.getElementById('ai-tomtat').value = tomtat;
+                if (kichban) document.getElementById('ai-kichban').value = kichban;
+                if (captions) document.getElementById('ticket-noidung').value = captions;
+                if (ytuong) document.getElementById('ticket-order').value = ytuong;
+                if (zalo) document.getElementById('ai-zalo').value = zalo;
+                
+                Utils.showToast('Trích xuất thành công từ Claude AI sang các Tab!', 'success');
+            } catch (error) {
+                console.error("Claude API Error:", error);
+                Utils.showToast('Lỗi khi gọi API Claude (Sai Key hoặc lỗi Cors).', 'error');
+                // Khôi phục nút
+                btn.innerHTML = originalBtnHtml;
+                btn.disabled = false;
+                return;
+            }
+
+            // Khôi phục nút
+            btn.innerHTML = originalBtnHtml;
+            btn.disabled = false;
+
         } else {
-            // Image/Text Randomizer
-            const headlines = [
-                `🔥 BẬT MÍ BÍ QUYẾT: ${tieuDe.toUpperCase()} 😱`,
-                `🌟 CƠ HỘI VÀNG: GIẢI MÃ ${tieuDe.toUpperCase()} CHO BẠN!`,
-                `💥 HOT: LÀM SAO ĐỂ XỬ LÝ ${tieuDe.toUpperCase()} HIỆU QUẢ?`
-            ];
-            const randomHead = headlines[Math.floor(Math.random() * headlines.length)];
+            // FALLBACK LOCAL MOCKUP NẾU CHƯA NHẬP KEY
+            Utils.showToast('Chưa có API Key. Sử dụng Local Template (Trộn ngẫu nhiên).', 'info');
+            
+            let draft = `[🔥 BẢN NHÁP LOCAL TỰ ĐỘNG - Vui lòng cấu hình API Claude để nội dung xịn hơn]\n\n`;
+            
+            if (isVideo) {
+                // Random Hooks
+                const hooks = [
+                    `3 Góc khuất về ${tieuDe} mà không ai nói cho bạn biết! 😱`,
+                    `Sự thật ngã ngửa về ${tieuDe} - Xem ngay nhé!`,
+                    `Đừng bỏ lỡ: Tuyệt chiêu xử lý ${tieuDe} trong 30 giây!`,
+                    `Ai đang gặp khó với ${tieuDe} thì bơi ngay vào đây!`
+                ];
+                const randomHook = hooks[Math.floor(Math.random() * hooks.length)];
 
-            const contents = [
-                `Nhiều anh/chị hay hỏi em tại sao lại cần như vậy. Đơn giản vì nó giúp TIẾT KIỆM 50% thời gian và CAM KẾT HIỆU QUẢ lâu dài. Cố gắng áp dụng nha!`,
-                `Đây là bộ giải pháp toàn diện đã được kiểm chứng. Bạn chỉ việc áp dụng, còn lại cứ để hệ thống tự động lo.`,
-                `Không cần phức tạp, chỉ với 3 thay đổi nhỏ mỗi ngày, thành quả mang lại sẽ khiến bạn bất ngờ đấy nhé!`
-            ];
-            const randomContent = contents[Math.floor(Math.random() * contents.length)];
+                // Random Bodies
+                const bodies = [
+                    `Lỗi sai phổ biến: Quá lạm dụng hoặc không chú ý tiểu tiết.\n   - Cách khắc phục: Tập trung trải nghiệm khách hàng trước tiên.`,
+                    `Bước 1: Xác định rõ tệp khách hàng hướng tới.\n   - Bước 2: Tối ưu quy trình và ngân sách.`,
+                    `Bạn chỉ cần 1 công thức đơn giản này: Đúng lúc + Đúng chỗ = Thành công!`
+                ];
+                const randomBody = bodies[Math.floor(Math.random() * bodies.length)];
 
-            draft += `📝 CAPTION BÀI VIẾT (ẢNH/TEXT):\n`;
-            draft += `━━━━━━━━━━━━━━━━━━━━━━\n`;
-            draft += `👉 Tiêu đề: ${randomHead}\n\n`;
-            draft += `🌟 Nội dung: ${randomContent}\n\n`;
-            draft += `✔️ Lợi ích 1: Tối ưu chi phí, X2 doanh thu.\n`;
-            draft += `✔️ Lợi ích 2: Support nhiệt tình 24/7.\n\n`;
-            draft += `🎁 ƯU ĐÃI ĐẶC BIỆT CHỈ CÓ SỐ LƯỢNG GIỚI HẠN!\n`;
-            draft += `🔥 Kêu gọi hành động: "Để lại [CHẤM] nhận ngay tư vấn hoặc Inbox trực tiếp nha!"\n\n`;
-            draft += `🖼️ Ý TƯỞNG THIẾT KẾ ẢNH:\n`;
-            draft += `- Bố cục 1/3: Bên trái là chữ to rõ, bên phải là ảnh minh họa.\n`;
-            draft += `- Tone màu chói/tương phản mạnh (Đỏ/Vàng) để hút mắt người lướt Feed.\n`;
+                // Random CTAs
+                const ctas = [
+                    `Thấy hay thì nhớ thả tim và Follow cho kênh nha! ❤️`,
+                    `Bạn nghĩ sao về điều này? Comment phí dưới nhé! 👇`,
+                    `Inbox ngay để được team mình hướng dẫn chi tiết nhé! 📩`
+                ];
+                const randomCta = ctas[Math.floor(Math.random() * ctas.length)];
+
+                draft += `🎬 KỊCH BẢN CHI TIẾT (VIDEO):\n`;
+                draft += `━━━━━━━━━━━━━━━━━━━━━━\n`;
+                draft += `⚡ 1. Hook (0-3s): Nhịp độ video nhanh, text đập vào mắt.\n`;
+                draft += `   ▶️ Thoại: "${randomHook}"\n\n`;
+                draft += `😰 2. Nội dung chính (3-15s): Chuyển cảnh liên tục 3-5s/shot.\n`;
+                draft += `   ▶️ Thoại: "${randomBody}"\n\n`;
+                draft += `🔥 3. Kêu gọi hành động (15-20s): Logo thương hiệu nháy sáng.\n`;
+                draft += `   ▶️ Thoại: "${randomCta}"\n\n`;
+                draft += `🎥 HƯỚNG DẪN QUAY (B-ROLL):\n`;
+                draft += `- Quay cận cảnh sản phẩm/dịch vụ (Macro shot, slow motion).\n`;
+                draft += `- Lồng nhạc Trending giật beat mạnh ở khúc chuyển cảnh.\n`;
+            } else {
+                // Image/Text Randomizer
+                const headlines = [
+                    `🔥 BẬT MÍ BÍ QUYẾT: ${tieuDe.toUpperCase()} 😱`,
+                    `🌟 CƠ HỘI VÀNG: GIẢI MÃ ${tieuDe.toUpperCase()} CHO BẠN!`,
+                    `💥 HOT: LÀM SAO ĐỂ XỬ LÝ ${tieuDe.toUpperCase()} HIỆU QUẢ?`
+                ];
+                const randomHead = headlines[Math.floor(Math.random() * headlines.length)];
+
+                const contents = [
+                    `Nhiều anh/chị hay hỏi em tại sao lại cần như vậy. Đơn giản vì nó giúp TIẾT KIỆM 50% thời gian và CAM KẾT HIỆU QUẢ lâu dài. Cố gắng áp dụng nha!`,
+                    `Đây là bộ giải pháp toàn diện đã được kiểm chứng. Bạn chỉ việc áp dụng, còn lại cứ để hệ thống tự động lo.`,
+                    `Không cần phức tạp, chỉ với 3 thay đổi nhỏ mỗi ngày, thành quả mang lại sẽ khiến bạn bất ngờ đấy nhé!`
+                ];
+                const randomContent = contents[Math.floor(Math.random() * contents.length)];
+
+                draft += `📝 CAPTION BÀI VIẾT (ẢNH/TEXT):\n`;
+                draft += `━━━━━━━━━━━━━━━━━━━━━━\n`;
+                draft += `👉 Tiêu đề: ${randomHead}\n\n`;
+                draft += `🌟 Nội dung: ${randomContent}\n\n`;
+                draft += `✔️ Lợi ích 1: Tối ưu chi phí, X2 doanh thu.\n`;
+                draft += `✔️ Lợi ích 2: Support nhiệt tình 24/7.\n\n`;
+                draft += `🎁 ƯU ĐÃI ĐẶC BIỆT CHỈ CÓ SỐ LƯỢNG GIỚI HẠN!\n`;
+                draft += `🔥 Kêu gọi hành động: "Để lại [CHẤM] nhận ngay tư vấn hoặc Inbox trực tiếp nha!"\n\n`;
+                draft += `🖼️ Ý TƯỞNG THIẾT KẾ ẢNH:\n`;
+                draft += `- Bố cục 1/3: Bên trái là chữ to rõ, bên phải là ảnh minh họa.\n`;
+                draft += `- Tone màu chói/tương phản mạnh (Đỏ/Vàng) để hút mắt người lướt Feed.\n`;
+            }
+
+            // Tự động điền cả Order Design
+            let orderBrief = `[🛠️ ORDER THIẾT KẾ / DỰNG VIDEO]\n- Yêu cầu: Làm nổi bật tiêu đề "${tieuDe}".\n- Tone màu: Phù hợp nhận diện thương hiệu.\n- Text chính: (Sử dụng text từ kịch bản trên).\n- Định dạng xuất file: Tối ưu cho Mobile (9:16 hoặc vuông 1:1, ảnh nét HD).`;
+            document.getElementById('ticket-order').value = orderBrief;
+
+            // Fill into the textarea
+            document.getElementById('ticket-noidung').value = draft;
+            Utils.showToast('Đã trộn ngẫu nhiên Template nội dung!', 'success');
+        }
+    },
+
+    copyActiveZaloMessage: () => {
+        // Copy nội dung của Tab Zalo
+        const zaloContent = document.getElementById('ai-zalo').value.trim();
+        if (!zaloContent) {
+            Utils.showToast('Vui lòng tạo nội dung AI mẫu trước hoặc điền tin nhắn Zalo!', 'warning');
+            return;
         }
 
-        // Tự động điền cả Order Design
-        let orderBrief = `[🛠️ ORDER THIẾT KẾ / DỰNG VIDEO]\n- Yêu cầu: Làm nổi bật tiêu đề "${tieuDe}".\n- Tone màu: Phù hợp nhận diện thương hiệu.\n- Text chính: (Sử dụng text từ kịch bản trên).\n- Định dạng xuất file: Tối ưu cho Mobile (9:16 hoặc vuông 1:1, ảnh nét HD).`;
-        document.getElementById('ticket-order').value = orderBrief;
-
-        // Fill into the textarea
-        document.getElementById('ticket-noidung').value = draft;
-        Utils.showToast('AI đã tạo xong nội dung khung sườn chi tiết!', 'success');
+        navigator.clipboard.writeText(zaloContent).then(() => {
+            Utils.showToast("Đã copy tin nhắn Zalo vào bộ nhớ đệm!", "success");
+        }).catch(err => {
+            console.error('Không thể copy', err);
+            Utils.showToast("Không thể copy tự động, vui lòng copy tay.", "error");
+        });
     },
 
     copyZaloMessage: () => {
