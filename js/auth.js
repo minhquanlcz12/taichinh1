@@ -249,6 +249,7 @@ const Auth = {
         const settingsView = document.getElementById('settings-view');
 
         let currentKey = Utils.storage.get('claude_api_key') || '';
+        let currentModel = Utils.storage.get('claude_api_model') || 'claude-3-haiku-20240307';
         let html = `
             <div class="glass-card" style="margin-bottom: 24px;">
                 <h3>Cài đặt ứng dụng</h3>
@@ -267,9 +268,22 @@ const Auth = {
                 <p style="color:var(--text-secondary); margin-bottom: 16px;">Nhập mã API Anthropic của bạn để kích hoạt chức năng tự động viết Nội dung/Kịch bản ở cấp độ chuyên gia.</p>
                 <div class="form-group" style="display:flex; gap: 8px;">
                     <input type="password" id="claude-api-key" class="form-control" placeholder="sk-ant-api03-..." value="${currentKey}" style="flex:1;">
-                    <button class="btn btn-primary" onclick="Auth.saveClaudeKey()"><i class="fa-solid fa-floppy-disk"></i> Lưu Key</button>
+                    <button class="btn btn-primary" onclick="Auth.saveClaudeKey()"><i class="fa-solid fa-floppy-disk"></i> Lưu Cấu Hình</button>
                 </div>
-                <small style="color: var(--text-secondary);"><i class="fa-solid fa-circle-info"></i> API Key chỉ lưu bảo mật trên trình duyệt máy tính của bạn, không gửi lên server.</small>
+                
+                <div class="form-group" style="margin-top: 12px; display: flex; gap: 16px; align-items: center;">
+                    <label style="color: var(--text-secondary); font-size: 13px;">Chọn Model AI:</label>
+                    <label style="display:flex; align-items:center; gap:4px; font-size: 13px;">
+                        <input type="radio" name="claude-model" value="claude-3-haiku-20240307" ${currentModel === 'claude-3-haiku-20240307' ? 'checked' : ''}>
+                        Claude 3 Haiku (Nhanh, Rẻ)
+                    </label>
+                    <label style="display:flex; align-items:center; gap:4px; font-size: 13px; color: var(--warning);">
+                        <input type="radio" name="claude-model" value="claude-3-5-sonnet-20240620" ${currentModel === 'claude-3-5-sonnet-20240620' ? 'checked' : ''}>
+                        Claude 3.5 Sonnet (Thông minh, Đắt hơn)
+                    </label>
+                </div>
+
+                <small style="color: var(--text-secondary); display:block; margin-top:8px;"><i class="fa-solid fa-circle-info"></i> API Key chỉ lưu bảo mật trên trình duyệt máy tính của bạn. Nếu API bị lỗi CORS do Browser, app sẽ tự động fallback về mẫu Local.</small>
             </div>
         `;
 
@@ -332,8 +346,10 @@ const Auth = {
 
     saveClaudeKey: () => {
         const key = document.getElementById('claude-api-key').value.trim();
+        const model = document.querySelector('input[name="claude-model"]:checked').value;
         Utils.storage.set('claude_api_key', key);
-        Utils.showToast('Đã lưu mã Claude API an toàn tại trình duyệt!', 'success');
+        Utils.storage.set('claude_api_model', model);
+        Utils.showToast('Đã lưu Cấu hình AI an toàn tại trình duyệt!', 'success');
     },
 
     deleteUser: async (username) => {

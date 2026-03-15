@@ -686,6 +686,7 @@ const WorkModule = {
             <zalo>Viết 2 mẫu tin nhắn Zalo gửi khách để báo cáo hoặc gửi kịch bản (1 mẫu Lịch sự chuyên nghiệp, 1 mẫu thân thiện ngắn gọn).</zalo>
             `;
 
+            const activeModel = Utils.storage.get('claude_api_model') || 'claude-3-haiku-20240307';
             try {
                 const response = await fetch('https://api.anthropic.com/v1/messages', {
                     method: 'POST',
@@ -696,7 +697,7 @@ const WorkModule = {
                         'anthropic-dangerous-direct-browser-access': 'true' // Bắt buộc cho trình duyệt
                     },
                     body: JSON.stringify({
-                        model: "claude-3-haiku-20240307", // Dùng models ưu tiên độ nhanh (Haiku/Sonnet)
+                        model: activeModel,
                         max_tokens: 2048,
                         messages: [
                             { role: "user", content: prompt }
@@ -749,80 +750,38 @@ const WorkModule = {
             // FALLBACK LOCAL MOCKUP NẾU CHƯA NHẬP KEY
             Utils.showToast('Chưa có API Key. Sử dụng Local Template (Trộn ngẫu nhiên).', 'info');
             
-            let draft = `[🔥 BẢN NHÁP LOCAL TỰ ĐỘNG - Vui lòng cấu hình API Claude để nội dung xịn hơn]\n\n`;
+            let draftTomTat = `[MẪU LOCAL] Tóm tắt công việc:
+- Mục tiêu: ${mucTieu || 'Chưa rõ'}
+- Chủ đề: ${truCot || 'Chưa rõ'}
+- Định dạng: ${dinhDang || 'Chưa rõ'}
+=> Cần hoàn thành nội dung thu hút và hình ảnh bắt mắt.`;
             
+            let draftKichBan = '';
+            let draftCaption = '';
+            let draftYTuong = `[MẪU LOCAL] Ý TƯỞNG THIẾT KẾ:\n- Bố cục 1/3: Bên trái là chữ to rõ, bên phải là ảnh minh họa.\n- Tone màu chói/tương phản mạnh để hút mắt người lướt Feed.\n- Yêu cầu thêm: Làm nổi bật tiêu đề "${tieuDe}".`;
+            let draftZalo = `[MẪU 1 - CHUYÊN NGHIỆP]\nDạ em gửi anh chị kịch bản nháp cho bài "${tieuDe}". Anh chị xem và phản hồi giúp em nhé!\n\n[MẪU 2 - THÂN THIỆN]\nSếp ơi, em lên xong plan bài "${tieuDe}" rồi nè. Sếp check qua nha 😉`;
+
             if (isVideo) {
-                // Random Hooks
-                const hooks = [
-                    `3 Góc khuất về ${tieuDe} mà không ai nói cho bạn biết! 😱`,
-                    `Sự thật ngã ngửa về ${tieuDe} - Xem ngay nhé!`,
-                    `Đừng bỏ lỡ: Tuyệt chiêu xử lý ${tieuDe} trong 30 giây!`,
-                    `Ai đang gặp khó với ${tieuDe} thì bơi ngay vào đây!`
-                ];
-                const randomHook = hooks[Math.floor(Math.random() * hooks.length)];
-
-                // Random Bodies
-                const bodies = [
-                    `Lỗi sai phổ biến: Quá lạm dụng hoặc không chú ý tiểu tiết.\n   - Cách khắc phục: Tập trung trải nghiệm khách hàng trước tiên.`,
-                    `Bước 1: Xác định rõ tệp khách hàng hướng tới.\n   - Bước 2: Tối ưu quy trình và ngân sách.`,
-                    `Bạn chỉ cần 1 công thức đơn giản này: Đúng lúc + Đúng chỗ = Thành công!`
-                ];
-                const randomBody = bodies[Math.floor(Math.random() * bodies.length)];
-
-                // Random CTAs
-                const ctas = [
-                    `Thấy hay thì nhớ thả tim và Follow cho kênh nha! ❤️`,
-                    `Bạn nghĩ sao về điều này? Comment phí dưới nhé! 👇`,
-                    `Inbox ngay để được team mình hướng dẫn chi tiết nhé! 📩`
-                ];
-                const randomCta = ctas[Math.floor(Math.random() * ctas.length)];
-
-                draft += `🎬 KỊCH BẢN CHI TIẾT (VIDEO):\n`;
-                draft += `━━━━━━━━━━━━━━━━━━━━━━\n`;
-                draft += `⚡ 1. Hook (0-3s): Nhịp độ video nhanh, text đập vào mắt.\n`;
-                draft += `   ▶️ Thoại: "${randomHook}"\n\n`;
-                draft += `😰 2. Nội dung chính (3-15s): Chuyển cảnh liên tục 3-5s/shot.\n`;
-                draft += `   ▶️ Thoại: "${randomBody}"\n\n`;
-                draft += `🔥 3. Kêu gọi hành động (15-20s): Logo thương hiệu nháy sáng.\n`;
-                draft += `   ▶️ Thoại: "${randomCta}"\n\n`;
-                draft += `🎥 HƯỚNG DẪN QUAY (B-ROLL):\n`;
-                draft += `- Quay cận cảnh sản phẩm/dịch vụ (Macro shot, slow motion).\n`;
-                draft += `- Lồng nhạc Trending giật beat mạnh ở khúc chuyển cảnh.\n`;
+                const hooks = [`3 Góc khuất về ${tieuDe} mà không ai nói cho bạn biết! 😱`, `Sự thật ngã ngửa về ${tieuDe} - Xem ngay nhé!`];
+                const bodies = [`Lỗi sai phổ biến: Quá lạm dụng hoặc không chú ý tiểu tiết.\n- Cách khắc phục: Tập trung trải nghiệm.`, `Bạn chỉ cần 1 bí quyết: Đúng lúc + Đúng chỗ = Thành công!`];
+                const ctas = [`Thấy hay thì nhớ thả tim và Follow nha! ❤️`, `Bạn nghĩ sao về điều này? Comment phí dưới nhé! 👇`];
+                
+                draftKichBan = `🎬 KỊCH BẢN CHI TIẾT (VIDEO):\n\n⚡ 1. Hook (0-3s):\n▶️ Thoại: "${hooks[Math.floor(Math.random() * hooks.length)]}"\n\n😰 2. Nội dung chính:\n▶️ Thoại: "${bodies[Math.floor(Math.random() * bodies.length)]}"\n\n🔥 3. Kêu gọi hành động:\n▶️ Thoại: "${ctas[Math.floor(Math.random() * ctas.length)]}"\n\n🎥 HƯỚNG DẪN B-ROLL:\n- Quay cận cảnh sản phẩm, lồng nhạc trending giật beat mạnh.`;
+                draftCaption = `📌 Dùng tóm tắt kịch bản trên làm caption đăng kèm reels/tiktok. Thêm hashtag #viral #${tieuDe.replace(/\s+/g,'')}`;
             } else {
-                // Image/Text Randomizer
-                const headlines = [
-                    `🔥 BẬT MÍ BÍ QUYẾT: ${tieuDe.toUpperCase()} 😱`,
-                    `🌟 CƠ HỘI VÀNG: GIẢI MÃ ${tieuDe.toUpperCase()} CHO BẠN!`,
-                    `💥 HOT: LÀM SAO ĐỂ XỬ LÝ ${tieuDe.toUpperCase()} HIỆU QUẢ?`
-                ];
-                const randomHead = headlines[Math.floor(Math.random() * headlines.length)];
-
-                const contents = [
-                    `Nhiều anh/chị hay hỏi em tại sao lại cần như vậy. Đơn giản vì nó giúp TIẾT KIỆM 50% thời gian và CAM KẾT HIỆU QUẢ lâu dài. Cố gắng áp dụng nha!`,
-                    `Đây là bộ giải pháp toàn diện đã được kiểm chứng. Bạn chỉ việc áp dụng, còn lại cứ để hệ thống tự động lo.`,
-                    `Không cần phức tạp, chỉ với 3 thay đổi nhỏ mỗi ngày, thành quả mang lại sẽ khiến bạn bất ngờ đấy nhé!`
-                ];
-                const randomContent = contents[Math.floor(Math.random() * contents.length)];
-
-                draft += `📝 CAPTION BÀI VIẾT (ẢNH/TEXT):\n`;
-                draft += `━━━━━━━━━━━━━━━━━━━━━━\n`;
-                draft += `👉 Tiêu đề: ${randomHead}\n\n`;
-                draft += `🌟 Nội dung: ${randomContent}\n\n`;
-                draft += `✔️ Lợi ích 1: Tối ưu chi phí, X2 doanh thu.\n`;
-                draft += `✔️ Lợi ích 2: Support nhiệt tình 24/7.\n\n`;
-                draft += `🎁 ƯU ĐÃI ĐẶC BIỆT CHỈ CÓ SỐ LƯỢNG GIỚI HẠN!\n`;
-                draft += `🔥 Kêu gọi hành động: "Để lại [CHẤM] nhận ngay tư vấn hoặc Inbox trực tiếp nha!"\n\n`;
-                draft += `🖼️ Ý TƯỞNG THIẾT KẾ ẢNH:\n`;
-                draft += `- Bố cục 1/3: Bên trái là chữ to rõ, bên phải là ảnh minh họa.\n`;
-                draft += `- Tone màu chói/tương phản mạnh (Đỏ/Vàng) để hút mắt người lướt Feed.\n`;
+                const headlines = [`🔥 BẬT MÍ BÍ QUYẾT: ${tieuDe.toUpperCase()}`, `🌟 CƠ HỘI VÀNG: GIẢI MÃ ${tieuDe.toUpperCase()}`];
+                const contents = [`Nhiều anh/chị hay hỏi em tại sao. Đơn giản vì nó giúp TIẾT KIỆM 50% thời gian!`, `Chỉ với 3 thay đổi nhỏ mỗi ngày, thành quả sẽ khiến bạn bất ngờ! chờ xem nhé.`];
+                
+                draftKichBan = `(Với bài Text/Ảnh không có kịch bản Video. Vui lòng xem Tab Caption bên cạnh)`;
+                draftCaption = `[CAPTION 1 - BÁN HÀNG]\n🔥 ${headlines[0]}\n${contents[0]}\n👉 Inbox chốt đơn ngay!\n\n[CAPTION 2 - BRANDING]\n🌟 ${headlines[1]}\n${contents[1]}\n👉 Phù hợp mọi phong cách. Theo dõi trang để biết thêm!`;
             }
 
-            // Tự động điền cả Order Design
-            let orderBrief = `[🛠️ ORDER THIẾT KẾ / DỰNG VIDEO]\n- Yêu cầu: Làm nổi bật tiêu đề "${tieuDe}".\n- Tone màu: Phù hợp nhận diện thương hiệu.\n- Text chính: (Sử dụng text từ kịch bản trên).\n- Định dạng xuất file: Tối ưu cho Mobile (9:16 hoặc vuông 1:1, ảnh nét HD).`;
-            document.getElementById('ticket-order').value = orderBrief;
+            document.getElementById('ai-tomtat').value = draftTomTat;
+            document.getElementById('ai-kichban').value = draftKichBan;
+            document.getElementById('ticket-noidung').value = draftCaption;
+            document.getElementById('ticket-order').value = draftYTuong;
+            document.getElementById('ai-zalo').value = draftZalo;
 
-            // Fill into the textarea
-            document.getElementById('ticket-noidung').value = draft;
             Utils.showToast('Đã trộn ngẫu nhiên Template nội dung!', 'success');
         }
     },
