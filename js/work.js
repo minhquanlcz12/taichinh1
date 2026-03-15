@@ -389,10 +389,13 @@ const WorkModule = {
                             <table class="data-table">
                                 <thead>
                                     <tr>
+                                        <th class="col-stt">STT</th>
                                         <th class="col-ngay">Ngày đăng</th>
                                         <th class="col-muctieu th-green">Mục tiêu</th>
                                         <th class="col-tieude th-green">Tiêu đề</th>
+                                        <th class="col-noidung th-green">Nội dung chi tiết</th>
                                         <th class="col-dinhdang">Định dạng</th>
+                                        <th class="col-order">Nội dung order thiết kế</th>
                                         <th class="col-deadline">Thứ - Deadline</th>
                                         <th class="col-trangthai">Trạng thái</th>
                                         <th class="col-actions" style="text-align: right;"><i class="fa-solid fa-gear"></i></th>
@@ -436,13 +439,21 @@ const WorkModule = {
 
                 html += `
                     <tr class="${isCompleted ? 'row-completed' : ''}">
+                        <td class="col-stt">${task.stt || ''}</td>
                         <td class="col-ngay" style="font-weight: 600;">${task.ngayDang}</td>
                         <td class="col-muctieu td-green"><span class="task-content-text">${task.mucTieu || '--'}</span></td>
                         <td class="col-tieude td-green">
-                            <span class="task-content-text" style="font-size: 14px; font-weight: bold; color: var(--primary);">${task.tieuDe || 'Chưa có tiêu đề'}</span>
+                            <span class="task-content-text" style="font-size: 14px; font-weight: bold; color: var(--primary);">${task.tieuDe || '--'}</span>
                         </td>
+                        <td class="col-noidung td-green"><span class="task-content-text" style="text-align:justify;">${task.noiDung || '--'}</span></td>
                         <td class="col-dinhdang"><span class="badge badge-gray">${task.dinhDang || '--'}</span></td>
-                        <td class="col-deadline"><div class="${deadlineClass}" style="padding: 4px; border-radius: 4px; text-align: left;">${task.thu} ${task.deadline ? `<br>(Hạn: ${task.deadline})` : ''}</div></td>
+                        <td class="col-order"><span class="task-content-text" style="text-align:justify;">${task.orderBrief || '--'}</span></td>
+                        <td class="col-deadline">
+                            <div class="${deadlineClass}" style="padding: 4px; border-radius: 4px; text-align: left;">
+                                ${task.thu ? `<b>${task.thu}</b><br>` : ''}
+                                ${task.deadline ? `${task.deadline}` : '--'}
+                            </div>
+                        </td>
                         <td class="col-trangthai">
                             <select class="form-control ${statusClass}" style="font-size: 12px; font-weight:600; padding:4px 8px; border-radius:4px; max-width: 120px;" onchange="WorkModule.changeTaskStatus('${task.id}', this.value)">
                                 ${statusOptions}
