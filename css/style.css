@@ -1332,63 +1332,63 @@ body.light-theme .data-table th {
 
 /* Specific Column Widths */
 .col-stt {
-    width: 25px; /* Giảm mạnh do STT chỉ là 1 con số */
-    padding: 4px;
+    width: 25px; /* Đã tối ưu nhỏ nhất */
+    padding: 2px;
     text-align: center;
 }
 
 .col-ngay {
-    width: 85px; /* Giảm nhẹ */
+    width: 70px;
     white-space: nowrap;
 }
 
 .col-thu {
-    width: 60px;
+    width: 30px;
     text-align: center;
 }
 
 .col-muctieu {
-    width: 120px;
+    width: 100px;
 }
 
 .col-trucot {
-    width: 120px;
+    width: 100px;
 }
 
 .col-tieude {
-    width: 150px; /* Giảm nhẹ */
+    width: 140px; 
     font-weight: 600;
 }
 
 .col-noidung {
-    width: 280px; /* Nội dung có thể xuống dòng, tối ưu không gian rộng */
+    width: 320px; /* Nội dung có thể xuống dòng, tối ưu không gian rộng */
 }
 
 .col-dinhdang {
-    width: 120px;
+    width: 100px;
 }
 
 .col-order {
-    width: 280px; /* Tương tự nội dung chi tiết */
+    width: 300px; /* Tương tự nội dung chi tiết */
 }
 
 .col-deadline {
-    width: 90px;
+    width: 80px;
     text-align: center;
 }
 
 .col-trangthai {
-    width: 90px;
+    width: 80px;
     text-align: center;
     font-weight: 600;
 }
 
 .col-ghichu {
-    width: 150px;
+    width: 120px;
 }
 
 .col-anh {
-    width: 80px;
+    width: 75px;
 }
 
 .col-actions {
@@ -1399,10 +1399,10 @@ body.light-theme .data-table th {
 /* Readability wraps */
 .task-content-text {
     display: block;
-    word-break: break-word;
+    word-break: break-word; /* Important to keep long text wrapped */
     white-space: pre-wrap;
     /* Preserve line breaks from excel */
-    line-height: 1.5;
+    line-height: 1.4;
 }
 
 /* Row Styling */

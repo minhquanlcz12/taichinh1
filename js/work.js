@@ -624,50 +624,82 @@ const WorkModule = {
         reader.readAsDataURL(file);
     },
 
+// AI Local Simulator Logic
     generateAILocal: () => {
         const task = WorkModule.data.tasks.find(t => t.id === WorkModule.activeTicketId);
         if (!task) return;
 
-        let tieuDe = document.getElementById('ticket-tieude').value || task.tieuDe || 'Chủ đề bài đăng';
+        let tieuDe = document.getElementById('ticket-tieude').value || task.tieuDe || 'chủ đề này';
         let dinhDang = (task.dinhDang || '').toLowerCase();
         
         let draft = `[🔥 BẢN NHÁP TẠO TỰ ĐỘNG BẰNG AI SIMULATOR]\n\n`;
         
-        if (dinhDang.includes('video') || dinhDang.includes('reels') || dinhDang.includes('tiktok') || dinhDang.includes('short')) {
+        const isVideo = dinhDang.includes('video') || dinhDang.includes('reels') || dinhDang.includes('tiktok') || dinhDang.includes('short');
+
+        if (isVideo) {
+            // Random Hooks
+            const hooks = [
+                `3 Góc khuất về ${tieuDe} mà không ai nói cho bạn biết! 😱`,
+                `Sự thật ngã ngửa về ${tieuDe} - Xem ngay nhé!`,
+                `Đừng bỏ lỡ: Tuyệt chiêu xử lý ${tieuDe} trong 30 giây!`,
+                `Ai đang gặp khó với ${tieuDe} thì bơi ngay vào đây!`
+            ];
+            const randomHook = hooks[Math.floor(Math.random() * hooks.length)];
+
+            // Random Bodies
+            const bodies = [
+                `Lỗi sai phổ biến: Quá lạm dụng hoặc không chú ý tiểu tiết.\n   - Cách khắc phục: Tập trung trải nghiệm khách hàng trước tiên.`,
+                `Bước 1: Xác định rõ tệp khách hàng hướng tới.\n   - Bước 2: Tối ưu quy trình và ngân sách.`,
+                `Bạn chỉ cần 1 công thức đơn giản này: Đúng lúc + Đúng chỗ = Thành công!`
+            ];
+            const randomBody = bodies[Math.floor(Math.random() * bodies.length)];
+
+            // Random CTAs
+            const ctas = [
+                `Thấy hay thì nhớ thả tim và Follow cho kênh nha! ❤️`,
+                `Bạn nghĩ sao về điều này? Comment phí dưới nhé! 👇`,
+                `Inbox ngay để được team mình hướng dẫn chi tiết nhé! 📩`
+            ];
+            const randomCta = ctas[Math.floor(Math.random() * ctas.length)];
+
             draft += `🎬 KỊCH BẢN CHI TIẾT (VIDEO):\n`;
             draft += `━━━━━━━━━━━━━━━━━━━━━━\n`;
-            draft += `⚡ 1. Hook (0-3s) - Thu hút ngay lập tức:\n`;
-            draft += `   - Hình ảnh: Cảnh quay giật gân, cận cảnh hoặc text to đập vào mắt.\n`;
-            draft += `   - Lời thoại/Text: "Bạn có biết ${tieuDe} đang là xu hướng không thể bỏ lỡ?"\n\n`;
-            draft += `😰 2. Vấn đề/Pain point (3-8s):\n`;
-            draft += `   - Hình ảnh: Khách hàng đang gặp khó khăn hoặc trạng thái chưa hoàn hảo.\n`;
-            draft += `   - Lời thoại/Text: "Rất nhiều người đang loay hoay vì chưa biết cách tối ưu..."\n\n`;
-            draft += `💡 3. Giải pháp (8-18s) - Body chính:\n`;
-            draft += `   - Hình ảnh: Show sản phẩm/dịch vụ giải quyết vấn đề. Góc máy năng động (pan, tilt).\n`;
-            draft += `   - Lời thoại/Text: "Với giải pháp từ chúng tôi, bạn dễ dàng đạt được 3 lợi ích vượt trội: A, B, C..."\n\n`;
-            draft += `🔥 4. Kêu gọi hành động (18-20s) - CTA:\n`;
-            draft += `   - Hình ảnh: Logo nhãn hàng, thông tin liên hệ bật lên rõ ràng.\n`;
-            draft += `   - Lời thoại/Text: "Để lại bình luận hoặc inbox ngay để nhận ưu đãi độc quyền!"\n\n`;
-            draft += `🎥 HƯỚNG DẪN QUAY (SHOT LIST BONE):\n`;
-            draft += `- Shot 1 (Cận cảnh): Setup ánh sáng keylight tôn chủ thể.\n`;
-            draft += `- Shot 2 (Trung cảnh): Khung hình 1/3, chừa backgound chèn Text.\n`;
-            draft += `- Shot 3 (B-roll): Quay chi tiết sản phẩm 60fps để slow-motion mượt mà.\n`;
-            draft += `- Âm nhạc: Trending TikTok, beat dồn dập ở đoạn Hook.\n`;
+            draft += `⚡ 1. Hook (0-3s): Nhịp độ video nhanh, text đập vào mắt.\n`;
+            draft += `   ▶️ Thoại: "${randomHook}"\n\n`;
+            draft += `😰 2. Nội dung chính (3-15s): Chuyển cảnh liên tục 3-5s/shot.\n`;
+            draft += `   ▶️ Thoại: "${randomBody}"\n\n`;
+            draft += `🔥 3. Kêu gọi hành động (15-20s): Logo thương hiệu nháy sáng.\n`;
+            draft += `   ▶️ Thoại: "${randomCta}"\n\n`;
+            draft += `🎥 HƯỚNG DẪN QUAY (B-ROLL):\n`;
+            draft += `- Quay cận cảnh sản phẩm/dịch vụ (Macro shot, slow motion).\n`;
+            draft += `- Lồng nhạc Trending giật beat mạnh ở khúc chuyển cảnh.\n`;
         } else {
+            // Image/Text Randomizer
+            const headlines = [
+                `🔥 BẬT MÍ BÍ QUYẾT: ${tieuDe.toUpperCase()} 😱`,
+                `🌟 CƠ HỘI VÀNG: GIẢI MÃ ${tieuDe.toUpperCase()} CHO BẠN!`,
+                `💥 HOT: LÀM SAO ĐỂ XỬ LÝ ${tieuDe.toUpperCase()} HIỆU QUẢ?`
+            ];
+            const randomHead = headlines[Math.floor(Math.random() * headlines.length)];
+
+            const contents = [
+                `Nhiều anh/chị hay hỏi em tại sao lại cần như vậy. Đơn giản vì nó giúp TIẾT KIỆM 50% thời gian và CAM KẾT HIỆU QUẢ lâu dài. Cố gắng áp dụng nha!`,
+                `Đây là bộ giải pháp toàn diện đã được kiểm chứng. Bạn chỉ việc áp dụng, còn lại cứ để hệ thống tự động lo.`,
+                `Không cần phức tạp, chỉ với 3 thay đổi nhỏ mỗi ngày, thành quả mang lại sẽ khiến bạn bất ngờ đấy nhé!`
+            ];
+            const randomContent = contents[Math.floor(Math.random() * contents.length)];
+
             draft += `📝 CAPTION BÀI VIẾT (ẢNH/TEXT):\n`;
             draft += `━━━━━━━━━━━━━━━━━━━━━━\n`;
-            draft += `👉 Tiêu đề giật tít: TỔNG HỢP NHỮNG ĐIỀU CẦN BIẾT VỀ ${tieuDe.toUpperCase()}!\n\n`;
-            draft += `🌟 Bạn đang tìm kiếm giải pháp hoàn hảo? Dưới đây là những lý do bạn không nên bỏ lỡ:\n`;
-            draft += `✔️ Lợi ích 1: Tiết kiệm tối đa thời gian & chi phí.\n`;
-            draft += `✔️ Lợi ích 2: Hiệu quả tức thì, cam kết chất lượng.\n`;
-            draft += `✔️ Lợi ích 3: Đội ngũ hỗ trợ nhiệt tình chuyên nghiệp.\n\n`;
-            draft += `🎁 ƯU ĐÃI ĐẶC BIỆT CHỈ TRONG HÔM NAY!\n`;
-            draft += `🔥 Kêu gọi hành động: "Để lại [CHẤM] nhận ngay tư vấn miễn phí hoặc Inbox trực tiếp cho Fanpage!"\n\n`;
-            draft += `🖼️ Ý TƯỞNG THIẾT KẾ ẢNH (BONE):\n`;
-            draft += `- Tone màu chủ đạo chuyên nghiệp, nổi bật thông điệp.\n`;
-            draft += `- Bố cục: Áp dụng quy tắc 1/3, chia rõ không gian đọc Text và không gian Hình ảnh.\n`;
-            draft += `- Text trên ảnh (Key visual): "${tieuDe}" font chữ to, đậm, viền nổi rõ trên màn hình Mobile.\n`;
-            draft += `- Call to action (Trên ảnh): Nút "Xem Thêm" hoặc "Đăng Ký Ngay" đặt ở mép dưới chữ nhỏ hơn.\n`;
+            draft += `👉 Tiêu đề: ${randomHead}\n\n`;
+            draft += `🌟 Nội dung: ${randomContent}\n\n`;
+            draft += `✔️ Lợi ích 1: Tối ưu chi phí, X2 doanh thu.\n`;
+            draft += `✔️ Lợi ích 2: Support nhiệt tình 24/7.\n\n`;
+            draft += `🎁 ƯU ĐÃI ĐẶC BIỆT CHỈ CÓ SỐ LƯỢNG GIỚI HẠN!\n`;
+            draft += `🔥 Kêu gọi hành động: "Để lại [CHẤM] nhận ngay tư vấn hoặc Inbox trực tiếp nha!"\n\n`;
+            draft += `🖼️ Ý TƯỞNG THIẾT KẾ ẢNH:\n`;
+            draft += `- Bố cục 1/3: Bên trái là chữ to rõ, bên phải là ảnh minh họa.\n`;
+            draft += `- Tone màu chói/tương phản mạnh (Đỏ/Vàng) để hút mắt người lướt Feed.\n`;
         }
 
         // Tự động điền cả Order Design
