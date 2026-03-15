@@ -16,7 +16,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
 
     <!-- Local scripts imported end of body -->
-    <link rel="stylesheet" href="css/style.css?v=3.3">
+    <link rel="stylesheet" href="css/style.css?v=3.4">
 </head>
 
 <body class="dark-theme">
@@ -37,16 +37,17 @@
             <div class="hud-border-line left"></div>
             <div class="hud-border-line right"></div>
 
-            <div class="auth-card">
+            <!-- Single HUD Title Box mounted on the frame to prevent clipping -->
+            <div class="hud-title-box" style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); z-index: 50; margin-top: 15px;">
+                <span class="hud-title-text" style="line-height: 1;">Thanh Long Work</span>
+                <div class="hud-flag"><i class="fa-solid fa-star"></i></div>
+            </div>
+
+            <div class="auth-card" style="margin-top: 15px;">
                 <!-- IN-CARD BOOT SCREEN GRAPHIC -->
                 <div id="incard-boot-screen" class="incard-boot-screen">
-                    <div class="hud-title-box">
-                        <span class="hud-title-text">Thanh Long Work</span>
-                        <div class="hud-flag"><i class="fa-solid fa-star"></i></div>
-                    </div>
-                    
                     <!-- Vòng Rồng Loading Lớn -->
-                    <div class="incard-dragon-ring">
+                    <div class="incard-dragon-ring" style="margin-top: 40px;">
                         <div class="ring-outer"></div>
                         <div class="ring-inner"></div>
                         <img src="img/dragon.png" alt="Dragon Logo" class="ring-dragon-img" onerror="this.style.display='none'">
@@ -65,12 +66,7 @@
                 </div>
 
                 <!-- Login Wrapper -->
-                <div id="login-wrapper" style="display: none;">
-                    <div class="hud-title-box" style="margin-bottom: 24px;">
-                        <span class="hud-title-text">Thanh Long Work</span>
-                        <div class="hud-flag"><i class="fa-solid fa-star"></i></div>
-                    </div>
-
+                <div id="login-wrapper" style="display: none; padding-top: 30px;">
                     <!-- Login Form -->
                     <form class="auth-form" id="login-form">
                         <div class="form-group">
@@ -435,14 +431,14 @@
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="js/utils.js?v=3.3"></script>
-    <script src="js/db.js?v=3.3"></script>
-    <script src="js/finance.js?v=3.3"></script>
-    <script src="js/work.js?v=3.3"></script>
-    <script src="js/attendance.js"></script>
-    <script src="js/chat.js?v=3.3"></script>
-    <script src="js/auth.js?v=3.3"></script>
-    <script src="js/app.js?v=3.3"></script>
+    <script src="js/utils.js?v=3.4"></script>
+    <script src="js/db.js?v=3.4"></script>
+    <script src="js/finance.js?v=3.4"></script>
+    <script src="js/work.js?v=3.4"></script>
+    <script src="js/attendance.js?v=3.4"></script>
+    <script src="js/chat.js?v=3.4"></script>
+    <script src="js/auth.js?v=3.4"></script>
+    <script src="js/app.js?v=3.4"></script>
 
     <!-- Toast Notification Container -->
     <div id="toast-container" class="toast-container"></div>
