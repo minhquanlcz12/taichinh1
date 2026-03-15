@@ -2289,7 +2289,7 @@ body.dark-theme .avatar-preview-box {
         bottom: 20px;
         right: 20px;
     }
-}@
+}
 /* --- ATTENDANCE SYSTEM STYLES --- */
 .attendance-user-container {
     display: flex;
@@ -2383,4 +2383,36 @@ body.dark-theme .avatar-preview-box {
     box-shadow: 0 0 40px rgba(46, 204, 113, 0.3);
     text-align: center;
 }
-@
+
+/* --- TICKET VIEW & DEADLINE WARNINGS --- */
+.ticket-readonly-box {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px dashed var(--border-color);
+    padding: 10px 14px;
+    border-radius: 4px;
+    font-size: 14px;
+    color: var(--text-primary);
+    min-height: 42px;
+    display: flex;
+    align-items: center;
+}
+
+.deadline-warning {
+    border: 2px solid var(--warning) !important;
+    background: rgba(241, 196, 15, 0.1) !important;
+    color: var(--warning) !important;
+    box-shadow: 0 0 8px rgba(241, 196, 15, 0.5);
+}
+
+.deadline-danger {
+    border: 2px solid var(--danger) !important;
+    background: rgba(231, 76, 60, 0.1) !important;
+    color: var(--danger) !important;
+    box-shadow: 0 0 12px rgba(231, 76, 60, 0.8);
+    animation: dangerPulse 1.5s infinite alternate;
+}
+
+@keyframes dangerPulse {
+    from { box-shadow: 0 0 5px rgba(231, 76, 60, 0.5); }
+    to { box-shadow: 0 0 20px rgba(231, 76, 60, 0.9); }
+}

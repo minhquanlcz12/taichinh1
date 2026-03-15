@@ -425,6 +425,23 @@ const WorkModule = {
                     ? `<img src="${task.anhData}" style="max-width:80px; max-height:80px; border-radius:4px; cursor:pointer;" onclick="WorkModule.triggerImageUpload('${task.id}')" title="Đổi ảnh">`
                     : `<button class="btn btn-outline" style="font-size:11px; padding:4px 8px;" onclick="WorkModule.triggerImageUpload('${task.id}')"><i class="fa-solid fa-image"></i> Tải ảnh</button>`;
 
+                // Deadline Logic
+                let deadlineClass = '';
+                if (task.deadline) {
+                    const todayStr = Utils.getTodayString();
+                    // Basic string comparison logic assuming YYYY-MM-DD
+                    const todayTime = new Date(todayStr).getTime();
+                    const deadlineTime = new Date(task.deadline).getTime();
+                    if (!isNaN(todayTime) && !isNaN(deadlineTime)) {
+                        const diffDays = Math.ceil((deadlineTime - todayTime) / (1000 * 60 * 60 * 24));
+                        if (diffDays <= 1) {
+                            deadlineClass = 'deadline-danger';
+                        } else if (diffDays === 2) {
+                            deadlineClass = 'deadline-warning';
+                        }
+                    }
+                }
+
                 html += `
                     <tr class="${isCompleted ? 'row-completed' : ''}">
                         <td class="col-stt">${task.stt}</td>
@@ -436,7 +453,7 @@ const WorkModule = {
                         <td class="col-noidung td-green"><span class="task-content-text" style="text-align:justify;">${task.noiDung}</span></td>
                         <td class="col-dinhdang"><span class="task-content-text">${task.dinhDang}</span></td>
                         <td class="col-order"><span class="task-content-text" style="text-align:justify;">${task.orderBrief}</span></td>
-                        <td class="col-deadline">${task.deadline}</td>
+                        <td class="col-deadline"><div class="${deadlineClass}" style="padding: 4px; border-radius: 4px; text-align: center;">${task.deadline}</div></td>
                         <td class="col-trangthai">
                             <select class="form-control ${statusClass}" style="font-size: 13px; font-weight:600; padding:4px 8px; border-radius:4px;" onchange="WorkModule.changeTaskStatus('${task.id}', this.value)">
                                 ${statusOptions}
@@ -446,9 +463,12 @@ const WorkModule = {
                         <td class="col-anh" style="text-align:center;">
                             ${imgCellContent}
                         </td>
-                        <td class="col-actions">
-                            <button class="btn-text text-danger" title="Xóa" onclick="WorkModule.deleteTask('${task.id}')" style="margin-top: 8px;">
-                                <i class="fa-solid fa-trash"></i>
+                        <td class="col-actions" style="display: flex; flex-direction: column; gap: 4px;">
+                            <button class="btn btn-primary btn-sm" title="Mở Phiếu Làm Việc" onclick="WorkModule.openTicketModal('${task.id}')">
+                                <i class="fa-solid fa-ticket"></i> Mở
+                            </button>
+                            <button class="btn-text text-danger" title="Xóa" onclick="WorkModule.deleteTask('${task.id}')">
+                                <i class="fa-solid fa-trash"></i> Xóa
                             </button>
                         </td>
                     </tr>
@@ -530,5 +550,130 @@ const WorkModule = {
             WorkModule.data.tasks = WorkModule.data.tasks.filter(t => t.id !== id);
             await WorkModule.save();
         }
+    },
+
+    // --- PHASE 2: TICKET VIEW MODULE & AUTOMATION ---
+    activeTicketId: null,
+
+    openTicketModal: (id) => {
+        const task = WorkModule.data.tasks.find(t => t.id === id);
+        if (!task) return;
+
+        WorkModule.activeTicketId = id;
+
+        // Fill Readonly Fields
+        document.getElementById('ticket-subtitle').textContent = `Dự án: ${task.project} - Nguồn: ${task.owner}`;
+        document.getElementById('ticket-ngay').textContent = task.ngayDang || '--';
+        document.getElementById('ticket-muctieu').textContent = task.mucTieu || '--';
+        document.getElementById('ticket-trucot').textContent = task.truCot || '--';
+        document.getElementById('ticket-dinhdang').textContent = task.dinhDang || '--';
+        document.getElementById('ticket-deadline').textContent = task.deadline || '--';
+
+        // Fill Editable Fields
+        document.getElementById('ticket-tieude').value = task.tieuDe || '';
+        document.getElementById('ticket-noidung').value = task.noiDung || '';
+        document.getElementById('ticket-order').value = task.orderBrief || '';
+        document.getElementById('ticket-trangthai').value = task.trangThai || 'Planned';
+
+        // Fill Image Preview
+        const imgPreview = document.getElementById('ticket-img-preview');
+        if (task.anhData) {
+            imgPreview.innerHTML = `<img src="${task.anhData}" style="width:100%; height:100%; object-fit:cover;">`;
+        } else {
+            imgPreview.innerHTML = `<i class="fa-solid fa-image" style="color: var(--text-secondary);"></i>`;
+        }
+
+        document.getElementById('ticket-modal-overlay').classList.add('active');
+    },
+
+    closeTicketModal: () => {
+        document.getElementById('ticket-modal-overlay').classList.remove('active');
+        WorkModule.activeTicketId = null;
+    },
+
+    saveTicketModal: async () => {
+        if (!WorkModule.activeTicketId) return;
+        const task = WorkModule.data.tasks.find(t => t.id === WorkModule.activeTicketId);
+        if (task) {
+            task.tieuDe = document.getElementById('ticket-tieude').value;
+            task.noiDung = document.getElementById('ticket-noidung').value;
+            task.orderBrief = document.getElementById('ticket-order').value;
+            task.trangThai = document.getElementById('ticket-trangthai').value;
+
+            await WorkModule.save();
+            Utils.showToast('Đã lưu Phiếu Làm Việc!', 'success');
+            WorkModule.closeTicketModal();
+        }
+    },
+
+    handleTicketImageUpload: (event) => {
+        const file = event.target.files[0];
+        if (!file || !WorkModule.activeTicketId) return;
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            const base64Data = e.target.result;
+            const task = WorkModule.data.tasks.find(t => t.id === WorkModule.activeTicketId);
+            if (task) {
+                task.anhData = base64Data;
+                // Update preview immediately
+                document.getElementById('ticket-img-preview').innerHTML = `<img src="${base64Data}" style="width:100%; height:100%; object-fit:cover;">`;
+            }
+            event.target.value = '';
+        };
+        reader.readAsDataURL(file);
+    },
+
+    generateAILocal: () => {
+        const task = WorkModule.data.tasks.find(t => t.id === WorkModule.activeTicketId);
+        if (!task) return;
+
+        let tieuDe = document.getElementById('ticket-tieude').value || task.tieuDe || 'Chủ đề chung';
+        let dinhDang = (task.dinhDang || '').toLowerCase();
+        
+        let draft = `[🔥 BẢN NHÁP TẠO TỰ ĐỘNG BẰNG AI SIMULATOR]\n\n`;
+        
+        if (dinhDang.includes('video') || dinhDang.includes('reels') || dinhDang.includes('tiktok')) {
+            draft += `🎬 KỊCH BẢN NGẮN (VIDEO):\n`;
+            draft += `1. Hook (3s đầu): "Bạn có biết ${tieuDe} đang là xu hướng?"\n`;
+            draft += `2. Body (10s): Đưa ra 2-3 lợi ích chính hoặc phân tích nhanh vấn đề.\n`;
+            draft += `3. CTA (3s): "Inbox ngay để được tư vấn chi tiết!"\n\n`;
+            draft += `🎥 Ý TƯỞNG QUAY TRÌNH DIỄN:\n`;
+            draft += `- Quay cận cảnh sản phẩm/dịch vụ.\n`;
+            draft += `- Thêm text nổi bật ở giữa màn hình.\n`;
+        } else {
+            draft += `📝 CAPTION BÀI VIẾT (ẢNH/TEXT):\n`;
+            draft += `👉 Tiêu đề giật tít: Khám phá ngay ${tieuDe}!\n`;
+            draft += `🌟 Nội dung chính: Cung cấp giải pháp tối ưu cho khách hàng, nêu bật ưu điểm của ${tieuDe}.\n`;
+            draft += `🔥 Kêu gọi hành động: "Liên hệ Hotline hoặc Inbox Fanpage!"\n\n`;
+            draft += `🖼️ Ý TƯỞNG THIẾT KẾ ẢNH:\n`;
+            draft += `- Tone màu chủ đạo chuyên nghiệp.\n`;
+            draft += `- Bố cục 1/3, text to rõ ràng dễ đọc trên Mobile.\n`;
+        }
+
+        // Fill into the textarea
+        document.getElementById('ticket-noidung').value = draft;
+        Utils.showToast('AI đã tạo xong nội dung nháp!', 'success');
+    },
+
+    copyZaloMessage: () => {
+        const task = WorkModule.data.tasks.find(t => t.id === WorkModule.activeTicketId);
+        if (!task) return;
+
+        const dateStr = task.ngayDang || Utils.getTodayString();
+        const contentStr = document.getElementById('ticket-noidung').value || task.noiDung || "(Chưa có nội dung chi tiết)";
+
+        const message = `Em gửi anh/chị nội dung lên bài ngày ${dateStr} gồm:\n\n`
+            + `👉 Chủ đề: ${task.tieuDe || task.truCot || 'N/A'}\n`
+            + `👉 Định dạng: ${task.dinhDang || 'N/A'}\n\n`
+            + `Nội dung Caption/Kịch bản dự kiến:\n--------------------\n${contentStr}\n--------------------\n\n`
+            + `Nhờ anh/chị xem giúp em ạ!`;
+
+        navigator.clipboard.writeText(message).then(() => {
+            Utils.showToast("Đã copy tin nhắn Zalo vào bộ nhớ đệm!", "success");
+        }).catch(err => {
+            console.error('Không thể copy', err);
+            Utils.showToast("Lỗi khi copy tin nhắn.", "error");
+        });
     }
 };

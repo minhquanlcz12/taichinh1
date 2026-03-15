@@ -16,7 +16,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
 
     <!-- Local scripts imported end of body -->
-    <link rel="stylesheet" href="css/style.css?v=4.0">
+    <link rel="stylesheet" href="css/style.css?v=4.1">
 </head>
 
 <body class="dark-theme">
@@ -414,17 +414,118 @@
         onclick="if(event.target===this) Auth.closeViewProfileModal()">
         <div class="modal profile-modal-content" id="view-profile-modal">
             <div class="modal-header">
-                <h3><i class="fa-solid fa-address-card" style="color:var(--primary); margin-right: 8px;"></i>Thông tin
-                    Nhân sự</h3>
-                <button class="btn-close" onclick="Auth.closeViewProfileModal()"><i
-                        class="fa-solid fa-times"></i></button>
+                <h3><i class="fa-solid fa-address-card" style="color:var(--primary); margin-right: 8px;"></i>Thông tin Nhân sự</h3>
+                <button class="btn-close" onclick="Auth.closeViewProfileModal()"><i class="fa-solid fa-times"></i></button>
             </div>
             <div class="modal-body" id="view-profile-content">
                 <!-- Data injected via JS -->
             </div>
             <div class="modal-footer">
-                <button class="btn btn-primary" onclick="Auth.closeViewProfileModal()" style="width: 100%;">Xác
-                    nhận</button>
+                <button class="btn btn-primary" onclick="Auth.closeViewProfileModal()" style="width: 100%;">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ticket View Modal (Phiếu Làm Việc) -->
+    <div class="modal-overlay" id="ticket-modal-overlay" onclick="if(event.target===this) WorkModule.closeTicketModal()">
+        <div class="modal ticket-modal-content" id="ticket-modal" style="width: 90%; max-width: 800px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header" style="background: rgba(4,9,20,0.9); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 10;">
+                <div>
+                    <h3 style="color: var(--primary);"><i class="fa-solid fa-ticket" style="margin-right: 8px;"></i>Phiếu Làm Việc</h3>
+                    <div id="ticket-subtitle" style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">--</div>
+                </div>
+                <button class="btn-close" onclick="WorkModule.closeTicketModal()"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+                <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr; gap: 16px;">
+                    
+                    <!-- Left Column -->
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <!-- 1. Ngày Đăng -->
+                        <div class="form-group">
+                            <label style="color: var(--primary); font-size: 11px;">1. NGÀY ĐĂNG</label>
+                            <div id="ticket-ngay" class="ticket-readonly-box"></div>
+                        </div>
+                        <!-- 2. Mục Tiêu -->
+                        <div class="form-group">
+                            <label style="color: var(--primary); font-size: 11px;">2. MỤC TIÊU</label>
+                            <div id="ticket-muctieu" class="ticket-readonly-box"></div>
+                        </div>
+                        <!-- 3. Chủ Đề -->
+                        <div class="form-group">
+                            <label style="color: var(--primary); font-size: 11px;">3. CHỦ ĐỀ (TRỤ CỘT)</label>
+                            <div id="ticket-trucot" class="ticket-readonly-box"></div>
+                        </div>
+                        <!-- 4. Tiêu Đề -->
+                        <div class="form-group">
+                            <label style="color: var(--primary); font-size: 11px;">4. TIÊU ĐỀ</label>
+                            <input type="text" id="ticket-tieude" class="form-control" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-color);">
+                        </div>
+                        <!-- 6. Định Dạng -->
+                        <div class="form-group">
+                            <label style="color: var(--primary); font-size: 11px;">6. ĐỊNH DẠNG</label>
+                            <div id="ticket-dinhdang" class="ticket-readonly-box"></div>
+                        </div>
+                        <!-- 8. Deadline -->
+                        <div class="form-group">
+                            <label style="color: var(--primary); font-size: 11px;">8. DEADLINE</label>
+                            <div id="ticket-deadline" class="ticket-readonly-box"></div>
+                        </div>
+                        <!-- 9. Trạng Thái -->
+                        <div class="form-group">
+                            <label style="color: var(--primary); font-size: 11px;">9. TRẠNG THÁI</label>
+                            <select id="ticket-trangthai" class="form-control" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-color);">
+                                <option value="Planned">Planned</option>
+                                <option value="Doing">Doing</option>
+                                <option value="Done">Done</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Right Column -->
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <!-- AI GENERATOR BUTTON -->
+                        <button type="button" class="btn btn-warning" onclick="WorkModule.generateAILocal()" style="width: 100%; font-weight: bold; background: linear-gradient(135deg, #f1c40f 0%, #d35400 100%); color: #fff; border: none; box-shadow: 0 0 15px rgba(241, 196, 15, 0.4); margin-bottom: 8px;">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> AUTO-GENERATE AI CONTENT
+                        </button>
+
+                        <!-- 5. Nội Dung Chi Tiết -->
+                        <div class="form-group" style="flex: 1; display: flex; flex-direction: column;">
+                            <label style="color: var(--primary); font-size: 11px;">5. NỘI DUNG CHI TIẾT (Kịch bản/Caption)</label>
+                            <textarea id="ticket-noidung" class="form-control" style="flex: 1; min-height: 150px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); resize: vertical;"></textarea>
+                        </div>
+                        
+                        <!-- 7. Nội Dung Thiết Kế -->
+                        <div class="form-group" style="flex: 1; display: flex; flex-direction: column;">
+                            <label style="color: var(--primary); font-size: 11px;">7. NỘI DUNG THIẾT KẾ (Order Brief)</label>
+                            <textarea id="ticket-order" class="form-control" style="flex: 1; min-height: 100px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); resize: vertical;"></textarea>
+                        </div>
+
+                        <!-- 10. Nộp Kết Quả (Ảnh) -->
+                        <div class="form-group">
+                            <label style="color: var(--primary); font-size: 11px;">10. Ô NỘP KẾT QUẢ / ẢNH GỢI Ý</label>
+                            <div style="display: flex; gap: 12px; align-items: flex-end;">
+                                <div id="ticket-img-preview" style="width: 80px; height: 80px; border: 1px dashed var(--border-color); border-radius: 4px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: rgba(0,0,0,0.2);">
+                                    <i class="fa-solid fa-image" style="color: var(--text-secondary);"></i>
+                                </div>
+                                <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('ticket-hidden-upload').click()">
+                                    <i class="fa-solid fa-upload"></i> Tải ảnh lên
+                                </button>
+                                <input type="file" id="ticket-hidden-upload" accept="image/*" style="display: none;" onchange="WorkModule.handleTicketImageUpload(event)">
+                            </div>
+                        </div>
+
+                        <!-- COPY ZALO BUTTON -->
+                        <button type="button" class="btn btn-success" onclick="WorkModule.copyZaloMessage()" style="width: 100%; margin-top: auto; font-weight: bold;">
+                            <i class="fa-solid fa-comment-sms"></i> COPY NHÁP GỬI ZALO (KHÁCH)
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid var(--border-color); background: rgba(4,9,20,0.9); position: sticky; bottom: 0; z-index: 10;">
+                <button class="btn btn-text" onclick="WorkModule.closeTicketModal()">Hủy thay đổi</button>
+                <button class="btn btn-primary" onclick="WorkModule.saveTicketModal()"><i class="fa-solid fa-floppy-disk" style="margin-right: 8px;"></i>Lưu Phiếu Việc</button>
             </div>
         </div>
     </div>
@@ -432,14 +533,14 @@
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="js/utils.js?v=4.0"></script>
-    <script src="js/db.js?v=4.0"></script>
-    <script src="js/finance.js?v=4.0"></script>
-    <script src="js/work.js?v=4.0"></script>
-    <script src="js/attendance.js?v=4.0"></script>
-    <script src="js/chat.js?v=4.0"></script>
-    <script src="js/auth.js?v=4.0"></script>
-    <script src="js/app.js?v=4.0"></script>
+    <script src="js/utils.js?v=4.1"></script>
+    <script src="js/db.js?v=4.1"></script>
+    <script src="js/finance.js?v=4.1"></script>
+    <script src="js/work.js?v=4.1"></script>
+    <script src="js/attendance.js?v=4.1"></script>
+    <script src="js/chat.js?v=4.1"></script>
+    <script src="js/auth.js?v=4.1"></script>
+    <script src="js/app.js?v=4.1"></script>
 
     <!-- Toast Notification Container -->
     <div id="toast-container" class="toast-container"></div>
