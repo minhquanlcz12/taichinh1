@@ -205,19 +205,36 @@ body {
     width: 200px;
     height: 200px;
     z-index: 2;
-    object-fit: contain;
-    /* Invert black to white, apply cyan glow */
-    filter: invert(1) brightness(1.5) contrast(1.5) drop-shadow(0 0 10px #00f0ff);
-    /* Use mix-blend-mode plus transparent border fix */
-    mix-blend-mode: screen;
+    /* Create a solid cyan block, then use the dragon image itself to cut out the shape based on its luma */
+    background-color: #ffffff;
+    -webkit-mask-image: url('../img/dragon.png');
+    mask-image: url('../img/dragon.png');
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    /* Use mask-type: luminance to tell it black=transparent, white=opaque (or vice versa, we'll invert the mask) */
+    mask-type: luminance;
+    -webkit-mask-box-image: luminance;
+    filter: drop-shadow(0 0 10px #00f0ff);
 }
 .sidebar-dragon-img {
     width: 44px;
     height: 44px;
-    object-fit: contain;
-    /* Emerald glow and invert */
-    filter: invert(1) brightness(1.5) contrast(1.5) drop-shadow(0 0 8px #88ffd1);
-    mix-blend-mode: screen;
+    background-color: #88ffd1;
+    -webkit-mask-image: url('../img/dragon.png');
+    mask-image: url('../img/dragon.png');
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    mask-type: luminance;
+    -webkit-mask-box-image: luminance;
+    filter: drop-shadow(0 0 5px #88ffd1);
 }
 .ring-outer {
     position: absolute;
