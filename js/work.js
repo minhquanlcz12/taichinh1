@@ -667,19 +667,90 @@ const WorkModule = {
             let targetInputId = '';
             
             if (activeTabId === 'tab-tomtat') {
-                prompt += `Hãy trả về duy nhất 1 "Phiếu tóm tắt công việc" gọn gàng gồm: Mục tiêu chính, nội dung trọng yếu, cách triển khai, đầu ra cần hoàn thành.\n`;
+                prompt += `Hãy trả về "Phiếu làm việc — Marketing" chi tiết, bám sát form mẫu sau, điền thông tin phù hợp với chủ đề:
+Phiếu làm việc — Marketing
+Mục tiêu
+[Mục tiêu]
+Định dạng
+[Định dạng]
+Chủ đề
+[Chủ đề]
+Phong cách thiết kế
+[Gợi ý phong cách]
+Nội dung chính
+Tiêu đề: [Tiêu đề đề xuất]
+Điểm nhấn: [Giải thích điểm nhấn chi tiết]
+Cách triển khai
+1. [Bước 1]
+2. [Bước 2]
+3. [Bước 3]
+Đầu ra cần làm
+[Danh sách đầu ra]
+Lưu ý quan trọng
+• [Lưu ý 1]
+• [Lưu ý 2]\n`;
                 targetInputId = 'ai-tomtat';
             } else if (activeTabId === 'tab-kichban') {
-                prompt += `Hãy trả về duy nhất kịch bản chi tiết ${isVideo ? '(Video/Reels)' : '(Bài đăng)'}. Có Hook (thu hút mở đầu), Thân bài/Painpoint, Kêu gọi hành động (CTA). Lời thoại dễ hiểu, cuốn hút.\n`;
+                prompt += `Hãy trả về kịch bản video/bài đăng dựa trên chủ đề yêu cầu. Viết theo format chuẩn:
+Kịch bản video ngắn — 20–30 giây
+🎬 HOOK (0–5 giây)
+Cảnh: [Mô tả cảnh thu hút]
+Lời thoại / text overlay: "[Hook 1 câu cực cuốn]"
+
+📌 NỘI DUNG CHÍNH (5–22 giây)
+Cảnh 1: [Mô tả]
+Cảnh 2: [Mô tả]
+Text overlay: "[Text tương ứng]"
+
+📣 CTA (22–30 giây)
+Cảnh: [Mô tả]
+Text overlay: "[CTA text]"
+Lời thoại: "[Lời thoại chốt sale/kêu gọi]"
+
+Ghi chú sản xuất
+Âm nhạc: [Gợi ý]
+Phong cách quay: [Gợi ý]
+Màu sắc chủ đạo: [Gợi ý]
+Phù hợp đăng: [Nền tảng]\n`;
                 targetInputId = 'ai-kichban';
             } else if (activeTabId === 'tab-caption') {
-                prompt += `Hãy trả về duy nhất 3 mẫu caption khác nhau:\n1. Bán hàng trực tiếp (kèm CTA/chốt sale)\n2. Kể chuyện branding nhẹ nhàng\n3. Caption siêu ngắn cho Video Reels/TikTok (tương tác cao)\n`;
+                prompt += `Hãy viết 3 mẫu Caption theo format chính xác sau:
+Caption kiểu 1 — Bán hàng trực tiếp
+[Nội dung caption 1 chốt sale mạnh, đủ icon, hashtag]
+
+Caption kiểu 2 — Branding nhẹ
+[Nội dung caption 2 tập trung vào cảm xúc, thương hiệu, bay bổng tinh tế]
+
+Caption kiểu 3 — Ngắn gọn dễ đăng
+[Nội dung caption 3 siêu ngắn, giật gân, mồi tương tác nền tảng ngắn]\n`;
                 targetInputId = 'ticket-noidung';
             } else if (activeTabId === 'tab-ytuong') {
-                prompt += `Hãy đóng vai trò là Art Director, trả về gợi ý 3 Concept/Ý tưởng hình ảnh hoặc quay video chi tiết (màu sắc, góc máy, mood/cảm giác tổng thể, text đặt lên ảnh nếu có) để đưa cho đội Thiết kế thực thi.\n`;
+                prompt += `Hãy đóng vai trò là Art Director, gợi ý 3 Ý tưởng/Concept thiết kế theo định dạng sau:
+01
+Concept
+[Tên concept]
+Bố cục
+[Mô tả bố cục]
+Màu sắc
+[Gợi ý màu]
+Cảm giác
+[Tâm trạng, vibe mang lại]
+
+02
+Concept
+... (tt)
+
+03
+Concept
+... (tt)\n`;
                 targetInputId = 'ticket-order';
             } else if (activeTabId === 'tab-zalo') {
-                prompt += `Hãy trả về duy nhất 2 mẫu tin nhắn Zalo gửi sếp hoặc gửi khách hàng để báo cáo/gửi kịch bản duyệt:\n1. Mẫu lịch sự, chuyên nghiệp.\n2. Mẫu thân thiện, ngắn gọn năng động.\n`;
+                prompt += `Hãy viết 2 mẫu tin nhắn Zalo gửi báo cáo hoặc gửi khách hàng để xin feedback. Format:
+Mẫu 1 — Lịch sự, chuyên nghiệp
+[Nội dung thân thiện, kính ngữ chuyên nghiệp, dài vừa phải]
+
+Mẫu 2 — Ngắn gọn, thân thiện
+[Nội dung nhí nhảnh hợp sếp/đồng nghiệp để báo cáo hoàn thành phiêu]\n`;
                 targetInputId = 'ai-zalo';
             } else {
                 btn.innerHTML = originalBtnHtml;
@@ -741,36 +812,106 @@ const WorkModule = {
 
             if (activeTabId === 'tab-tomtat') {
                 targetInputId = 'ai-tomtat';
-                fallbackContent = `[MẪU LOCAL] Tóm tắt công việc:
-- Mục tiêu: ${mucTieu || 'Chưa rõ'}
-- Chủ đề: ${truCot || 'Chưa rõ'}
-- Định dạng: ${dinhDang || 'Chưa rõ'}
-=> Cần hoàn thành nội dung thu hút và hình ảnh bắt mắt.`;
+                fallbackContent = `Phiếu làm việc — Marketing
+Mục tiêu
+${mucTieu || 'Tăng nhận diện thương hiệu'}
+Định dạng
+${dinhDang || 'Ảnh + Caption'}
+Chủ đề
+${truCot || 'Giới thiệu tính năng'}
+Phong cách thiết kế
+Sang trọng, sạch sẽ, hiện đại
+Nội dung chính
+Tiêu đề: ${tieuDe || 'Mẫu thiết kế thanh lịch cho dân văn phòng'}
+
+Điểm nhấn: Tập trung giới thiệu cách mà sản phẩm giúp ích cho cuộc sống/công việc hàng ngày. Cách sử dụng dễ dàng và vô cùng chuyên nghiệp.
+Cách triển khai
+1. Chụp ảnh sản phẩm: nền trắng, ánh sáng trong, setup đơn giản
+2. Chụp lifestyle: người dùng đang trải nghiệm
+3. Thiết kế layout sạch: font tối giản, màu ấm
+4. Lên lịch đăng giờ vàng: 7-9h tối
+Đầu ra cần làm
+3 hình ảnh
+1 video reels
+3 mẫu caption
+Lưu ý quan trọng
+• Hình ảnh nhất quán: sang - sạch - hiện đại
+• Call-to-action phải xuất hiện ở ảnh cuối cùng và ở caption`;
             } else if (activeTabId === 'tab-kichban') {
                 targetInputId = 'ai-kichban';
-                if (isVideo) {
-                    const hooks = [`3 Góc khuất về ${tieuDe} mà không ai nói cho bạn biết! 😱`, `Sự thật ngã ngửa về ${tieuDe} - Xem ngay nhé!`];
-                    const bodies = [`Lỗi sai phổ biến: Quá lạm dụng hoặc không chú ý tiểu tiết.\n- Cách khắc phục: Tập trung trải nghiệm.`, `Bạn chỉ cần 1 bí quyết: Đúng lúc + Đúng chỗ = Thành công!`];
-                    const ctas = [`Thấy hay thì nhớ thả tim và Follow nha! ❤️`, `Bạn nghĩ sao về điều này? Comment phí dưới nhé! 👇`];
-                    fallbackContent = `🎬 KỊCH BẢN CHI TIẾT (VIDEO):\n\n⚡ 1. Hook (0-3s):\n▶️ Thoại: "${hooks[Math.floor(Math.random() * hooks.length)]}"\n\n😰 2. Nội dung chính:\n▶️ Thoại: "${bodies[Math.floor(Math.random() * bodies.length)]}"\n\n🔥 3. Kêu gọi hành động:\n▶️ Thoại: "${ctas[Math.floor(Math.random() * ctas.length)]}"\n\n🎥 HƯỚNG DẪN B-ROLL:\n- Quay cận cảnh sản phẩm, lồng nhạc trending giật beat mạnh.`;
-                } else {
-                    fallbackContent = `(Với bài Text/Ảnh không có kịch bản Video. Vui lòng xem Tab Caption bên cạnh)`;
-                }
+                fallbackContent = `Kịch bản video ngắn — 20–30 giây
+🎬 HOOK (0–5 giây)
+Cảnh: Cú máy đi từ dưới lên, cận cảnh vào chi tiết đáng giá nhất của sản phẩm.
+Lời thoại / text overlay:
+"Bạn đã bỏ lỡ bí quyết này trong suốt ngần ấy năm!"
+
+📌 NỘI DUNG CHÍNH (5–22 giây)
+Cảnh 1: Một nhân vật đang gặp vấn đề quen thuộc, gương mặt mệt mỏi.
+Cảnh 2: Ứng dụng ngay "${tieuDe}" -> Cười rạng rỡ, thần thái đỉnh cao.
+Text overlay: "Giải pháp nhanh chóng — hiệu quả tức thì."
+
+📣 CTA (22–30 giây)
+Cảnh: Sản phẩm đặt giữa màn hình, vòng hào quang phía sau.
+Text overlay: "Sở hữu ngay hôm nay!"
+Lời thoại: "Click vào link dưới đây để chốt đơn với giá cực hời."
+
+Ghi chú sản xuất
+Âm nhạc
+Nhạc nền điện tử (EDM) giật beat mạnh hoặc lofi tùy tính chất sản phẩm
+Phong cách quay
+Chuyển cảnh nhanh để giữ chân người xem
+Màu sắc chủ đạo
+Môi trường sáng rõ, màu chủ thể nổi trội
+Phù hợp đăng
+TikTok, Instagram Reels, Youtube Shorts`;
             } else if (activeTabId === 'tab-caption') {
                 targetInputId = 'ticket-noidung';
-                if (isVideo) {
-                    fallbackContent = `📌 Dùng tóm tắt kịch bản trên làm caption đăng kèm reels/tiktok. Thêm hashtag #viral #${tieuDe.replace(/\s+/g,'')}`;
-                } else {
-                    const headlines = [`🔥 BẬT MÍ BÍ QUYẾT: ${tieuDe.toUpperCase()}`, `🌟 CƠ HỘI VÀNG: GIẢI MÃ ${tieuDe.toUpperCase()}`];
-                    const contents = [`Nhiều anh/chị hay hỏi em tại sao. Đơn giản vì nó giúp TIẾT KIỆM 50% thời gian!`, `Chỉ với 3 thay đổi nhỏ mỗi ngày, thành quả sẽ khiến bạn bất ngờ! chờ xem nhé.`];
-                    fallbackContent = `[CAPTION 1 - BÁN HÀNG]\n🔥 ${headlines[0]}\n${contents[0]}\n👉 Inbox chốt đơn ngay!\n\n[CAPTION 2 - BRANDING]\n🌟 ${headlines[1]}\n${contents[1]}\n👉 Phù hợp mọi phong cách. Theo dõi trang để biết thêm!`;
-                }
+                fallbackContent = `Caption kiểu 1 — Bán hàng trực tiếp
+✨ Bí kíp để công việc trôi chảy cả ngày dài! ${tieuDe} mang đến trải nghiệm tuyệt vời chưa từng có. 💼 Tự tin hơn, chuyên nghiệp hơn. Hơn 1.000+ người đã thử và hài lòng tuyệt đối! 👉 Nhắn tin inbox trực tiếp trên page để nhận tư vấn miễn phí + ưu đãi giảm 20% hôm nay. #SảnPhẩm #UuDai
+
+Caption kiểu 2 — Branding nhẹ
+Có những thứ nhỏ bé, nhưng thay đổi cả cách công việc vận hành. ${tieuDe} — tinh tế, thanh lịch và không phô trương. Vì phong cách không cần nói nhiều, chỉ cần đứng vào đúng chỗ là tự toả sáng. 🔗 Khám phá bộ sưu tập đầy đủ tại [link bio]
+
+Caption kiểu 3 — Ngắn gọn dễ đăng
+${tieuDe} — Nhẹ, Sang, Đỉnh cao xu hướng. 🕶️ Thử ngay để thấy sự khác biệt tại [Tên cửa hàng]! 📲 Inbox chốt đơn liền tay.`;
             } else if (activeTabId === 'tab-ytuong') {
                 targetInputId = 'ticket-order';
-                fallbackContent = `[MẪU LOCAL] Ý TƯỞNG THIẾT KẾ:\n- Bố cục 1/3: Bên trái là chữ to rõ, bên phải là ảnh minh họa.\n- Tone màu chói/tương phản mạnh để hút mắt người lướt Feed.\n- Yêu cầu thêm: Làm nổi bật tiêu đề "${tieuDe}".`;
+                fallbackContent = `01
+Concept
+Lifestyle — "Một ngày làm việc hoàn hảo"
+Bố cục
+Nhân vật đang ngồi ở một quán cafe sang chảnh, tập trung vào màn hình làm việc. Góc chụp ngang hoặc từ bên trên qua vai người mẫu.
+Màu sắc
+Tone kem, vàng nhạt, xám văn phòng. Ấm và sang trọng.
+Cảm giác
+Tự tin, điềm đạm, đẳng cấp
+
+02
+Concept
+Flat lay sản phẩm — "Chi tiết đắt giá"
+Bố cục
+Sản phẩm là nhân vật chính diện. Xung quanh trang trí một vài phụ kiện văn phòng: Macbook, đồng hồ, ly cafe.
+Màu sắc
+Tông tương phản sáng tối mạnh. Ánh sáng tạt.
+Cảm giác
+Sang trọng, chi tiết, tập trung
+
+03
+Concept
+Video Before/After — "Một bước lên mây"
+Bố cục
+Chia khung hình Split-screen để thấy sự đối lập giữa lúc chưa dùng và khi đã dùng "${tieuDe}".
+Màu sắc
+Tone sáng khỏe mạnh.
+Cảm giác
+Bất ngờ, giải trí, thỏa mãn thị giác`;
             } else if (activeTabId === 'tab-zalo') {
                 targetInputId = 'ai-zalo';
-                fallbackContent = `[MẪU 1 - CHUYÊN NGHIỆP]\nDạ em gửi anh chị kịch bản nháp cho bài "${tieuDe}". Anh chị xem và phản hồi giúp em nhé!\n\n[MẪU 2 - THÂN THIỆN]\nSếp ơi, em lên xong plan bài "${tieuDe}" rồi nè. Sếp check qua nha 😉`;
+                fallbackContent = `Mẫu 1 — Lịch sự, chuyên nghiệp
+Xin chào anh/chị [Tên khách], Em là [Tên bạn] từ [Tên thương hiệu]. Em xin phép gửi anh/chị tham khảo nội dung kế hoạch bài "${tieuDe}". Anh/chị xem qua nếu cần chỉnh sửa thì phản hồi sớm giúp em để team bay vào sản xuất ạ. Em cảm ơn! Trân trọng.
+
+Mẫu 2 — Ngắn gọn, thân thiện
+Sếp ơi 👋 Em xong bản nháp Ticket "${tieuDe}" rồi ạ. Sếp đi ngang rảnh ngó qua Tab Caption với Kịch Bản cho em xin xíu góc nhìn nha. Oke là em bật máy quay luôn 📷 Mãi iu 🫰`;
             }
 
             if (targetInputId) {
