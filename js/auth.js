@@ -90,6 +90,11 @@ const Auth = {
         document.getElementById('login-wrapper').style.display = 'block'; // Ensure the new wrapper is shown
         document.getElementById('login-form').style.display = 'block';
         document.getElementById('register-form').style.display = 'none';
+        
+        // Ensure forgot password modal is hidden when returning to login
+        const forgotModal = document.getElementById('forgot-password-modal');
+        if (forgotModal) forgotModal.style.display = 'none';
+        
         document.querySelector('.app-container').style.display = 'none';
         
         // Hide boot screen if we are just switching back to login
@@ -101,9 +106,20 @@ const Auth = {
         document.getElementById('login-form').style.display = 'none';
         document.getElementById('register-form').style.display = 'block';
         
+        // Ensure forgot password modal is hidden
+        const forgotModal = document.getElementById('forgot-password-modal');
+        if (forgotModal) forgotModal.style.display = 'none';
+        
         // Hide boot screen if we are just switching to register
         const bootScreen = document.getElementById('incard-boot-screen');
         if (bootScreen) bootScreen.style.display = 'none';
+    },
+
+    showForgotPassword: (e) => {
+        if (e) e.preventDefault();
+        // Hide the wrappers and forms, then show the modal
+        document.getElementById('login-wrapper').style.display = 'none';
+        document.getElementById('forgot-password-modal').style.display = 'flex';
     },
 
     showApp: () => {
@@ -185,15 +201,31 @@ const Auth = {
         
         const forgotLink = document.getElementById('go-to-forgot');
         if(forgotLink) {
-            forgotLink.addEventListener('click', Auth.handleForgotPassword);
+            forgotLink.addEventListener('click', Auth.showForgotPassword);
+        }
+        
+        const cancelForgotBtn = document.getElementById('btn-cancel-forgot');
+        if(cancelForgotBtn) {
+            cancelForgotBtn.addEventListener('click', () => {
+                document.getElementById('forgot-password-modal').style.display = 'none';
+                document.getElementById('login-wrapper').style.display = 'block';
+            });
+        }
+        
+        const forgotForm = document.getElementById('forgot-form');
+        if(forgotForm) {
+            forgotForm.addEventListener('submit', Auth.handleForgotPassword);
         }
     },
     
     handleForgotPassword: (e) => {
         e.preventDefault();
-        const userIn = prompt('Vui lòng nhập Tên đăng nhập của bạn:');
+        const userIn = document.getElementById('forgot-user').value.trim();
         if (userIn) {
-            alert(`Yêu cầu cấp lại mật khẩu cho tài khoản "${userIn}" đã được gửi.\\n\\nVui lòng liên hệ trực tiếp Admin Điện Thoại/Zalo: 0886 46 2345 để nhận mật khẩu mới.`);
+            alert(`Yêu cầu cấp lại mật khẩu cho tài khoản "${userIn}" đã được hệ thống ghi nhận.\n\nVui lòng liên hệ trực tiếp\nAdmin Điện thoại/Zalo: 0886 46 2345 để nhận mật khẩu mới.`);
+            document.getElementById('forgot-user').value = '';
+            document.getElementById('forgot-password-modal').style.display = 'none';
+            document.getElementById('login-wrapper').style.display = 'block';
         }
     },
 

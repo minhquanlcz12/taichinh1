@@ -207,19 +207,17 @@ body {
     z-index: 2;
     object-fit: contain;
     /* Invert black to white, apply cyan glow */
-    filter: invert(1) brightness(1.2) drop-shadow(0 0 15px #00f0ff);
-    /* Soften edges using a radial mask instead of blend-mode to avoid square borders */
-    -webkit-mask-image: radial-gradient(circle, black 50%, transparent 100%);
-    mask-image: radial-gradient(circle, black 50%, transparent 100%);
+    filter: invert(1) brightness(1.5) contrast(1.5) drop-shadow(0 0 10px #00f0ff);
+    /* Use mix-blend-mode plus transparent border fix */
+    mix-blend-mode: screen;
 }
 .sidebar-dragon-img {
     width: 44px;
     height: 44px;
     object-fit: contain;
     /* Emerald glow and invert */
-    filter: invert(1) brightness(1.2) drop-shadow(0 0 8px #88ffd1);
-    -webkit-mask-image: radial-gradient(circle, black 60%, transparent 100%);
-    mask-image: radial-gradient(circle, black 60%, transparent 100%);
+    filter: invert(1) brightness(1.5) contrast(1.5) drop-shadow(0 0 8px #88ffd1);
+    mix-blend-mode: screen;
 }
 .ring-outer {
     position: absolute;
