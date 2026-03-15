@@ -222,10 +222,26 @@ const Auth = {
         e.preventDefault();
         const userIn = document.getElementById('forgot-user').value.trim();
         if (userIn) {
-            alert(`Yêu cầu cấp lại mật khẩu cho tài khoản "${userIn}" đã được hệ thống ghi nhận.\n\nVui lòng liên hệ trực tiếp\nAdmin Điện thoại/Zalo: 0886 46 2345 để nhận mật khẩu mới.`);
-            document.getElementById('forgot-user').value = '';
-            document.getElementById('forgot-password-modal').style.display = 'none';
-            document.getElementById('login-wrapper').style.display = 'block';
+            Utils.showModal(
+                'SYSTEM ACTIVATED',
+                `
+                <div style="text-align: center;">
+                    <i class="fa-solid fa-shield-halved" style="font-size: 48px; color: var(--warning); margin-bottom: 16px;"></i>
+                    <p style="font-size: 16px; margin-bottom: 16px;">Yêu cầu cấp lại mật khẩu cho tài khoản <strong style="color: var(--primary);">"${userIn}"</strong> đã được tiếp nhận.</p>
+                    <div style="background: rgba(0,0,0,0.3); padding: 16px; border-radius: 8px; border: 1px dashed var(--warning);">
+                        <p style="color: var(--text-secondary); margin-bottom: 8px;">Vui lòng liên hệ trực tiếp Quản trị viên:</p>
+                        <p style="font-weight: bold; font-family: monospace; font-size: 20px; color: var(--success); letter-spacing: 2px;">0886 46 2345</p>
+                    </div>
+                </div>
+                `,
+                () => {
+                    document.getElementById('forgot-user').value = '';
+                    document.getElementById('forgot-password-modal').style.display = 'none';
+                    document.getElementById('login-wrapper').style.display = 'block';
+                    return true;
+                },
+                'ĐÃ HIỂU'
+            );
         }
     },
 

@@ -234,7 +234,7 @@ const Attendance = {
         const allData = await Attendance.loadData();
         // Cẩn thận double click
         if (allData.find(r => r.username === user.username && r.dateStr === dateStr)) {
-            alert('Hôm nay bạn đã điểm danh rồi!');
+            Utils.showToast('Hôm nay bạn đã điểm danh rồi!', 'info');
             return;
         }
 
