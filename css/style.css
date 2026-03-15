@@ -1291,8 +1291,8 @@ body.dark-theme .task-item.completed {
 }
 
 .data-table {
-    width: 2500px;
-    /* Force wide width for 13 columns */
+    width: 100%;
+    min-width: 1600px;
     border-collapse: collapse;
     margin-top: 8px;
     font-size: 13px;
@@ -1301,7 +1301,7 @@ body.dark-theme .task-item.completed {
 
 .data-table th,
 .data-table td {
-    padding: 8px 12px;
+    padding: 6px 8px; /* Tối ưu padding gọn hơn */
     text-align: left;
     border: 1px solid var(--glass-border);
     vertical-align: top;
@@ -1399,10 +1399,23 @@ body.light-theme .data-table th {
 /* Readability wraps */
 .task-content-text {
     display: block;
-    word-break: break-word; /* Important to keep long text wrapped */
+    word-break: break-word;
     white-space: pre-wrap;
-    /* Preserve line breaks from excel */
     line-height: 1.4;
+    max-height: 90px; /* Giới hạn chiều cao text */
+    overflow-y: auto; /* Cho phép cuộn nếụ nội dung quá dài */
+}
+
+/* Custom mini scrollbar cho khung text */
+.task-content-text::-webkit-scrollbar {
+    width: 3px;
+}
+.task-content-text::-webkit-scrollbar-track {
+    background: transparent;
+}
+.task-content-text::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border-radius: 3px;
 }
 
 /* Row Styling */
