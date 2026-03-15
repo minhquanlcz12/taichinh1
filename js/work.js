@@ -391,14 +391,18 @@ const WorkModule = {
                                     <tr>
                                         <th class="col-stt">STT</th>
                                         <th class="col-ngay">Ngày đăng</th>
+                                        <th class="col-thu">Thứ</th>
                                         <th class="col-muctieu th-green">Mục tiêu</th>
+                                        <th class="col-trucot th-green">Trụ cột</th>
                                         <th class="col-tieude th-green">Tiêu đề</th>
-                                        <th class="col-noidung th-green">Nội dung chi tiết</th>
+                                        <th class="col-noidung th-green">Nội dung chi tiết (caption/outline)</th>
                                         <th class="col-dinhdang">Định dạng</th>
-                                        <th class="col-order">Nội dung order thiết kế</th>
-                                        <th class="col-deadline">Thứ - Deadline</th>
+                                        <th class="col-order">Nội dung order thiết kế (brief)</th>
+                                        <th class="col-deadline">Deadline<br>thiết kế</th>
                                         <th class="col-trangthai">Trạng thái</th>
-                                        <th class="col-actions" style="text-align: right;"><i class="fa-solid fa-gear"></i></th>
+                                        <th class="col-ghichu">Ghi chú</th>
+                                        <th class="col-anh">Ảnh gợi ý</th>
+                                        <th class="col-actions"><i class="fa-solid fa-gear"></i></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -420,6 +424,11 @@ const WorkModule = {
                     return `<option value="${s}" ${selected}>${s}</option>`;
                 }).join('');
 
+                // Image logic
+                const imgCellContent = task.anhData
+                    ? `<img src="${task.anhData}" style="max-width:80px; max-height:80px; border-radius:4px; cursor:pointer;" onclick="WorkModule.triggerImageUpload('${task.id}')" title="Đổi ảnh">`
+                    : `<button class="btn btn-outline" style="font-size:11px; padding:4px 8px;" onclick="WorkModule.triggerImageUpload('${task.id}')"><i class="fa-solid fa-image"></i> Tải ảnh</button>`;
+
                 // Deadline Logic
                 let deadlineClass = '';
                 if (task.deadline) {
@@ -439,31 +448,30 @@ const WorkModule = {
 
                 html += `
                     <tr class="${isCompleted ? 'row-completed' : ''}">
-                        <td class="col-stt">${task.stt || ''}</td>
-                        <td class="col-ngay" style="font-weight: 600;">${task.ngayDang}</td>
-                        <td class="col-muctieu td-green"><span class="task-content-text">${task.mucTieu || '--'}</span></td>
-                        <td class="col-tieude td-green">
-                            <span class="task-content-text" style="font-size: 14px; font-weight: bold; color: var(--primary);">${task.tieuDe || '--'}</span>
-                        </td>
-                        <td class="col-noidung td-green"><span class="task-content-text" style="text-align:justify;">${task.noiDung || '--'}</span></td>
-                        <td class="col-dinhdang"><span class="badge badge-gray">${task.dinhDang || '--'}</span></td>
-                        <td class="col-order"><span class="task-content-text" style="text-align:justify;">${task.orderBrief || '--'}</span></td>
-                        <td class="col-deadline">
-                            <div class="${deadlineClass}" style="padding: 4px; border-radius: 4px; text-align: left;">
-                                ${task.thu ? `<b>${task.thu}</b><br>` : ''}
-                                ${task.deadline ? `${task.deadline}` : '--'}
-                            </div>
-                        </td>
+                        <td class="col-stt">${task.stt}</td>
+                        <td class="col-ngay">${task.ngayDang}</td>
+                        <td class="col-thu">${task.thu}</td>
+                        <td class="col-muctieu td-green"><span class="task-content-text">${task.mucTieu}</span></td>
+                        <td class="col-trucot td-green"><span class="task-content-text">${task.truCot}</span></td>
+                        <td class="col-tieude td-green"><span class="task-content-text">${task.tieuDe}</span></td>
+                        <td class="col-noidung td-green"><span class="task-content-text" style="text-align:justify;">${task.noiDung}</span></td>
+                        <td class="col-dinhdang"><span class="task-content-text">${task.dinhDang}</span></td>
+                        <td class="col-order"><span class="task-content-text" style="text-align:justify;">${task.orderBrief}</span></td>
+                        <td class="col-deadline"><div class="${deadlineClass}" style="padding: 4px; border-radius: 4px; text-align: center;">${task.deadline}</div></td>
                         <td class="col-trangthai">
-                            <select class="form-control ${statusClass}" style="font-size: 12px; font-weight:600; padding:4px 8px; border-radius:4px; max-width: 120px;" onchange="WorkModule.changeTaskStatus('${task.id}', this.value)">
+                            <select class="form-control ${statusClass}" style="font-size: 13px; font-weight:600; padding:4px 8px; border-radius:4px;" onchange="WorkModule.changeTaskStatus('${task.id}', this.value)">
                                 ${statusOptions}
                             </select>
                         </td>
-                        <td class="col-actions" style="display: flex; gap: 8px; justify-content: flex-end;">
-                            <button class="btn btn-warning btn-sm" title="Mở Phiếu Làm Việc" onclick="WorkModule.openTicketModal('${task.id}')" style="font-weight: bold; min-width: 100px;">
-                                <i class="fa-solid fa-ticket"></i> MỞ PHIẾU
+                        <td class="col-ghichu"><span class="task-content-text">${task.ghiChu}</span></td>
+                        <td class="col-anh" style="text-align:center;">
+                            ${imgCellContent}
+                        </td>
+                        <td class="col-actions" style="display: flex; flex-direction: column; gap: 4px;">
+                            <button class="btn btn-warning btn-sm" title="Mở Phiếu Làm Việc" onclick="WorkModule.openTicketModal('${task.id}')" style="font-weight: bold; width: 100%;">
+                                <i class="fa-solid fa-ticket"></i> Mở
                             </button>
-                            <button class="btn-text text-danger" title="Xóa" onclick="WorkModule.deleteTask('${task.id}')">
+                            <button class="btn btn-danger btn-sm" title="Xóa" onclick="WorkModule.deleteTask('${task.id}')" style="width: 100%;">
                                 <i class="fa-solid fa-trash"></i>
                             </button>
                         </td>
