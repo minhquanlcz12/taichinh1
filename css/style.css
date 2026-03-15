@@ -69,7 +69,8 @@ body {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: linear-gradient(rgba(4, 9, 20, 0.7), rgba(4, 9, 20, 0.85)), url('../assets/bg-login-v2.jpg') center/cover no-repeat !important;
+    /* Tăng độ che phủ (opacity) của nền đen đè lên giao diện bên dưới để không lòi mờ mờ UI cũ */
+    background: linear-gradient(rgba(4, 9, 20, 0.95), rgba(4, 9, 20, 0.98)), url('../assets/bg-login-v2.jpg') center/cover no-repeat !important;
     display: none;
     align-items: center;
     justify-content: center;
@@ -155,7 +156,8 @@ body {
     transform: translateX(-50%);
     z-index: 50; /* Ensure this is always on top */
     gap: 12px;
-    clip-path: polygon(0 0, 100% 0, calc(100% - 15px) 100%, 15px 100%);
+    /* Adjusted clip path to give more horizontal room to text and icon before slanting */
+    clip-path: polygon(0 0, 100% 0, calc(100% - 10px) 100%, 10px 100%);
 }
 .hud-title-text {
     font-family: 'Poppins', sans-serif;
@@ -164,6 +166,7 @@ body {
     font-size: 16px;
     text-transform: uppercase;
     letter-spacing: 2px;
+    white-space: nowrap; /* Prevent wrapping which might cause cutoff */
 }
 .hud-flag {
     width: 30px;

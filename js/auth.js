@@ -182,6 +182,19 @@ const Auth = {
 
         document.getElementById('go-to-reg').addEventListener('click', Auth.showRegister);
         document.getElementById('go-to-login').addEventListener('click', Auth.showLogin);
+        
+        const forgotLink = document.getElementById('go-to-forgot');
+        if(forgotLink) {
+            forgotLink.addEventListener('click', Auth.handleForgotPassword);
+        }
+    },
+    
+    handleForgotPassword: (e) => {
+        e.preventDefault();
+        const userIn = prompt('Vui lòng nhập Tên đăng nhập của bạn:');
+        if (userIn) {
+            alert(`Yêu cầu cấp lại mật khẩu cho tài khoản "${userIn}" đã được gửi.\\n\\nVui lòng liên hệ trực tiếp Admin Điện Thoại/Zalo: 0886 46 2345 để nhận mật khẩu mới.`);
+        }
     },
 
     renderSettings: async () => {
