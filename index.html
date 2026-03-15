@@ -16,7 +16,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
 
     <!-- Local scripts imported end of body -->
-    <link rel="stylesheet" href="css/style.css?v=3.5">
+    <link rel="stylesheet" href="css/style.css?v=3.6">
 </head>
 
 <body class="dark-theme">
@@ -44,27 +44,6 @@
             </div>
 
             <div class="auth-card" style="margin-top: 15px;">
-                <!-- IN-CARD BOOT SCREEN GRAPHIC -->
-                <div id="incard-boot-screen" class="incard-boot-screen">
-                    <!-- Vòng Rồng Loading Lớn -->
-                    <div class="incard-dragon-ring" style="margin-top: 40px;">
-                        <div class="ring-outer"></div>
-                        <div class="ring-inner"></div>
-                        <img src="img/dragon.png" alt="Dragon Logo" class="ring-dragon-img" onerror="this.style.display='none'">
-                    </div>
-
-                    <!-- Thanh Progress Loading Dọc -->
-                    <div class="cyber-progress-container">
-                        <div class="cyber-progress-bracket left">[</div>
-                        <div class="cyber-progress-track" id="cyber-progress-track">
-                            <!-- JS will inject .cyber-pill here -->
-                        </div>
-                        <div class="cyber-progress-bracket right">]</div>
-                        <div id="cyber-progress-text" style="color: #00f0ff; font-family: 'Courier New', monospace; font-size: 16px; font-weight: bold; margin-left: 12px; width: 45px; text-align: right; text-shadow: 0 0 5px #00f0ff;">0%</div>
-                    </div>
-                    <div class="incard-status">INITIALIZING...</div>
-                </div>
-
                 <!-- Login Wrapper -->
                 <div id="login-wrapper" style="display: none; padding-top: 30px;">
                     <!-- Login Form -->
@@ -149,7 +128,29 @@
                     </form>
                 </div> <!-- end #forgot-password-modal -->
 
+            </div> <!-- end auth-card -->
+
+            <!-- IN-CARD BOOT SCREEN GRAPHIC MOVED HERE TO FIX BLEND MODE -->
+            <div id="incard-boot-screen" class="incard-boot-screen" style="position: absolute; top: 15px; left: 0; width: 100%; height: calc(100% - 15px); background: #040914; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; clip-path: polygon(15px 0, calc(50% - 70px) 0, calc(50% - 60px) 15px, calc(50% + 60px) 15px, calc(50% + 70px) 0, calc(100% - 15px) 0, 100% 15px, 100% calc(100% - 15px), calc(100% - 15px) 100%, 15px 100%, 0 calc(100% - 15px), 0 15px);">
+                <!-- Vòng Rồng Loading Lớn -->
+                <div class="incard-dragon-ring" style="margin-top: 40px;">
+                    <div class="ring-outer"></div>
+                    <div class="ring-inner"></div>
+                    <img src="img/dragon.png" alt="Dragon Logo" class="ring-dragon-img" onerror="this.style.display='none'">
+                </div>
+
+                <!-- Thanh Progress Loading Dọc -->
+                <div class="cyber-progress-container">
+                    <div class="cyber-progress-bracket left">[</div>
+                    <div class="cyber-progress-track" id="cyber-progress-track">
+                        <!-- JS will inject .cyber-pill here -->
+                    </div>
+                    <div class="cyber-progress-bracket right">]</div>
+                    <div id="cyber-progress-text" style="color: #00f0ff; font-family: 'Courier New', monospace; font-size: 16px; font-weight: bold; margin-left: 12px; width: 45px; text-align: right; text-shadow: 0 0 5px #00f0ff;">0%</div>
+                </div>
+                <div class="incard-status">INITIALIZING...</div>
             </div>
+
         </div>
     </div>
 
@@ -431,14 +432,14 @@
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="js/utils.js?v=3.5"></script>
-    <script src="js/db.js?v=3.5"></script>
-    <script src="js/finance.js?v=3.5"></script>
-    <script src="js/work.js?v=3.5"></script>
-    <script src="js/attendance.js?v=3.5"></script>
-    <script src="js/chat.js?v=3.5"></script>
-    <script src="js/auth.js?v=3.5"></script>
-    <script src="js/app.js?v=3.5"></script>
+    <script src="js/utils.js?v=3.6"></script>
+    <script src="js/db.js?v=3.6"></script>
+    <script src="js/finance.js?v=3.6"></script>
+    <script src="js/work.js?v=3.6"></script>
+    <script src="js/attendance.js?v=3.6"></script>
+    <script src="js/chat.js?v=3.6"></script>
+    <script src="js/auth.js?v=3.6"></script>
+    <script src="js/app.js?v=3.6"></script>
 
     <!-- Toast Notification Container -->
     <div id="toast-container" class="toast-container"></div>
