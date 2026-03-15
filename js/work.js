@@ -867,8 +867,15 @@ Chỉ xuất ra đúng chuỗi JSON, không giải thích hay bao bọc XML/HTML
                 const data = await response.json();
                 let aiText = data.content[0].text;
                 
-                // Trích xuất JSON an toàn
+                // Trích xuất JSON an toàn (Xử lý cả trường hợp Claude nói 'Dạ đây là JSON: ...')
                 aiText = aiText.replace(/```json/gi, '').replace(/```/g, '').trim();
+                const startIdx = aiText.indexOf('{');
+                const endIdx = aiText.lastIndexOf('}');
+                
+                if (startIdx !== -1 && endIdx !== -1) {
+                    aiText = aiText.substring(startIdx, endIdx + 1);
+                }
+                
                 const aiDataObj = JSON.parse(aiText);
 
                 // Gán vào giao diện
@@ -881,7 +888,7 @@ Chỉ xuất ra đúng chuỗi JSON, không giải thích hay bao bọc XML/HTML
                 Utils.showToast('Đã tạo thành công đủ 5 mục bằng AI!', 'success');
             } catch (error) {
                 console.error("Claude API Error:", error);
-                Utils.showToast('Lỗi khi gọi API hoặc định dạng JSON không hợp lệ.', 'error');
+                Utils.showToast('Lỗi khi gọi API hoặc định dạng JSON không hợp lệ. Vui lòng thử lại!', 'error');
             }
             btn.innerHTML = originalBtnHtml;
             btn.disabled = false;
