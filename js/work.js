@@ -628,32 +628,55 @@ const WorkModule = {
         const task = WorkModule.data.tasks.find(t => t.id === WorkModule.activeTicketId);
         if (!task) return;
 
-        let tieuDe = document.getElementById('ticket-tieude').value || task.tieuDe || 'Chủ đề chung';
+        let tieuDe = document.getElementById('ticket-tieude').value || task.tieuDe || 'Chủ đề bài đăng';
         let dinhDang = (task.dinhDang || '').toLowerCase();
         
         let draft = `[🔥 BẢN NHÁP TẠO TỰ ĐỘNG BẰNG AI SIMULATOR]\n\n`;
         
-        if (dinhDang.includes('video') || dinhDang.includes('reels') || dinhDang.includes('tiktok')) {
-            draft += `🎬 KỊCH BẢN NGẮN (VIDEO):\n`;
-            draft += `1. Hook (3s đầu): "Bạn có biết ${tieuDe} đang là xu hướng?"\n`;
-            draft += `2. Body (10s): Đưa ra 2-3 lợi ích chính hoặc phân tích nhanh vấn đề.\n`;
-            draft += `3. CTA (3s): "Inbox ngay để được tư vấn chi tiết!"\n\n`;
-            draft += `🎥 Ý TƯỞNG QUAY TRÌNH DIỄN:\n`;
-            draft += `- Quay cận cảnh sản phẩm/dịch vụ.\n`;
-            draft += `- Thêm text nổi bật ở giữa màn hình.\n`;
+        if (dinhDang.includes('video') || dinhDang.includes('reels') || dinhDang.includes('tiktok') || dinhDang.includes('short')) {
+            draft += `🎬 KỊCH BẢN CHI TIẾT (VIDEO):\n`;
+            draft += `━━━━━━━━━━━━━━━━━━━━━━\n`;
+            draft += `⚡ 1. Hook (0-3s) - Thu hút ngay lập tức:\n`;
+            draft += `   - Hình ảnh: Cảnh quay giật gân, cận cảnh hoặc text to đập vào mắt.\n`;
+            draft += `   - Lời thoại/Text: "Bạn có biết ${tieuDe} đang là xu hướng không thể bỏ lỡ?"\n\n`;
+            draft += `😰 2. Vấn đề/Pain point (3-8s):\n`;
+            draft += `   - Hình ảnh: Khách hàng đang gặp khó khăn hoặc trạng thái chưa hoàn hảo.\n`;
+            draft += `   - Lời thoại/Text: "Rất nhiều người đang loay hoay vì chưa biết cách tối ưu..."\n\n`;
+            draft += `💡 3. Giải pháp (8-18s) - Body chính:\n`;
+            draft += `   - Hình ảnh: Show sản phẩm/dịch vụ giải quyết vấn đề. Góc máy năng động (pan, tilt).\n`;
+            draft += `   - Lời thoại/Text: "Với giải pháp từ chúng tôi, bạn dễ dàng đạt được 3 lợi ích vượt trội: A, B, C..."\n\n`;
+            draft += `🔥 4. Kêu gọi hành động (18-20s) - CTA:\n`;
+            draft += `   - Hình ảnh: Logo nhãn hàng, thông tin liên hệ bật lên rõ ràng.\n`;
+            draft += `   - Lời thoại/Text: "Để lại bình luận hoặc inbox ngay để nhận ưu đãi độc quyền!"\n\n`;
+            draft += `🎥 HƯỚNG DẪN QUAY (SHOT LIST BONE):\n`;
+            draft += `- Shot 1 (Cận cảnh): Setup ánh sáng keylight tôn chủ thể.\n`;
+            draft += `- Shot 2 (Trung cảnh): Khung hình 1/3, chừa backgound chèn Text.\n`;
+            draft += `- Shot 3 (B-roll): Quay chi tiết sản phẩm 60fps để slow-motion mượt mà.\n`;
+            draft += `- Âm nhạc: Trending TikTok, beat dồn dập ở đoạn Hook.\n`;
         } else {
             draft += `📝 CAPTION BÀI VIẾT (ẢNH/TEXT):\n`;
-            draft += `👉 Tiêu đề giật tít: Khám phá ngay ${tieuDe}!\n`;
-            draft += `🌟 Nội dung chính: Cung cấp giải pháp tối ưu cho khách hàng, nêu bật ưu điểm của ${tieuDe}.\n`;
-            draft += `🔥 Kêu gọi hành động: "Liên hệ Hotline hoặc Inbox Fanpage!"\n\n`;
-            draft += `🖼️ Ý TƯỞNG THIẾT KẾ ẢNH:\n`;
-            draft += `- Tone màu chủ đạo chuyên nghiệp.\n`;
-            draft += `- Bố cục 1/3, text to rõ ràng dễ đọc trên Mobile.\n`;
+            draft += `━━━━━━━━━━━━━━━━━━━━━━\n`;
+            draft += `👉 Tiêu đề giật tít: TỔNG HỢP NHỮNG ĐIỀU CẦN BIẾT VỀ ${tieuDe.toUpperCase()}!\n\n`;
+            draft += `🌟 Bạn đang tìm kiếm giải pháp hoàn hảo? Dưới đây là những lý do bạn không nên bỏ lỡ:\n`;
+            draft += `✔️ Lợi ích 1: Tiết kiệm tối đa thời gian & chi phí.\n`;
+            draft += `✔️ Lợi ích 2: Hiệu quả tức thì, cam kết chất lượng.\n`;
+            draft += `✔️ Lợi ích 3: Đội ngũ hỗ trợ nhiệt tình chuyên nghiệp.\n\n`;
+            draft += `🎁 ƯU ĐÃI ĐẶC BIỆT CHỈ TRONG HÔM NAY!\n`;
+            draft += `🔥 Kêu gọi hành động: "Để lại [CHẤM] nhận ngay tư vấn miễn phí hoặc Inbox trực tiếp cho Fanpage!"\n\n`;
+            draft += `🖼️ Ý TƯỞNG THIẾT KẾ ẢNH (BONE):\n`;
+            draft += `- Tone màu chủ đạo chuyên nghiệp, nổi bật thông điệp.\n`;
+            draft += `- Bố cục: Áp dụng quy tắc 1/3, chia rõ không gian đọc Text và không gian Hình ảnh.\n`;
+            draft += `- Text trên ảnh (Key visual): "${tieuDe}" font chữ to, đậm, viền nổi rõ trên màn hình Mobile.\n`;
+            draft += `- Call to action (Trên ảnh): Nút "Xem Thêm" hoặc "Đăng Ký Ngay" đặt ở mép dưới chữ nhỏ hơn.\n`;
         }
+
+        // Tự động điền cả Order Design
+        let orderBrief = `[🛠️ ORDER THIẾT KẾ / DỰNG VIDEO]\n- Yêu cầu: Làm nổi bật tiêu đề "${tieuDe}".\n- Tone màu: Phù hợp nhận diện thương hiệu.\n- Text chính: (Sử dụng text từ kịch bản trên).\n- Định dạng xuất file: Tối ưu cho Mobile (9:16 hoặc vuông 1:1, ảnh nét HD).`;
+        document.getElementById('ticket-order').value = orderBrief;
 
         // Fill into the textarea
         document.getElementById('ticket-noidung').value = draft;
-        Utils.showToast('AI đã tạo xong nội dung nháp!', 'success');
+        Utils.showToast('AI đã tạo xong nội dung khung sườn chi tiết!', 'success');
     },
 
     copyZaloMessage: () => {

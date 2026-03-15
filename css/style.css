@@ -1332,12 +1332,13 @@ body.light-theme .data-table th {
 
 /* Specific Column Widths */
 .col-stt {
-    width: 40px;
+    width: 25px; /* Giảm mạnh do STT chỉ là 1 con số */
+    padding: 4px;
     text-align: center;
 }
 
 .col-ngay {
-    width: 100px;
+    width: 85px; /* Giảm nhẹ */
     white-space: nowrap;
 }
 
@@ -1355,12 +1356,12 @@ body.light-theme .data-table th {
 }
 
 .col-tieude {
-    width: 200px;
+    width: 150px; /* Giảm nhẹ */
     font-weight: 600;
 }
 
 .col-noidung {
-    width: 400px;
+    width: 280px; /* Nội dung có thể xuống dòng, tối ưu không gian rộng */
 }
 
 .col-dinhdang {
@@ -1368,30 +1369,30 @@ body.light-theme .data-table th {
 }
 
 .col-order {
-    width: 400px;
+    width: 280px; /* Tương tự nội dung chi tiết */
 }
 
 .col-deadline {
-    width: 100px;
+    width: 90px;
     text-align: center;
 }
 
 .col-trangthai {
-    width: 100px;
+    width: 90px;
     text-align: center;
     font-weight: 600;
 }
 
 .col-ghichu {
-    width: 200px;
+    width: 150px;
 }
 
 .col-anh {
-    width: 100px;
+    width: 80px;
 }
 
 .col-actions {
-    width: 60px;
+    width: 50px;
     text-align: center;
 }
 
