@@ -842,6 +842,10 @@ Cấu trúc JSON bắt buộc phải chính xác như sau:
 Chỉ xuất ra đúng chuỗi JSON, không giải thích hay bao bọc XML/HTML.`;
 
             const activeModel = Utils.storage.get('claude_api_model') || 'claude-3-haiku-20240307';
+            // Thêm random seed để đảm bảo AI trả về kết quả khác nhau mỗi lần
+            const randomSeed = Math.random().toString(36).substring(7);
+            const finalPrompt = prompt + `\n\n[Bắt buộc: Bạn hãy nghĩ ra các ý tưởng hoang dã, góc nhìn hoàn toàn MỚI LẠ. Sử dụng văn phong, từ vựng và cấu trúc hoàn toàn KHÁC BIỆT so với các mẫu thông thường! Mã tạo ngẫu nhiên để ép tính sáng tạo: ${randomSeed}]`;
+
             try {
                 const response = await fetch('https://api.anthropic.com/v1/messages', {
                     method: 'POST',
@@ -854,8 +858,9 @@ Chỉ xuất ra đúng chuỗi JSON, không giải thích hay bao bọc XML/HTML
                     body: JSON.stringify({
                         model: activeModel,
                         max_tokens: 4096,
+                        temperature: 0.9,
                         messages: [
-                            { role: "user", content: prompt }
+                            { role: "user", content: finalPrompt }
                         ]
                     })
                 });
@@ -895,52 +900,58 @@ Chỉ xuất ra đúng chuỗi JSON, không giải thích hay bao bọc XML/HTML
 
         } else {
             // FALLBACK LOCAL MOCKUP KHI KHÔNG CÓ API
-            Utils.showToast('Chưa có API Key. Sử dụng Local Template điền full 5 mục.', 'info');
+            Utils.showToast('Chưa có API Key. Đang tạo Bản nháp Mẫu...', 'info');
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ĐANG TẠO...';
             btn.disabled = true;
             
             setTimeout(() => {
+                const styles = ['Sang trọng', 'Tối giản', 'Phá cách', 'Hiện đại', 'Cổ điển', 'Đường phố'];
+                const randStyle = styles[Math.floor(Math.random() * styles.length)];
+                
+                const angles = ['Tập trung vào tính năng', 'Mang yếu tố hài hước', 'Chạm vào cảm xúc', 'So sánh trực diện'];
+                const randAngle = angles[Math.floor(Math.random() * angles.length)];
+
                 const mockupObj = {
                     "tomTat": {
-                        "mucTieu": mucTieu || "Tăng nhận diện thương hiệu",
-                        "dinhDang": dinhDang || "Ảnh + Caption",
-                        "chuDe": truCot || tieuDe || "Sản phẩm chiến lược",
-                        "phongCach": "Sang, sạch, hiện đại",
-                        "tieuDe": tieuDe || "Mẫu thanh lịch dành cho dân văn phòng",
-                        "diemNhan": "Tập trung vào giải pháp tinh tế, giá trị cốt lõi sản phẩm.",
+                        "mucTieu": mucTieu || "Tạo độ phủ thương hiệu cực đỉnh",
+                        "dinhDang": dinhDang || "Video/Ảnh chất lượng cao",
+                        "chuDe": truCot || tieuDe || "Ra mắt bộ sưu tập mới",
+                        "phongCach": randStyle + " và tinh gọn",
+                        "tieuDe": (tieuDe || "Bí mật chuyên gia") + ` - Phiên bản ${Math.floor(Math.random() * 100)}`,
+                        "diemNhan": `Hướng tiếp cận: ${randAngle}. Thu hút sâu sắc tâm lý người xem.`,
                         "cachTrienKhai": [
-                            "Chụp ảnh sản phẩm: nền kem/trắng, góc 45 độ",
-                            "Thiết kế layout sạch — font tối giản, màu trung tính",
-                            "Lên lịch đăng báo vào giờ vàng: 7-9h"
+                            "Brainstorm ý tưởng kịch bản chốt khoảnh khắc 3 giây đầu",
+                            "Setup ánh sáng nghệ thuật nổi bật chủ thể",
+                            "Edit nhịp độ nhanh (fast-pace) kết hợp nhạc trending"
                         ],
-                        "dauRa": ["3-5 ảnh sản phẩm", "1 video reels", "3 phiên bản caption", "Lịch đăng"],
+                        "dauRa": ["3-5 ảnh nét căng", "1 video tối ưu nền tảng dọc", "Caption nhiều sắc thái"],
                         "luuY": [
-                            "Hình ảnh nhất quán: sang - sạch - hiện đại",
-                            "CTA phải xuất hiện trong mọi phiên bản"
+                            "Phải test A/B tiêu đề video",
+                            "Focus mạnh vào cảm xúc ngay từ âm thanh"
                         ]
                     },
                     "kichBan": {
-                        "hook": "Cảnh: Cận cảnh chi tiết đắt giá nhất.\\nLời thoại / Text: \"Bí quyết chưa từng tiết lộ...\"",
-                        "noiDung": "Cảnh 1: Hiển thị vấn đề thường gặp.\\nCảnh 2: Sử dụng sản phẩm.\\nText overlay: \"Giải quyết trong 3 giây.\"",
-                        "cta": "Cảnh: Sản phẩm tỏa sáng, link bio.\\nLời thoại: \"Nhấn ngay góc trái để sở hữu!\"",
-                        "amNhac": "Lofi / Corporate nhẹ",
-                        "phongCachQuay": "Cận cảnh + Trung cảnh",
-                        "mauSac": "Trắng, kem, xám bạc",
-                        "phuHopDang": "TikTok, Reels, Shorts"
+                        "hook": `Cảnh: Mở đầu góc quay siêu thực, zoom in chớp nhoáng.\\nLời thoại: "Đừng lướt qua nếu bạn chưa biết điều này! Mẫu ${Math.floor(Math.random() * 999)}..."`,
+                        "noiDung": `Cảnh 1: Hé lộ vấn đề muôn thuở.\\nCảnh 2: Khung hình chậm lại, giới thiệu giải pháp.\\nText: "${randAngle}"`,
+                        "cta": "Cảnh: Link bio rực sáng.\\nLời thoại: \"Đừng chờ đợi, trải nghiệm ngay!\"",
+                        "amNhac": "Nhạc Cinematic hoặc Lofi chill (phân khúc tùy tâm trạng)",
+                        "phongCachQuay": "Handheld / Dynamic",
+                        "mauSac": "Tương phản mạnh (High-contrast)",
+                        "phuHopDang": "TikTok, Trạng thái đa nền tảng"
                     },
                     "caption": [
-                        { "tieuDe": "Caption 1 — Bán hàng trực tiếp", "noiDung": "✨ Đừng bỏ qua! Dân văn phòng đang 'phát sốt' vì độ tiện lợi siêu việt của bộ sản phẩm này. 👉 Click ngay link dưới để nhận tư vấn sớm nhất! #Trending" },
-                        { "tieuDe": "Caption 2 — Branding nhẹ", "noiDung": "Có những chi tiết nhỏ nhưng thay đổi hoàn toàn phong cách của bạn. Tôn vinh đẳng cấp từ bên trong, không cần ồn ào. 🔗 [Link bio]" },
-                        { "tieuDe": "Caption 3 — Ngắn gọn dễ đăng", "noiDung": "Nhẹ nhàng. Tinh tế. Xịn sò. 👓 Mua ngay tại inbox [Tên Cửa hàng]" }
+                        { "tieuDe": "Caption 1 - Viral & Chốt sale", "noiDung": `🔥 Chấn động! Bí quyết đỉnh cao đã được hé lộ. Sở hữu ngay hôm nay chỉ với 1 click! 🚀 #Viral #TopSale` },
+                        { "tieuDe": "Caption 2 - Storytelling sâu lắng", "noiDung": `Hành trình dẫn đến sự hoàn mỹ không bao giờ dễ dàng. Nhưng hôm nay, chúng tôi mang nó đến cho bạn... Nhẹ nhàng tinh tế như phong cách ${randStyle}.` },
+                        { "tieuDe": "Caption 3 - Kêu gọi hành động ngắn", "noiDung": `Gọn gàng. Đẹp mắt. Bứt phá. 👉 Chốt nhanh ở link BIO!` }
                     ],
                     "yTuong": [
-                        { "concept": "Lifestyle — Hoàn hảo", "boCuc": "Góc chụp ngang qua vai, tập trung màn hình", "mauSac": "Trắng, be", "camGiac": "Tập trung, chuyên nghiệp" },
-                        { "concept": "Flat lay — Đắt giá", "boCuc": "Sản phẩm nằm giữa, phụ kiện bao quanh tinh xảo", "mauSac": "Xám trung tính, tương phản mạnh", "camGiac": "Sang trọng thuần khiết" },
-                        { "concept": "Before/After — Lột xác", "boCuc": "Sắp xếp cạnh nhau để so sánh độ tiện lợi", "mauSac": "Tươi sáng, khỏe khoắn", "camGiac": "Bất ngờ, kích thích" }
+                        { "concept": "Cinematic Story", "boCuc": "Luật 1/3, focus đôi mắt", "mauSac": "Cyberpunk Neon", "camGiac": "Kịch tính" },
+                        { "concept": "Minimial", "boCuc": "Chính diện, nền trơn mượt", "mauSac": "Off-white", "camGiac": "Sạch sẽ, đáng tin" },
+                        { "concept": "Behind the scene", "boCuc": "Quay lén tự nhiên", "mauSac": "Màu giả lập máy phim (Retro)", "camGiac": "Chân thật, gần gũi" }
                     ],
                     "zalo": [
-                        { "tieuDe": "Mẫu 1 — Lịch sự, chuyên nghiệp", "noiDung": "Xin chào anh/chị, em xin gửi thông tin chương trình/chiến dịch mới nhất bên em. Anh chị rảnh xem qua góp ý giúp em nha. Em cảm ơn!" },
-                        { "tieuDe": "Mẫu 2 — Ngắn gọn, thân thiện", "noiDung": "Sếp ơi 👋 Nháp đã xong, sếp rảnh lướt nhanh cho em xin chỉ đạo tiến hành nhé! 🚀" }
+                        { "tieuDe": "Mẫu cho Đối tác/Khách VIP", "noiDung": "Dạ em gửi biểu mẫu concept chuẩn bị cho chiến dịch sắp tới. Góc độ này tụi em đã tinh chỉnh theo xu hướng mới nhất. Chờ anh/chị duyệt ạ." },
+                        { "tieuDe": "Mẫu báo cáo nhanh", "noiDung": `Ping cả nhà! Gói nội dung version ${Math.floor(Math.random()*100)} đã lên nòng, mọi người xem qua nhé 👌` }
                     ]
                 };
 
