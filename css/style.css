@@ -1342,16 +1342,7 @@ body.light-theme .data-table th {
     white-space: nowrap;
 }
 
-.col-thu {
-    width: 30px;
-    text-align: center;
-}
-
 .col-muctieu {
-    width: 100px;
-}
-
-.col-trucot {
     width: 100px;
 }
 

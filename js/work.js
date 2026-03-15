@@ -391,14 +391,12 @@ const WorkModule = {
                                     <tr>
                                         <th class="col-stt">STT</th>
                                         <th class="col-ngay">Ngày đăng</th>
-                                        <th class="col-thu">Thứ</th>
+                                        <th class="col-deadline">Deadline<br>thiết kế</th>
                                         <th class="col-muctieu th-green">Mục tiêu</th>
-                                        <th class="col-trucot th-green">Trụ cột</th>
                                         <th class="col-tieude th-green">Tiêu đề</th>
                                         <th class="col-noidung th-green">Nội dung chi tiết (caption/outline)</th>
                                         <th class="col-dinhdang">Định dạng</th>
                                         <th class="col-order">Nội dung order thiết kế (brief)</th>
-                                        <th class="col-deadline">Deadline<br>thiết kế</th>
                                         <th class="col-trangthai">Trạng thái</th>
                                         <th class="col-ghichu">Ghi chú</th>
                                         <th class="col-anh">Ảnh gợi ý</th>
@@ -448,22 +446,20 @@ const WorkModule = {
 
                 html += `
                     <tr class="${isCompleted ? 'row-completed' : ''}">
-                        <td class="col-stt">${task.stt}</td>
-                        <td class="col-ngay">${task.ngayDang}</td>
-                        <td class="col-thu">${task.thu}</td>
-                        <td class="col-muctieu td-green"><span class="task-content-text">${task.mucTieu}</span></td>
-                        <td class="col-trucot td-green"><span class="task-content-text">${task.truCot}</span></td>
-                        <td class="col-tieude td-green"><span class="task-content-text">${task.tieuDe}</span></td>
-                        <td class="col-noidung td-green"><span class="task-content-text" style="text-align:justify;">${task.noiDung}</span></td>
-                        <td class="col-dinhdang"><span class="task-content-text">${task.dinhDang}</span></td>
-                        <td class="col-order"><span class="task-content-text" style="text-align:justify;">${task.orderBrief}</span></td>
-                        <td class="col-deadline"><div class="${deadlineClass}" style="padding: 4px; border-radius: 4px; text-align: center;">${task.deadline}</div></td>
+                        <td class="col-stt">${task.stt || ''}</td>
+                        <td class="col-ngay">${task.ngayDang || ''}</td>
+                        <td class="col-deadline"><div class="${deadlineClass}" style="padding: 4px; border-radius: 4px; text-align: center; font-weight: bold;">${task.deadline || '--'}</div></td>
+                        <td class="col-muctieu td-green"><span class="task-content-text">${task.mucTieu || ''}</span></td>
+                        <td class="col-tieude td-green"><span class="task-content-text" style="font-weight: bold;">${task.tieuDe || ''}</span></td>
+                        <td class="col-noidung td-green"><span class="task-content-text" style="text-align:justify;">${task.noiDung || ''}</span></td>
+                        <td class="col-dinhdang"><span class="task-content-text">${task.dinhDang || ''}</span></td>
+                        <td class="col-order"><span class="task-content-text" style="text-align:justify;">${task.orderBrief || ''}</span></td>
                         <td class="col-trangthai">
                             <select class="form-control ${statusClass}" style="font-size: 13px; font-weight:600; padding:4px 8px; border-radius:4px;" onchange="WorkModule.changeTaskStatus('${task.id}', this.value)">
                                 ${statusOptions}
                             </select>
                         </td>
-                        <td class="col-ghichu"><span class="task-content-text">${task.ghiChu}</span></td>
+                        <td class="col-ghichu"><span class="task-content-text">${task.ghiChu || ''}</span></td>
                         <td class="col-anh" style="text-align:center;">
                             ${imgCellContent}
                         </td>
