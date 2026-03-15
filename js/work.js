@@ -66,6 +66,9 @@ const WorkModule = {
             if (dateDisplay) dateDisplay.textContent = 'Tất cả Kế hoạch';
         }
 
+        const timeFilterEl = document.getElementById('work-time-filter');
+        if (timeFilterEl) timeFilterEl.value = WorkModule.currentFilterTime;
+
         if (app.state && app.state.currentView === 'dashboard-view') {
             app.renderDashboard();
         }
@@ -365,13 +368,19 @@ const WorkModule = {
             const isExpanded = WorkModule.expandedProjects.has(projName) ? 'expanded' : '';
 
             html += `
-                <div class="folder-group glass-card ${isExpanded}" style="padding: 0; overflow:hidden;" id="${folderId}">
+                <div class="folder-group glass-card ${isExpanded}" style="padding: 0; overflow:hidden; margin-bottom: 24px;" id="${folderId}">
                     <div class="folder-header" onclick="WorkModule.toggleFolder('${folderId}', '${projName}')">
                         <div class="folder-title">
-                <div class="glass-card table-folder">
-                    <div class="folder-header" onclick="this.parentElement.classList.toggle('collapsed')">
-                        <h3 style="margin:0;"><i class="fa-regular fa-folder-open" style="color:var(--primary); margin-right:8px;"></i> ${projName} <span class="badge badge-gray" style="font-size:12px; margin-left:8px;">${projTasks.length} nhiệm vụ</span></h3>
-                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <i class="fa-solid fa-folder-open" style="color: var(--primary);"></i>
+                            ${projName}
+                            ${adminBadgeHtml}
+                            <span class="badge badge-gray" style="font-size: 11px; margin-left: 8px;">${projTasks.length} nhiệm vụ</span>
+                            <span class="badge badge-blue" style="font-size: 11px; margin-left: 8px;">Hoàn thành: ${doneCount}/${totalCount}</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap: 16px;">
+                            <button class="btn btn-danger" style="padding: 4px 12px; font-size: 12px; font-weight: bold;" onclick="WorkModule.deleteProject('${projName}', event)">
+                                <i class="fa-solid fa-trash"></i> Xóa
+                            </button>
                             <i class="fa-solid fa-chevron-down chevron-icon"></i>
                         </div>
                     </div>
