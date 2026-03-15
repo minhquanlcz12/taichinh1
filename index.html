@@ -16,7 +16,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
 
     <!-- Local scripts imported end of body -->
-    <link rel="stylesheet" href="css/style.css?v=2.7">
+    <link rel="stylesheet" href="css/style.css?v=3.0">
 </head>
 
 <body class="dark-theme">
@@ -133,15 +133,16 @@
         <!-- Sidebar Navigation -->
         <nav class="sidebar glass-panel">
             <div class="sidebar-header">
-                <div class="logo">
-                    <i class="fa-solid fa-dragon neon-text-cyan"></i>
-                    <span style="font-size: 20px; display: flex; align-items: center; gap: 6px;"
-                        class="neon-text-cyan">Thanh Long Work <svg xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 900 600" width="36" height="24"
-                            style="border-radius:2px; box-shadow: 0 1px 3px rgba(0,0,0,0.3);">
-                            <rect width="900" height="600" fill="#da251d" />
-                            <polygon points="450,120 353,419 607,235 293,235 547,419" fill="#ffcd00" />
-                        </svg></span>
+                <div class="logo" style="display: flex; align-items: center; gap: 10px; width: 100%;">
+                    <i class="fa-solid fa-dragon" style="font-size: 38px; color: #88ffd1; filter: drop-shadow(0 0 8px rgba(136,255,209,0.8));"></i>
+                    <div style="display: flex; flex-direction: column; line-height: 1.1;">
+                        <span style="font-size: 18px; font-weight: 700; color: #88ffd1; text-shadow: 0 0 5px rgba(136,255,209,0.5); letter-spacing: 0.5px;">Thanh Long</span>
+                        <span style="font-size: 18px; font-weight: 700; color: #88ffd1; text-shadow: 0 0 5px rgba(136,255,209,0.5); letter-spacing: 0.5px;">Work</span>
+                    </div>
+                    <svg style="margin-left: auto; border-radius: 4px; box-shadow: 0 0 6px rgba(218, 37, 29, 0.5);" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" width="30" height="20">
+                        <rect width="900" height="600" fill="#da251d" />
+                        <polygon points="450,120 353,419 607,235 293,235 547,419" fill="#ffcd00" />
+                    </svg>
                 </div>
             </div>
 
@@ -197,23 +198,55 @@
                 <div id="dashboard-view" class="view active">
                     <div class="dashboard-grid">
                         <!-- Summary Cards -->
-                        <div class="summary-card neon-card-base neon-card-yellow">
-                            <i class="fa-solid fa-coins bg-icon" style="opacity: 0.1;"></i>
-                            <h3 class="summary-title" style="color:var(--text-secondary); font-size: 13px;">Số dư khả
-                                dụng</h3>
-                            <h2 class="amount summary-value" id="dash-balance">0 ₫</h2>
+                        <div class="summary-card neon-card-yellow">
+                            <div class="card-inner">
+                                <h3 class="summary-title text-yellow">Số dư khả dụng</h3>
+                                <h2 class="amount summary-value text-white" id="dash-balance">0 <span style="text-decoration: underline; font-size: 0.8em;">đ</span></h2>
+                                <svg class="bg-icon-stack" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12 11C16.9706 11 21 9.43299 21 7.5C21 5.56701 16.9706 4 12 4C7.02944 4 3 5.56701 3 7.5C3 9.43299 7.02944 11 12 11Z" fill="currentColor" fill-opacity="0.5"/>
+                                    <path d="M3 11.5C3 13.433 7.02944 15 12 15C16.9706 15 21 13.433 21 11.5 V10.3C19.1416 11.7583 15.8285 12.8 12 12.8C8.17147 12.8 4.85842 11.7583 3 10.3 V11.5Z" fill="currentColor" fill-opacity="0.4"/>
+                                    <path d="M3 15.5C3 17.433 7.02944 19 12 19C16.9706 19 21 17.433 21 15.5 V14.3C19.1416 15.7583 15.8285 16.8 12 16.8C8.17147 16.8 4.85842 15.7583 3 14.3 V15.5Z" fill="currentColor" fill-opacity="0.3"/>
+                                    <path d="M3 19.5C3 21.433 7.02944 23 12 23C16.9706 23 21 21.433 21 19.5 V18.3C19.1416 19.7583 15.8285 20.8 12 20.8C8.17147 20.8 4.85842 19.7583 3 18.3 V19.5Z" fill="currentColor" fill-opacity="0.2"/>
+                                </svg>
+                                <div class="soundwave-bg">
+                                    <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+                                    <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+                                    <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+                                    <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="summary-card neon-card-base neon-card-green">
-                            <i class="fa-solid fa-arrow-trend-up bg-icon" style="opacity: 0.1;"></i>
-                            <h3 class="summary-title" style="color:var(--text-secondary); font-size: 13px;">Tổng Thu
-                                (Tháng)</h3>
-                            <h2 class="amount summary-value" id="dash-income">0 ₫</h2>
+                        <div class="summary-card neon-card-green">
+                            <div class="card-inner">
+                                <h3 class="summary-title text-green">Tổng Thu (Tháng)</h3>
+                                <h2 class="amount summary-value text-white" id="dash-income">0 <span style="text-decoration: underline; font-size: 0.8em;">đ</span></h2>
+                                <svg class="bg-icon-arrow" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M20,80 L35,50 L55,70 L85,25" stroke="url(#green_grad)" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"/>
+                                    <path d="M55,25 L85,25 L85,55" stroke="url(#green_grad)" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"/>
+                                    <defs>
+                                        <linearGradient id="green_grad" x1="0" y1="100" x2="100" y2="0" gradientUnits="userSpaceOnUse">
+                                            <stop offset="0%" stop-color="rgba(74, 222, 128, 0.1)"/>
+                                            <stop offset="100%" stop-color="rgba(74, 222, 128, 0.8)"/>
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+                            </div>
                         </div>
-                        <div class="summary-card neon-card-base neon-card-red">
-                            <i class="fa-solid fa-arrow-trend-down bg-icon" style="opacity: 0.1;"></i>
-                            <h3 class="summary-title" style="color:var(--text-secondary); font-size: 13px;">Tổng Chi
-                                (Tháng)</h3>
-                            <h2 class="amount summary-value" id="dash-expense">0 ₫</h2>
+                        <div class="summary-card neon-card-red">
+                            <div class="card-inner">
+                                <h3 class="summary-title text-red">Tổng Chi (Tháng)</h3>
+                                <h2 class="amount summary-value text-white" id="dash-expense">0 <span style="text-decoration: underline; font-size: 0.8em;">đ</span></h2>
+                                <svg class="bg-icon-arrow" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M20,20 L45,55 L65,30 L90,75" stroke="url(#red_grad)" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"/>
+                                    <path d="M60,75 L90,75 L90,45" stroke="url(#red_grad)" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"/>
+                                    <defs>
+                                        <linearGradient id="red_grad" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+                                            <stop offset="0%" stop-color="rgba(248, 113, 113, 0.1)"/>
+                                            <stop offset="100%" stop-color="rgba(248, 113, 113, 0.8)"/>
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+                            </div>
                         </div>
                     </div>
 
@@ -365,13 +398,13 @@
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="js/utils.js?v=2.7"></script>
-    <script src="js/db.js?v=2.7"></script>
-    <script src="js/finance.js?v=2.7"></script>
-    <script src="js/work.js?v=2.7"></script>
-    <script src="js/chat.js?v=2.7"></script>
-    <script src="js/auth.js?v=2.7"></script>
-    <script src="js/app.js?v=2.7"></script>
+    <script src="js/utils.js?v=3.0"></script>
+    <script src="js/db.js?v=3.0"></script>
+    <script src="js/finance.js?v=3.0"></script>
+    <script src="js/work.js?v=3.0"></script>
+    <script src="js/chat.js?v=3.0"></script>
+    <script src="js/auth.js?v=3.0"></script>
+    <script src="js/app.js?v=3.0"></script>
 
     <!-- Toast Notification Container -->
     <div id="toast-container" class="toast-container"></div>
