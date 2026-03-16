@@ -93,6 +93,7 @@ const Attendance = {
                 </div>
             `;
         } else {
+            checkInHtml = `
                 <div class="check-in-box">
                     <button id="btn-check-in" class="btn-radar-cyber" onclick="Attendance.handleCheckIn()">
                         <span class="radar-text">ĐIỂM DANH<br>NGAY</span>
@@ -178,21 +179,19 @@ const Attendance = {
                         </tbody>
                     </table>
                 </div>
-                    </table>
-                </div>
             </div>
-        \`;
+        `;
 
-        container.innerHTML = \`
+        container.innerHTML = `
             <div class="attendance-user-container">
                 <div class="attendance-header" style="text-align: center; margin-bottom: 30px;">
                     <h2 style="color: var(--primary); text-transform: uppercase; letter-spacing: 2px;">Chấm Công Hàng Ngày</h2>
                     <p style="color: var(--text-secondary);">Hạn chót: <strong>08:30 AM</strong></p>
                 </div>
-                \${checkInHtml}
-                \${historyHtml}
+                ${checkInHtml}
+                ${historyHtml}
             </div>
-        \`;
+        `;
     },
 
     renderAdminView: async (container) => {
