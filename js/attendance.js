@@ -298,8 +298,8 @@ const Attendance = {
                                     <td>${l.days}</td>
                                     <td title="${l.reason}" style="max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${l.reason}</td>
                                     <td>
-                                        <button class="btn btn-sm btn-success" onclick="Attendance.updateLeaveStatus('${l.id}', 'approved')" style="margin-right: 4px; padding: 4px 8px;"><i class="fa-solid fa-check"></i></button>
-                                        <button class="btn btn-sm btn-danger" onclick="Attendance.updateLeaveStatus('${l.id}', 'rejected')" style="padding: 4px 8px;"><i class="fa-solid fa-times"></i></button>
+                                        <button class="btn btn-sm btn-success" onclick="Attendance.updateLeaveStatus('${l.id}', 'approved')" style="margin-right: 4px; padding: 4px 12px; display: inline-flex; align-items: center; gap: 6px;"><i class="fa-solid fa-check"></i> Duyệt</button>
+                                        <button class="btn btn-sm btn-danger" onclick="Attendance.updateLeaveStatus('${l.id}', 'rejected')" style="padding: 4px 12px; display: inline-flex; align-items: center; gap: 6px;"><i class="fa-solid fa-times"></i> Từ chối</button>
                                     </td>
                                 </tr>
                             `).join('')}
