@@ -102,14 +102,17 @@ const Attendance = {
                     </button>
                     <p style="margin-top: 24px; color: var(--text-secondary);">Nhấp vào vòng tròn để xác nhận có mặt hôm nay.</p>
                 </div>
-                
-                <div style="text-align: center; margin-top: 20px;">
-                    <button class="btn btn-outline" style="border-color: var(--warning); color: var(--warning);" onclick="Attendance.showLeaveModal()">
-                        <i class="fa-solid fa-calendar-minus" style="margin-right: 6px;"></i>Đăng ký Nghỉ phép
-                    </button>
-                </div>
             `;
         }
+
+        // Luôn hiển thị nút xin nghỉ phép
+        checkInHtml += `
+            <div style="text-align: center; margin-top: 24px; padding-top: 24px; border-top: 1px dashed rgba(255,255,255,0.1);">
+                <button class="btn btn-outline" style="border-color: var(--warning); color: var(--warning);" onclick="Attendance.showLeaveModal()">
+                    <i class="fa-solid fa-calendar-minus" style="margin-right: 6px;"></i>Đăng ký Xin Nghỉ Phép
+                </button>
+            </div>
+        `;
 
         // Lấy lịch sử 30 ngày gần nhất
         const userHistory = allData.filter(r => r.username === user.username).sort((a,b) => b.timestamp - a.timestamp).slice(0, 30);
@@ -271,19 +274,22 @@ const Attendance = {
             <div class="glass-panel" style="padding: 24px; margin-top: 24px;">
                 <h2 style="color: var(--warning); margin-bottom: 24px;"><i class="fa-solid fa-envelope-open-text"></i> Danh sách Xin Nghỉ Phép</h2>
                 
-                <h3 style="color: var(--primary); margin-bottom: 12px; font-size: 16px;">Yêu cầu chờ duyệt (${pendingLeaves.length})</h3>
-                <div class="table-responsive" style="margin-bottom: 24px;">
-                    <table class="tl-table">
-                        <thead>
-                            <tr>
-                                <th>Nhân Viên</th>
-                                <th>Ngày nghỉ</th>
-                                <th>Số ngày</th>
-                                <th>Lý do</th>
-                                <th>Thao tác</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+                    <h3 style="color: var(--primary); margin-bottom: 16px; font-size: 16px; display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-clock-rotate-left"></i> Yêu cầu chờ duyệt (${pendingLeaves.length})
+                    </h3>
+                    <div class="table-responsive">
+                        <table class="tl-table">
+                            <thead>
+                                <tr>
+                                    <th>Nhân Viên</th>
+                                    <th>Ngày nghỉ</th>
+                                    <th>Số ngày</th>
+                                    <th>Lý do</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
                             ${pendingLeaves.length === 0 ? '<tr><td colspan="5" style="text-align:center;">Không có yêu cầu chờ duyệt</td></tr>' : ''}
                             ${pendingLeaves.map(l => `
                                 <tr>
@@ -300,19 +306,23 @@ const Attendance = {
                         </tbody>
                     </table>
                 </div>
+                </div> <!-- End Pending Block -->
                 
-                <h3 style="color: var(--text-secondary); margin-bottom: 12px; font-size: 14px;">Lịch sử đã duyệt/từ chối gần đây</h3>
-                <div class="table-responsive">
-                    <table class="tl-table">
-                        <thead>
-                            <tr>
-                                <th>Nhân Viên</th>
-                                <th>Ngày nghỉ</th>
-                                <th>Số ngày</th>
-                                <th>Trạng thái</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 16px;">
+                    <h3 style="color: var(--text-secondary); margin-bottom: 16px; font-size: 14px; display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-clock-rotate-left"></i> Lịch sử đã duyệt/từ chối gần đây
+                    </h3>
+                    <div class="table-responsive">
+                        <table class="tl-table">
+                            <thead>
+                                <tr>
+                                    <th>Nhân Viên</th>
+                                    <th>Ngày nghỉ</th>
+                                    <th>Số ngày</th>
+                                    <th>Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody>
                             ${resolvedLeaves.length === 0 ? '<tr><td colspan="4" style="text-align:center;">Trống</td></tr>' : ''}
                             ${resolvedLeaves.map(l => {
                                 let statusHtml = l.status === 'approved' ? '<span class="badge bg-success">Đã Duyệt</span>' : '<span class="badge bg-danger">Từ Chối</span>';
@@ -328,6 +338,7 @@ const Attendance = {
                         </tbody>
                     </table>
                 </div>
+                </div> <!-- End Resolved Block -->
             </div>
         `;
 
