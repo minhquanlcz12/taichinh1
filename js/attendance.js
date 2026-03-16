@@ -471,7 +471,15 @@ const Attendance = {
     },
 
     updateLeaveStatus: async (leaveId, newStatus) => {
-        if (!confirm(`Bạn có chắc chắn muốn ${newStatus === 'approved' ? 'DUYỆT' : 'TỪ CHỐI'} yêu cầu này?`)) return;
+        const actionText = newStatus === 'approved' ? 'DUYỆT' : 'TỪ CHỐI';
+        const color = newStatus === 'approved' ? 'var(--success)' : 'var(--danger)';
+        
+        const isConfirm = await Utils.showConfirm(
+            'Xác nhận thao tác', 
+            `Bạn có chắc chắn muốn <span style="color: ${color}; font-weight: bold; font-size: 16px;">${actionText}</span> yêu cầu nghỉ phép này?`
+        );
+        
+        if (!isConfirm) return;
 
         const allLeaves = await Attendance.loadLeaveData();
         const leaveIndex = allLeaves.findIndex(l => l.id === leaveId);
