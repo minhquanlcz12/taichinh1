@@ -427,6 +427,44 @@
         </div>
     </div>
 
+    <!-- Leave Request Modal Overlay -->
+    <div class="modal-overlay" id="leave-modal-overlay" onclick="if(event.target===this) Attendance.closeLeaveModal()">
+        <div class="modal profile-modal-content" id="leave-modal">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-calendar-minus" style="color:var(--warning); margin-right: 8px;"></i>Đăng ký Nghỉ phép</h3>
+                <button class="btn-close" onclick="Attendance.closeLeaveModal()"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="modal-body" style="padding-top: 10px;">
+                <form id="leave-form">
+                    <div class="form-group with-icon">
+                        <label>Từ ngày</label>
+                        <div class="input-icon-wrap">
+                            <i class="fa-solid fa-calendar-day input-icon"></i>
+                            <input type="date" id="leave-start-date" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group with-icon">
+                        <label>Số ngày nghỉ</label>
+                        <div class="input-icon-wrap">
+                            <i class="fa-solid fa-hashtag input-icon"></i>
+                            <input type="number" id="leave-days" class="form-control" min="0.5" step="0.5" placeholder="Ví dụ: 1 hoặc 0.5" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Lý do nghỉ</label>
+                        <textarea id="leave-reason" class="form-control" rows="3" placeholder="Nhập chi tiết lý do xin nghỉ..." style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-primary); padding: 12px; resize: vertical;" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid var(--border-color); padding-top: 16px;">
+                <button class="btn btn-text" onclick="Attendance.closeLeaveModal()">Hủy</button>
+                <button class="btn " onclick="Attendance.submitLeaveRequest()" style="background: var(--warning); color: #000; font-weight: bold;"><i class="fa-solid fa-paper-plane" style="margin-right: 6px;"></i>Gửi Yêu Cầu</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Ticket View Modal (Phiếu Làm Việc) -->
     <div class="modal-overlay" id="ticket-modal-overlay" onclick="if(event.target===this) WorkModule.closeTicketModal()">
         <div class="modal ticket-modal-content" id="ticket-modal" style="width: 90%; max-width: 800px; max-height: 90vh; overflow-y: auto;">

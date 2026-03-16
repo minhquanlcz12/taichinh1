@@ -1435,6 +1435,12 @@ body.dark-theme .data-table tbody tr:hover {
     color: var(--primary);
 }
 
+.status-expired {
+    color: var(--danger);
+    font-style: italic;
+    opacity: 0.8;
+}
+
 .row-completed {
     opacity: 0.6;
 }
@@ -1445,6 +1451,18 @@ body.dark-theme .data-table tbody tr:hover {
 
 body.dark-theme .row-completed td {
     background-color: rgba(46, 204, 113, 0.1) !important;
+}
+
+.row-expired {
+    opacity: 0.5;
+}
+
+.row-expired td {
+    background-color: rgba(231, 76, 60, 0.05) !important;
+}
+
+body.dark-theme .row-expired td {
+    background-color: rgba(231, 76, 60, 0.1) !important;
 }
 
 /* Accordion / Folders */

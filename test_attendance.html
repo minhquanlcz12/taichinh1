@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test</title>
+</head>
+<body>
+    <script>
+        window.onerror = function(msg, url, lineNo, columnNo, error) {
+            console.log('Error:', msg, 'Line:', lineNo);
+            const errDiv = document.createElement('div');
+            errDiv.textContent = 'Error: ' + msg + ' at line ' + lineNo;
+            document.body.appendChild(errDiv);
+            return false;
+        };
+    </script>
+    <script src="js/attendance.js"></script>
+    <script>
+        console.log("attendance.js loaded successfully");
+        const successDiv = document.createElement('div');
+        successDiv.textContent = 'attendance.js loaded successfully';
+        document.body.appendChild(successDiv);
+    </script>
+</body>
+</html>

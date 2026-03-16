@@ -162,6 +162,17 @@ const WorkModule = {
             return;
         }
 
+        if (!WorkModule.data.importedFiles) {
+            WorkModule.data.importedFiles = [];
+        }
+        
+        const fileSignature = `${projectName}_${file.name}_${file.size}`;
+        if (WorkModule.data.importedFiles.includes(fileSignature)) {
+            Utils.showToast(`File "${file.name}" đã được tải lên dự án "${projectName}" trước đây!`, 'error');
+            event.target.value = '';
+            return;
+        }
+
         const reader = new FileReader();
         reader.onload = async (e) => {
             try {
@@ -224,11 +235,23 @@ const WorkModule = {
 
                     const safeGet = (colIndex) => colIndex !== undefined && row[colIndex] !== undefined && row[colIndex] !== null ? row[colIndex].toString() : '';
 
+                    const ngayDangParsed = colMap.ngayDang !== undefined ? Utils.convertExcelDate(row[colMap.ngayDang]) : '';
+                    const deadlineParsed = colMap.deadline !== undefined ? Utils.convertExcelDate(row[colMap.deadline]) : '';
+                    let rawTrangThai = safeGet(colMap.trangThai) || 'Planned';
+
+                    // Auto-expired logic
+                    const todayStr = Utils.getTodayString();
+                    const compareDate = deadlineParsed || ngayDangParsed;
+                    
+                    if (compareDate && compareDate < todayStr && !rawTrangThai.toLowerCase().includes('done')) {
+                        rawTrangThai = 'Hết hạn';
+                    }
+
                     const taskObj = {
                         id: Utils.generateId(),
                         project: projectName,
                         stt: safeGet(colMap.stt),
-                        ngayDang: colMap.ngayDang !== undefined ? Utils.convertExcelDate(row[colMap.ngayDang]) : '',
+                        ngayDang: ngayDangParsed,
                         thu: safeGet(colMap.thu),
                         mucTieu: safeGet(colMap.mucTieu),
                         truCot: safeGet(colMap.truCot),
@@ -236,8 +259,8 @@ const WorkModule = {
                         noiDung: safeGet(colMap.noiDung),
                         dinhDang: safeGet(colMap.dinhDang),
                         orderBrief: safeGet(colMap.orderBrief),
-                        deadline: colMap.deadline !== undefined ? Utils.convertExcelDate(row[colMap.deadline]) : '',
-                        trangThai: safeGet(colMap.trangThai) || 'Planned',
+                        deadline: deadlineParsed,
+                        trangThai: rawTrangThai,
                         ghiChu: safeGet(colMap.ghiChu),
                         anhGoiY: safeGet(colMap.anhGoiY),
                         owner: Auth.currentUser ? Auth.currentUser.username : 'admin'
@@ -246,6 +269,8 @@ const WorkModule = {
                     WorkModule.data.tasks.push(taskObj);
                     importedCount++;
                 }
+
+                WorkModule.data.importedFiles.push(fileSignature);
 
                 Utils.showToast(`Đã nhập thành công ${importedCount} công việc vào kế hoạch "${projectName}".`, 'success');
                 await WorkModule.save();
@@ -407,16 +432,22 @@ const WorkModule = {
             `;
 
             projTasks.forEach(task => {
-                const isCompleted = task.trangThai && task.trangThai.toLowerCase().includes('done');
-                let statusClass = '';
                 const currentStatus = task.trangThai ? task.trangThai.toLowerCase() : 'planned';
+                const isCompleted = currentStatus.includes('done');
+                const isExpired = currentStatus.includes('hết hạn');
+                let statusClass = '';
 
                 if (currentStatus.includes('planned')) statusClass = 'status-planned';
                 if (isCompleted) statusClass = 'status-done';
                 if (currentStatus.includes('doing')) statusClass = 'status-doing';
+                if (isExpired) statusClass = 'status-expired';
+
+                let rowClass = '';
+                if (isCompleted) rowClass = 'row-completed';
+                else if (isExpired) rowClass = 'row-expired';
 
                 // Status Dropdown Options
-                const statuses = ['Planned', 'Doing', 'Done'];
+                const statuses = ['Planned', 'Doing', 'Done', 'Hết hạn'];
                 let statusOptions = statuses.map(s => {
                     const selected = task.trangThai.toLowerCase() === s.toLowerCase() ? 'selected' : '';
                     return `<option value="${s}" ${selected}>${s}</option>`;
@@ -453,7 +484,7 @@ const WorkModule = {
                 };
 
                 html += `
-                    <tr class="${isCompleted ? 'row-completed' : ''}">
+                    <tr class="${rowClass}">
                         <td class="col-stt">${task.stt || ''}</td>
                         <td class="col-ngay">${task.ngayDang || ''}</td>
                         <td class="col-deadline"><div class="${deadlineClass}" style="padding: 4px; border-radius: 4px; text-align: center; font-weight: bold;">${task.deadline || '--'}</div></td>
