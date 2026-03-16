@@ -197,17 +197,17 @@ const Utils = {
             overlay.style.zIndex = '9999';
             overlay.style.backdropFilter = 'blur(5px)';
             overlay.innerHTML = `
-                <div class="modal glass-card" style="width: 90%; max-width: 400px; padding: 24px; animation: slideIn 0.3s ease; text-align: center; border-radius: 12px; border: 1px solid rgba(136, 255, 209, 0.3); box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);">
-                    <div style="margin-bottom: 24px;">
-                        <div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(255, 193, 7, 0.1); border: 2px solid var(--warning); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto; box-shadow: 0 0 15px rgba(255, 193, 7, 0.2);">
-                            <i class="fa-solid fa-triangle-exclamation" style="font-size: 28px; color: var(--warning);"></i>
+                <div class="modal glass-card" style="width: 90%; max-width: 320px; padding: 20px; animation: slideIn 0.3s ease; text-align: center; border-radius: 12px; border: 1px solid rgba(136, 255, 209, 0.3); box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);">
+                    <div style="margin-bottom: 20px;">
+                        <div style="width: 50px; height: 50px; border-radius: 50%; background: rgba(255, 193, 7, 0.1); border: 2px solid var(--warning); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px auto; box-shadow: 0 0 15px rgba(255, 193, 7, 0.2);">
+                            <i class="fa-solid fa-triangle-exclamation" style="font-size: 24px; color: var(--warning);"></i>
                         </div>
-                        <h3 style="font-weight: bold; font-size: 18px; margin: 0; margin-bottom: 12px; color: #fff;">${title}</h3>
-                        <p style="color: var(--text-secondary); font-size: 14px; line-height: 1.5; margin: 0;">${message}</p>
+                        <h3 style="font-weight: bold; font-size: 16px; margin: 0; margin-bottom: 8px; color: #fff;">${title}</h3>
+                        <p style="color: var(--text-secondary); font-size: 13px; line-height: 1.5; margin: 0;">${message}</p>
                     </div>
-                    <div style="display: flex; gap: 12px;">
-                        <button class="btn btn-text" id="custom-confirm-cancel" style="flex: 1; padding: 10px 0; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px;">${cancelText}</button>
-                        <button class="btn" id="custom-confirm-ok" style="flex: 1; padding: 10px 0; background: var(--warning); color: #000; font-weight: bold; border-radius: 6px; box-shadow: 0 0 10px rgba(255, 193, 7, 0.4);">${confirmText}</button>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-text" id="custom-confirm-cancel" style="flex: 1; padding: 10px 0; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; display: flex; justify-content: center; align-items: center; text-align: center;">${cancelText}</button>
+                        <button class="btn" id="custom-confirm-ok" style="flex: 1; padding: 10px 0; background: var(--warning); color: #000; font-weight: bold; border-radius: 6px; box-shadow: 0 0 10px rgba(255, 193, 7, 0.4); display: flex; justify-content: center; align-items: center; text-align: center;">${confirmText}</button>
                     </div>
                 </div>
             `;
