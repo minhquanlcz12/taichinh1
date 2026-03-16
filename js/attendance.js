@@ -271,7 +271,7 @@ const Attendance = {
         const resolvedLeaves = allLeaves.filter(l => l.status !== 'pending').sort((a,b) => b.timestamp - a.timestamp).slice(0, 20);
 
         let leavesHtml = `
-            <div class="glass-panel" style="padding: 24px; margin-top: 24px;">
+            <div class="glass-panel" style="padding: 24px; height: 100%;">
                 <h2 style="color: var(--warning); margin-bottom: 24px;"><i class="fa-solid fa-envelope-open-text"></i> Danh sách Xin Nghỉ Phép</h2>
                 
                 <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 16px; margin-bottom: 24px;">
@@ -298,8 +298,8 @@ const Attendance = {
                                     <td>${l.days}</td>
                                     <td title="${l.reason}" style="max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${l.reason}</td>
                                     <td>
-                                        <button class="btn btn-sm btn-success" onclick="Attendance.updateLeaveStatus('${l.id}', 'approved')" style="margin-right: 4px; padding: 4px 12px; display: inline-flex; align-items: center; gap: 6px;"><i class="fa-solid fa-check"></i> Duyệt</button>
-                                        <button class="btn btn-sm btn-danger" onclick="Attendance.updateLeaveStatus('${l.id}', 'rejected')" style="padding: 4px 12px; display: inline-flex; align-items: center; gap: 6px;"><i class="fa-solid fa-times"></i> Từ chối</button>
+                                        <button class="btn btn-sm btn-outline btn-success" onclick="Attendance.updateLeaveStatus('${l.id}', 'approved')" style="margin-right: 4px; padding: 6px 14px; font-weight: 600; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;"><i class="fa-solid fa-check"></i> Duyệt</button>
+                                        <button class="btn btn-sm btn-outline btn-danger" onclick="Attendance.updateLeaveStatus('${l.id}', 'rejected')" style="padding: 6px 14px; font-weight: 600; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;"><i class="fa-solid fa-times"></i> Từ chối</button>
                                     </td>
                                 </tr>
                             `).join('')}
@@ -342,7 +342,21 @@ const Attendance = {
             </div>
         `;
 
-        container.innerHTML = adminHtml + leavesHtml;
+        container.innerHTML = `<div class="cyber-admin-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100%, 1fr)); gap: 24px; min-height: 500px;">
+            <div class="admin-col" style="display: flex; flex-direction: column;">
+                ${adminHtml}
+            </div>
+            <div class="admin-col" style="display: flex; flex-direction: column;">
+                ${leavesHtml}
+            </div>
+        </div>
+        <style>
+            @media(min-width: 1024px) {
+                .cyber-admin-container {
+                    grid-template-columns: 1fr 1fr !important;
+                }
+            }
+        </style>`;
     },
 
     handleCheckIn: async () => {
