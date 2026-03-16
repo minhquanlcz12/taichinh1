@@ -228,36 +228,38 @@ const Attendance = {
                 
                 <div style="display: flex; gap: 24px; align-items: stretch;">
                     <!-- Cục Nhân sự bên trái -->
-                    <div class="summary-card neon-card-blue" style="width: 200px; flex-shrink: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 12px; clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);">
+                    <div class="summary-card neon-card-blue" style="width: 200px; flex-shrink: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 12px; clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px); background: rgba(10, 25, 40, 0.8); border: 2px solid rgba(100, 255, 218, 0.5); box-shadow: inset 0 0 20px rgba(100, 255, 218, 0.1), 0 0 15px rgba(100, 255, 218, 0.2); position: relative;">
+                        <!-- Thêm thanh sáng bên dưới giống thiết kế -->
+                        <div style="position: absolute; bottom: 10px; width: 40px; height: 4px; background: #64ffda; border-radius: 2px; box-shadow: 0 0 8px #64ffda;"></div>
                         <div class="card-inner" style="text-align: center;">
                             <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 8px;">Nhân sự đã điểm danh</p>
-                            <h2 style="color: #64ffda; font-size: 48px; font-weight: bold; text-shadow: 0 0 15px rgba(100, 255, 218, 0.4);">${usersList.length}</h2>
+                            <h2 style="color: #64ffda; font-size: 56px; font-weight: bold; text-shadow: 0 0 20px rgba(100, 255, 218, 0.6);">${usersList.length}</h2>
                         </div>
                     </div>
                 
                     <!-- Bảng thống kê bên phải -->
-                    <div class="table-responsive" style="flex: 1; border: 1px solid rgba(100, 255, 218, 0.2); border-radius: 8px; overflow: hidden;">
-                        <table class="tl-table cyber-hover-table" style="margin: 0;">
+                    <div class="table-responsive" style="flex: 1; border: 1px solid rgba(100, 255, 218, 0.4); border-radius: 8px; overflow: hidden; box-shadow: inset 0 0 15px rgba(100, 255, 218, 0.05), 0 0 10px rgba(100, 255, 218, 0.1);">
+                        <table class="tl-table cyber-hover-table" style="margin: 0; border-collapse: separate; border-spacing: 0 8px; padding: 0 16px;">
                             <thead>
-                                <tr style="background: rgba(4,9,20,0.8);">
-                                    <th style="color: #64ffda; border-bottom: 1px solid rgba(100, 255, 218, 0.2);">Nhân Viên</th>
-                                    <th style="color: #64ffda; border-bottom: 1px solid rgba(100, 255, 218, 0.2);">Tổng ngày công</th>
-                                    <th style="color: var(--success); border-bottom: 1px solid rgba(100, 255, 218, 0.2);"><i class="fa-regular fa-calendar-check" style="margin-right: 4px;"></i> 1 Công</th>
-                                    <th style="color: var(--danger); border-bottom: 1px solid rgba(100, 255, 218, 0.2);"><i class="fa-regular fa-clock" style="margin-right: 4px;"></i> Vắng</th>
-                                    <th style="color: var(--danger); border-bottom: 1px solid rgba(100, 255, 218, 0.2);"><i class="fa-regular fa-clock" style="margin-right: 4px;"></i> Muộn</th>
-                                    <th style="color: #64ffda; border-bottom: 1px solid rgba(100, 255, 218, 0.2);">Tổng phút</th>
+                                <tr>
+                                    <th style="color: #64ffda; border: none; padding-bottom: 8px;">Nhân Viên</th>
+                                    <th style="color: #64ffda; border: none; padding-bottom: 8px;">Tổng ngày công</th>
+                                    <th style="color: var(--success); border: none; padding-bottom: 8px;"><i class="fa-regular fa-calendar-check" style="margin-right: 4px;"></i> 1 Công</th>
+                                    <th style="color: var(--danger); border: none; padding-bottom: 8px;"><i class="fa-regular fa-clock" style="margin-right: 4px;"></i> Vắng</th>
+                                    <th style="color: var(--danger); border: none; padding-bottom: 8px;"><i class="fa-regular fa-clock" style="margin-right: 4px;"></i> Muộn</th>
+                                    <th style="color: #64ffda; border: none; padding-bottom: 8px;">Tổng phút</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 ${usersList.length === 0 ? '<tr><td colspan="6" style="text-align:center; padding: 16px;">Chưa có dữ liệu tháng này</td></tr>' : ''}
                                 ${usersList.map(u => `
-                                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); background: linear-gradient(90deg, rgba(255,255,255,0.02) 0%, transparent 100%);">
-                                        <td style="font-weight: 600; padding: 12px; color: #fff;">${u}</td>
-                                        <td style="padding: 12px; color: var(--text-secondary);"><i class="fa-regular fa-calendar" style="margin-right: 6px;"></i> ${summary[u].totalDays}</td>
-                                        <td style="color: var(--success); font-weight: bold; padding: 12px;">${summary[u].onTime}</td>
-                                        <td style="color: var(--danger); font-weight: bold; padding: 12px;">0</td> <!-- TODO: Tính toán vắng nếu cần -->
-                                        <td style="color: var(--danger); font-weight: bold; padding: 12px;">${summary[u].late}</td>
-                                        <td style="padding: 12px;"><span style="color: #64ffda; font-weight: 500; display: inline-flex; align-items: center; gap: 6px;"><i class="fa-regular fa-clock"></i> ${summary[u].totalLateMinutes} p</span></td>
+                                    <tr style="background: rgba(10, 30, 40, 0.6); border-radius: 6px; box-shadow: inset 0 0 0 1px rgba(100, 255, 218, 0.2);">
+                                        <td style="font-weight: 600; padding: 12px 16px; color: #fff; border-top-left-radius: 6px; border-bottom-left-radius: 6px;">${u}</td>
+                                        <td style="padding: 12px 16px; color: var(--text-secondary);"><i class="fa-regular fa-calendar" style="margin-right: 6px;"></i> ${summary[u].totalDays}</td>
+                                        <td style="color: var(--success); font-weight: bold; padding: 12px 16px;">${summary[u].onTime}</td>
+                                        <td style="color: var(--danger); font-weight: bold; padding: 12px 16px;">0</td> <!-- TODO: Tính toán vắng nếu cần -->
+                                        <td style="color: var(--danger); font-weight: bold; padding: 12px 16px;">${summary[u].late}</td>
+                                        <td style="padding: 12px 16px; border-top-right-radius: 6px; border-bottom-right-radius: 6px;"><span style="color: #64ffda; font-weight: 500; display: inline-flex; align-items: center; gap: 6px;"><i class="fa-regular fa-clock"></i> ${summary[u].totalLateMinutes} p</span></td>
                                     </tr>
                                 `).join('')}
                             </tbody>
@@ -276,30 +278,30 @@ const Attendance = {
             <div class="glass-panel admin-cyber-box" style="padding: 24px; height: 100%;">
                 <h2 style="color: var(--warning); margin-bottom: 24px; text-transform: uppercase; font-size: 18px; letter-spacing: 1px;"><i class="fa-solid fa-wallet" style="margin-right: 8px;"></i> Danh sách Xin Nghỉ Phép</h2>
                 
-                <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+                <div style="background: rgba(4, 15, 25, 0.5); border: 1px solid rgba(255, 193, 7, 0.3); border-radius: 8px; padding: 16px; margin-bottom: 24px; box-shadow: inset 0 0 10px rgba(255, 193, 7, 0.05), 0 0 8px rgba(255, 193, 7, 0.1);">
                     <h3 style="color: var(--warning); margin-bottom: 16px; font-size: 14px; display: flex; align-items: center; gap: 8px;">
                         <i class="fa-solid fa-clock-rotate-left"></i> Yêu cầu chờ duyệt (${pendingLeaves.length})
                     </h3>
                     <div class="table-responsive">
-                        <table class="tl-table cyber-hover-table">
+                        <table class="tl-table cyber-hover-table" style="border-collapse: separate; border-spacing: 0 6px;">
                             <thead>
-                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
-                                    <th style="color: var(--text-secondary); font-weight: 500;">Nhân Viên</th>
-                                    <th style="color: var(--text-secondary); font-weight: 500;">Ngày nghỉ</th>
-                                    <th style="color: var(--text-secondary); font-weight: 500;">Số ngày</th>
-                                    <th style="color: var(--text-secondary); font-weight: 500;">Lý do</th>
-                                    <th style="color: var(--text-secondary); font-weight: 500; text-align: right;">Thao tác</th>
+                                <tr>
+                                    <th style="color: var(--text-secondary); font-weight: 500; border: none; padding-bottom: 8px;">Nhân Viên</th>
+                                    <th style="color: var(--text-secondary); font-weight: 500; border: none; padding-bottom: 8px;">Ngày nghỉ</th>
+                                    <th style="color: var(--text-secondary); font-weight: 500; border: none; padding-bottom: 8px;">Số ngày</th>
+                                    <th style="color: var(--text-secondary); font-weight: 500; border: none; padding-bottom: 8px;">Lý do</th>
+                                    <th style="color: var(--text-secondary); font-weight: 500; text-align: right; border: none; padding-bottom: 8px;">Thao tác</th>
                                 </tr>
                             </thead>
                             <tbody>
                             ${pendingLeaves.length === 0 ? '<tr><td colspan="5" style="text-align:center; padding: 16px;">Không có yêu cầu chờ duyệt</td></tr>' : ''}
                             ${pendingLeaves.map(l => `
-                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                                    <td style="font-weight: bold; color: #fff; padding: 12px;">${l.username}</td>
-                                    <td style="padding: 12px;"><i class="fa-regular fa-calendar" style="margin-right: 6px; color: var(--text-secondary);"></i> ${l.startDate}</td>
-                                    <td style="padding: 12px;">${l.days}</td>
-                                    <td style="padding: 12px; color: var(--danger);"><i class="fa-solid fa-triangle-exclamation" style="margin-right: 4px;"></i> ${l.reason}</td>
-                                    <td style="padding: 12px; text-align: right;">
+                                <tr style="background: rgba(255,255,255,0.03); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1); border-radius: 6px;">
+                                    <td style="font-weight: bold; color: #fff; padding: 12px 16px; border-top-left-radius: 6px; border-bottom-left-radius: 6px;">${l.username}</td>
+                                    <td style="padding: 12px 16px;"><i class="fa-regular fa-calendar" style="margin-right: 6px; color: var(--text-secondary);"></i> ${l.startDate}</td>
+                                    <td style="padding: 12px 16px;">${l.days}</td>
+                                    <td style="padding: 12px 16px; color: var(--danger);"><i class="fa-solid fa-triangle-exclamation" style="margin-right: 4px;"></i> ${l.reason}</td>
+                                    <td style="padding: 12px 16px; text-align: right; border-top-right-radius: 6px; border-bottom-right-radius: 6px;">
                                         <button class="btn btn-sm" onclick="Attendance.updateLeaveStatus('${l.id}', 'approved')" style="background: rgba(46, 204, 113, 0.1); border: 1px solid var(--success); color: var(--success); margin-right: 8px; padding: 6px 16px; border-radius: 4px; font-weight: bold; transition: all 0.2s;"><i class="fa-solid fa-check" style="margin-right: 6px;"></i> Duyệt [v]</button>
                                         <button class="btn btn-sm" onclick="Attendance.updateLeaveStatus('${l.id}', 'rejected')" style="background: rgba(231, 76, 60, 0.1); border: 1px solid var(--danger); color: var(--danger); padding: 6px 16px; border-radius: 4px; font-weight: bold; transition: all 0.2s;">Từ Chối [x]</button>
                                     </td>
@@ -310,18 +312,18 @@ const Attendance = {
                 </div>
                 </div> <!-- End Pending Block -->
                 
-                <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 16px;">
+                <div style="background: rgba(4, 15, 25, 0.5); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 16px; box-shadow: inset 0 0 10px rgba(255,255,255,0.02);">
                     <h3 style="color: var(--text-secondary); margin-bottom: 16px; font-size: 14px; display: flex; align-items: center; gap: 8px;">
                         <i class="fa-solid fa-clock-rotate-left"></i> Lịch sử đã duyệt/từ chối gần đây
                     </h3>
                     <div class="table-responsive">
-                        <table class="tl-table cyber-hover-table" style="text-align: center;">
+                        <table class="tl-table cyber-hover-table" style="text-align: center; border-collapse: separate; border-spacing: 0 6px;">
                             <thead>
-                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
-                                    <th style="color: var(--text-secondary); font-weight: 500;">Nhân Viên</th>
-                                    <th style="color: var(--text-secondary); font-weight: 500;">Ngày nghỉ</th>
-                                    <th style="color: var(--text-secondary); font-weight: 500;">Số ngày</th>
-                                    <th style="color: var(--text-secondary); font-weight: 500;">Trạng thái</th>
+                                <tr>
+                                    <th style="color: var(--text-secondary); font-weight: 500; border: none; padding-bottom: 8px;">Nhân Viên</th>
+                                    <th style="color: var(--text-secondary); font-weight: 500; border: none; padding-bottom: 8px;">Ngày nghỉ</th>
+                                    <th style="color: var(--text-secondary); font-weight: 500; border: none; padding-bottom: 8px;">Số ngày</th>
+                                    <th style="color: var(--text-secondary); font-weight: 500; border: none; padding-bottom: 8px;">Trạng thái</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -329,11 +331,11 @@ const Attendance = {
                             ${resolvedLeaves.map(l => {
                                 let statusHtml = l.status === 'approved' ? '<span style="color: var(--success); font-weight: bold;"><i class="fa-solid fa-check"></i> Đã Duyệt</span>' : '<span style="color: var(--danger); font-weight: bold;"><i class="fa-solid fa-times"></i> Từ Chối</span>';
                                 return `
-                                <tr>
-                                    <td style="padding: 12px; color: #fff; font-weight: bold;">${l.username}</td>
-                                    <td style="padding: 12px;"><i class="fa-regular fa-calendar" style="margin-right: 6px; color: var(--text-secondary);"></i> ${l.startDate}</td>
-                                    <td style="padding: 12px;">${l.days}</td>
-                                    <td style="padding: 12px;">${statusHtml}</td>
+                                <tr style="background: rgba(255,255,255,0.02); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05); border-radius: 6px;">
+                                    <td style="padding: 12px 16px; color: #fff; font-weight: bold; border-top-left-radius: 6px; border-bottom-left-radius: 6px;">${l.username}</td>
+                                    <td style="padding: 12px 16px;"><i class="fa-regular fa-calendar" style="margin-right: 6px; color: var(--text-secondary);"></i> ${l.startDate}</td>
+                                    <td style="padding: 12px 16px;">${l.days}</td>
+                                    <td style="padding: 12px 16px; border-top-right-radius: 6px; border-bottom-right-radius: 6px;">${statusHtml}</td>
                                 </tr>
                                 `;
                             }).join('')}
