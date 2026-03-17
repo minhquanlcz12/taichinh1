@@ -21,13 +21,20 @@ const WorkModule = {
                 let changed = false;
                 if (d && d.tasks) {
                     const todayStr = Utils.getTodayString();
+                    const todayParts = todayStr.split('/');
+                    const todayTime = new Date(`${todayParts[2]}-${todayParts[1]}-${todayParts[0]}T00:00:00`).getTime();
+
                     d.tasks.forEach(t => {
                         let curStatus = (t.trangThai || 'Planned').toLowerCase();
                         if (!curStatus.includes('done') && !curStatus.includes('hết hạn') && !curStatus.includes('hoàn thành')) {
-                            const compareDate = t.deadline || t.ngayDang;
-                            if (compareDate && compareDate < todayStr) {
-                                t.trangThai = 'Hết hạn';
-                                changed = true;
+                            const compareDateStr = t.deadline || t.ngayDang;
+                            if (compareDateStr) {
+                                const p = compareDateStr.split('/');
+                                const compareTime = p.length === 3 ? new Date(`${p[2]}-${p[1]}-${p[0]}T00:00:00`).getTime() : new Date(compareDateStr).getTime();
+                                if (!isNaN(compareTime) && compareTime < todayTime) {
+                                    t.trangThai = 'Hết hạn';
+                                    changed = true;
+                                }
                             }
                         }
                     });
@@ -262,10 +269,16 @@ const WorkModule = {
 
                     // Auto-expired logic
                     const todayStr = Utils.getTodayString();
-                    const compareDate = deadlineParsed || ngayDangParsed;
+                    const todayParts = todayStr.split('/');
+                    const todayTime = new Date(`${todayParts[2]}-${todayParts[1]}-${todayParts[0]}T00:00:00`).getTime();
                     
-                    if (compareDate && compareDate < todayStr && !rawTrangThai.toLowerCase().includes('done')) {
-                        rawTrangThai = 'Hết hạn';
+                    const compareDateStr = deadlineParsed || ngayDangParsed;
+                    if (compareDateStr && !rawTrangThai.toLowerCase().includes('done')) {
+                        const p = compareDateStr.split('/');
+                        const compareTime = p.length === 3 ? new Date(`${p[2]}-${p[1]}-${p[0]}T00:00:00`).getTime() : new Date(compareDateStr).getTime();
+                        if (!isNaN(compareTime) && compareTime < todayTime) {
+                            rawTrangThai = 'Hết hạn';
+                        }
                     }
 
                     const taskObj = {
