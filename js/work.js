@@ -17,9 +17,30 @@ const WorkModule = {
     load: () => {
         return new Promise((resolve) => {
             let initialLoad = true;
-            DB.listenWorkData((d) => {
+            DB.listenWorkData(async (d) => {
+                let changed = false;
                 if (d && d.tasks) {
+                    const todayStr = Utils.getTodayString();
+                    d.tasks.forEach(t => {
+                        let curStatus = (t.trangThai || 'Planned').toLowerCase();
+                        if (!curStatus.includes('done') && !curStatus.includes('hết hạn') && !curStatus.includes('hoàn thành')) {
+                            const compareDate = t.deadline || t.ngayDang;
+                            if (compareDate && compareDate < todayStr) {
+                                t.trangThai = 'Hết hạn';
+                                changed = true;
+                            }
+                        }
+                    });
                     WorkModule.data = d;
+                    
+                    // Nết có update trạng thái thì lưu lại db
+                    if (changed) {
+                        try {
+                            await DB.saveWorkData(WorkModule.data);
+                        } catch (e) {
+                            console.error("Auto-expire save error:", e);
+                        }
+                    }
                 } else {
                     WorkModule.data.tasks = [];
                 }
