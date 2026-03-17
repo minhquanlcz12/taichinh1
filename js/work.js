@@ -31,9 +31,14 @@ const WorkModule = {
                             if (compareDateStr) {
                                 const p = compareDateStr.split('/');
                                 const compareTime = p.length === 3 ? new Date(`${p[2]}-${p[1]}-${p[0]}T00:00:00`).getTime() : new Date(compareDateStr).getTime();
-                                if (!isNaN(compareTime) && compareTime < todayTime) {
-                                    t.trangThai = 'Hết hạn';
-                                    changed = true;
+                                if (!isNaN(compareTime)) {
+                                    if (compareTime < todayTime && !curStatus.includes('hết hạn')) {
+                                        t.trangThai = 'Hết hạn';
+                                        changed = true;
+                                    } else if (compareTime === todayTime && !curStatus.includes('hạn chót')) {
+                                        t.trangThai = 'Hạn chót';
+                                        changed = true;
+                                    }
                                 }
                             }
                         }
@@ -276,8 +281,12 @@ const WorkModule = {
                     if (compareDateStr && !rawTrangThai.toLowerCase().includes('done')) {
                         const p = compareDateStr.split('/');
                         const compareTime = p.length === 3 ? new Date(`${p[2]}-${p[1]}-${p[0]}T00:00:00`).getTime() : new Date(compareDateStr).getTime();
-                        if (!isNaN(compareTime) && compareTime < todayTime) {
-                            rawTrangThai = 'Hết hạn';
+                        if (!isNaN(compareTime)) {
+                            if (compareTime < todayTime) {
+                                rawTrangThai = 'Hết hạn';
+                            } else if (compareTime === todayTime) {
+                                rawTrangThai = 'Hạn chót';
+                            }
                         }
                     }
 
@@ -467,21 +476,24 @@ const WorkModule = {
 
             projTasks.forEach(task => {
                 const currentStatus = task.trangThai ? task.trangThai.toLowerCase() : 'planned';
-                const isCompleted = currentStatus.includes('done');
+                const isCompleted = currentStatus.includes('done') || currentStatus.includes('hoàn thành');
                 const isExpired = currentStatus.includes('hết hạn');
+                const isDeadline = currentStatus.includes('hạn chót');
                 let statusClass = '';
 
                 if (currentStatus.includes('planned')) statusClass = 'status-planned';
                 if (isCompleted) statusClass = 'status-done';
                 if (currentStatus.includes('doing')) statusClass = 'status-doing';
                 if (isExpired) statusClass = 'status-expired';
+                if (isDeadline) statusClass = 'status-deadline'; // For styling later
 
                 let rowClass = '';
                 if (isCompleted) rowClass = 'row-completed';
                 else if (isExpired) rowClass = 'row-expired';
+                else if (isDeadline) rowClass = 'row-deadline';
 
                 // Status Dropdown Options
-                const statuses = ['Planned', 'Doing', 'Done', 'Hết hạn'];
+                const statuses = ['Planned', 'Doing', 'Done', 'Hạn chót', 'Hết hạn'];
                 let statusOptions = statuses.map(s => {
                     const selected = task.trangThai.toLowerCase() === s.toLowerCase() ? 'selected' : '';
                     return `<option value="${s}" ${selected}>${s}</option>`;
