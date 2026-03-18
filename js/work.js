@@ -389,6 +389,9 @@ const WorkModule = {
         event.stopPropagation(); // prevent toggling accordion
         if (confirm(`Bạn có chắc chắn muốn xóa toàn bộ kế hoạch "${projectName}"? Hành động này không thể hoàn tác.`)) {
             WorkModule.data.tasks = WorkModule.data.tasks.filter(t => t.project !== projectName);
+            if (WorkModule.data.importedFiles) {
+                WorkModule.data.importedFiles = WorkModule.data.importedFiles.filter(f => !f.startsWith(`${projectName}_`));
+            }
             await WorkModule.save();
         }
     },
