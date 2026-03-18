@@ -27,7 +27,7 @@ const WorkModule = {
                     d.tasks.forEach(t => {
                         let curStatus = (t.trangThai || 'Planned').toLowerCase();
                         if (!curStatus.includes('done') && !curStatus.includes('hết hạn') && !curStatus.includes('hoàn thành')) {
-                            const compareDateStr = t.deadline || t.ngayDang;
+                            const compareDateStr = t.ngayDang || t.deadline;
                             if (compareDateStr) {
                                 const p = compareDateStr.split('/');
                                 const compareTime = p.length === 3 ? new Date(`${p[2]}-${p[1]}-${p[0]}T00:00:00`).getTime() : new Date(compareDateStr).getTime();
@@ -277,7 +277,7 @@ const WorkModule = {
                     const todayParts = todayStr.split('/');
                     const todayTime = new Date(`${todayParts[2]}-${todayParts[1]}-${todayParts[0]}T00:00:00`).getTime();
                     
-                    const compareDateStr = deadlineParsed || ngayDangParsed;
+                    const compareDateStr = ngayDangParsed || deadlineParsed;
                     if (compareDateStr && !rawTrangThai.toLowerCase().includes('done')) {
                         const p = compareDateStr.split('/');
                         const compareTime = p.length === 3 ? new Date(`${p[2]}-${p[1]}-${p[0]}T00:00:00`).getTime() : new Date(compareDateStr).getTime();
@@ -506,17 +506,32 @@ const WorkModule = {
 
                 // Deadline Logic
                 let deadlineClass = '';
+                let deadlineText = task.deadline || '--';
                 if (task.deadline) {
                     const todayStr = Utils.getTodayString();
-                    // Basic string comparison logic assuming YYYY-MM-DD
-                    const todayTime = new Date(todayStr).getTime();
-                    const deadlineTime = new Date(task.deadline).getTime();
-                    if (!isNaN(todayTime) && !isNaN(deadlineTime)) {
-                        const diffDays = Math.ceil((deadlineTime - todayTime) / (1000 * 60 * 60 * 24));
-                        if (diffDays <= 1) {
-                            deadlineClass = 'deadline-danger';
-                        } else if (diffDays === 2) {
-                            deadlineClass = 'deadline-warning';
+                    const pToday = todayStr.split('/');
+                    const pDeadline = task.deadline.split('/');
+                    
+                    if (pToday.length === 3 && pDeadline.length === 3) {
+                        const todayTime = new Date(`${pToday[2]}-${pToday[1]}-${pToday[0]}T00:00:00`).getTime();
+                        const deadlineTime = new Date(`${pDeadline[2]}-${pDeadline[1]}-${pDeadline[0]}T00:00:00`).getTime();
+                        
+                        if (!isNaN(todayTime) && !isNaN(deadlineTime)) {
+                            const diffDays = Math.round((deadlineTime - todayTime) / (1000 * 60 * 60 * 24));
+                            
+                            if (diffDays < 0) {
+                                deadlineClass = 'deadline-danger';
+                                deadlineText = `${task.deadline} <br><span style="font-size:10px; color:var(--danger);">(Quá hạn ${Math.abs(diffDays)} ngày)</span>`;
+                            } else if (diffDays === 0) {
+                                deadlineClass = 'deadline-danger';
+                                deadlineText = `${task.deadline} <br><span style="font-size:10px; color:var(--danger);">(Hạn hôm nay!)</span>`;
+                            } else if (diffDays === 1) {
+                                deadlineClass = 'deadline-warning';
+                                deadlineText = `${task.deadline} <br><span style="font-size:10px; color:var(--warning);">(Ngày mai)</span>`;
+                            } else if (diffDays === 2 || diffDays === 3) {
+                                deadlineClass = 'deadline-info';
+                                deadlineText = `${task.deadline} <br><span style="font-size:10px; color:var(--info);">(Còn ${diffDays} ngày)</span>`;
+                            }
                         }
                     }
                 }
@@ -533,7 +548,7 @@ const WorkModule = {
                     <tr class="${rowClass}">
                         <td class="col-stt">${task.stt || ''}</td>
                         <td class="col-ngay">${task.ngayDang || ''}</td>
-                        <td class="col-deadline"><div class="${deadlineClass}" style="padding: 4px; border-radius: 4px; text-align: center; font-weight: bold;">${task.deadline || '--'}</div></td>
+                        <td class="col-deadline"><div class="${deadlineClass}" style="padding: 4px; border-radius: 4px; text-align: center; font-weight: bold; min-width: 90px;">${deadlineText}</div></td>
                         <td class="col-muctieu td-green"><span class="task-content-text">${task.mucTieu || ''}</span></td>
                         <td class="col-tieude td-green"><span class="task-content-text" style="font-weight: bold;">${task.tieuDe || ''}</span></td>
                         <td class="col-noidung td-green"><span class="task-content-text" style="text-align:justify;">${stripHtml(task.noiDung)}</span></td>
