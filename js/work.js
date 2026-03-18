@@ -209,9 +209,15 @@ const WorkModule = {
         
         const fileSignature = `${projectName}_${file.name}_${file.size}`;
         if (WorkModule.data.importedFiles.includes(fileSignature)) {
-            Utils.showToast(`File "${file.name}" đã được tải lên dự án "${projectName}" trước đây!`, 'error');
-            event.target.value = '';
-            return;
+            const hasExistingProject = WorkModule.data.tasks.some(t => t.project === projectName);
+            if (hasExistingProject) {
+                Utils.showToast(`File "${file.name}" đã được tải lên dự án "${projectName}" trước đây! Vui lòng xóa kế hoạch đang hiển thị trước khi tải đè.`, 'error');
+                event.target.value = '';
+                return;
+            } else {
+                // Xóa signature bị kẹt do dự án cũ đã bị xóa
+                WorkModule.data.importedFiles = WorkModule.data.importedFiles.filter(f => f !== fileSignature);
+            }
         }
 
         const reader = new FileReader();
