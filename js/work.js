@@ -475,8 +475,7 @@ const WorkModule = {
                                 <thead>
                                     <tr>
                                         <th class="col-stt">STT</th>
-                                        <th class="col-ngay">Ngày đăng</th>
-                                        <th class="col-deadline">Deadline<br>thiết kế</th>
+                                        <th class="col-ngay">Ngày đăng /<br>Deadline</th>
                                         <th class="col-muctieu th-green">Mục tiêu</th>
                                         <th class="col-tieude th-green">Tiêu đề</th>
                                         <th class="col-noidung th-green">Nội dung chi tiết (caption/outline)</th>
@@ -485,7 +484,8 @@ const WorkModule = {
                                         <th class="col-trangthai">Trạng thái</th>
                                         <th class="col-ghichu">Ghi chú</th>
                                         <th class="col-anh">Ảnh gợi ý</th>
-                                        <th class="col-actions"><i class="fa-solid fa-gear"></i></th>
+                                        <th class="col-ticket" style="min-width: 80px;">Phiếu LV</th>
+                                        <th class="col-actions"><i class="fa-solid fa-trash"></i></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -574,8 +574,10 @@ const WorkModule = {
                 html += `
                     <tr class="${rowClass}">
                         <td class="col-stt">${task.stt || ''}</td>
-                        <td class="col-ngay">${task.ngayDang || ''}</td>
-                        <td class="col-deadline"><div class="${deadlineClass}" style="padding: 4px; border-radius: 4px; text-align: center; font-weight: bold; min-width: 90px;">${deadlineText}</div></td>
+                        <td class="col-ngay">
+                            <div style="font-weight:bold; color:var(--text-secondary); font-size: 13px; margin-bottom: 4px; text-align: center;">Đăng: ${task.ngayDang || '---'}</div>
+                            ${task.deadline ? `<div class="${deadlineClass}" style="padding: 4px; border-radius: 4px; text-align: center; font-weight: bold; width: 100%; min-width: 90px; display: inline-block;">Hạn: ${deadlineText}</div>` : ''}
+                        </td>
                         <td class="col-muctieu td-green"><span class="task-content-text">${task.mucTieu || ''}</span></td>
                         <td class="col-tieude td-green"><span class="task-content-text" style="font-weight: bold;">${task.tieuDe || ''}</span></td>
                         <td class="col-noidung td-green"><span class="task-content-text" style="text-align:justify;">${stripHtml(task.noiDung)}</span></td>
@@ -590,11 +592,13 @@ const WorkModule = {
                         <td class="col-anh" style="text-align:center;">
                             ${imgCellContent}
                         </td>
-                        <td class="col-actions" style="display: flex; flex-direction: column; gap: 4px;">
-                            <button class="btn btn-warning btn-sm" title="Mở Phiếu Làm Việc" onclick="WorkModule.openTicketModal('${task.id}')" style="font-weight: bold; width: 100%;">
+                        <td class="col-ticket" style="text-align:center; vertical-align:middle;">
+                            <button class="btn btn-warning btn-sm" title="Mở Phiếu Làm Việc" onclick="WorkModule.openTicketModal('${task.id}')" style="font-weight: bold; width: 100%; height: 36px;">
                                 <i class="fa-solid fa-ticket"></i> Mở
                             </button>
-                            <button class="btn btn-danger btn-sm" title="Xóa" onclick="WorkModule.deleteTask('${task.id}')" style="width: 100%;">
+                        </td>
+                        <td class="col-actions" style="text-align:center; vertical-align:middle;">
+                            <button class="btn btn-danger btn-sm" title="Xóa" onclick="WorkModule.deleteTask('${task.id}')">
                                 <i class="fa-solid fa-trash"></i>
                             </button>
                         </td>
