@@ -474,18 +474,18 @@ const WorkModule = {
                             <table class="data-table">
                                 <thead>
                                     <tr>
-                                        <th class="col-stt">STT</th>
-                                        <th class="col-ngay">Ngày đăng /<br>Deadline</th>
+                                        <th class="col-stt" style="width: 40px; min-width: 40px; text-align: center;">STT</th>
+                                        <th class="col-ngay" style="width: 105px; min-width: 105px;">Ngày đăng /<br>Deadline</th>
                                         <th class="col-muctieu th-green">Mục tiêu</th>
                                         <th class="col-tieude th-green">Tiêu đề</th>
                                         <th class="col-noidung th-green">Nội dung chi tiết (caption/outline)</th>
                                         <th class="col-dinhdang">Định dạng</th>
                                         <th class="col-order">Nội dung order thiết kế (brief)</th>
-                                        <th class="col-trangthai">Trạng thái</th>
+                                        <th class="col-trangthai" style="width: 110px; min-width: 110px;">Trạng thái</th>
                                         <th class="col-ghichu">Ghi chú</th>
                                         <th class="col-anh">Ảnh gợi ý</th>
-                                        <th class="col-ticket" style="min-width: 80px;">Phiếu LV</th>
-                                        <th class="col-actions"><i class="fa-solid fa-trash"></i></th>
+                                        <th class="col-ticket" style="width: 90px; min-width: 90px; text-align: center;">Phiếu LV</th>
+                                        <th class="col-actions" style="width: 50px; min-width: 50px; text-align: center;"><i class="fa-solid fa-trash"></i></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -573,7 +573,7 @@ const WorkModule = {
 
                 html += `
                     <tr class="${rowClass}">
-                        <td class="col-stt">${task.stt || ''}</td>
+                        <td class="col-stt" style="text-align: center; vertical-align: middle;">${task.stt || ''}</td>
                         <td class="col-ngay">
                             <div style="font-weight:bold; color:var(--text-secondary); font-size: 13px; margin-bottom: 4px; text-align: center;">Đăng: ${task.ngayDang || '---'}</div>
                             ${task.deadline ? `<div class="${deadlineClass}" style="padding: 4px; border-radius: 4px; text-align: center; font-weight: bold; width: 100%; min-width: 90px; display: inline-block;">Hạn: ${deadlineText}</div>` : ''}
