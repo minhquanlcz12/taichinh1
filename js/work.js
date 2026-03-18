@@ -509,26 +509,36 @@ const WorkModule = {
                 let deadlineText = task.deadline || '--';
                 if (task.deadline) {
                     const todayStr = Utils.getTodayString();
+                    // todayStr from Utils is DD/MM/YYYY
                     const pToday = todayStr.split('/');
-                    const pDeadline = task.deadline.split('/');
                     
-                    if (pToday.length === 3 && pDeadline.length === 3) {
+                    // task.deadline can be YYYY-MM-DD or DD/MM/YYYY
+                    let deadlineTime;
+                    if (task.deadline.includes('-')) {
+                        deadlineTime = new Date(task.deadline).getTime();
+                    } else if (task.deadline.includes('/')) {
+                        const pDeadline = task.deadline.split('/');
+                        if (pDeadline.length === 3) {
+                            deadlineTime = new Date(`${pDeadline[2]}-${pDeadline[1]}-${pDeadline[0]}T00:00:00`).getTime();
+                        }
+                    }
+
+                    if (pToday.length === 3 && deadlineTime) {
                         const todayTime = new Date(`${pToday[2]}-${pToday[1]}-${pToday[0]}T00:00:00`).getTime();
-                        const deadlineTime = new Date(`${pDeadline[2]}-${pDeadline[1]}-${pDeadline[0]}T00:00:00`).getTime();
                         
                         if (!isNaN(todayTime) && !isNaN(deadlineTime)) {
                             const diffDays = Math.round((deadlineTime - todayTime) / (1000 * 60 * 60 * 24));
                             
-                            if (diffDays < 0) {
+                            if (diffDays < 0 && !task.trangThai.toLowerCase().includes('done')) {
                                 deadlineClass = 'deadline-danger';
                                 deadlineText = `${task.deadline} <br><span style="font-size:10px; color:var(--danger);">(Quá hạn ${Math.abs(diffDays)} ngày)</span>`;
-                            } else if (diffDays === 0) {
+                            } else if (diffDays === 0 && !task.trangThai.toLowerCase().includes('done')) {
                                 deadlineClass = 'deadline-danger';
                                 deadlineText = `${task.deadline} <br><span style="font-size:10px; color:var(--danger);">(Hạn hôm nay!)</span>`;
-                            } else if (diffDays === 1) {
+                            } else if (diffDays === 1 && !task.trangThai.toLowerCase().includes('done')) {
                                 deadlineClass = 'deadline-warning';
                                 deadlineText = `${task.deadline} <br><span style="font-size:10px; color:var(--warning);">(Ngày mai)</span>`;
-                            } else if (diffDays === 2 || diffDays === 3) {
+                            } else if ((diffDays === 2 || diffDays === 3) && !task.trangThai.toLowerCase().includes('done')) {
                                 deadlineClass = 'deadline-info';
                                 deadlineText = `${task.deadline} <br><span style="font-size:10px; color:var(--info);">(Còn ${diffDays} ngày)</span>`;
                             }
