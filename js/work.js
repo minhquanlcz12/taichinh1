@@ -29,9 +29,17 @@ const WorkModule = {
                         if (!curStatus.includes('done') && !curStatus.includes('hết hạn') && !curStatus.includes('hoàn thành')) {
                             const compareDateStr = t.ngayDang || t.deadline;
                             if (compareDateStr) {
-                                const p = compareDateStr.split('/');
-                                const compareTime = p.length === 3 ? new Date(`${p[2]}-${p[1]}-${p[0]}T00:00:00`).getTime() : new Date(compareDateStr).getTime();
-                                if (!isNaN(compareTime)) {
+                                let compareTime;
+                                if (compareDateStr.includes('-')) {
+                                    compareTime = new Date(compareDateStr).getTime();
+                                } else if (compareDateStr.includes('/')) {
+                                    const p = compareDateStr.split('/');
+                                    if (p.length === 3) {
+                                        compareTime = new Date(`${p[2]}-${p[1]}-${p[0]}T00:00:00`).getTime();
+                                    }
+                                }
+
+                                if (compareTime && !isNaN(compareTime)) {
                                     if (compareTime < todayTime && !curStatus.includes('hết hạn')) {
                                         t.trangThai = 'Hết hạn';
                                         changed = true;
