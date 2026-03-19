@@ -471,6 +471,10 @@ const Attendance = {
 
         Attendance.closeLeaveModal();
         Utils.showToast("Đã gửi yêu cầu xin nghỉ phép thành công!", "success");
+
+        const msg = `📢 <b>[TỜ TRÌNH XIN NGHỈ PHÉP]</b>\n👤 Nhân viên: <b>${user.username}</b>\n📅 Từ ngày: ${startDate}\n⏳ Số ngày nghỉ: ${days}\n📝 Lý do: <i>${reason}</i>\n\n👉 Sếp vào hệ thống kiểm tra và duyệt nhé!`;
+        Utils.notifyTelegram(msg);
+
         Attendance.render(); // Tải lại view
     },
 

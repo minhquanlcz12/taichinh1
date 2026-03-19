@@ -42,6 +42,28 @@ const DB = {
         return Utils.storage.get('backup_accounts', []);
     },
 
+    // --- LƯU TRỮ CÀI ĐẶT HỆ THỐNG ---
+    saveSettings: async (settingsObj) => {
+        try {
+            Utils.storage.set('backup_settings', settingsObj);
+            await db.collection("system").doc("settings").set(settingsObj);
+        } catch (e) {
+            console.error("Error saving settings:", e);
+        }
+    },
+
+    getSettings: async () => {
+        try {
+            const doc = await db.collection("system").doc("settings").get();
+            if (doc.exists) {
+                return doc.data();
+            }
+        } catch (e) {
+            console.error("Error getting settings:", e);
+        }
+        return Utils.storage.get('backup_settings', {});
+    },
+
     // --- LƯU TRỮ GIAO DỊCH TÀI CHÍNH ---
     saveFinanceData: async (financeDataObj) => {
         try {

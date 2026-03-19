@@ -3,10 +3,17 @@
 const app = {
     state: {
         currentView: 'dashboard-view',
-        theme: 'dark'
+        theme: 'dark',
+        settings: {}
     },
+    
+    financeChartInstance: null,
+    taskChartInstance: null,
 
-    init: () => {
+    init: async () => {
+        // Load settings
+        app.state.settings = await DB.getSettings();
+
         // Load theme
         app.state.theme = Utils.storage.get('app_theme', 'dark');
         app.applyTheme();
@@ -19,8 +26,10 @@ const app = {
         FinanceModule.init();
         WorkModule.init();
 
-        // Initial dashboard render handled by module inits, 
-        // as they use app.renderDashboard(filteredTx)
+        // Run pseudo-cron for Daily Summary Report 5 seconds after boot (wait for modules to load)
+        setTimeout(() => {
+            Utils.checkDailyTelegramSummary();
+        }, 5000);
     },
 
     setupNavListeners: () => {
@@ -114,7 +123,22 @@ const app = {
             document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
             const attNav = document.querySelector('.nav-item[data-target="attendance-view"]');
             if (attNav) attNav.classList.add('active');
+        } else if (viewId === 'settings-view') {
+            document.getElementById('setting-tg-token').value = app.state.settings.tgToken || '';
+            document.getElementById('setting-tg-chatid').value = app.state.settings.tgChatId || '';
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            const settingsNav = document.querySelector('.nav-item[data-target="settings-view"]');
+            if (settingsNav) settingsNav.classList.add('active');
         }
+    },
+
+    saveTelegramSettings: async () => {
+        const token = document.getElementById('setting-tg-token').value.trim();
+        const chatId = document.getElementById('setting-tg-chatid').value.trim();
+        app.state.settings.tgToken = token;
+        app.state.settings.tgChatId = chatId;
+        await DB.saveSettings(app.state.settings);
+        Utils.showToast("Đã lưu cấu hình Telegram Bot thành công!", "success");
     },
 
     renderDashboard: (filteredTransactions) => {
@@ -234,6 +258,142 @@ const app = {
                     </div>
                 </div>
             `}).join('');
+        }
+
+        // Render Charts
+        app.renderCharts(filteredTransactions);
+    },
+
+    renderCharts: (filteredTransactions) => {
+        // Finance Line Chart (Last 30 days)
+        const ctxFinance = document.getElementById('financeChart');
+        if (ctxFinance && typeof Chart !== 'undefined') {
+            let txs = filteredTransactions || FinanceModule.data.transactions;
+            const currentUser = Auth.currentUser;
+            if (!filteredTransactions && currentUser) {
+                txs = txs.filter(t => t.owner === currentUser.username || (!t.owner && currentUser.username === 'admin'));
+            }
+            
+            // Group by day for last 30 days
+            const last30Days = [...Array(30)].map((_, i) => {
+                const d = new Date();
+                d.setDate(d.getDate() - (29 - i));
+                return d.toISOString().split('T')[0];
+            });
+
+            const incomeData = Array(30).fill(0);
+            const expenseData = Array(30).fill(0);
+
+            txs.forEach(tx => {
+                const idx = last30Days.indexOf(tx.date);
+                if (idx !== -1) {
+                    if (tx.type === 'income') incomeData[idx] += tx.amount;
+                    else expenseData[idx] += tx.amount;
+                }
+            });
+
+            if (app.financeChartInstance) {
+                app.financeChartInstance.destroy();
+            }
+
+            app.financeChartInstance = new Chart(ctxFinance, {
+                type: 'line',
+                data: {
+                    labels: last30Days.map(d => d.substring(5).replace('-', '/')),
+                    datasets: [
+                        {
+                            label: 'Thu nhập',
+                            data: incomeData,
+                            borderColor: '#4ade80',
+                            backgroundColor: 'rgba(74, 222, 128, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Chi tiêu',
+                            data: expenseData,
+                            borderColor: '#f87171',
+                            backgroundColor: 'rgba(248, 113, 113, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#a0aec0' } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + Utils.formatCurrency(context.parsed.y);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#a0aec0' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                        y: { 
+                            ticks: { 
+                                color: '#a0aec0', 
+                                callback: function(val) { return val >= 1000 ? (val/1000) + 'k' : val; } 
+                            }, 
+                            grid: { color: 'rgba(255,255,255,0.05)' } 
+                        }
+                    }
+                }
+            });
+        }
+
+        // Task Pie Chart
+        const ctxTask = document.getElementById('taskChart');
+        if (ctxTask && typeof Chart !== 'undefined') {
+            let allTasks = WorkModule.data.tasks || [];
+            if (Auth.currentUser && Auth.currentUser.role !== 'admin') {
+                allTasks = allTasks.filter(t => t.owner === Auth.currentUser.username);
+            }
+
+            let planned = 0, doing = 0, done = 0, expired = 0;
+            allTasks.forEach(t => {
+                const st = (t.trangThai || 'planned').toLowerCase();
+                if (st.includes('done') || st.includes('hoàn thành')) done++;
+                else if (st.includes('hết hạn')) expired++;
+                else if (st.includes('doing')) doing++;
+                else planned++; 
+            });
+
+            if (app.taskChartInstance) {
+                app.taskChartInstance.destroy();
+            }
+
+            app.taskChartInstance = new Chart(ctxTask, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Mới (Planned)', 'Đang làm (Doing)', 'Hoàn thành (Done)', 'Trễ hạn (Expired)'],
+                    datasets: [{
+                        data: [planned, doing, done, expired],
+                        backgroundColor: [
+                            '#3b82f6', // blue
+                            '#f59e0b', // yellow
+                            '#10b981', // green
+                            '#ef4444'  // red
+                        ],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right', labels: { color: '#a0aec0', padding: 20 } }
+                    },
+                    cutout: '70%'
+                }
+            });
         }
     }
 };

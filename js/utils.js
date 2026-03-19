@@ -258,5 +258,80 @@ const Utils = {
                 toast.remove();
             }, 400); // Wait for transition finish
         }, 3000);
+    },
+
+    notifyTelegram: async (message) => {
+        if (!app.state.settings || !app.state.settings.tgToken || !app.state.settings.tgChatId) return;
+        try {
+            const url = `https://api.telegram.org/bot${app.state.settings.tgToken}/sendMessage`;
+            await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: app.state.settings.tgChatId,
+                    text: message,
+                    parse_mode: 'HTML'
+                })
+            });
+        } catch (e) {
+            console.error("Lỗi gửi Telegram:", e);
+        }
+    },
+
+    checkDailyTelegramSummary: async () => {
+        if (!app.state.settings || !app.state.settings.tgToken || !app.state.settings.tgChatId) return;
+        const todayIso = new Date().toISOString().split('T')[0];
+        if (app.state.settings.lastTgSummaryDate === todayIso) return; // Đã gửi hôm nay
+
+        // Lấy danh sách tasks
+        let allTasks = await DB.getWorkData();
+        if (!allTasks || !allTasks.tasks || allTasks.tasks.length === 0) return;
+
+        const todayStr = Utils.getTodayString();
+        const pToday = todayStr.split('/');
+        const todayTime = new Date(`${pToday[2]}-${pToday[1]}-${pToday[0]}T00:00:00`).getTime();
+
+        let expiredTxs = [];
+        let deadlineTxs = [];
+
+        allTasks.tasks.forEach(t => {
+            const st = (t.trangThai || 'planned').toLowerCase();
+            if (st.includes('done') || st.includes('hoàn thành')) return;
+            if (!t.deadline) return;
+
+            let deadlineTime;
+            if (t.deadline.includes('-')) {
+                deadlineTime = new Date(t.deadline).getTime();
+            } else if (t.deadline.includes('/')) {
+                const p = t.deadline.split('/');
+                if (p.length === 3) deadlineTime = new Date(`${p[2]}-${p[1]}-${p[0]}T00:00:00`).getTime();
+            }
+
+            if (deadlineTime && !isNaN(deadlineTime)) {
+                const diffDays = Math.round((deadlineTime - todayTime) / (1000 * 60 * 60 * 24));
+                if (diffDays < 0) {
+                    expiredTxs.push(`- [${t.project}] ${t.tieuDe || t.mucTieu} (@${t.owner})`);
+                } else if (diffDays === 0) {
+                    deadlineTxs.push(`- [${t.project}] ${t.tieuDe || t.mucTieu} (@${t.owner})`);
+                }
+            }
+        });
+
+        if (expiredTxs.length > 0 || deadlineTxs.length > 0) {
+            let msg = `<b>[THÔNG BÁO KẾ HOẠCH HÀNG NGÀY]</b>\n\n`;
+            if (deadlineTxs.length > 0) {
+                msg += `⚠️ <b>CÔNG VIỆC HẠN HÔM NAY (${deadlineTxs.length}):</b>\n${deadlineTxs.join('\n')}\n\n`;
+            }
+            if (expiredTxs.length > 0) {
+                msg += `❌ <b>CÔNG VIỆC QUÁ HẠN (${expiredTxs.length}):</b>\n${expiredTxs.join('\n')}\n\n`;
+            }
+            msg += `Mọi người nhấp link hệ thống để xử lý gấp nhé!`;
+            
+            await Utils.notifyTelegram(msg);
+
+            // Cập nhật ngày gửi
+            app.state.settings.lastTgSummaryDate = todayIso;
+            await DB.saveSettings(app.state.settings);
+        }
     }
 };
