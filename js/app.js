@@ -357,12 +357,16 @@ const app = {
             }
 
             let planned = 0, doing = 0, done = 0, expired = 0;
+            let owners = {};
             allTasks.forEach(t => {
                 const st = (t.trangThai || 'planned').toLowerCase();
                 if (st.includes('done') || st.includes('hoàn thành')) done++;
                 else if (st.includes('hết hạn')) expired++;
                 else if (st.includes('doing')) doing++;
                 else planned++; 
+                
+                let o = t.owner || 'admin';
+                owners[o] = (owners[o] || 0) + 1;
             });
 
             if (app.taskChartInstance) {
@@ -389,11 +393,44 @@ const app = {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { position: 'right', labels: { color: '#a0aec0', padding: 20 } }
+                        legend: { display: false } // Hide chart legend to save space
                     },
                     cutout: '70%'
                 }
             });
+
+            const statsContainer = document.getElementById('task-chart-stats');
+            if (statsContainer) {
+                const total = planned + doing + done + expired;
+                const ownersHtml = Object.keys(owners).map(o => `<span class="badge ${o==='admin'?'badge-orange':'badge-blue'}" style="font-size: 11px; padding: 4px 8px;">${o}: ${owners[o]}</span>`).join('');
+                
+                statsContainer.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;">
+                        <span style="color: var(--text-secondary);">Tổng số kế hoạch:</span>
+                        <strong style="font-size: 16px; color: #fff;">${total}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--text-secondary);"><i class="fa-solid fa-circle" style="color: #10b981; font-size: 10px; margin-right: 6px;"></i>Hoàn thành:</span>
+                        <strong style="color: #10b981;">${done}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--text-secondary);"><i class="fa-solid fa-circle" style="color: #ef4444; font-size: 10px; margin-right: 6px;"></i>Trễ hạn:</span>
+                        <strong style="color: #ef4444;">${expired}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--text-secondary);"><i class="fa-solid fa-circle" style="color: #f59e0b; font-size: 10px; margin-right: 6px;"></i>Đang làm:</span>
+                        <strong style="color: #f59e0b;">${doing}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="color: var(--text-secondary);"><i class="fa-solid fa-circle" style="color: #3b82f6; font-size: 10px; margin-right: 6px;"></i>Mới:</span>
+                        <strong style="color: #3b82f6;">${planned}</strong>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Phân bổ nhân sự:</div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                        ${ownersHtml || '<span style="color: var(--text-secondary); font-size: 11px;">Chống</span>'}
+                    </div>
+                `;
+            }
         }
     }
 };
