@@ -264,7 +264,7 @@ const Utils = {
         if (!app.state.settings || !app.state.settings.tgToken || !app.state.settings.tgChatId) return;
         try {
             const url = `https://api.telegram.org/bot${app.state.settings.tgToken}/sendMessage`;
-            await fetch(url, {
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -273,8 +273,16 @@ const Utils = {
                     parse_mode: 'HTML'
                 })
             });
+            if (!response.ok) {
+                const errText = await response.text();
+                console.error("Telegram API Error:", errText);
+                Utils.showToast("Lỗi gửi Telegram: Kiểm tra lại Token/Chat ID!", "error");
+            } else {
+                console.log("Telegram notification sent successfully.");
+            }
         } catch (e) {
-            console.error("Lỗi gửi Telegram:", e);
+            console.error("Lỗi mạng khi gửi Telegram:", e);
+            Utils.showToast("Lỗi mạng khi gửi Telegram", "error");
         }
     },
 
