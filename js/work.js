@@ -333,25 +333,30 @@ const WorkModule = {
                 await WorkModule.save();
 
                 // --- NEW: Gửi thông báo Telegram khi import bảng kế hoạch mới ---
-                if (importedCount > 0 && app.state.settings && app.state.settings.tgToken && app.state.settings.tgChatId) {
+                if (!app.state.settings || !app.state.settings.tgToken || !app.state.settings.tgChatId) {
+                    Utils.showToast("Cảnh báo: Chưa có Token/Chat ID Telegram, Bot sẽ không thông báo vào nhóm!", "warning");
+                } else if (importedCount > 0) {
                     const currentUserStr = Auth.currentUser ? Auth.currentUser.username : 'admin';
                     let urgentCount = 0;
                     
-                    // Quét số lượng công việc gấp/hết hạn trong mảng vừa import
+                    // Quét số lượng công việc trong ngày (Hạn chót)
                     WorkModule.data.tasks.forEach(t => {
-                        if (t.project === projectName && (t.trangThai === 'Hết hạn' || t.trangThai === 'Hạn chót')) {
+                        if (t.project === projectName && t.trangThai === 'Hạn chót') {
                             urgentCount++;
                         }
                     });
 
+                    // Xử lý Escape chuỗi để tránh lỗi Parse HTML của Telegram
+                    const safeProjectName = projectName.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
                     let msg = `📢 <b>CẬP NHẬT KẾ HOẠCH MỚI</b>\n\n`;
-                    msg += `📁 <b>Dự án:</b> ${projectName}\n`;
+                    msg += `📁 <b>Dự án:</b> ${safeProjectName}\n`;
                     msg += `👤 <b>Tài khoản:</b> ${currentUserStr}\n\n`;
                     
                     if (urgentCount > 0) {
-                        msg += `🚨 <b>CẢNH BÁO:</b> Tài khoản <b>${currentUserStr}</b> có ${urgentCount} việc cần làm gấp/quá hạn trong ngày hôm nay! Đề nghị xử lý ngay lập tức.\n`;
+                        msg += `🚨 <b>CẢNH BÁO:</b> Tài khoản <b>${currentUserStr}</b> có ${urgentCount} việc cần làm gấp (Hạn hôm nay)! Đề nghị xử lý ngay lập tức.\n`;
                     } else {
-                        msg += `✅ Tài khoản <b>${currentUserStr}</b> có ${importedCount} công việc mới (Đều trong tiến độ an toàn).\n`;
+                        msg += `✅ Tài khoản <b>${currentUserStr}</b> có ${importedCount} công việc mới (Đều trong tiến độ, không có việc gấp hôm nay).\n`;
                     }
                     msg += `\n👉 <a href="https://minhquanlcz12.github.io/taichinh1/">Truy cập hệ thống</a>`;
                     
