@@ -181,6 +181,32 @@ const Auth = {
         accounts.push({ username: userIn, password: passIn, role: 'user', profile: {} });
         await Auth.saveAccounts(accounts);
 
+        // --- NEW: Lời chào Telegram khi có nhân viên mới ---
+        // Phải getSettings thủ công vì lúc này người dùng chưa đăng nhập nên app.state.settings có thể chưa tải
+        const currentSettings = await DB.getSettings();
+        if (currentSettings && currentSettings.tgToken && currentSettings.tgChatId) {
+            const welcomeMsg = `🎉 <b>CHÀO MỪNG NHÂN VIÊN MỚI</b> 🎉\n\n` +
+                               `👤 <b>Tài khoản:</b> ${userIn}\n` +
+                               `💼 <b>Chức vụ:</b> Nhân viên (User)\n\n` +
+                               `🎊 Chúc bạn hoàn thành xuất sắc công việc được giao nhé! Chào mừng gia nhập Team!\n` +
+                               `👉 <a href="https://minhquanlcz12.github.io/taichinh1/">Đăng nhập Hệ thống</a>`;
+            
+            try {
+                const url = `https://api.telegram.org/bot${currentSettings.tgToken}/sendMessage`;
+                fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: currentSettings.tgChatId,
+                        text: welcomeMsg,
+                        parse_mode: 'HTML'
+                    })
+                });
+            } catch (e) {
+                console.error("Lỗi gửi lời chào Telegram:", e);
+            }
+        }
+
         Utils.showToast('Đăng ký thành công! Vui lòng Đăng nhập.', 'success');
         Auth.showLogin();
     },
