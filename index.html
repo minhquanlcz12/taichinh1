@@ -281,21 +281,45 @@
                     </div>
 
                     <div class="dashboard-chart-grid" style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 24px;">
-                        <div class="glass-card" style="padding: 20px;">
-                            <h3 style="margin-bottom: 16px; font-size: 16px; color: var(--text-secondary);"><i class="fa-solid fa-chart-line" style="color:var(--primary); margin-right:8px;"></i>Tương quan Thu - Chi (30 ngày)</h3>
-                            <div style="position: relative; height: 250px; width: 100%;">
+                        <div class="glass-card" style="padding: 16px;">
+                            <h3 style="margin-bottom: 8px; font-size: 15px; color: var(--text-secondary);"><i class="fa-solid fa-chart-line" style="color:var(--primary); margin-right:8px;"></i>Tương quan Thu - Chi</h3>
+                            <div style="position: relative; height: 160px; width: 100%;">
                                 <canvas id="financeChart"></canvas>
                             </div>
                         </div>
-                        <div class="glass-card" style="padding: 20px;">
-                            <h3 style="margin-bottom: 16px; font-size: 16px; color: var(--text-secondary);"><i class="fa-solid fa-chart-pie" style="color:var(--primary); margin-right:8px;"></i>Tiến độ Kế hoạch</h3>
-                            <div style="display: flex; gap: 20px; align-items: center;">
-                                <div style="position: relative; height: 220px; width: 220px; flex-shrink: 0;">
+                        <div class="glass-card" style="padding: 16px;">
+                            <h3 style="margin-bottom: 8px; font-size: 15px; color: var(--text-secondary);"><i class="fa-solid fa-chart-pie" style="color:var(--primary); margin-right:8px;"></i>Tỷ lệ Hoàn thành</h3>
+                            <div style="display: flex; gap: 16px; align-items: center; justify-content: center;">
+                                <div style="position: relative; height: 160px; width: 160px; flex-shrink: 0;">
                                     <canvas id="taskChart"></canvas>
                                 </div>
-                                <div id="task-chart-stats" style="flex: 1; display: flex; flex-direction: column; gap: 10px; font-size: 14px; background: rgba(0,0,0,0.2); padding: 16px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                                <div id="task-chart-stats" style="flex: 1; display: flex; flex-direction: column; gap: 6px; font-size: 12px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
                                     <!-- Injected by JS -->
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- New Dashboard Row for Project Tracking and Hall of Fame -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+                        <div class="glass-card" style="padding: 16px; display: flex; flex-direction: column;">
+                            <h3 style="margin-bottom: 12px; font-size: 16px; color: var(--text-secondary); display: flex; justify-content: space-between; align-items: center;">
+                                <span><i class="fa-solid fa-bars-progress" style="color:var(--primary); margin-right:8px;"></i>Tiến độ Dự án / Nhóm</span>
+                            </h3>
+                            <div id="dash-project-progress" style="display: flex; flex-direction: column; gap: 12px; overflow-y: auto; max-height: 200px; padding-right: 4px;">
+                                <!-- Injected by JS -->
+                                <div style="color: var(--text-secondary); font-size: 13px; text-align: center; padding: 20px 0;">Đang tải dữ liệu tiến độ...</div>
+                            </div>
+                        </div>
+
+                        <div class="glass-card panel-glow" style="padding: 16px; background: linear-gradient(145deg, rgba(20,25,35,0.95), rgba(4,9,20,0.95)); border: 1px solid rgba(255,215,0,0.3); display: flex; flex-direction: column; position: relative; overflow: hidden;">
+                            <div style="position: absolute; top: -20px; right: -20px; font-size: 100px; color: rgba(255,215,0,0.05); transform: rotate(15deg); pointer-events: none;"><i class="fa-solid fa-trophy"></i></div>
+                            <h3 style="margin-bottom: 12px; font-size: 16px; color: #ffd700; text-shadow: 0 0 10px rgba(255,215,0,0.3); z-index: 1;">
+                                <i class="fa-solid fa-ranking-star" style="margin-right:8px;"></i>Bảng Vàng Tuyên Dương
+                            </h3>
+                            <div id="dash-hall-of-fame" style="display: flex; flex-direction: column; gap: 10px; overflow-y: auto; max-height: 200px; z-index: 1;">
+                                <!-- Injected by JS -->
+                                <div style="color: var(--text-secondary); font-size: 13px; text-align: center; padding: 20px 0;">Chưa có thành tích nào...</div>
                             </div>
                         </div>
                     </div>

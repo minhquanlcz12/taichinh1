@@ -492,6 +492,118 @@ const app = {
                 `;
             }
         }
+
+        // --- BỔ SUNG: TIẾN ĐỘ DỰ ÁN & BẢNG VÀNG TUYÊN DƯƠNG ---
+        let allTasks = WorkModule.data.tasks || [];
+        if (Auth.currentUser && Auth.currentUser.role !== 'admin') {
+            allTasks = allTasks.filter(t => t.owner === Auth.currentUser.username);
+        }
+        app.renderProjectProgress(allTasks);
+        app.renderHallOfFame(allTasks);
+    },
+
+    renderProjectProgress: (tasks) => {
+        const container = document.getElementById('dash-project-progress');
+        if (!container) return;
+
+        // Nhóm task theo project
+        const projects = {};
+        tasks.forEach(t => {
+            const p = t.project || 'Khác';
+            if (!projects[p]) projects[p] = { total: 0, done: 0 };
+            projects[p].total++;
+            const st = (t.trangThai || '').toLowerCase();
+            if (st.includes('done') || st.includes('hoàn thành')) {
+                projects[p].done++;
+            }
+        });
+
+        const sortedProjects = Object.keys(projects).map(p => {
+            return {
+                name: p,
+                total: projects[p].total,
+                done: projects[p].done,
+                percent: Math.round((projects[p].done / projects[p].total) * 100)
+            }
+        }).sort((a, b) => b.total - a.total); // Sort theo project nhiều task nhất
+
+        if (sortedProjects.length === 0) {
+            container.innerHTML = '<div style="color: var(--text-secondary); font-size: 13px; text-align: center; padding: 20px 0;">Chưa có dự án nào đang chạy.</div>';
+            return;
+        }
+
+        container.innerHTML = sortedProjects.map(p => {
+            let color = '#3b82f6'; // default blue
+            if (p.percent === 100) color = '#10b981'; // green
+            else if (p.percent < 30) color = '#ef4444'; // red
+
+            return `
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                        <strong style="color: #e2e8f0;"><i class="fa-regular fa-folder" style="color: var(--primary); margin-right: 6px;"></i>${p.name}</strong>
+                        <span style="color: ${color}; font-weight: 600;">${p.done}/${p.total} (${p.percent}%)</span>
+                    </div>
+                    <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;">
+                        <div style="height: 100%; width: ${p.percent}%; background: ${color}; border-radius: 4px; transition: width 1s ease;"></div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    },
+
+    renderHallOfFame: (tasks) => {
+        const container = document.getElementById('dash-hall-of-fame');
+        if (!container) return;
+
+        // Bảng vàng chỉ nên hiện task done
+        const allSystemTasks = WorkModule.data.tasks || [];
+        
+        const users = {};
+        allSystemTasks.forEach(t => {
+            const owner = t.owner || 'admin';
+            if (!users[owner]) users[owner] = { total: 0, done: 0, expired: 0 };
+            users[owner].total++;
+            
+            const st = (t.trangThai || '').toLowerCase();
+            if (st.includes('done') || st.includes('hoàn thành')) users[owner].done++;
+            else if (st.includes('hết hạn') || st.includes('quá hạn')) users[owner].expired++;
+        });
+
+        const rankedUsers = Object.keys(users).map(u => {
+            return {
+                name: u,
+                done: users[u].done,
+                total: users[u].total,
+                expired: users[u].expired,
+                rate: users[u].total > 0 ? (users[u].done / users[u].total * 100) : 0
+            }
+        })
+        .filter(u => u.done > 0)
+        .sort((a, b) => b.done - a.done);
+
+        if (rankedUsers.length === 0) {
+            container.innerHTML = '<div style="color: var(--text-secondary); font-size: 13px; text-align: center; padding: 20px 0;">Chưa có thành tích nào được ghi nhận...</div>';
+            return;
+        }
+
+        container.innerHTML = rankedUsers.slice(0, 5).map((u, index) => {
+            let rankIcon = `<span style="display:inline-block; width:20px; text-align:center; font-weight:bold; color:var(--text-secondary);">#${index + 1}</span>`;
+            if (index === 0) rankIcon = `<i class="fa-solid fa-medal" style="color: #ffd700; font-size: 16px;"></i>`;
+            else if (index === 1) rankIcon = `<i class="fa-solid fa-medal" style="color: #c0c0c0; font-size: 16px;"></i>`;
+            else if (index === 2) rankIcon = `<i class="fa-solid fa-medal" style="color: #cd7f32; font-size: 16px;"></i>`;
+
+            const isFlawless = (u.expired === 0 && u.done === u.total);
+
+            return `
+                <div style="display: flex; align-items: center; gap: 12px; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid ${index === 0 ? '#ffd700' : 'rgba(255,255,255,0.1)'};">
+                    <div style="width: 24px; text-align: center;">${rankIcon}</div>
+                    <div style="flex: 1; display: flex; flex-direction: column;">
+                        <strong style="color: #fff; font-size: 14px;">${u.name} ${isFlawless ? '<i class="fa-solid fa-fire" style="color: #ff4500; font-size: 12px;" title="Tỷ lệ hoàn thành 100%"></i>' : ''}</strong>
+                        <span style="color: var(--text-secondary); font-size: 11px;">Hoàn thành: <span style="color: #10b981; font-weight:bold;">${u.done}</span> nhiệm vụ</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
     }
 };
 
