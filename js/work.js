@@ -332,6 +332,16 @@ const WorkModule = {
                 Utils.showToast(`Đã nhập thành công ${importedCount} công việc vào kế hoạch "${projectName}".`, 'success');
                 await WorkModule.save();
 
+                // --- NEW: Gửi thông báo Telegram khi import bảng kế hoạch mới ---
+                if (importedCount > 0 && app.state.settings && app.state.settings.tgToken && app.state.settings.tgChatId) {
+                    const msg = `📢 <b>CÓ KẾ HOẠCH MỚI ĐƯỢC GIAO</b>\n\n` +
+                                `📁 <b>Dự án:</b> ${projectName}\n` +
+                                `📝 <b>Số lượng:</b> ${importedCount} công việc\n` +
+                                `👤 <b>Người giao:</b> ${Auth.currentUser ? Auth.currentUser.username.toUpperCase() : 'ADMIN'}\n` +
+                                `👉 Mọi người vào hệ thống nhận việc nhé!`;
+                    Utils.notifyTelegram(msg);
+                }
+
             } catch (err) {
                 console.error(err);
                 Utils.showToast("Đã xảy ra lỗi khi đọc file Excel. Vui lòng đảm bảo định dạng các cột (13 cột) chuẩn.", 'error');
