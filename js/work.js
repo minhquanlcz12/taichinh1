@@ -334,11 +334,27 @@ const WorkModule = {
 
                 // --- NEW: Gửi thông báo Telegram khi import bảng kế hoạch mới ---
                 if (importedCount > 0 && app.state.settings && app.state.settings.tgToken && app.state.settings.tgChatId) {
-                    const msg = `📢 <b>CÓ KẾ HOẠCH MỚI ĐƯỢC GIAO</b>\n\n` +
-                                `📁 <b>Dự án:</b> ${projectName}\n` +
-                                `📝 <b>Số lượng:</b> ${importedCount} công việc\n` +
-                                `👤 <b>Người giao:</b> ${Auth.currentUser ? Auth.currentUser.username.toUpperCase() : 'ADMIN'}\n` +
-                                `👉 Mọi người vào hệ thống nhận việc nhé!`;
+                    const currentUserStr = Auth.currentUser ? Auth.currentUser.username : 'admin';
+                    let urgentCount = 0;
+                    
+                    // Quét số lượng công việc gấp/hết hạn trong mảng vừa import
+                    WorkModule.data.tasks.forEach(t => {
+                        if (t.project === projectName && (t.trangThai === 'Hết hạn' || t.trangThai === 'Hạn chót')) {
+                            urgentCount++;
+                        }
+                    });
+
+                    let msg = `📢 <b>CẬP NHẬT KẾ HOẠCH MỚI</b>\n\n`;
+                    msg += `📁 <b>Dự án:</b> ${projectName}\n`;
+                    msg += `👤 <b>Tài khoản:</b> ${currentUserStr}\n\n`;
+                    
+                    if (urgentCount > 0) {
+                        msg += `🚨 <b>CẢNH BÁO:</b> Tài khoản <b>${currentUserStr}</b> có ${urgentCount} việc cần làm gấp/quá hạn trong ngày hôm nay! Đề nghị xử lý ngay lập tức.\n`;
+                    } else {
+                        msg += `✅ Tài khoản <b>${currentUserStr}</b> có ${importedCount} công việc mới (Đều trong tiến độ an toàn).\n`;
+                    }
+                    msg += `\n👉 <a href="https://minhquanlcz12.github.io/taichinh1/">Truy cập hệ thống</a>`;
+                    
                     Utils.notifyTelegram(msg);
                 }
 
