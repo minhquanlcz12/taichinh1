@@ -188,7 +188,7 @@ const Auth = {
             const welcomeMsg = `🎉 <b>CHÀO MỪNG NHÂN VIÊN MỚI</b> 🎉\n\n` +
                                `👤 <b>Tài khoản:</b> ${userIn}\n` +
                                `💼 <b>Chức vụ:</b> Nhân viên (User)\n\n` +
-                               `🎊 Chúc bạn hoàn thành xuất sắc công việc được giao nhé! Chào mừng gia nhập Team!\n` +
+                               `🎊 Chúc bạn hoàn thành xuất sắc công việc được giao nhé! Chào mừng đến với công ty Tiến Dũng Digital!\n` +
                                `👉 <a href="https://minhquanlcz12.github.io/taichinh1/">Đăng nhập Hệ thống</a>`;
             
             try {
