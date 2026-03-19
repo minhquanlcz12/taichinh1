@@ -551,7 +551,7 @@ const app = {
         }).join('');
     },
 
-    renderHallOfFame: (tasks) => {
+    renderHallOfFame: async (tasks) => {
         const container = document.getElementById('dash-hall-of-fame');
         if (!container) return;
 
@@ -569,12 +569,22 @@ const app = {
             else if (st.includes('hết hạn') || st.includes('quá hạn')) users[owner].expired++;
         });
 
+        // Lấy thông tin account để hiển thị avatar
+        const accounts = await Auth.getAccounts();
+
         const rankedUsers = Object.keys(users).map(u => {
+            const account = accounts.find(a => a.username === u);
+            let avatarHtml = `<span style="display:flex; align-items:center; justify-content:center; width:36px; height:36px; background:var(--gradient-primary); border-radius:50%; color:#fff; font-weight:bold; font-size:14px;">${u[0].toUpperCase()}</span>`;
+            if (account && account.profile && account.profile.avatar) {
+                avatarHtml = `<img src="${account.profile.avatar}" style="width:36px; height:36px; border-radius:50%; object-fit:cover; border: 2px solid rgba(255,255,255,0.1);">`;
+            }
+
             return {
                 name: u,
                 done: users[u].done,
                 total: users[u].total,
                 expired: users[u].expired,
+                avatarHtml: avatarHtml,
                 rate: users[u].total > 0 ? (users[u].done / users[u].total * 100) : 0
             }
         })
@@ -597,6 +607,7 @@ const app = {
             return `
                 <div style="display: flex; align-items: center; gap: 12px; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid ${index === 0 ? '#ffd700' : 'rgba(255,255,255,0.1)'};">
                     <div style="width: 24px; text-align: center;">${rankIcon}</div>
+                    <div style="width: 36px; height: 36px; flex-shrink: 0;">${u.avatarHtml}</div>
                     <div style="flex: 1; display: flex; flex-direction: column;">
                         <strong style="color: #fff; font-size: 14px;">${u.name} ${isFlawless ? '<i class="fa-solid fa-fire" style="color: #ff4500; font-size: 12px;" title="Tỷ lệ hoàn thành 100%"></i>' : ''}</strong>
                         <span style="color: var(--text-secondary); font-size: 11px;">Hoàn thành: <span style="color: #10b981; font-weight:bold;">${u.done}</span> nhiệm vụ</span>
