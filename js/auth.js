@@ -291,10 +291,28 @@ const Auth = {
             const accounts = await Auth.getAccounts();
             html += `
                 <div class="glass-card" style="margin-bottom: 24px;">
-                    <h3>Dữ liệu Hệ thống</h3>
-                    <p style="color:var(--text-secondary); margin-bottom: 20px;">Lưu ý: Xóa dữ liệu sẽ làm mất vĩnh viễn toàn bộ giao dịch và kế hoạch trên toàn hệ thống.</p>
+                    <h3 style="margin-bottom: 24px; color: var(--primary);"><i class="fa-brands fa-telegram" style="margin-right: 8px;"></i>Tích hợp Telegram Bot</h3>
+                    <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 20px; line-height: 1.6;">
+                        Nhận thông báo tự động (Đơn xin nghỉ phép, Cảnh báo Deadline) trực tiếp về điện thoại thông qua Telegram Bot.
+                    </p>
+                    <div class="form-group">
+                        <label>1. Telegram Bot Token <span style="font-weight: normal; font-size: 11px; color: var(--warning);">(Tạo từ @BotFather)</span></label>
+                        <input type="text" id="setting-tg-token" class="form-control" placeholder="Ví dụ: 1234567890:ABCdefGhIJKlmNoPQRstuVWXyz..." value="${app.state.settings.tgToken || ''}">
+                    </div>
+                    <div class="form-group" style="margin-top: 16px;">
+                        <label>2. Group Chat ID / User Chat ID <span style="font-weight: normal; font-size: 11px; color: var(--warning);">(Lấy từ @userinfobot hoặc thêm bot vào nhóm)</span></label>
+                        <input type="text" id="setting-tg-chatid" class="form-control" placeholder="Ví dụ: -100123456789" value="${app.state.settings.tgChatId || ''}">
+                    </div>
+                    <button class="btn btn-primary" onclick="app.saveTelegramSettings()" style="margin-top: 16px;">
+                        <i class="fa-solid fa-floppy-disk"></i> Lưu Cài Đặt Telegram
+                    </button>
+                </div>
+                
+                <div class="glass-card" style="margin-bottom: 24px; border-color: rgba(248, 113, 113, 0.3);">
+                    <h3 style="color: var(--danger);"><i class="fa-solid fa-triangle-exclamation"></i> Dữ liệu Hệ thống (Vùng nguy hiểm)</h3>
+                    <p style="color:var(--text-secondary); margin-bottom: 20px;">Lưu ý: Xóa dữ liệu sẽ làm mất vĩnh viễn toàn bộ giao dịch và kế hoạch hệ thống.</p>
                     <button class="btn btn-danger" id="clear-data-btn">
-                        Xóa toàn bộ dữ liệu (Reset DB Firebase)
+                        Xóa toàn bộ dữ liệu (Hard Reset)
                     </button>
                 </div>
 
