@@ -30,6 +30,66 @@ const app = {
         setTimeout(() => {
             Utils.checkDailyTelegramSummary();
         }, 5000);
+
+        // --- NEW: Alert Admin for Pending Tasks ---
+        if (Auth.currentUser && Auth.currentUser.role === 'admin') {
+            setTimeout(app.checkAdminPendingActions, 1500); 
+        }
+    },
+
+    checkAdminPendingActions: async () => {
+        // 1. Password reset requests
+        const pwdReqs = await DB.getPasswordRequests();
+        const pendingPwdCount = pwdReqs.length;
+
+        // 2. Pending Leave requests
+        // Wait, Attendance data is stored in DB.getAttendanceData() ??? No, wait.
+        // It's in DB.getWorkData() for Tasks, but Attendance is not in DB.js?
+        // Ah, Attendance Module loads from Firebase directly? Let's check Utils or DB.
+        // I will just read "db.collection('system').doc('attendance')" directly to be safe.
+        let pendingLeaveCount = 0;
+        try {
+            // Because I don't want to import AttendanceModule if it's not fully ready or if its method is different
+            // Let's rely on DB or AttendanceModule
+            if (typeof AttendanceModule !== 'undefined' && AttendanceModule.data && AttendanceModule.data.logs) {
+                pendingLeaveCount = AttendanceModule.data.logs.filter(l => l.type === 'P' && l.status === 'pending').length;
+            } else {
+                // Fetch directly
+                const attDoc = await db.collection("attendance").doc("main").get();
+                if (attDoc.exists && attDoc.data().logs) {
+                    pendingLeaveCount = attDoc.data().logs.filter(l => l.type === 'P' && l.status === 'pending').length;
+                }
+            }
+        } catch (e) {
+            console.error(e);
+        }
+
+        if (pendingPwdCount > 0 || pendingLeaveCount > 0) {
+            Utils.showModal(
+                '🔔 CÔNG VIỆC CẦN XỬ LÝ',
+                `
+                <div style="text-align: center;">
+                    <i class="fa-solid fa-bell-concierge" style="font-size: 48px; color: var(--warning); margin-bottom: 16px;"></i>
+                    <p style="font-size: 16px; margin-bottom: 16px;">Chào Admin, bạn có công việc chờ Duyệt!</p>
+                    <div style="background: rgba(0,0,0,0.3); padding: 16px; border-radius: 8px; border: 1px dashed var(--warning); text-align: left;">
+                        ${pendingLeaveCount > 0 ? `<p style="color: var(--warning); font-weight: bold; margin-bottom: 8px;">👉 ${pendingLeaveCount} Đơn xin nghỉ phép chờ duyệt</p>` : ''}
+                        ${pendingPwdCount > 0 ? `<p style="color: var(--danger); font-weight: bold;">👉 ${pendingPwdCount} Yêu cầu cấp lại mật khẩu</p>` : ''}
+                    </div>
+                </div>
+                `,
+                () => {
+                    // Navigate to appropriate section if they click OK.
+                    // If both, let's just go to Settings? Or just close it.
+                    if (pendingPwdCount > 0) {
+                        app.navigateTo('settings-view');
+                    } else if (pendingLeaveCount > 0) {
+                        app.navigateTo('attendance-view');
+                    }
+                    return true;
+                },
+                'ĐI XỬ LÝ NGAY'
+            );
+        }
     },
 
     setupNavListeners: () => {
