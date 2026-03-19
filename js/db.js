@@ -64,6 +64,30 @@ const DB = {
         return Utils.storage.get('backup_settings', {});
     },
 
+    // --- LƯU TRỮ YÊU CẦU CẤP LẠI MẬT KHẨU ---
+    savePasswordRequests: async (requestsArray) => {
+        try {
+            Utils.storage.set('backup_pwd_reqs', requestsArray);
+            await db.collection("system").doc("password_requests").set({
+                data: requestsArray
+            });
+        } catch (e) {
+            console.error("Error saving password requests:", e);
+        }
+    },
+
+    getPasswordRequests: async () => {
+        try {
+            const doc = await db.collection("system").doc("password_requests").get();
+            if (doc.exists && doc.data() && doc.data().data) {
+                return doc.data().data;
+            }
+        } catch (e) {
+            console.error("Error getting password requests:", e);
+        }
+        return Utils.storage.get('backup_pwd_reqs', []);
+    },
+
     // --- LƯU TRỮ GIAO DỊCH TÀI CHÍNH ---
     saveFinanceData: async (financeDataObj) => {
         try {

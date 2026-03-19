@@ -244,10 +244,22 @@ const Auth = {
         }
     },
     
-    handleForgotPassword: (e) => {
+    handleForgotPassword: async (e) => {
         e.preventDefault();
         const userIn = document.getElementById('forgot-user').value.trim();
         if (userIn) {
+            const accounts = await Auth.getAccounts();
+            if(!accounts.find(a => a.username === userIn)) {
+                Utils.showToast('Tài khoản không tồn tại.', 'error');
+                return;
+            }
+            
+            let reqs = await DB.getPasswordRequests();
+            if(!reqs.find(r => r.username === userIn)) {
+                reqs.push({ username: userIn, date: new Date().toISOString() });
+                await DB.savePasswordRequests(reqs);
+            }
+
             Utils.showModal(
                 'SYSTEM ACTIVATED',
                 `
@@ -255,8 +267,7 @@ const Auth = {
                     <i class="fa-solid fa-shield-halved" style="font-size: 48px; color: var(--warning); margin-bottom: 16px;"></i>
                     <p style="font-size: 16px; margin-bottom: 16px;">Yêu cầu cấp lại mật khẩu cho tài khoản <strong style="color: var(--primary);">"${userIn}"</strong> đã được tiếp nhận.</p>
                     <div style="background: rgba(0,0,0,0.3); padding: 16px; border-radius: 8px; border: 1px dashed var(--warning);">
-                        <p style="color: var(--text-secondary); margin-bottom: 8px;">Vui lòng liên hệ trực tiếp Quản trị viên:</p>
-                        <p style="font-weight: bold; font-family: monospace; font-size: 20px; color: var(--success); letter-spacing: 2px;">0886 46 2345</p>
+                        <p style="color: var(--text-secondary); margin-bottom: 8px;">Yêu cầu của bạn đang chờ Quản trị viên phê duyệt.</p>
                     </div>
                 </div>
                 `,
@@ -277,6 +288,21 @@ const Auth = {
         let currentKey = Utils.storage.get('claude_api_key') || '';
         let currentModel = Utils.storage.get('claude_api_model') || 'claude-3-haiku-20240307';
         let html = `
+            <div class="glass-card" style="margin-bottom: 24px;">
+                <h3>Đổi mật khẩu</h3>
+                <p style="color:var(--text-secondary); margin-bottom: 16px;">Thay đổi mật khẩu đăng nhập của bạn. Khuyến nghị cập nhật thường xuyên.</p>
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <input type="password" id="cp-old" class="form-control" placeholder="Mật khẩu hiện tại" autocomplete="off">
+                </div>
+                <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+                    <input type="password" id="cp-new" class="form-control" placeholder="Mật khẩu mới" autocomplete="off" style="flex:1;">
+                    <input type="password" id="cp-confirm" class="form-control" placeholder="Xác nhận mật khẩu mới" autocomplete="off" style="flex:1;">
+                </div>
+                <button class="btn btn-warning" onclick="Auth.changePassword()">
+                    <i class="fa-solid fa-key"></i> Cập nhật Mật khẩu
+                </button>
+            </div>
+            
             <div class="glass-card" style="margin-bottom: 24px;">
                 <h3>Cài đặt ứng dụng</h3>
                 <p style="color:var(--text-secondary); margin-bottom: 20px;">Quản lý tài khoản hiện tại của bạn.</p>
@@ -315,7 +341,37 @@ const Auth = {
 
         if (Auth.currentUser.role === 'admin') {
             const accounts = await Auth.getAccounts();
+            const pwdReqs = await DB.getPasswordRequests();
+
             html += `
+                <div class="glass-card" style="margin-bottom: 24px; border-color: rgba(234, 179, 8, 0.3);">
+                    <h3 style="color: var(--warning);"><i class="fa-solid fa-bell"></i> Yêu cầu cấp lại mật khẩu ${pwdReqs.length > 0 ? `<span class="badge badge-orange" style="margin-left: 8px;">${pwdReqs.length}</span>` : ''}</h3>
+                    <p style="color:var(--text-secondary); margin-bottom: 16px;">Nhân viên quên mật khẩu sẽ hiện ở đây để chờ Admin cấp lại.</p>
+                    ${pwdReqs.length === 0 ? '<p style="color: var(--text-secondary); font-style: italic;">Không có yêu cầu nào.</p>' : `
+                    <table class="data-table" style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>Tài khoản</th>
+                                <th>Thời gian gửi</th>
+                                <th style="text-align:right;">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${pwdReqs.map(r => `
+                                <tr>
+                                    <td><strong style="color: var(--primary);">${r.username}</strong></td>
+                                    <td>${new Date(r.date).toLocaleString('vi-VN')}</td>
+                                    <td style="text-align:right;">
+                                        <button class="btn btn-primary" onclick="Auth.approvePasswordReset('${r.username}')" style="margin-right:8px;"><i class="fa-solid fa-check"></i> Xác nhận (Pass: 123456)</button>
+                                        <button class="btn-text text-danger" onclick="Auth.rejectPasswordReset('${r.username}')"><i class="fa-solid fa-trash"></i> Hủy</button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    `}
+                </div>
+
                 <div class="glass-card" style="margin-bottom: 24px;">
                     <h3 style="margin-bottom: 24px; color: var(--primary);"><i class="fa-brands fa-telegram" style="margin-right: 8px;"></i>Tích hợp Telegram Bot</h3>
                     <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 20px; line-height: 1.6;">
@@ -405,6 +461,69 @@ const Auth = {
             await Auth.saveAccounts(accounts);
             Auth.renderSettings();
         }
+    },
+
+    changePassword: async () => {
+        const oldP = document.getElementById('cp-old').value;
+        const newP = document.getElementById('cp-new').value;
+        const confirmP = document.getElementById('cp-confirm').value;
+
+        if(!oldP || !newP || !confirmP) {
+            Utils.showToast("Vui lòng điền đủ thông tin.", "error");
+            return;
+        }
+
+        if (newP !== confirmP) {
+            Utils.showToast("Mật khẩu mới không khớp.", "error");
+            return;
+        }
+
+        let accounts = await Auth.getAccounts();
+        const me = accounts.find(a => a.username === Auth.currentUser.username);
+        if (!me || me.password !== oldP) {
+            Utils.showToast("Mật khẩu hiện tại không đúng.", "error");
+            return;
+        }
+
+        me.password = newP;
+        await Auth.saveAccounts(accounts);
+        
+        document.getElementById('cp-old').value = '';
+        document.getElementById('cp-new').value = '';
+        document.getElementById('cp-confirm').value = '';
+
+        Utils.showToast("Đổi mật khẩu thành công!", "success");
+    },
+
+    approvePasswordReset: async (username) => {
+        if (!confirm(`Xác nhận cấp lại mật khẩu cho tài khoản "${username}" về mặc định "123456"?`)) return;
+
+        // 1. Change password
+        let accounts = await Auth.getAccounts();
+        const target = accounts.find(a => a.username === username);
+        if (target) {
+            target.password = '123456';
+            await Auth.saveAccounts(accounts);
+        }
+
+        // 2. Remove Request
+        let reqs = await DB.getPasswordRequests();
+        reqs = reqs.filter(r => r.username !== username);
+        await DB.savePasswordRequests(reqs);
+
+        // 3. Rerender
+        Auth.renderSettings();
+
+        // 4. Báo cáo (Do Bot không inbox riêng được nên chỉ hiện Toast cho Admin biết)
+        Utils.showToast(`Đã reset mật khẩu của "${username}" về 123456. Vui lòng nhắn tin riêng cho nhân sự đó.`, "success");
+    },
+
+    rejectPasswordReset: async (username) => {
+        if (!confirm(`Bạn muốn hủy yêu cầu cấp lại mật khẩu của "${username}"?`)) return;
+        let reqs = await DB.getPasswordRequests();
+        reqs = reqs.filter(r => r.username !== username);
+        await DB.savePasswordRequests(reqs);
+        Auth.renderSettings();
     },
 
     // Profile Management
