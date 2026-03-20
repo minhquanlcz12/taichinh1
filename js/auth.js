@@ -348,16 +348,20 @@ const Auth = {
             </button>
         `, isOpen('acc-password', false));
 
-        html += Auth.createAccordionBlock('acc-profile', 'Cài đặt ứng dụng', 'fa-user-gear', `
-            <p style="color:var(--text-secondary); margin-bottom: 20px; margin-top: 0;">Quản lý tài khoản hiện tại của bạn.</p>
-            <div style="display:flex; align-items:center; gap:16px;">
-                <div class="avatar" style="width: 64px; height: 64px;">${Auth.currentUser.username[0].toUpperCase()}</div>
-                <div>
-                    <h4 style="font-size:18px;">${Auth.currentUser.username} <span class="badge ${Auth.currentUser.role === 'admin' ? 'badge-orange' : 'badge-blue'}">${Auth.currentUser.role.toUpperCase()}</span></h4>
-                    <button class="btn btn-danger" onclick="Auth.logout()" style="margin-top: 8px;">Đăng xuất</button>
+        html += `
+            <div class="glass-card" style="margin-bottom: 24px; padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%); border: 1px solid rgba(255,255,255,0.1);">
+                <div style="display:flex; align-items:center; gap:16px;">
+                    <div class="avatar" style="width: 50px; height: 50px; font-size: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.5);">${Auth.currentUser.username[0].toUpperCase()}</div>
+                    <div>
+                        <h4 style="font-size:16px; margin: 0 0 4px 0; color: var(--primary);">${Auth.currentUser.username} <span class="badge ${Auth.currentUser.role === 'admin' ? 'badge-orange' : 'badge-blue'}" style="vertical-align: middle; margin-left: 4px; font-size: 10px;">${Auth.currentUser.role.toUpperCase()}</span></h4>
+                        <p style="color:var(--text-secondary); margin: 0; font-size: 12px;">Phiên đăng nhập hiện tại</p>
+                    </div>
                 </div>
+                <button class="btn btn-danger" onclick="Auth.logout()" style="padding: 10px 20px; font-weight: bold; box-shadow: 0 4px 15px rgba(248, 113, 113, 0.3);">
+                    <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+                </button>
             </div>
-        `, isOpen('acc-profile', false));
+        `;
 
         html += Auth.createAccordionBlock('acc-ai', 'Tích hợp AI (Claude API)', 'fa-robot', `
             <p style="color:var(--text-secondary); margin-bottom: 16px; margin-top: 0;">Nhập mã API Anthropic của bạn để kích hoạt chức năng tự động viết Nội dung/Kịch bản ở cấp độ chuyên gia.</p>
