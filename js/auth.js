@@ -282,151 +282,172 @@ const Auth = {
         }
     },
 
+    toggleAccordion: (headerEl) => {
+        const content = headerEl.nextElementSibling;
+        const icon = headerEl.querySelector('.accordion-icon');
+        if (content.style.display === 'none') {
+            content.style.display = 'block';
+            if (icon) { icon.classList.remove('fa-chevron-down'); icon.classList.add('fa-chevron-up'); }
+        } else {
+            content.style.display = 'none';
+            if (icon) { icon.classList.remove('fa-chevron-up'); icon.classList.add('fa-chevron-down'); }
+        }
+    },
+
+    createAccordionBlock: (title, iconClass, contentHtml, openByDefault = false, styleOverride = '', titleStyleOverride = '') => {
+        return `
+            <div class="glass-card" style="margin-bottom: 24px; padding: 0; overflow: hidden; ${styleOverride}">
+                <div onclick="Auth.toggleAccordion(this)" style="padding: 16px 24px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); transition: background 0.2s;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <h3 style="margin: 0; font-size: 16px; color: var(--primary); ${titleStyleOverride}"><i class="fa-solid ${iconClass}" style="margin-right: 8px;"></i>${title}</h3>
+                    </div>
+                    <i class="fa-solid ${openByDefault ? 'fa-chevron-up' : 'fa-chevron-down'} accordion-icon" style="color:var(--text-secondary);"></i>
+                </div>
+                <div style="display: ${openByDefault ? 'block' : 'none'}; padding: 16px 24px; border-top: 1px solid rgba(255,255,255,0.05);">
+                    ${contentHtml}
+                </div>
+            </div>
+        `;
+    },
+
     renderSettings: async () => {
         const settingsView = document.getElementById('settings-view');
 
         let currentKey = Utils.storage.get('claude_api_key') || '';
         let currentModel = Utils.storage.get('claude_api_model') || 'claude-3-haiku-20240307';
-        let html = `
-            <div class="glass-card" style="margin-bottom: 24px;">
-                <h3>Đổi mật khẩu</h3>
-                <p style="color:var(--text-secondary); margin-bottom: 16px;">Thay đổi mật khẩu đăng nhập của bạn. Khuyến nghị cập nhật thường xuyên.</p>
-                <div class="form-group" style="margin-bottom: 12px;">
-                    <input type="password" id="cp-old" class="form-control" placeholder="Mật khẩu hiện tại" autocomplete="off">
-                </div>
-                <div style="display: flex; gap: 12px; margin-bottom: 16px;">
-                    <input type="password" id="cp-new" class="form-control" placeholder="Mật khẩu mới" autocomplete="off" style="flex:1;">
-                    <input type="password" id="cp-confirm" class="form-control" placeholder="Xác nhận mật khẩu mới" autocomplete="off" style="flex:1;">
-                </div>
-                <button class="btn btn-warning" onclick="Auth.changePassword()">
-                    <i class="fa-solid fa-key"></i> Cập nhật Mật khẩu
-                </button>
-            </div>
-            
-            <div class="glass-card" style="margin-bottom: 24px;">
-                <h3>Cài đặt ứng dụng</h3>
-                <p style="color:var(--text-secondary); margin-bottom: 20px;">Quản lý tài khoản hiện tại của bạn.</p>
-                <div style="display:flex; align-items:center; gap:16px;">
-                    <div class="avatar" style="width: 64px; height: 64px;">${Auth.currentUser.username[0].toUpperCase()}</div>
-                    <div>
-                        <h4 style="font-size:18px;">${Auth.currentUser.username} <span class="badge ${Auth.currentUser.role === 'admin' ? 'badge-orange' : 'badge-blue'}">${Auth.currentUser.role.toUpperCase()}</span></h4>
-                        <button class="btn btn-danger" onclick="Auth.logout()" style="margin-top: 8px;">Đăng xuất</button>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="glass-card" style="margin-bottom: 24px;">
-                <h3>🔗 Tích hợp AI (Claude API)</h3>
-                <p style="color:var(--text-secondary); margin-bottom: 16px;">Nhập mã API Anthropic của bạn để kích hoạt chức năng tự động viết Nội dung/Kịch bản ở cấp độ chuyên gia.</p>
-                <div class="form-group" style="display:flex; gap: 8px;">
-                    <input type="password" id="claude-api-key" class="form-control" placeholder="sk-ant-api03-..." value="${currentKey}" style="flex:1;">
-                    <button class="btn btn-primary" onclick="Auth.saveClaudeKey()"><i class="fa-solid fa-floppy-disk"></i> Lưu Cấu Hình</button>
-                </div>
-                
-                <div class="form-group" style="margin-top: 12px; display: flex; gap: 16px; align-items: center;">
-                    <label style="color: var(--text-secondary); font-size: 13px;">Chọn Model AI:</label>
-                    <label style="display:flex; align-items:center; gap:4px; font-size: 13px;">
-                        <input type="radio" name="claude-model" value="claude-3-haiku-20240307" ${currentModel === 'claude-3-haiku-20240307' ? 'checked' : ''}>
-                        Claude 3 Haiku (Nhanh, Rẻ)
-                    </label>
-                    <label style="display:flex; align-items:center; gap:4px; font-size: 13px; color: var(--warning);">
-                        <input type="radio" name="claude-model" value="claude-3-5-sonnet-20240620" ${currentModel === 'claude-3-5-sonnet-20240620' ? 'checked' : ''}>
-                        Claude 3.5 Sonnet (Thông minh, Đắt hơn)
-                    </label>
-                </div>
+        
+        let html = '';
 
-                <small style="color: var(--text-secondary); display:block; margin-top:8px;"><i class="fa-solid fa-circle-info"></i> API Key chỉ lưu bảo mật trên trình duyệt máy tính của bạn. Nếu API bị lỗi CORS do Browser, app sẽ tự động fallback về mẫu Local.</small>
+        html += Auth.createAccordionBlock('Đổi mật khẩu', 'fa-key', `
+            <p style="color:var(--text-secondary); margin-bottom: 16px; margin-top: 0;">Thay đổi mật khẩu đăng nhập của bạn. Khuyến nghị cập nhật thường xuyên.</p>
+            <div class="form-group" style="margin-bottom: 12px;">
+                <input type="password" id="cp-old" class="form-control" placeholder="Mật khẩu hiện tại" autocomplete="off">
             </div>
-        `;
+            <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+                <input type="password" id="cp-new" class="form-control" placeholder="Mật khẩu mới" autocomplete="off" style="flex:1;">
+                <input type="password" id="cp-confirm" class="form-control" placeholder="Xác nhận mật khẩu mới" autocomplete="off" style="flex:1;">
+            </div>
+            <button class="btn btn-warning" onclick="Auth.changePassword()">
+                <i class="fa-solid fa-key"></i> Cập nhật Mật khẩu
+            </button>
+        `, true);
+
+        html += Auth.createAccordionBlock('Cài đặt ứng dụng', 'fa-user-gear', `
+            <p style="color:var(--text-secondary); margin-bottom: 20px; margin-top: 0;">Quản lý tài khoản hiện tại của bạn.</p>
+            <div style="display:flex; align-items:center; gap:16px;">
+                <div class="avatar" style="width: 64px; height: 64px;">${Auth.currentUser.username[0].toUpperCase()}</div>
+                <div>
+                    <h4 style="font-size:18px;">${Auth.currentUser.username} <span class="badge ${Auth.currentUser.role === 'admin' ? 'badge-orange' : 'badge-blue'}">${Auth.currentUser.role.toUpperCase()}</span></h4>
+                    <button class="btn btn-danger" onclick="Auth.logout()" style="margin-top: 8px;">Đăng xuất</button>
+                </div>
+            </div>
+        `);
+
+        html += Auth.createAccordionBlock('Tích hợp AI (Claude API)', 'fa-robot', `
+            <p style="color:var(--text-secondary); margin-bottom: 16px; margin-top: 0;">Nhập mã API Anthropic của bạn để kích hoạt chức năng tự động viết Nội dung/Kịch bản ở cấp độ chuyên gia.</p>
+            <div class="form-group" style="display:flex; gap: 8px;">
+                <input type="password" id="claude-api-key" class="form-control" placeholder="sk-ant-api03-..." value="${currentKey}" style="flex:1;">
+                <button class="btn btn-primary" onclick="Auth.saveClaudeKey()"><i class="fa-solid fa-floppy-disk"></i> Lưu Cấu Hình</button>
+            </div>
+            
+            <div class="form-group" style="margin-top: 12px; display: flex; gap: 16px; align-items: center;">
+                <label style="color: var(--text-secondary); font-size: 13px;">Chọn Model AI:</label>
+                <label style="display:flex; align-items:center; gap:4px; font-size: 13px;">
+                    <input type="radio" name="claude-model" value="claude-3-haiku-20240307" ${currentModel === 'claude-3-haiku-20240307' ? 'checked' : ''}>
+                    Claude 3 Haiku (Nhanh, Rẻ)
+                </label>
+                <label style="display:flex; align-items:center; gap:4px; font-size: 13px; color: var(--warning);">
+                    <input type="radio" name="claude-model" value="claude-3-5-sonnet-20240620" ${currentModel === 'claude-3-5-sonnet-20240620' ? 'checked' : ''}>
+                    Claude 3.5 Sonnet (Thông minh, Đắt hơn)
+                </label>
+            </div>
+
+            <small style="color: var(--text-secondary); display:block; margin-top:8px;"><i class="fa-solid fa-circle-info"></i> API Key chỉ lưu bảo mật trên trình duyệt máy tính của bạn. Nếu API bị lỗi CORS do Browser, app sẽ tự động fallback về mẫu Local.</small>
+        `);
 
         if (Auth.currentUser.role === 'admin') {
             const accounts = await Auth.getAccounts();
             const pwdReqs = await DB.getPasswordRequests();
 
-            html += `
-                <div class="glass-card" style="margin-bottom: 24px; border-color: rgba(234, 179, 8, 0.3);">
-                    <h3 style="color: var(--warning);"><i class="fa-solid fa-bell"></i> Yêu cầu cấp lại mật khẩu ${pwdReqs.length > 0 ? `<span class="badge badge-orange" style="margin-left: 8px;">${pwdReqs.length}</span>` : ''}</h3>
-                    <p style="color:var(--text-secondary); margin-bottom: 16px;">Nhân viên quên mật khẩu sẽ hiện ở đây để chờ Admin cấp lại.</p>
-                    ${pwdReqs.length === 0 ? '<p style="color: var(--text-secondary); font-style: italic;">Không có yêu cầu nào.</p>' : `
-                    <table class="data-table" style="width: 100%;">
-                        <thead>
+            const pwdReqsHtml = `
+                <p style="color:var(--text-secondary); margin-bottom: 16px; margin-top: 0;">Nhân viên quên mật khẩu sẽ hiện ở đây để chờ Admin cấp lại.</p>
+                ${pwdReqs.length === 0 ? '<p style="color: var(--text-secondary); font-style: italic;">Không có yêu cầu nào.</p>' : `
+                <table class="data-table" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>Tài khoản</th>
+                            <th>Thời gian gửi</th>
+                            <th style="text-align:right;">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${pwdReqs.map(r => `
                             <tr>
-                                <th>Tài khoản</th>
-                                <th>Thời gian gửi</th>
-                                <th style="text-align:right;">Thao tác</th>
+                                <td><strong style="color: var(--primary);">${r.username}</strong></td>
+                                <td>${new Date(r.date).toLocaleString('vi-VN')}</td>
+                                <td style="text-align:right;">
+                                    <button class="btn btn-primary" onclick="Auth.approvePasswordReset('${r.username}')" style="margin-right:8px;"><i class="fa-solid fa-check"></i> Xác nhận (Pass: 123456)</button>
+                                    <button class="btn-text text-danger" onclick="Auth.rejectPasswordReset('${r.username}')"><i class="fa-solid fa-trash"></i> Hủy</button>
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            ${pwdReqs.map(r => `
-                                <tr>
-                                    <td><strong style="color: var(--primary);">${r.username}</strong></td>
-                                    <td>${new Date(r.date).toLocaleString('vi-VN')}</td>
-                                    <td style="text-align:right;">
-                                        <button class="btn btn-primary" onclick="Auth.approvePasswordReset('${r.username}')" style="margin-right:8px;"><i class="fa-solid fa-check"></i> Xác nhận (Pass: 123456)</button>
-                                        <button class="btn-text text-danger" onclick="Auth.rejectPasswordReset('${r.username}')"><i class="fa-solid fa-trash"></i> Hủy</button>
-                                    </td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                    `}
-                </div>
-
-                <div class="glass-card" style="margin-bottom: 24px;">
-                    <h3 style="margin-bottom: 24px; color: var(--primary);"><i class="fa-brands fa-telegram" style="margin-right: 8px;"></i>Tích hợp Telegram Bot</h3>
-                    <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 20px; line-height: 1.6;">
-                        Nhận thông báo tự động (Đơn xin nghỉ phép, Cảnh báo Deadline) trực tiếp về điện thoại thông qua Telegram Bot.
-                    </p>
-                    <div class="form-group">
-                        <label>1. Telegram Bot Token <span style="font-weight: normal; font-size: 11px; color: var(--warning);">(Tạo từ @BotFather)</span></label>
-                        <input type="text" id="setting-tg-token" class="form-control" placeholder="Ví dụ: 1234567890:ABCdefGhIJKlmNoPQRstuVWXyz..." value="${app.state.settings.tgToken || ''}">
-                    </div>
-                    <div class="form-group" style="margin-top: 16px;">
-                        <label>2. Group Chat ID / User Chat ID <span style="font-weight: normal; font-size: 11px; color: var(--warning);">(Lấy từ @userinfobot hoặc thêm bot vào nhóm)</span></label>
-                        <input type="text" id="setting-tg-chatid" class="form-control" placeholder="Ví dụ: -100123456789" value="${app.state.settings.tgChatId || ''}">
-                    </div>
-                    <button class="btn btn-primary" onclick="app.saveTelegramSettings()" style="margin-top: 16px;">
-                        <i class="fa-solid fa-floppy-disk"></i> Lưu Cài Đặt Telegram
-                    </button>
-                </div>
-                
-                <div class="glass-card" style="margin-bottom: 24px; border-color: rgba(248, 113, 113, 0.3);">
-                    <h3 style="color: var(--danger);"><i class="fa-solid fa-triangle-exclamation"></i> Dữ liệu Hệ thống (Vùng nguy hiểm)</h3>
-                    <p style="color:var(--text-secondary); margin-bottom: 20px;">Lưu ý: Xóa dữ liệu sẽ làm mất vĩnh viễn toàn bộ giao dịch và kế hoạch hệ thống.</p>
-                    <button class="btn btn-danger" id="clear-data-btn">
-                        Xóa toàn bộ dữ liệu (Hard Reset)
-                    </button>
-                </div>
-
-                <div class="glass-card">
-                    <h3>Quản lý Người dùng (Admin Only)</h3>
-                    <p style="color:var(--text-secondary); margin-bottom: 16px;">Danh sách các tài khoản đã đăng ký trên máy này.</p>
-                    
-                    <table class="data-table" style="width: 100%;">
-                        <thead>
-                            <tr>
-                                <th>Tên đăng nhập</th>
-                                <th>Vai trò</th>
-                                <th style="text-align:right;">Thao tác</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${accounts.map(acc => `
-                                <tr>
-                                    <td>${acc.username}</td>
-                                    <td><span class="badge ${acc.role === 'admin' ? 'badge-orange' : 'badge-blue'}">${acc.role}</span></td>
-                                    <td style="text-align:right;">
-                                        <button class="btn-text" style="color:var(--primary); margin-right: 8px;" onclick="Auth.showViewProfileModal('${acc.username}')"><i class="fa-solid fa-eye"></i> Xem</button>
-                                        ${acc.username !== 'admin' ?
-                    `<button class="btn-text text-danger" onclick="Auth.deleteUser('${acc.username}')"><i class="fa-solid fa-trash"></i> Xóa</button>` :
-                    '<span style="color:var(--text-secondary); font-size:12px;">Không thể xóa Admin</span>'}
-                                    </td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
+                        `).join('')}
+                    </tbody>
+                </table>
+                `}
             `;
+            html += Auth.createAccordionBlock('Yêu cầu cấp lại mật khẩu' + (pwdReqs.length > 0 ? ` <span class="badge badge-orange" style="margin-left: 8px;">${pwdReqs.length}</span>` : ''), 'fa-bell', pwdReqsHtml, pwdReqs.length > 0, 'border-color: rgba(234, 179, 8, 0.3);', 'color: var(--warning);');
+
+            html += Auth.createAccordionBlock('Tích hợp Telegram Bot', 'fa-telegram', `
+                <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 20px; margin-top: 0; line-height: 1.6;">
+                    Nhận thông báo tự động (Đơn xin nghỉ phép, Cảnh báo Deadline) trực tiếp về điện thoại thông qua Telegram Bot.
+                </p>
+                <div class="form-group">
+                    <label>1. Telegram Bot Token <span style="font-weight: normal; font-size: 11px; color: var(--warning);">(Tạo từ @BotFather)</span></label>
+                    <input type="text" id="setting-tg-token" class="form-control" placeholder="Ví dụ: 1234567890:ABCdefGhIJKlmNoPQRstuVWXyz..." value="${app.state.settings.tgToken || ''}">
+                </div>
+                <div class="form-group" style="margin-top: 16px;">
+                    <label>2. Group Chat ID / User Chat ID <span style="font-weight: normal; font-size: 11px; color: var(--warning);">(Lấy từ @userinfobot hoặc thêm bot vào nhóm)</span></label>
+                    <input type="text" id="setting-tg-chatid" class="form-control" placeholder="Ví dụ: -100123456789" value="${app.state.settings.tgChatId || ''}">
+                </div>
+                <button class="btn btn-primary" onclick="app.saveTelegramSettings()" style="margin-top: 16px;">
+                    <i class="fa-solid fa-floppy-disk"></i> Lưu Cài Đặt Telegram
+                </button>
+            `);
+
+            html += Auth.createAccordionBlock('Quản lý Người dùng', 'fa-users', `
+                <p style="color:var(--text-secondary); margin-bottom: 16px; margin-top: 0;">Danh sách các tài khoản đã đăng ký trên máy này.</p>
+                
+                <table class="data-table" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>Tên đăng nhập</th>
+                            <th>Vai trò</th>
+                            <th style="text-align:right;">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${accounts.map(acc => `
+                            <tr>
+                                <td>${acc.username}</td>
+                                <td><span class="badge ${acc.role === 'admin' ? 'badge-orange' : 'badge-blue'}">${acc.role}</span></td>
+                                <td style="text-align:right;">
+                                    <button class="btn-text" style="color:var(--primary); margin-right: 8px;" onclick="Auth.showViewProfileModal('${acc.username}')"><i class="fa-solid fa-eye"></i> Xem</button>
+                                    ${acc.username !== 'admin' ?
+                `<button class="btn-text text-danger" onclick="Auth.deleteUser('${acc.username}')"><i class="fa-solid fa-trash"></i> Xóa</button>` :
+                '<span style="color:var(--text-secondary); font-size:12px;">Không thể xóa Admin</span>'}
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `);
+
+            html += Auth.createAccordionBlock('Dữ liệu Hệ thống (Vùng nguy hiểm)', 'fa-triangle-exclamation', `
+                <p style="color:var(--text-secondary); margin-bottom: 20px; margin-top: 0;">Lưu ý: Xóa dữ liệu sẽ làm mất vĩnh viễn toàn bộ giao dịch và kế hoạch hệ thống.</p>
+                <button class="btn btn-danger" id="clear-data-btn">
+                    Xóa toàn bộ dữ liệu (Hard Reset)
+                </button>
+            `, false, 'border-color: rgba(248, 113, 113, 0.3);', 'color: var(--danger);');
         }
 
         settingsView.innerHTML = html;
@@ -665,6 +686,16 @@ const Auth = {
                         <div style="font-weight: 500; line-height: 1.4;">${profile.address || 'Chưa cập nhật'}</div>
                     </div>
                 </div>
+                <div style="display: flex; align-items: center; gap: 12px; margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--warning);">
+                    <i class="fa-solid fa-money-bill-wave" style="color: var(--success); width: 20px; text-align: center; font-size: 18px;"></i>
+                    <div style="flex: 1; display: flex; gap: 8px; align-items: flex-end;">
+                        <div style="flex: 1;">
+                            <div style="font-size: 12px; color: var(--warning); margin-bottom: 4px; font-weight: bold;">CÀI ĐẶT LƯƠNG CƠ BẢN (VNĐ/Tháng)</div>
+                            <input type="number" id="admin-edit-base-salary" class="form-control" value="${acc.baseSalary || 0}" style="padding: 6px 12px; font-size: 14px; font-weight: bold; color: var(--success);">
+                        </div>
+                        <button class="btn btn-success" style="padding: 6px 16px; height: 35px;" onclick="Auth.saveBaseSalary('${username}')"><i class="fa-solid fa-save"></i> LƯU</button>
+                    </div>
+                </div>
             </div>
         `;
 
@@ -676,6 +707,19 @@ const Auth = {
     closeViewProfileModal: () => {
         document.getElementById('view-profile-modal-overlay').classList.remove('active');
         document.getElementById('view-profile-modal').style.display = 'none';
+    },
+
+    saveBaseSalary: async (username) => {
+        const inputVal = document.getElementById('admin-edit-base-salary').value;
+        const newSalary = parseInt(inputVal) || 0;
+
+        let accounts = await Auth.getAccounts();
+        const accIdx = accounts.findIndex(a => a.username === username);
+        if (accIdx > -1) {
+            accounts[accIdx].baseSalary = newSalary;
+            await Auth.saveAccounts(accounts);
+            Utils.showToast(`Đã lưu Lương cơ bản của ${username}: ${Utils.formatCurrency(newSalary)}đ`, 'success');
+        }
     }
 };
 

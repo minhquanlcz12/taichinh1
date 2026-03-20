@@ -25,6 +25,7 @@ const app = {
         // Init modules
         FinanceModule.init();
         WorkModule.init();
+        if (typeof PayrollModule !== 'undefined') PayrollModule.init();
 
         // Run pseudo-cron for Daily Summary Report 5 seconds after boot (wait for modules to load)
         setTimeout(() => {
@@ -146,9 +147,10 @@ const app = {
 
         // Update topbar title
         const titles = {
-            'dashboard-view': { title: 'Tổng quan', sub: 'Cập nhật tình hình gia đình bạn' },
-            'finance-view': { title: 'Quản lý Tài chính', sub: 'Theo dõi thu chi chi tiết' },
-            'work-view': { title: 'Công việc & Lịch', sub: 'Sắp xếp thời gian hiệu quả' },
+            'dashboard-view': { title: 'Tổng quan', sub: 'Cập nhật diễn biến nhanh chóng' },
+            'finance-view': { title: 'Quản lý Tài chính', sub: 'Theo dõi dòng tiền chặt chẽ' },
+            'payroll-view': { title: 'Lương & Thưởng', sub: 'Bảng tính tự động theo năng suất nhân sự' },
+            'work-view': { title: 'Công việc & Lịch', sub: 'Sắp xếp kế hoạch hiệu quả' },
             'attendance-view': { title: 'Chấm Công Tự Động', sub: 'Quản lý ngày làm việc và chuyên cần' },
             'settings-view': { title: 'Cài đặt', sub: 'Tùy chỉnh hệ thống' }
         };
@@ -183,6 +185,13 @@ const app = {
             document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
             const attNav = document.querySelector('.nav-item[data-target="attendance-view"]');
             if (attNav) attNav.classList.add('active');
+        } else if (viewId === 'payroll-view') {
+            if (typeof PayrollModule !== 'undefined') {
+                PayrollModule.render();
+            }
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            const prNav = document.querySelector('.nav-item[data-target="payroll-view"]');
+            if (prNav) prNav.classList.add('active');
         } else if (viewId === 'settings-view') {
             document.getElementById('setting-tg-token').value = app.state.settings.tgToken || '';
             document.getElementById('setting-tg-chatid').value = app.state.settings.tgChatId || '';
