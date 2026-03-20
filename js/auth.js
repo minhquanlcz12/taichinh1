@@ -294,16 +294,16 @@ const Auth = {
         }
     },
 
-    createAccordionBlock: (title, iconClass, contentHtml, openByDefault = false, styleOverride = '', titleStyleOverride = '') => {
+    createAccordionBlock: (id, title, iconClass, contentHtml, openByDefault = false, styleOverride = '', titleStyleOverride = '') => {
         return `
-            <div class="glass-card" style="margin-bottom: 24px; padding: 0; overflow: hidden; ${styleOverride}">
+            <div class="glass-card" data-accordion-id="${id}" style="margin-bottom: 24px; padding: 0; overflow: hidden; ${styleOverride}">
                 <div onclick="Auth.toggleAccordion(this)" style="padding: 16px 24px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); transition: background 0.2s;">
                     <div style="display: flex; align-items: center; gap: 12px;">
                         <h3 style="margin: 0; font-size: 16px; color: var(--primary); ${titleStyleOverride}"><i class="fa-solid ${iconClass}" style="margin-right: 8px;"></i>${title}</h3>
                     </div>
                     <i class="fa-solid ${openByDefault ? 'fa-chevron-up' : 'fa-chevron-down'} accordion-icon" style="color:var(--text-secondary);"></i>
                 </div>
-                <div style="display: ${openByDefault ? 'block' : 'none'}; padding: 16px 24px; border-top: 1px solid rgba(255,255,255,0.05);">
+                <div class="accordion-content" style="display: ${openByDefault ? 'block' : 'none'}; padding: 16px 24px; border-top: 1px solid rgba(255,255,255,0.05);">
                     ${contentHtml}
                 </div>
             </div>
@@ -313,12 +313,28 @@ const Auth = {
     renderSettings: async () => {
         const settingsView = document.getElementById('settings-view');
 
+        // Track what was previously open if re-rendering
+        const previouslyOpen = new Set();
+        let hasRenderedBefore = false;
+        if (settingsView.innerHTML.trim() !== '') {
+            hasRenderedBefore = true;
+            settingsView.querySelectorAll('.glass-card').forEach(card => {
+                const idAttr = card.getAttribute('data-accordion-id');
+                const content = card.querySelector('.accordion-content');
+                if (idAttr && content && content.style.display === 'block') {
+                    previouslyOpen.add(idAttr);
+                }
+            });
+        }
+        
+        const isOpen = (id, defaultVal) => hasRenderedBefore ? previouslyOpen.has(id) : defaultVal;
+
         let currentKey = Utils.storage.get('claude_api_key') || '';
         let currentModel = Utils.storage.get('claude_api_model') || 'claude-3-haiku-20240307';
         
         let html = '';
 
-        html += Auth.createAccordionBlock('Đổi mật khẩu', 'fa-key', `
+        html += Auth.createAccordionBlock('acc-password', 'Đổi mật khẩu', 'fa-key', `
             <p style="color:var(--text-secondary); margin-bottom: 16px; margin-top: 0;">Thay đổi mật khẩu đăng nhập của bạn. Khuyến nghị cập nhật thường xuyên.</p>
             <div class="form-group" style="margin-bottom: 12px;">
                 <input type="password" id="cp-old" class="form-control" placeholder="Mật khẩu hiện tại" autocomplete="off">
@@ -330,9 +346,9 @@ const Auth = {
             <button class="btn btn-warning" onclick="Auth.changePassword()">
                 <i class="fa-solid fa-key"></i> Cập nhật Mật khẩu
             </button>
-        `, true);
+        `, isOpen('acc-password', false));
 
-        html += Auth.createAccordionBlock('Cài đặt ứng dụng', 'fa-user-gear', `
+        html += Auth.createAccordionBlock('acc-profile', 'Cài đặt ứng dụng', 'fa-user-gear', `
             <p style="color:var(--text-secondary); margin-bottom: 20px; margin-top: 0;">Quản lý tài khoản hiện tại của bạn.</p>
             <div style="display:flex; align-items:center; gap:16px;">
                 <div class="avatar" style="width: 64px; height: 64px;">${Auth.currentUser.username[0].toUpperCase()}</div>
@@ -341,9 +357,9 @@ const Auth = {
                     <button class="btn btn-danger" onclick="Auth.logout()" style="margin-top: 8px;">Đăng xuất</button>
                 </div>
             </div>
-        `);
+        `, isOpen('acc-profile', false));
 
-        html += Auth.createAccordionBlock('Tích hợp AI (Claude API)', 'fa-robot', `
+        html += Auth.createAccordionBlock('acc-ai', 'Tích hợp AI (Claude API)', 'fa-robot', `
             <p style="color:var(--text-secondary); margin-bottom: 16px; margin-top: 0;">Nhập mã API Anthropic của bạn để kích hoạt chức năng tự động viết Nội dung/Kịch bản ở cấp độ chuyên gia.</p>
             <div class="form-group" style="display:flex; gap: 8px;">
                 <input type="password" id="claude-api-key" class="form-control" placeholder="sk-ant-api03-..." value="${currentKey}" style="flex:1;">
@@ -363,7 +379,7 @@ const Auth = {
             </div>
 
             <small style="color: var(--text-secondary); display:block; margin-top:8px;"><i class="fa-solid fa-circle-info"></i> API Key chỉ lưu bảo mật trên trình duyệt máy tính của bạn. Nếu API bị lỗi CORS do Browser, app sẽ tự động fallback về mẫu Local.</small>
-        `);
+        `, isOpen('acc-ai', false));
 
         if (Auth.currentUser.role === 'admin') {
             const accounts = await Auth.getAccounts();
@@ -395,9 +411,9 @@ const Auth = {
                 </table>
                 `}
             `;
-            html += Auth.createAccordionBlock('Yêu cầu cấp lại mật khẩu' + (pwdReqs.length > 0 ? ` <span class="badge badge-orange" style="margin-left: 8px;">${pwdReqs.length}</span>` : ''), 'fa-bell', pwdReqsHtml, pwdReqs.length > 0, 'border-color: rgba(234, 179, 8, 0.3);', 'color: var(--warning);');
+            html += Auth.createAccordionBlock('acc-pwd', 'Yêu cầu cấp lại mật khẩu' + (pwdReqs.length > 0 ? ` <span class="badge badge-orange" style="margin-left: 8px;">${pwdReqs.length}</span>` : ''), 'fa-bell', pwdReqsHtml, isOpen('acc-pwd', pwdReqs.length > 0), pwdReqs.length > 0 ? 'border-color: rgba(234, 179, 8, 0.3);' : '', pwdReqs.length > 0 ? 'color: var(--warning);' : '');
 
-            html += Auth.createAccordionBlock('Tích hợp Telegram Bot', 'fa-telegram', `
+            html += Auth.createAccordionBlock('acc-bot', 'Tích hợp Telegram Bot', 'fa-telegram', `
                 <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 20px; margin-top: 0; line-height: 1.6;">
                     Nhận thông báo tự động (Đơn xin nghỉ phép, Cảnh báo Deadline) trực tiếp về điện thoại thông qua Telegram Bot.
                 </p>
@@ -412,9 +428,9 @@ const Auth = {
                 <button class="btn btn-primary" onclick="app.saveTelegramSettings()" style="margin-top: 16px;">
                     <i class="fa-solid fa-floppy-disk"></i> Lưu Cài Đặt Telegram
                 </button>
-            `);
+            `, isOpen('acc-bot', false));
 
-            html += Auth.createAccordionBlock('Quản lý Người dùng', 'fa-users', `
+            html += Auth.createAccordionBlock('acc-users', 'Quản lý Người dùng', 'fa-users', `
                 <p style="color:var(--text-secondary); margin-bottom: 16px; margin-top: 0;">Danh sách các tài khoản đã đăng ký trên máy này.</p>
                 
                 <table class="data-table" style="width: 100%;">
@@ -440,14 +456,14 @@ const Auth = {
                         `).join('')}
                     </tbody>
                 </table>
-            `);
+            `, isOpen('acc-users', true));
 
-            html += Auth.createAccordionBlock('Dữ liệu Hệ thống (Vùng nguy hiểm)', 'fa-triangle-exclamation', `
+            html += Auth.createAccordionBlock('acc-danger', 'Dữ liệu Hệ thống (Vùng nguy hiểm)', 'fa-triangle-exclamation', `
                 <p style="color:var(--text-secondary); margin-bottom: 20px; margin-top: 0;">Lưu ý: Xóa dữ liệu sẽ làm mất vĩnh viễn toàn bộ giao dịch và kế hoạch hệ thống.</p>
                 <button class="btn btn-danger" id="clear-data-btn">
                     Xóa toàn bộ dữ liệu (Hard Reset)
                 </button>
-            `, false, 'border-color: rgba(248, 113, 113, 0.3);', 'color: var(--danger);');
+            `, isOpen('acc-danger', false), 'border-color: rgba(248, 113, 113, 0.3);', 'color: var(--danger);');
         }
 
         settingsView.innerHTML = html;
