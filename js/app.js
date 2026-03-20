@@ -602,6 +602,7 @@ const app = {
                 rate: users[u].total > 0 ? (users[u].done / users[u].total * 100) : 0
             }
         })
+        .filter(u => accounts.some(a => a.username === u.name))
         .filter(u => u.done > 0)
         .sort((a, b) => b.done - a.done);
 
