@@ -210,7 +210,7 @@ const app = {
         Utils.showToast("Đã lưu cấu hình Telegram Bot thành công!", "success");
     },
 
-    renderDashboard: (filteredTransactions) => {
+    renderDashboard: async (filteredTransactions) => {
         // Gather data from modules
         const financeData = FinanceModule.getSummary(filteredTransactions);
         const recentTxs = FinanceModule.getRecentTransactions(5, filteredTransactions);
@@ -220,6 +220,11 @@ const app = {
         Utils.animateValue(document.getElementById('dash-balance'), 0, financeData.balance, 1000, Utils.formatCurrency);
         Utils.animateValue(document.getElementById('dash-income'), 0, financeData.income, 1000, Utils.formatCurrency);
         Utils.animateValue(document.getElementById('dash-expense'), 0, financeData.expense, 1000, Utils.formatCurrency);
+
+        if (Auth.currentUser && typeof PayrollModule !== 'undefined') {
+            const currentSalary = await PayrollModule.calculateUserSalary(Auth.currentUser.username, new Date().toISOString().slice(0, 7));
+            Utils.animateValue(document.getElementById('dash-salary'), 0, currentSalary, 1000, Utils.formatCurrency);
+        }
 
         // Update Recent Transactions
         const txList = document.getElementById('dash-transaction-list');

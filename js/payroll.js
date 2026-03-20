@@ -70,6 +70,55 @@ const PayrollModule = {
         PayrollModule.calculateAndRenderBody();
     },
 
+    calculateUserSalary: async (username, monthStr) => {
+        try {
+            const accounts = await Auth.getAccounts();
+            const acc = accounts.find(a => a.username === username);
+            if (!acc) return 0;
+
+            const baseSalary = acc.baseSalary || 0;
+            const allAttendance = await Attendance.loadData();
+            const allLeaves = await Attendance.loadLeaveData();
+            const allCustomBonuses = await DB.getCustomBonuses();
+            
+            let onTimeDays = 0, lateDays = 0, approvedLeaveDays = 0;
+            const targetMonth = parseInt(monthStr.split('-')[1]) - 1;
+            const targetYear = parseInt(monthStr.split('-')[0]);
+
+            allAttendance.forEach(a => {
+                if (a.username === username) {
+                    const d = new Date(a.dateStr);
+                    if (d.getMonth() === targetMonth && d.getFullYear() === targetYear) {
+                        if (a.status === 'on_time') onTimeDays++;
+                        else if (a.status === 'late') lateDays++;
+                    }
+                }
+            });
+
+            allLeaves.forEach(l => {
+                if (l.username === username && l.status === 'approved') {
+                    const d = new Date(l.date);
+                    if (d.getMonth() === targetMonth && d.getFullYear() === targetYear) {
+                        approvedLeaveDays += (parseInt(l.days) || 1);
+                    }
+                }
+            });
+
+            const dailyRate = baseSalary / PayrollModule.STANDARD_WORK_DAYS;
+            const paidDays = onTimeDays + lateDays + approvedLeaveDays;
+            
+            const attendancePay = paidDays * dailyRate;
+            const latePenaltyTotal = lateDays * PayrollModule.LATE_PENALTY;
+            const customBonus = parseFloat((allCustomBonuses[monthStr] || {})[username]) || 0;
+
+            const netSalary = attendancePay + customBonus - latePenaltyTotal;
+            return Math.round(netSalary > 0 ? netSalary : 0);
+        } catch (e) {
+            console.error(e);
+            return 0;
+        }
+    },
+
     changeMonth: (newMonth) => {
         PayrollModule.currentMonth = newMonth;
         PayrollModule.calculateAndRenderBody();
