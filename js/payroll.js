@@ -85,8 +85,12 @@ const PayrollModule = {
             const targetMonth = parseInt(monthStr.split('-')[1]) - 1;
             const targetYear = parseInt(monthStr.split('-')[0]);
 
+            // Lấy ngày hôm nay
+            const now = new Date();
+            const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+
             allAttendance.forEach(a => {
-                if (a.username === username) {
+                if (a.username === username && a.dateStr < todayStr) {
                     const d = new Date(a.dateStr);
                     if (d.getMonth() === targetMonth && d.getFullYear() === targetYear) {
                         if (a.status === 'on_time') onTimeDays++;
@@ -96,7 +100,7 @@ const PayrollModule = {
             });
 
             allLeaves.forEach(l => {
-                if (l.username === username && l.status === 'approved') {
+                if (l.username === username && l.status === 'approved' && l.date < todayStr) {
                     const d = new Date(l.date);
                     if (d.getMonth() === targetMonth && d.getFullYear() === targetYear) {
                         approvedLeaveDays += (parseInt(l.days) || 1);
@@ -156,6 +160,10 @@ const PayrollModule = {
             const targetMonth = selectedDate.getMonth();
             const targetYear = selectedDate.getFullYear();
 
+            // Lấy ngày hôm nay theo YYYY-MM-DD timezone Local
+            const now = new Date();
+            const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+
             const rowsHtml = accounts.map(acc => {
                 const username = acc.username;
                 const baseSalary = acc.baseSalary || 0;
@@ -167,7 +175,7 @@ const PayrollModule = {
 
                 // Scan attendance
                 allAttendance.forEach(a => {
-                    if (a.username === username) {
+                    if (a.username === username && a.dateStr < todayStr) {
                         const d = new Date(a.dateStr);
                         if (d.getMonth() === targetMonth && d.getFullYear() === targetYear) {
                             if (a.status === 'on_time') onTimeDays++;
@@ -178,7 +186,7 @@ const PayrollModule = {
 
                 // Scan leaves
                 allLeaves.forEach(l => {
-                    if (l.username === username && l.status === 'approved') {
+                    if (l.username === username && l.status === 'approved' && l.date < todayStr) {
                         // Assuming l.date is YYYY-MM-DD
                         const d = new Date(l.date);
                         if (d.getMonth() === targetMonth && d.getFullYear() === targetYear) {
