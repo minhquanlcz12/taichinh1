@@ -2,8 +2,6 @@
 
 const PayrollModule = {
     currentMonth: new Date().toISOString().slice(0, 7), // YYYY-MM
-    KPI_BONUS_PER_TASK: 50000,
-    KPI_PENALTY_PER_TASK: 50000,
     LATE_PENALTY: 20000,
     STANDARD_WORK_DAYS: 22,
 
@@ -37,7 +35,7 @@ const PayrollModule = {
                             <th style="text-align: right;">Lương cứng</th>
                             <th style="text-align: center;">Chấm công</th>
                             <th style="text-align: center;">Hiệu suất (Task)</th>
-                            <th style="text-align: right;">Thưởng / Phạt</th>
+                            <th style="text-align: right;">Thưởng/Phạt khác</th>
                             <th style="text-align: right;">Thực Lĩnh</th>
                         </tr>
                     </thead>
@@ -49,13 +47,27 @@ const PayrollModule = {
 
             <div style="margin-top: 16px; font-size: 11px; color: var(--text-secondary); display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
                 <span><i class="fa-solid fa-circle-info text-primary"></i> Lương ngày = Lương cứng / ${PayrollModule.STANDARD_WORK_DAYS} ngày</span>
-                <span><i class="fa-solid fa-circle-info text-success"></i> Thưởng KPI = ${Utils.formatCurrency(PayrollModule.KPI_BONUS_PER_TASK)}đ / Task Hoàn thành</span>
-                <span><i class="fa-solid fa-circle-info text-danger"></i> Phạt KPI = ${Utils.formatCurrency(PayrollModule.KPI_PENALTY_PER_TASK)}đ / Task Hết hạn</span>
                 <span><i class="fa-solid fa-circle-info text-warning"></i> Phạt đi muộn = ${Utils.formatCurrency(PayrollModule.LATE_PENALTY)}đ / lần</span>
+                <span><i class="fa-solid fa-circle-info text-success"></i> Thưởng/Phạt Tuỳ chỉnh: Do Admin tự đánh giá nhập tay dựa trên hiệu suất (Task Done)</span>
             </div>
         `;
 
         await PayrollModule.calculateAndRenderBody();
+    },
+
+    saveCustomBonus: async (username, amount) => {
+        const val = parseFloat(amount) || 0;
+        const monthStr = PayrollModule.currentMonth;
+        const allCustomBonuses = await DB.getCustomBonuses();
+        
+        if (!allCustomBonuses[monthStr]) {
+            allCustomBonuses[monthStr] = {};
+        }
+        allCustomBonuses[monthStr][username] = val;
+        
+        await DB.saveCustomBonuses(allCustomBonuses);
+        Utils.showToast(`Đã lưu Thưởng/Phạt cho ${username}`, 'success');
+        PayrollModule.calculateAndRenderBody();
     },
 
     changeMonth: (newMonth) => {
@@ -88,6 +100,8 @@ const PayrollModule = {
                 await WorkModule.load();
             }
             const allTasks = WorkModule.data.tasks;
+            const allCustomBonuses = await DB.getCustomBonuses();
+            const monthlyBonuses = allCustomBonuses[PayrollModule.currentMonth] || {};
 
             const selectedDate = new Date(PayrollModule.currentMonth + '-01');
             const targetMonth = selectedDate.getMonth();
@@ -160,10 +174,11 @@ const PayrollModule = {
                 
                 const attendancePay = paidDays * dailyRate;
                 const latePenaltyTotal = lateDays * PayrollModule.LATE_PENALTY;
-                const kpiBonusTotal = doneTasks * PayrollModule.KPI_BONUS_PER_TASK;
-                const kpiPenaltyTotal = expiredTasks * PayrollModule.KPI_PENALTY_PER_TASK;
+                
+                // Manual custom Bonus/Penalty
+                const customBonus = parseFloat(monthlyBonuses[username]) || 0;
 
-                const netSalary = attendancePay + kpiBonusTotal - kpiPenaltyTotal - latePenaltyTotal;
+                const netSalary = attendancePay + customBonus - latePenaltyTotal;
 
                 return `
                     <tr>
@@ -184,8 +199,10 @@ const PayrollModule = {
                             <span class="badge bg-danger" title="Hết hạn">${expiredTasks} Expired</span>
                         </td>
                         <td style="text-align: right; font-size: 13px;">
-                            <div style="color: var(--success);">+${Utils.formatCurrency(kpiBonusTotal)}đ</div>
-                            <div style="color: var(--danger);">-${Utils.formatCurrency(kpiPenaltyTotal + latePenaltyTotal)}đ</div>
+                            ${currentUser.role === 'admin' ? 
+                            `<input type="number" class="form-control" style="width: 100px; padding: 4px 8px; font-size: 13px; text-align: right; display: inline-block; color: ${customBonus >= 0 ? 'var(--success)' : 'var(--danger)'}; border-color: rgba(255,255,255,0.1);" value="${customBonus}" placeholder="0" onchange="PayrollModule.saveCustomBonus('${username}', this.value)">` 
+                            : `<strong style="color: ${customBonus >= 0 ? 'var(--success)' : 'var(--danger)'};">${customBonus > 0 ? '+' : ''}${Utils.formatCurrency(customBonus)}đ</strong>`}
+                            ${latePenaltyTotal > 0 ? `<div style="color: var(--warning); font-size: 11px; margin-top: 4px;">Phạt muộn: -${Utils.formatCurrency(latePenaltyTotal)}đ</div>` : ''}
                         </td>
                         <td style="text-align: right;">
                             <strong style="font-size: 16px; color: ${netSalary >= 0 ? 'var(--success)' : 'var(--danger)'};">

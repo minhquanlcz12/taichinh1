@@ -150,6 +150,30 @@ const DB = {
         }
     },
 
+    // --- LƯU TRỮ PHỤ CẤP / THƯỞNG PHẠT TÙY CHỈNH ---
+    saveCustomBonuses: async (bonusesObj) => {
+        try {
+            Utils.storage.set('backup_custom_bonuses', bonusesObj);
+            await db.collection("system").doc("custom_bonuses").set(bonusesObj);
+        } catch (e) {
+            console.error("Error saving custom bonuses:", e);
+        }
+    },
+
+    getCustomBonuses: async () => {
+        try {
+            const doc = await db.collection("system").doc("custom_bonuses").get();
+            if (doc.exists && doc.data()) {
+                let data = doc.data();
+                Utils.storage.set('backup_custom_bonuses', data);
+                return data;
+            }
+        } catch (e) {
+            console.error("Error getting custom bonuses:", e);
+        }
+        return Utils.storage.get('backup_custom_bonuses', {});
+    },
+
     // Xóa trắng dữ liệu thiết lập lại từ đầu
     clearAll: async () => {
         try {
