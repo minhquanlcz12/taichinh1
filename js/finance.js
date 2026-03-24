@@ -195,8 +195,8 @@ const FinanceModule = {
                     actionHtml = `<span class="badge bg-warning" style="font-size: 10px; color: #000; padding: 4px 8px; font-weight: bold;"><i class="fa-solid fa-hourglass-half"></i> Chờ duyệt</span>`;
                 } else {
                     actionHtml = `
-                        <button class="btn-text" style="color: var(--warning);" onclick="FinanceModule.requestEditTransaction('${tx.id}')" title="Yêu cầu Admin sửa/xóa">
-                            <i class="fa-solid fa-code-pull-request"></i>
+                        <button class="btn btn-warning btn-sm" style="font-weight: 600; padding: 6px 12px; border-radius: 6px; box-shadow: 0 0 10px rgba(255, 193, 7, 0.2);" onclick="FinanceModule.requestEditTransaction('${tx.id}')" title="Yêu cầu Admin sửa/xóa">
+                            <i class="fa-solid fa-lock" style="margin-right: 4px;"></i> Mở khóa Sửa/Xóa
                         </button>
                     `;
                 }
@@ -303,11 +303,16 @@ const FinanceModule = {
         const tx = FinanceModule.data.transactions.find(t => t.id === id);
         if (!tx) return;
 
-        Utils.showModal('Yêu cầu Chỉnh sửa / Xóa', `
-            <p style="color: var(--text-secondary); margin-bottom: 16px; font-size: 13px;">Giao dịch sau khi đã lưu không thể tự ý thay đổi. Vui lòng nhập lý do và chi tiết cần sửa để Admin phê duyệt.</p>
+        Utils.showModal('Yêu cầu Cấp quyền Chỉnh sửa / Xóa', `
+            <div style="background: rgba(255, 193, 7, 0.1); border: 1px solid rgba(255, 193, 7, 0.3); padding: 12px 16px; border-radius: 8px; margin-bottom: 20px;">
+                <p style="color: var(--warning); margin: 0; font-size: 14.5px; line-height: 1.6;">
+                    <i class="fa-solid fa-shield-halved" style="margin-right: 6px;"></i>
+                    Giao dịch sau khi lưu đã được khóa bảo mật. Bạn vui lòng nhập lý do cụ thể để Admin xem xét và mở khóa.
+                </p>
+            </div>
             <div class="form-group">
-                <label>Lý do / Nội dung cần sửa</label>
-                <textarea class="form-control" id="req-edit-reason" rows="3" placeholder="Ví dụ: Em nhập nhầm số tiền thành 500k, nhờ sếp sửa thành 50k giúp em." required></textarea>
+                <label style="font-size: 15px; font-weight: 600; margin-bottom: 8px; display: block; color: #fff;">Lý do / Nội dung bạn cần sửa là gì?</label>
+                <textarea class="form-control" id="req-edit-reason" rows="4" style="font-size: 15px; padding: 12px; line-height: 1.5; border-radius: 8px;" placeholder="Ví dụ: Em nhập nhầm số tiền thành 500k, nhờ sếp mở khóa để em sửa lại thành 50k giúp em." required></textarea>
             </div>
         `, async () => {
             const reason = document.getElementById('req-edit-reason').value.trim();
