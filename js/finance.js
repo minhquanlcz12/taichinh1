@@ -292,11 +292,14 @@ const FinanceModule = {
 
             await FinanceModule.save();
 
-            if (Auth.currentUser && Auth.currentUser.username.toUpperCase() === 'CONGTY') {
-                const typeStr = type === 'income' ? 'Thu' : 'Chi';
-                const icon = type === 'income' ? '💰' : '💸';
-                const msg = `${icon} <b>BIẾN ĐỘNG TÀI CHÍNH (CONGTY)</b>\n- Loại: <b>Thêm khoản ${typeStr}</b>\n- Số tiền: <b>${Utils.formatCurrency(amount)}</b>\n- Hạng mục: ${category}\n- Ghi chú: <i>${note || 'Không có'}</i>`;
-                Utils.notifyTelegram(msg);
+            if (Auth.currentUser) {
+                const uName = Auth.currentUser.username.toLowerCase().replace(/\s/g, '');
+                if (uName.includes('congty') || uName.includes('côngty')) {
+                    const typeStr = type === 'income' ? 'Thu' : 'Chi';
+                    const icon = type === 'income' ? '💰' : '💸';
+                    const msg = `${icon} <b>BIẾN ĐỘNG TÀI CHÍNH (CONGTY)</b>\n- Loại: <b>Thêm khoản ${typeStr}</b>\n- Số tiền: <b>${Utils.formatCurrency(amount)}</b>\n- Hạng mục: ${category}\n- Ghi chú: <i>${note || 'Không có'}</i>`;
+                    Utils.notifyTelegram(msg);
+                }
             }
 
             Utils.showToast('Thêm giao dịch thành công!', 'success');
@@ -448,10 +451,13 @@ Admin đã CẤP QUYỀN sửa/xóa giao dịch cho bạn:
 
             await FinanceModule.save();
 
-            if (Auth.currentUser && Auth.currentUser.username.toUpperCase() === 'CONGTY') {
-                const typeStr = type === 'income' ? 'Thu' : 'Chi';
-                const msg = `✏️ <b>CẬP NHẬT TÀI CHÍNH (CONGTY)</b>\n- Vừa SỬA một khoản ${typeStr}\n- Số tiền mới: <b>${Utils.formatCurrency(amount)}</b>\n- Hạng mục mới: ${category}\n- Ghi chú: <i>${note || 'Không có'}</i>`;
-                Utils.notifyTelegram(msg);
+            if (Auth.currentUser) {
+                const uName = Auth.currentUser.username.toLowerCase().replace(/\s/g, '');
+                if (uName.includes('congty') || uName.includes('côngty')) {
+                    const typeStr = type === 'income' ? 'Thu' : 'Chi';
+                    const msg = `✏️ <b>CẬP NHẬT TÀI CHÍNH (CONGTY)</b>\n- Vừa SỬA một khoản ${typeStr}\n- Số tiền mới: <b>${Utils.formatCurrency(amount)}</b>\n- Hạng mục mới: ${category}\n- Ghi chú: <i>${note || 'Không có'}</i>`;
+                    Utils.notifyTelegram(msg);
+                }
             }
 
             Utils.showToast('Cập nhật giao dịch thành công!', 'success');
@@ -487,10 +493,13 @@ Admin đã CẤP QUYỀN sửa/xóa giao dịch cho bạn:
             FinanceModule.data.transactions = FinanceModule.data.transactions.filter(t => t.id !== id);
             await FinanceModule.save();
 
-            if (tx && Auth.currentUser && Auth.currentUser.username.toUpperCase() === 'CONGTY') {
-                const typeStr = tx.type === 'income' ? 'Thu' : 'Chi';
-                const msg = `🗑️ <b>HỦY GIAO DỊCH (CONGTY)</b>\n- Vừa XÓA khoản ${typeStr} <b>${Utils.formatCurrency(tx.amount)}</b> thuộc: ${tx.category}`;
-                Utils.notifyTelegram(msg);
+            if (tx && Auth.currentUser) {
+                const uName = Auth.currentUser.username.toLowerCase().replace(/\s/g, '');
+                if (uName.includes('congty') || uName.includes('côngty')) {
+                    const typeStr = tx.type === 'income' ? 'Thu' : 'Chi';
+                    const msg = `🗑️ <b>HỦY GIAO DỊCH (CONGTY)</b>\n- Vừa XÓA khoản ${typeStr} <b>${Utils.formatCurrency(tx.amount)}</b> thuộc: ${tx.category}`;
+                    Utils.notifyTelegram(msg);
+                }
             }
 
             Utils.showToast('Đã xoá giao dịch!', 'success');
