@@ -424,7 +424,7 @@ const WorkModule = {
 
     deleteProject: async (projectName, event) => {
         event.stopPropagation(); // prevent toggling accordion
-        if (confirm(`Bạn có chắc chắn muốn xóa toàn bộ kế hoạch "${projectName}"? Hành động này không thể hoàn tác.`)) {
+        if (await Utils.showConfirm('Xác nhận Xóa', `Bạn có chắc chắn muốn xóa toàn bộ kế hoạch "${projectName}"? Hành động này không thể hoàn tác.`)) {
             WorkModule.data.tasks = WorkModule.data.tasks.filter(t => t.project !== projectName);
             if (WorkModule.data.importedFiles) {
                 WorkModule.data.importedFiles = WorkModule.data.importedFiles.filter(f => !f.startsWith(`${projectName}_`));
@@ -708,7 +708,7 @@ const WorkModule = {
         reader.readAsDataURL(file);
     },
     deleteTask: async (id) => {
-        if (confirm('Bạn có chắc muốn xóa dòng công việc này?')) {
+        if (await Utils.showConfirm('Xác nhận Xóa', 'Bạn có chắc muốn xóa dòng công việc này?')) {
             WorkModule.data.tasks = WorkModule.data.tasks.filter(t => t.id !== id);
             await WorkModule.save();
         }

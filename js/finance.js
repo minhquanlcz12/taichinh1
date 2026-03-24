@@ -462,7 +462,7 @@ Admin đã CẤP QUYỀN sửa/xóa giao dịch cho bạn:
     },
 
     deleteTransaction: async (id) => {
-        if (confirm('Bạn có chắc muốn xóa giao dịch này?')) {
+        if (await Utils.showConfirm('Xác nhận Xóa', 'Bạn có chắc muốn xóa giao dịch này?')) {
             FinanceModule.data.transactions = FinanceModule.data.transactions.filter(t => t.id !== id);
             await FinanceModule.save();
             Utils.showToast('Đã xoá giao dịch!', 'success');

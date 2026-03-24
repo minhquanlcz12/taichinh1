@@ -476,7 +476,7 @@ const Auth = {
             const clearBtn = document.getElementById('clear-data-btn');
         if (clearBtn) {
             clearBtn.addEventListener('click', async () => {
-                if (confirm('Bạn có chắc chắn muốn xóa tất cả dữ liệu (Của CẢ HỆ THỐNG)? Hành động này không thể hoàn tác.')) {
+                if (await Utils.showConfirm('Vùng nguy hiểm', 'Bạn có chắc chắn muốn xóa tất cả dữ liệu (Của CẢ HỆ THỐNG)? Hành động này không thể hoàn tác.', 'Xóa toàn bộ', 'Hủy bỏ')) {
                     await DB.clearAll();
                     Utils.storage.clearAll(); // clear local session
                     location.reload();
@@ -496,7 +496,7 @@ const Auth = {
     deleteUser: async (username) => {
         if (username === 'admin') return;
 
-        if (confirm(`Bạn có chắc chắn xóa tài khoản "${username}" ? `)) {
+        if (await Utils.showConfirm('Xác nhận Xóa', `Bạn có chắc chắn xóa tài khoản "${username}"?`)) {
             let accounts = await Auth.getAccounts();
             accounts = accounts.filter(a => a.username !== username);
             await Auth.saveAccounts(accounts);
@@ -537,7 +537,7 @@ const Auth = {
     },
 
     approvePasswordReset: async (username) => {
-        if (!confirm(`Xác nhận cấp lại mật khẩu cho tài khoản "${username}" về mặc định "123456"?`)) return;
+        if (!await Utils.showConfirm('Xác nhận', `Xác nhận cấp lại mật khẩu cho tài khoản "${username}" về mặc định "123456"?`)) return;
 
         // 1. Change password
         let accounts = await Auth.getAccounts();
@@ -560,7 +560,7 @@ const Auth = {
     },
 
     rejectPasswordReset: async (username) => {
-        if (!confirm(`Bạn muốn hủy yêu cầu cấp lại mật khẩu của "${username}"?`)) return;
+        if (!await Utils.showConfirm('Xác nhận Hủy', `Bạn muốn hủy yêu cầu cấp lại mật khẩu của "${username}"?`)) return;
         let reqs = await DB.getPasswordRequests();
         reqs = reqs.filter(r => r.username !== username);
         await DB.savePasswordRequests(reqs);
