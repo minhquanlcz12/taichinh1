@@ -286,31 +286,109 @@ const Utils = {
         }
     },
 
+    checkTimeBasedActions: async () => {
+        const now = new Date();
+        const hours = now.getHours();
+        const minutes = now.getMinutes();
+
+        // 1. Nhắc nhở chấm công lúc 8:15 AM
+        if (hours === 8 && minutes >= 15 && minutes <= 30) {
+            await Utils.remindAttendance();
+        }
+
+        // 2. Tóm tắt cuối ngày lúc 17:30 PM (chạy từ 17:30 đến 18:00 nếu lỡ tắt máy)
+        if (hours === 17 && minutes >= 30) {
+            await Utils.checkDailyTelegramSummary();
+        }
+    },
+
+    remindAttendance: async () => {
+        if (!app.state.settings || !app.state.settings.tgToken || !app.state.settings.tgChatId) return;
+        const todayIso = new Date().toISOString().split('T')[0];
+        if (app.state.settings.lastAttRemindDate === todayIso) return; // Đã gửi hôm nay
+
+        let accounts = [];
+        try { accounts = await Auth.getAccounts(); } catch (e) { return; }
+
+        let attendanceData = [];
+        try { attendanceData = await Attendance.loadData(); } catch (e) { return; }
+
+        const todayStr = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}-${String(new Date().getDate()).padStart(2,'0')}`;
+        const checkedInUsers = attendanceData.filter(r => r.dateStr === todayStr).map(r => r.username);
+        const missingUsers = accounts.map(a => a.username).filter(u => !checkedInUsers.includes(u) && u !== 'admin');
+
+        if (missingUsers.length > 0) {
+            let msg = `⏰ <b>NHẮC NHỞ ĐIỂM DANH SÁNG</b>\n\nHiện tại là <b>08:15</b>, chỉ còn 15 phút nữa là chốt công!\n\n`;
+            msg += `Các đồng chí sau chưa điểm danh, hãy vào hệ thống điểm danh ngay nhé:\n`;
+            missingUsers.forEach(u => msg += `- <b>${u}</b>\n`);
+            msg += `\n👉 Bấm vào trang web Thanh Long Work phân hệ 'Chấm Công' để thực hiện.`;
+
+            await Utils.notifyTelegram(msg);
+        }
+
+        // Đánh dấu đã quét nhắc nhở hôm nay (dù gửi hay không vẫn lưu cờ)
+        app.state.settings.lastAttRemindDate = todayIso;
+        await DB.saveSettings(app.state.settings);
+    },
+
     checkDailyTelegramSummary: async () => {
         if (!app.state.settings || !app.state.settings.tgToken || !app.state.settings.tgChatId) return;
         const todayIso = new Date().toISOString().split('T')[0];
         if (app.state.settings.lastTgSummaryDate === todayIso) return; // Đã gửi hôm nay
 
-        // Lấy danh sách tasks
+        // 1. Lấy danh sách tasks
         let allTasks = await DB.getWorkData();
-        if (!allTasks || !allTasks.tasks || allTasks.tasks.length === 0) return;
+        let tasks = (allTasks && allTasks.tasks) ? allTasks.tasks : [];
 
-        const todayStr = Utils.getTodayString();
-        const pToday = todayStr.split('/');
+        // 2. Lấy data thu chi trong ngày
+        let financeData = await DB.getFinanceData();
+        let incomeToday = 0;
+        let expenseToday = 0;
+        if (financeData && financeData.transactions) {
+            financeData.transactions.forEach(tx => {
+                if (tx.date === todayIso) {
+                    if (tx.type === 'income') incomeToday += parseFloat(tx.amount);
+                    else expenseToday += parseFloat(tx.amount);
+                }
+            });
+        }
+
+        // 3. Lấy thông tin vắng mặt
+        let allAtt = [];
+        try { allAtt = await Attendance.loadData(); } catch (e) {}
+        let accounts = [];
+        try { accounts = await Auth.getAccounts(); } catch (e) {}
+
+        const todayStr = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}-${String(new Date().getDate()).padStart(2,'0')}`;
+        const checkedInUsers = allAtt.filter(r => r.dateStr === todayStr).map(r => r.username);
+        const missingUsers = accounts.map(a => a.username).filter(u => !checkedInUsers.includes(u) && u !== 'admin');
+
+        // Logic phân tích Task
+        const pToday = Utils.getTodayString().split('/');
         const todayTime = new Date(`${pToday[2]}-${pToday[1]}-${pToday[0]}T00:00:00`).getTime();
 
         let expiredTxs = [];
-        let deadlineTxs = [];
+        let doneToday = 0;
 
-        allTasks.tasks.forEach(t => {
+        tasks.forEach(t => {
             const st = (t.trangThai || 'planned').toLowerCase();
-            if (st.includes('done') || st.includes('hoàn thành')) return;
+            if (st.includes('done') || st.includes('hoàn thành')) {
+                if (t.deadline) {
+                    let dTime;
+                    if (t.deadline.includes('-')) dTime = new Date(t.deadline).getTime();
+                    else if (t.deadline.includes('/')) {
+                        const p = t.deadline.split('/');
+                        if (p.length === 3) dTime = new Date(`${p[2]}-${p[1]}-${p[0]}T00:00:00`).getTime();
+                    }
+                    if (dTime === todayTime) doneToday++;
+                }
+                return;
+            }
             if (!t.deadline) return;
 
             let deadlineTime;
-            if (t.deadline.includes('-')) {
-                deadlineTime = new Date(t.deadline).getTime();
-            } else if (t.deadline.includes('/')) {
+            if (t.deadline.includes('-')) deadlineTime = new Date(t.deadline).getTime();
+            else if (t.deadline.includes('/')) {
                 const p = t.deadline.split('/');
                 if (p.length === 3) deadlineTime = new Date(`${p[2]}-${p[1]}-${p[0]}T00:00:00`).getTime();
             }
@@ -319,27 +397,37 @@ const Utils = {
                 const diffDays = Math.round((deadlineTime - todayTime) / (1000 * 60 * 60 * 24));
                 if (diffDays < 0) {
                     expiredTxs.push(`- [${t.project}] ${t.tieuDe || t.mucTieu} (@${t.owner})`);
-                } else if (diffDays === 0) {
-                    deadlineTxs.push(`- [${t.project}] ${t.tieuDe || t.mucTieu} (@${t.owner})`);
                 }
             }
         });
 
-        if (expiredTxs.length > 0 || deadlineTxs.length > 0) {
-            let msg = `<b>[THÔNG BÁO KẾ HOẠCH HÀNG NGÀY]</b>\n\n`;
-            if (deadlineTxs.length > 0) {
-                msg += `⚠️ <b>CÔNG VIỆC HẠN HÔM NAY (${deadlineTxs.length}):</b>\n${deadlineTxs.join('\n')}\n\n`;
-            }
-            if (expiredTxs.length > 0) {
-                msg += `❌ <b>CÔNG VIỆC QUÁ HẠN (${expiredTxs.length}):</b>\n${expiredTxs.join('\n')}\n\n`;
-            }
-            msg += `Mọi người nhấp link hệ thống để xử lý gấp nhé!`;
-            
-            await Utils.notifyTelegram(msg);
+        // 4. Build tin nhắn Report
+        let msg = `<b>📊 BÁO CÁO TỔNG HỢP CUỐI NGÀY</b>\n\n`;
+        msg += `<b>MẢNG 1: TÀI CHÍNH</b>\n`;
+        msg += `+ Tổng Thu: <b>${Utils.formatCurrency(incomeToday)}đ</b>\n`;
+        msg += `- Tổng Chi: <b>${Utils.formatCurrency(expenseToday)}đ</b>\n\n`;
 
-            // Cập nhật ngày gửi
-            app.state.settings.lastTgSummaryDate = todayIso;
-            await DB.saveSettings(app.state.settings);
+        msg += `<b>MẢNG 2: NHÂN SỰ</b>\n`;
+        if (missingUsers.length > 0) {
+            msg += `❌ Vắng mặt (Khác): <b>${missingUsers.join(', ')}</b>\n\n`;
+        } else {
+            msg += `✅ 100% nhân sự đi làm đầy đủ!\n\n`;
         }
+
+        msg += `<b>MẢNG 3: TIẾN ĐỘ THỰC THI (TASK)</b>\n`;
+        msg += `✅ Hoàn thành (Deadline hôm nay): <b>${doneToday}</b>\n`;
+        if (expiredTxs.length > 0) {
+            msg += `❌ Đang quá hạn (${expiredTxs.length}):\n${expiredTxs.slice(0, 5).join('\n')}${expiredTxs.length > 5 ? '\\n... (Xem nội bộ)' : ''}\n\n`;
+        } else {
+            msg += `🎉 Không có công việc nào bị quá hạn tồn đọng!\n\n`;
+        }
+
+        msg += `<i>Cảm ơn sự đóng góp của team hôm nay!</i> 🌙`;
+
+        await Utils.notifyTelegram(msg);
+
+        // Cập nhật ngày gửi
+        app.state.settings.lastTgSummaryDate = todayIso;
+        await DB.saveSettings(app.state.settings);
     }
 };

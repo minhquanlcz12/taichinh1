@@ -27,9 +27,10 @@ const app = {
         WorkModule.init();
         if (typeof PayrollModule !== 'undefined') PayrollModule.init();
 
-        // Run pseudo-cron for Daily Summary Report 5 seconds after boot (wait for modules to load)
+        // Bật vòng lặp kiểm tra các sự kiện theo thời gian (nhắc telegram, v.v)
         setTimeout(() => {
-            Utils.checkDailyTelegramSummary();
+            setInterval(Utils.checkTimeBasedActions, 60000); // Check mỗi phút
+            Utils.checkTimeBasedActions(); // Lần chạy đầu tiên
         }, 5000);
 
         // --- NEW: Alert Admin for Pending Tasks ---

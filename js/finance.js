@@ -136,6 +136,7 @@ const FinanceModule = {
                     <button class="btn btn-primary" onclick="FinanceModule.showAddModal()">
                         <i class="fa-solid fa-plus"></i> Thêm Giao dịch
                     </button>
+                    ${isAdmin ? '<button class="btn btn-outline" style="border-color: #f1c40f; color: #f1c40f;" onclick="FinanceModule.exportToPDF()"><i class="fa-solid fa-file-pdf"></i> Xuất PDF</button>' : ''}
                 </div>
             </div>
             
@@ -159,27 +160,72 @@ const FinanceModule = {
             return;
         }
 
-        container.innerHTML = sortedTxs.map(tx => `
-            <div class="transaction-item" style="padding: 20px 16px;">
+        const isAdmin = Auth.currentUser && Auth.currentUser.role === 'admin';
+
+        container.innerHTML = sortedTxs.map(tx => {
+            let actionHtml = '';
+            if (isAdmin) {
+                actionHtml = `
+                    ${tx.editRequested ? `
+                    <button class="btn-text text-success" onclick="FinanceModule.approveEditRequest('${tx.id}')" title="Duyệt & Cấp quyền Sửa/Xóa">
+                        <i class="fa-solid fa-check-circle"></i>
+                    </button>
+                    <button class="btn-text text-warning" onclick="FinanceModule.clearEditRequest('${tx.id}')" title="Từ chối/Hủy yêu cầu">
+                        <i class="fa-solid fa-xmark-circle"></i>
+                    </button>
+                    ` : ''}
+                    <button class="btn-text text-primary" onclick="FinanceModule.editTransaction('${tx.id}')" title="Chỉnh sửa trực tiếp">
+                        <i class="fa-solid fa-pen"></i>
+                    </button>
+                    <button class="btn-text text-danger" onclick="FinanceModule.deleteTransaction('${tx.id}')" title="Xóa">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                `;
+            } else {
+                if (tx.editApproved) {
+                    actionHtml = `
+                        <button class="btn-text text-primary" onclick="FinanceModule.editTransaction('${tx.id}')" title="Đã được cấp quyền sửa">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button class="btn-text text-danger" onclick="FinanceModule.deleteTransaction('${tx.id}')" title="Đã được cấp quyền xóa">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    `;
+                } else if (tx.editRequested) {
+                    actionHtml = `<span class="badge bg-warning" style="font-size: 10px; color: #000; padding: 4px 8px; font-weight: bold;"><i class="fa-solid fa-hourglass-half"></i> Chờ duyệt</span>`;
+                } else {
+                    actionHtml = `
+                        <button class="btn-text" style="color: var(--warning);" onclick="FinanceModule.requestEditTransaction('${tx.id}')" title="Yêu cầu Admin sửa/xóa">
+                            <i class="fa-solid fa-code-pull-request"></i>
+                        </button>
+                    `;
+                }
+            }
+
+            return `
+            <div class="transaction-item" style="padding: 20px 16px; ${tx.editRequested && isAdmin ? 'border: 1px solid var(--warning); background: rgba(245, 158, 11, 0.1);' : ''}">
                 <div class="tx-info">
                     <div class="tx-icon ${tx.type === 'income' ? 'bg-success' : 'bg-danger'}">
                         <i class="fa-solid ${tx.type === 'income' ? 'fa-arrow-down' : 'fa-arrow-up'}"></i>
                     </div>
                     <div class="tx-details">
-                        <h4>${tx.category} ${Auth.currentUser && Auth.currentUser.role === 'admin' ? `<span class="badge badge-orange" style="font-size:10px; margin-left: 8px;"><i class="fa-solid fa-user"></i> ${tx.owner || 'admin'}</span>` : ''}</h4>
+                        <h4>
+                            ${tx.category} 
+                            ${isAdmin ? `<span class="badge badge-orange" style="font-size:10px; margin-left: 8px;"><i class="fa-solid fa-user"></i> ${tx.owner || 'admin'}</span>` : ''}
+                        </h4>
                         <p>${tx.note ? tx.note + ' • ' : ''}${Utils.formatDate(tx.date)}</p>
+                        ${tx.editRequested && isAdmin ? `<div style="margin-top: 6px; font-size: 12px; color: var(--warning);"><i class="fa-solid fa-triangle-exclamation"></i> <b>Yêu cầu:</b> ${tx.editReason}</div>` : ''}
                     </div>
                 </div>
-                <div style="display:flex; align-items:center; gap: 16px;">
+                <div style="display:flex; align-items:center; gap: 8px;">
                     <div class="tx-amount ${tx.type === 'income' ? 'text-success' : 'text-danger'}">
                         ${tx.type === 'income' ? '+' : '-'}${Utils.formatCurrency(tx.amount)}
                     </div>
-                    <button class="btn-text text-danger" onclick="FinanceModule.deleteTransaction('${tx.id}')">
-                        <i class="fa-solid fa-trash"></i>
-                    </button>
+                    ${actionHtml}
                 </div>
             </div>
-        `).join('');
+            `;
+        }).join('');
     },
 
     render: () => {
@@ -251,6 +297,75 @@ const FinanceModule = {
 
         // Initialize categories for default 'expense'
         FinanceModule.updateCategories();
+    },
+
+    requestEditTransaction: (id) => {
+        const tx = FinanceModule.data.transactions.find(t => t.id === id);
+        if (!tx) return;
+
+        Utils.showModal('Yêu cầu Chỉnh sửa / Xóa', `
+            <p style="color: var(--text-secondary); margin-bottom: 16px; font-size: 13px;">Giao dịch sau khi đã lưu không thể tự ý thay đổi. Vui lòng nhập lý do và chi tiết cần sửa để Admin phê duyệt.</p>
+            <div class="form-group">
+                <label>Lý do / Nội dung cần sửa</label>
+                <textarea class="form-control" id="req-edit-reason" rows="3" placeholder="Ví dụ: Em nhập nhầm số tiền thành 500k, nhờ sếp sửa thành 50k giúp em." required></textarea>
+            </div>
+        `, async () => {
+            const reason = document.getElementById('req-edit-reason').value.trim();
+            if (!reason) {
+                Utils.showToast("Vui lòng nhập lý do!", "error");
+                return false;
+            }
+
+            tx.editRequested = true;
+            tx.editReason = reason;
+
+            await FinanceModule.save();
+            Utils.showToast("Đã gửi yêu cầu cho Admin!", "success");
+
+            // Notify via Telegram
+            if (typeof Utils.notifyTelegram === 'function') {
+                const msg = `⚠️ <b>[YÊU CẦU CẬP NHẬT TÀI CHÍNH]</b>
+👤 Nhân viên: <b>${tx.owner}</b>
+💰 Giao dịch: ${tx.type === 'income' ? '+' : '-'}${Utils.formatCurrency(tx.amount)} (${tx.category})
+📝 Lý do: <i>${reason}</i>
+
+👉 Admin vui lòng truy cập mục Tài chính để xử lý!`;
+                Utils.notifyTelegram(msg);
+            }
+
+            return true;
+        }, 'Gửi Yêu Cầu');
+    },
+
+    approveEditRequest: async (id) => {
+        const tx = FinanceModule.data.transactions.find(t => t.id === id);
+        if (!tx) return;
+        
+        tx.editApproved = true;
+        tx.editRequested = false;
+        await FinanceModule.save();
+        Utils.showToast('Đã cấp quyền sửa/xóa cho nhân viên!', 'success');
+
+        // Notify via Telegram
+        if (typeof Utils.notifyTelegram === 'function') {
+            const msg = `✅ <b>[YÊU CẦU ĐÃ ĐƯỢC DUYỆT]</b>
+Admin đã CẤP QUYỀN sửa/xóa giao dịch cho bạn:
+💰 Số tiền: ${tx.type === 'income' ? '+' : '-'}${Utils.formatCurrency(tx.amount)} (${tx.category})
+📝 Yêu cầu ban đầu: <i>${tx.editReason}</i>
+
+👉 Vui lòng vào lại hệ thống Tài chính để thực hiện Sửa/Xóa!`;
+            Utils.notifyTelegram(msg);
+        }
+    },
+
+    clearEditRequest: async (id) => {
+        const tx = FinanceModule.data.transactions.find(t => t.id === id);
+        if (!tx) return;
+        
+        tx.editRequested = false;
+        tx.editReason = null;
+        await FinanceModule.save();
+        Utils.showToast('Đã từ chối/hủy yêu cầu sửa!', 'success');
     },
 
     editTransaction: (id) => {
@@ -352,5 +467,83 @@ const FinanceModule = {
             await FinanceModule.save();
             Utils.showToast('Đã xoá giao dịch!', 'success');
         }
+    },
+
+    exportToPDF: () => {
+        const listContainer = document.getElementById('finance-list-container');
+        if (!listContainer || listContainer.innerHTML.includes('Chưa có giao dịch lịch sử')) {
+            Utils.showToast("Không có dữ liệu để xuất", "error");
+            return;
+        }
+
+        Utils.showToast("Đang tạo file PDF...", "info");
+
+        const clone = document.createElement('div');
+        clone.style.padding = '30px';
+        clone.style.background = '#ffffff';
+        clone.style.color = '#000000';
+        clone.style.fontFamily = 'Arial, sans-serif';
+
+        const today = new Date().toLocaleDateString('vi-VN');
+        const totalInc = FinanceModule.data.transactions.filter(t=>t.type==='income').reduce((sum,t)=>sum+t.amount,0);
+        const totalExp = FinanceModule.data.transactions.filter(t=>t.type==='expense').reduce((sum,t)=>sum+t.amount,0);
+
+        clone.innerHTML = `
+            <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #da251d; padding-bottom: 20px;">
+                <h1 style="color: #da251d; margin-bottom: 5px;">THANH LONG WORK</h1>
+                <h3>BÁO CÁO TÀI CHÍNH</h3>
+                <p>Ngày xuất: ${today}</p>
+            </div>
+            
+            <div style="display:flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold;">
+                <div style="color: #10b981;">Tổng Thu: ${Utils.formatCurrency(totalInc)}đ</div>
+                <div style="color: #ef4444;">Tổng Chi: ${Utils.formatCurrency(totalExp)}đ</div>
+            </div>
+
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 40px; font-size: 13px;">
+                <thead>
+                    <tr style="background: #f3f4f6;">
+                        <th style="padding: 10px; border: 1px solid #d1d5db; text-align: left;">Ngày</th>
+                        <th style="padding: 10px; border: 1px solid #d1d5db; text-align: left;">Loại</th>
+                        <th style="padding: 10px; border: 1px solid #d1d5db; text-align: left;">Danh mục</th>
+                        <th style="padding: 10px; border: 1px solid #d1d5db; text-align: left;">Ghi chú</th>
+                        <th style="padding: 10px; border: 1px solid #d1d5db; text-align: right;">Số tiền</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${FinanceModule.data.transactions.sort((a,b) => new Date(b.date) - new Date(a.date)).map(tx => `
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #d1d5db;">${Utils.formatDate(tx.date)}</td>
+                            <td style="padding: 10px; border: 1px solid #d1d5db; color: ${tx.type === 'income' ? '#10b981' : '#ef4444'}; font-weight: bold;">${tx.type === 'income' ? 'Thu' : 'Chi'}</td>
+                            <td style="padding: 10px; border: 1px solid #d1d5db;">${tx.category}</td>
+                            <td style="padding: 10px; border: 1px solid #d1d5db;">${tx.note || ''}</td>
+                            <td style="padding: 10px; border: 1px solid #d1d5db; text-align: right; color: ${tx.type === 'income' ? '#10b981' : '#ef4444'};">${tx.type === 'income' ? '+' : '-'}${Utils.formatCurrency(tx.amount)}đ</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+
+            <div style="display: flex; justify-content: flex-end; margin-top: 50px; text-align: center;">
+                <div style="width: 200px;">
+                    <p style="font-weight: bold; margin-bottom: 80px;">Giám Đốc</p>
+                    <p>ĐÀO THANH LONG</p>
+                </div>
+            </div>
+        `;
+
+        const opt = {
+            margin:       0.5,
+            filename:     'baocao_taichinh_' + Date.now() + '.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2 },
+            jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+        };
+
+        html2pdf().set(opt).from(clone).save().then(() => {
+            Utils.showToast("Đã xuất Báo Cáo Tài Chính ra PDF!", "success");
+        }).catch(err => {
+            console.error("Lỗi xuất PDF:", err);
+            Utils.showToast("Lỗi khi xuất PDF", "error");
+        });
     }
 };

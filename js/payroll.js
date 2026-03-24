@@ -24,6 +24,7 @@ const PayrollModule = {
                 <div style="display: flex; gap: 12px; align-items: center;">
                     <label style="color: var(--text-secondary); font-size: 13px;">Chọn tháng:</label>
                     <input type="month" id="payroll-month" class="form-control" style="width: auto; display: inline-block; height: 38px;" value="${PayrollModule.currentMonth}" onchange="PayrollModule.changeMonth(this.value)">
+                    ${currentUser.role === 'admin' ? '<button class="btn btn-outline" style="border-color: #f1c40f; color: #f1c40f;" onclick="PayrollModule.exportToPDF()"><i class="fa-solid fa-file-pdf"></i> Xuất Bảng Lương</button>' : ''}
                 </div>
             </div>
             
@@ -280,5 +281,98 @@ const PayrollModule = {
             console.error("Lỗi khi tính lương:", e);
             tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--danger);">Đã xảy ra lỗi trong quá trình tính toán.</td></tr>';
         }
+    },
+
+    exportToPDF: () => {
+        const tbody = document.getElementById('payroll-table-body');
+        if (!tbody || tbody.innerHTML.includes('Chưa có dữ liệu') || tbody.innerHTML.includes('Không có dữ liệu')) {
+            Utils.showToast("Không có dữ liệu để xuất", "error");
+            return;
+        }
+
+        Utils.showToast("Đang tạo file bảng lương PDF...", "info");
+
+        let cloneRowHtml = tbody.innerHTML.replace(/var\(--primary\)/g, '#3b82f6')
+                                            .replace(/var\(--text-secondary\)/g, '#4b5563')
+                                            .replace(/var\(--success\)/g, '#10b981')
+                                            .replace(/var\(--warning\)/g, '#f59e0b')
+                                            .replace(/var\(--danger\)/g, '#ef4444');
+
+        const clone = document.createElement('div');
+        clone.style.padding = '30px';
+        clone.style.background = '#ffffff';
+        clone.style.color = '#000000';
+        clone.style.fontFamily = 'Arial, sans-serif';
+
+        const today = new Date().toLocaleDateString('vi-VN');
+
+        clone.innerHTML = `
+            <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #da251d; padding-bottom: 20px;">
+                <h1 style="color: #da251d; margin-bottom: 5px;">THANH LONG WORK</h1>
+                <h3>BẢNG LƯƠNG NHÂN SỰ TỔNG HỢP</h3>
+                <p>Kỳ tháng: ${PayrollModule.currentMonth.replace('-', '/')} &bull; Ngày xuất: ${today}</p>
+            </div>
+
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 40px; font-size: 12px; text-align: left;">
+                <thead>
+                    <tr style="background: #f3f4f6;">
+                        <th style="padding: 10px; border: 1px solid #d1d5db; text-align: left;">Nhân sự</th>
+                        <th style="padding: 10px; border: 1px solid #d1d5db; text-align: right;">Lương cứng</th>
+                        <th style="padding: 10px; border: 1px solid #d1d5db; text-align: center;">Chấm công</th>
+                        <th style="padding: 10px; border: 1px solid #d1d5db; text-align: center;">Hiệu suất</th>
+                        <th style="padding: 10px; border: 1px solid #d1d5db; text-align: right;">Thưởng/Phạt</th>
+                        <th style="padding: 10px; border: 1px solid #d1d5db; text-align: right;">Thực Lĩnh</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${cloneRowHtml}
+                </tbody>
+            </table>
+
+            <div style="display: flex; justify-content: space-between; margin-top: 50px; text-align: center; padding: 0 50px;">
+                <div style="width: 200px;">
+                    <p style="font-weight: bold; margin-bottom: 80px;">Người Lập Bảng</p>
+                    <p>Kế toán</p>
+                </div>
+                <div style="width: 200px;">
+                    <p style="font-weight: bold; margin-bottom: 80px;">Giám Đốc</p>
+                    <p>ĐÀO THANH LONG</p>
+                </div>
+            </div>
+        `;
+
+        // Strip input tags for PDF formatting
+        const inputs = clone.querySelectorAll('input');
+        inputs.forEach(input => {
+            const val = input.value;
+            const textNode = document.createTextNode(val + 'đ');
+            input.replaceWith(textNode);
+        });
+
+        const bdgs = clone.querySelectorAll('.badge');
+        bdgs.forEach(b => {
+            b.style.display = 'inline-block';
+            b.style.padding = '3px 6px';
+            b.style.border = '1px solid #ccc';
+            b.style.borderRadius = '4px';
+            b.style.fontSize = '10px';
+            b.style.color = '#333';
+            b.style.background = 'transparent';
+        });
+
+        const opt = {
+            margin:       0.5,
+            filename:     'bang_luong_' + PayrollModule.currentMonth + '.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2 },
+            jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }
+        };
+
+        html2pdf().set(opt).from(clone).save().then(() => {
+            Utils.showToast("Đã xuất Bảng lương ra PDF!", "success");
+        }).catch(err => {
+            console.error("Lỗi xuất PDF:", err);
+            Utils.showToast("Lỗi xuất báo cáo PDF", "error");
+        });
     }
 };
