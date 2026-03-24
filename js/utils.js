@@ -276,7 +276,12 @@ const Utils = {
             if (!response.ok) {
                 const errText = await response.text();
                 console.error("Telegram API Error:", errText);
-                Utils.showToast("Lỗi gửi Telegram: Kiểm tra lại Token/Chat ID!", "error");
+                let specificErr = "Lỗi rỗng";
+                try {
+                    const parsed = JSON.parse(errText);
+                    specificErr = parsed.description || errText;
+                } catch(e) { specificErr = errText; }
+                Utils.showToast("Lỗi gửi Telegram: " + specificErr, "error");
             } else {
                 console.log("Telegram notification sent successfully.");
             }
