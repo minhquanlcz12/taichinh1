@@ -575,7 +575,17 @@
                                 <option value="Planned">Planned</option>
                                 <option value="Doing">Doing</option>
                                 <option value="Done">Done</option>
+                                <option value="Đã lên lịch FB" style="color: var(--warning);">Đã Lên Lịch FB 🕒</option>
+                                <option value="Đã Đăng FB" style="color: var(--success);">Đã Đăng FB ✅</option>
                             </select>
+                        </div>
+                        
+                        <!-- 9.5. HẸN GIỜ ĐĂNG FB -->
+                        <div class="form-group" style="background: rgba(41, 128, 185, 0.1); border: 1px dashed rgba(41, 128, 185, 0.5); padding: 12px; border-radius: 6px; position: relative;">
+                            <div style="position: absolute; right: 12px; top: 12px; color: #3b5998; font-size: 18px;"><i class="fa-brands fa-facebook"></i></div>
+                            <label style="color: #3b5998; font-size: 12px; font-weight: bold;"><i class="fa-solid fa-robot"></i> ĐẶT LỊCH ĐĂNG (AUTO-PUBLISH)</label>
+                            <input type="datetime-local" id="ticket-schedule-time" class="form-control" style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: #3498db; font-weight: bold; margin-top: 6px;">
+                            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 6px; font-style: italic;">Khi tới giờ, Vercel Server sẽ tự động lấy Ảnh (bên trái) và Nội dung (Tab 3) để xuất bản lên Fanpage.</div>
                         </div>
                     </div>
 

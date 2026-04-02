@@ -749,6 +749,7 @@ const WorkModule = {
         document.getElementById('ai-zalo').innerHTML = task.aiZalo || '';
 
         document.getElementById('ticket-trangthai').value = task.trangThai || 'Planned';
+        document.getElementById('ticket-schedule-time').value = task.scheduledFbTime || '';
 
         // Reset về tab đầu tiên
         WorkModule.switchAITab('tab-tomtat');
@@ -780,6 +781,7 @@ const WorkModule = {
             task.aiKichBan = document.getElementById('ai-kichban').innerHTML;
             task.aiZalo = document.getElementById('ai-zalo').innerHTML;
 
+            task.scheduledFbTime = document.getElementById('ticket-schedule-time').value;
             task.trangThai = document.getElementById('ticket-trangthai').value;
 
             await WorkModule.save();
