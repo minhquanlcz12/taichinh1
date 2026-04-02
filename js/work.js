@@ -786,6 +786,31 @@ const WorkModule = {
 
             await WorkModule.save();
             Utils.showToast('Đã lưu Phiếu Làm Việc!', 'success');
+
+            // --- TÍCH HỢP AUTO-PUBLISH WEBHOOK ---
+            if (task.trangThai === 'Đã lên lịch FB' && task.scheduledFbTime) {
+                 try {
+                     Utils.showToast('Đang truyền dữ liệu Auto-Publish...', 'info');
+                     let tmpEl = document.createElement("DIV");
+                     tmpEl.innerHTML = task.noiDung;
+                     let cleanContent = tmpEl.textContent || tmpEl.innerText || "";
+                     let payload = {
+                         message: (task.tieuDe ? task.tieuDe.toUpperCase() + "\\n\\n" : "") + cleanContent,
+                         imageUrl: task.anhData || '',
+                         scheduledTime: task.scheduledFbTime,
+                         taskId: task.id
+                     };
+                     fetch('https://hook.eu1.make.com/iye5sbzfo7iyx2emljm5l8fya8ni53h9', {
+                         method: 'POST',
+                         headers: { 'Content-Type': 'application/json' },
+                         body: JSON.stringify(payload)
+                     });
+                     Utils.showToast('Đã bắn tín hiệu đến trạm Make.com 🚀', 'success');
+                 } catch(err) {
+                     console.error('Webhook error:', err);
+                 }
+            }
+
             WorkModule.closeTicketModal();
         }
     },
