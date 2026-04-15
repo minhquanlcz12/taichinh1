@@ -12,6 +12,21 @@ const Attendance = {
         try {
             if (typeof DB !== 'undefined' && typeof DB.getAttendance === 'function') {
                 attendanceData = await DB.getAttendance() || [];
+                // Đồng bộ mồ côi từ LocalStorage lỡ lưu lúc chưa update
+                let localData = JSON.parse(localStorage.getItem('tl_attendance') || '[]');
+                if (localData.length > 0) {
+                    let changed = false;
+                    localData.forEach(lr => {
+                        if (!attendanceData.find(r => r.id === lr.id)) {
+                            attendanceData.push(lr);
+                            changed = true;
+                        }
+                    });
+                    if (changed) {
+                        await DB.saveAttendance(attendanceData);
+                    }
+                    localStorage.removeItem('tl_attendance');
+                }
             } else {
                 attendanceData = JSON.parse(localStorage.getItem('tl_attendance') || '[]');
             }
@@ -54,6 +69,21 @@ const Attendance = {
         try {
             if (typeof DB !== 'undefined' && typeof DB.getLeaveRequests === 'function') {
                 leaveData = await DB.getLeaveRequests() || [];
+                // Đồng bộ rác từ LocalStorage
+                let localData = JSON.parse(localStorage.getItem('tl_leave_requests') || '[]');
+                if (localData.length > 0) {
+                    let changed = false;
+                    localData.forEach(lr => {
+                        if (!leaveData.find(r => r.id === lr.id)) {
+                            leaveData.push(lr);
+                            changed = true;
+                        }
+                    });
+                    if (changed) {
+                        await DB.saveLeaveRequests(leaveData);
+                    }
+                    localStorage.removeItem('tl_leave_requests');
+                }
             } else {
                 leaveData = JSON.parse(localStorage.getItem('tl_leave_requests') || '[]');
             }
