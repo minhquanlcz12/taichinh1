@@ -621,21 +621,8 @@ const WorkModule = {
                         <td class="col-noidung td-green"><span class="task-content-text" style="text-align:justify;">${stripHtml(task.noiDung)}</span></td>
                         <td class="col-dinhdang"><span class="task-content-text">${task.dinhDang || ''}</span></td>
                         <td class="col-order"><span class="task-content-text" style="text-align:justify;">${stripHtml(task.orderBrief)}</span></td>
-                        <td class="col-phancong" style="text-align:center; vertical-align:middle;">
-                            ${taskCurrentUser && taskCurrentUser.role === 'admin'
-                                ? (() => {
-                                    const accs = WorkModule.allAccounts;
-                                    let aopts = `<option value="">-- Chưa giao --</option>`;
-                                    accs.forEach(a => {
-                                        const sel = task.owner === a.username ? 'selected' : '';
-                                        aopts += `<option value="${a.username}" ${sel}>${a.username}</option>`;
-                                    });
-                                    return `<select class="form-control" style="font-size:12px; padding:3px 6px; border-radius:4px; min-width:90px;" onchange="WorkModule.assignTask('${task.id}', this.value)">${aopts}</select>`;
-                                  })()
-                                : task.owner
-                                    ? `<span class="badge badge-orange" style="font-size:12px; padding:4px 8px;"><i class="fa-solid fa-user"></i> ${task.owner}</span>`
-                                    : `<span style="color:var(--text-secondary); font-size:11px;">Chưa giao</span>`
-                            }
+                        <td class="col-phancong" style="text-align:center; vertical-align:middle; padding:8px 6px;">
+                            ${WorkModule.getAssigneeHtml(task.id, task.owner, taskCurrentUser && taskCurrentUser.role === 'admin')}
                         </td>
                         <td class="col-trangthai">
                             ${canEditStatus
@@ -676,6 +663,73 @@ const WorkModule = {
         html += `<input type="file" id="hidden-image-upload" accept="image/*" style="display:none;" onchange="WorkModule.handleImageSelection(event)">`;
 
         container.innerHTML = html;
+    },
+
+    // Tạo HTML hiển thị avatar + tên cho cột Phân công
+    getAssigneeHtml: (taskId, ownerUsername, isAdmin) => {
+        const colors = ['#00b4d8','#f77f00','#06d6a0','#e63946','#7b2d8b','#457b9d','#e9c46a'];
+        const hashColor = (str) => {
+            if (!str) return colors[0];
+            let h = 0;
+            for (let i = 0; i < str.length; i++) h = str.charCodeAt(i) + ((h << 5) - h);
+            return colors[Math.abs(h) % colors.length];
+        };
+
+        const acc = WorkModule.allAccounts.find(a => a.username === ownerUsername);
+        const avatarHtml = acc && acc.profile && acc.profile.avatar
+            ? `<img src="${acc.profile.avatar}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`
+            : `<span style="font-size:15px; font-weight:700; color:#fff;">${ownerUsername ? ownerUsername[0].toUpperCase() : '?'}</span>`;
+        const bgColor = hashColor(ownerUsername);
+
+        const avatarCircle = `
+            <div style="width:40px; height:40px; border-radius:50%; background:${bgColor}; display:flex; align-items:center; justify-content:center; overflow:hidden; border:2px solid ${bgColor}; box-shadow:0 0 8px ${bgColor}88; flex-shrink:0;">
+                ${avatarHtml}
+            </div>`;
+
+        if (!ownerUsername) {
+            // Chưa giao - chỉ admin thấy dropdown
+            if (isAdmin) {
+                const opts = WorkModule.allAccounts.map(a =>
+                    `<option value="${a.username}">${a.username}</option>`
+                ).join('');
+                return `
+                    <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
+                        <div style="width:40px; height:40px; border-radius:50%; background:#333; display:flex; align-items:center; justify-content:center; border:2px dashed #555;">
+                            <i class="fa-solid fa-user-plus" style="color:#888; font-size:14px;"></i>
+                        </div>
+                        <select class="form-control" style="font-size:11px; padding:2px 4px; border-radius:4px; min-width:80px; margin-top:2px;" onchange="WorkModule.assignTask('${taskId}', this.value)">
+                            <option value="">-- Giao --</option>${opts}
+                        </select>
+                    </div>`;
+            }
+            return `<span style="color:#555; font-size:11px; font-style:italic;">Chưa giao</span>`;
+        }
+
+        const nameTag = `<span style="font-size:11px; font-weight:600; color:#e0e0e0; max-width:80px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${ownerUsername}</span>`;
+
+        if (isAdmin) {
+            const opts = [`<option value="">-- Bỏ giao --</option>`,
+                ...WorkModule.allAccounts.map(a => {
+                    const sel = a.username === ownerUsername ? 'selected' : '';
+                    return `<option value="${a.username}" ${sel}>${a.username}</option>`;
+                })].join('');
+            return `
+                <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        ${avatarCircle}
+                        ${nameTag}
+                    </div>
+                    <select class="form-control" style="font-size:11px; padding:2px 4px; border-radius:4px; min-width:80px;" onchange="WorkModule.assignTask('${taskId}', this.value)">
+                        ${opts}
+                    </select>
+                </div>`;
+        }
+
+        return `
+            <div style="display:flex; align-items:center; gap:6px; justify-content:center;">
+                ${avatarCircle}
+                ${nameTag}
+            </div>`;
     },
 
     changeTaskStatus: async (id, newStatus) => {
