@@ -502,11 +502,21 @@
                 <button class="btn-close" onclick="PromptModule.closeModal()"><i class="fa-solid fa-times"></i></button>
             </div>
             <div class="modal-body" style="padding-top: 10px;">
-                <form id="prompt-form">
+                <form id="prompt-form" onsubmit="event.preventDefault();">
                     <input type="hidden" id="prompt-id">
                     <div class="form-group">
                         <label>Tên Prompt / Chủ đề</label>
                         <input type="text" id="prompt-title" class="form-control" placeholder="Ví dụ: Lên kịch bản Tiktok" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Danh mục (Phân loại)</label>
+                        <select id="prompt-category" class="form-control" required style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-primary);">
+                            <option value="Video">Video / Tiktok</option>
+                            <option value="SEO">Bài viết / Chuẩn SEO</option>
+                            <option value="Chatbot">Chatbot / Tự động hóa</option>
+                            <option value="Sale">Sale / CSKH</option>
+                            <option value="Khác">Khác</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label>Mô tả ngắn (Tag / Dùng để làm gì?)</label>
@@ -519,8 +529,8 @@
                 </form>
             </div>
             <div class="modal-footer" style="border-top: 1px solid var(--border-color); padding-top: 16px;">
-                <button class="btn btn-text" onclick="PromptModule.closeModal()">Hủy</button>
-                <button class="btn btn-primary" onclick="PromptModule.savePrompt()"><i class="fa-solid fa-floppy-disk" style="margin-right: 6px;"></i>Lưu Prompt</button>
+                <button type="button" class="btn btn-text" onclick="PromptModule.closeModal()">Hủy</button>
+                <button type="button" class="btn btn-primary" onclick="PromptModule.savePrompt()"><i class="fa-solid fa-floppy-disk" style="margin-right: 6px;"></i>Lưu Prompt</button>
             </div>
         </div>
     </div>
