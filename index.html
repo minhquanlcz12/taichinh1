@@ -195,6 +195,10 @@
                     <i class="fa-solid fa-money-check-dollar"></i>
                     <span>Lương / Thưởng</span>
                 </li>
+                <li class="nav-item" data-target="prompt-view">
+                    <i class="fa-solid fa-terminal"></i>
+                    <span>Kho Prompt</span>
+                </li>
                 <li class="nav-item" data-target="settings-view">
                     <i class="fa-solid fa-gear"></i>
                     <span>Cài đặt</span>
@@ -390,6 +394,11 @@
                     <div id="attendance-content-area"></div>
                 </div>
 
+                <!-- Prompt View Placeholder -->
+                <div id="prompt-view" class="view">
+                    <!-- Sẽ được inject bởi prompt.js -->
+                </div>
+
                 <!-- Settings View Placeholder -->
                 <div id="settings-view" class="view">
                     <!-- Sẽ được inject bởi auth.js -> Auth.renderSettings -->
@@ -481,6 +490,37 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-primary" onclick="Auth.closeViewProfileModal()" style="width: 100%;">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prompt Modal Overlay -->
+    <div class="modal-overlay" id="prompt-modal-overlay" onclick="if(event.target===this) PromptModule.closeModal()">
+        <div class="modal prompt-modal-content" id="prompt-modal" style="width: 90%; max-width: 600px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-terminal" style="color:var(--primary); margin-right: 8px;"></i>Soạn / Sửa Prompt</h3>
+                <button class="btn-close" onclick="PromptModule.closeModal()"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="modal-body" style="padding-top: 10px;">
+                <form id="prompt-form">
+                    <input type="hidden" id="prompt-id">
+                    <div class="form-group">
+                        <label>Tên Prompt / Chủ đề</label>
+                        <input type="text" id="prompt-title" class="form-control" placeholder="Ví dụ: Lên kịch bản Tiktok" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Mô tả ngắn (Tag / Dùng để làm gì?)</label>
+                        <input type="text" id="prompt-desc" class="form-control" placeholder="Mẫu viết chuẩn SEO, Phân tích thị trường, v.v" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Nội dung Prompt</label>
+                        <textarea id="prompt-content" class="form-control" rows="8" placeholder="Đóng vai chuyên gia content, hãy viết..." style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-primary); padding: 12px; resize: vertical;" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid var(--border-color); padding-top: 16px;">
+                <button class="btn btn-text" onclick="PromptModule.closeModal()">Hủy</button>
+                <button class="btn btn-primary" onclick="PromptModule.savePrompt()"><i class="fa-solid fa-floppy-disk" style="margin-right: 6px;"></i>Lưu Prompt</button>
             </div>
         </div>
     </div>
@@ -688,6 +728,7 @@
     <script src="js/attendance.js?v=25.1"></script>
     <script src="js/payroll.js?v=25.1"></script>
     <script src="js/chat.js?v=25.1"></script>
+    <script src="js/prompt.js?v=25.1"></script>
     <script src="js/auth.js?v=25.1"></script>
     <script src="js/app.js?v=25.1"></script>
 

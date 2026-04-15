@@ -174,6 +174,28 @@ const DB = {
         return Utils.storage.get('backup_custom_bonuses', {});
     },
 
+    // --- LƯU TRỮ PROMPT VAULT ---
+    savePrompts: async (promptsArray) => {
+        try {
+            Utils.storage.set('backup_prompts', promptsArray);
+            await db.collection("system").doc("prompts").set({ data: promptsArray });
+        } catch (e) {
+            console.error("Error saving prompts:", e);
+        }
+    },
+
+    getPrompts: async () => {
+        try {
+            const doc = await db.collection("system").doc("prompts").get();
+            if (doc.exists && doc.data() && doc.data().data) {
+                return doc.data().data;
+            }
+        } catch (e) {
+            console.error("Error getting prompts fallback:", e);
+        }
+        return Utils.storage.get('backup_prompts', []);
+    },
+
     // Xóa trắng dữ liệu thiết lập lại từ đầu
     clearAll: async () => {
         try {

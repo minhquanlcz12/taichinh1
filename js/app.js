@@ -26,6 +26,7 @@ const app = {
         FinanceModule.init();
         WorkModule.init();
         if (typeof PayrollModule !== 'undefined') PayrollModule.init();
+        if (typeof PromptModule !== 'undefined') PromptModule.init();
 
         // Bật vòng lặp kiểm tra các sự kiện theo thời gian (nhắc telegram, v.v)
         setTimeout(() => {
@@ -153,6 +154,7 @@ const app = {
             'payroll-view': { title: 'Lương & Thưởng', sub: 'Bảng tính tự động theo năng suất nhân sự' },
             'work-view': { title: 'Công việc & Lịch', sub: 'Sắp xếp kế hoạch hiệu quả' },
             'attendance-view': { title: 'Chấm Công Tự Động', sub: 'Quản lý ngày làm việc và chuyên cần' },
+            'prompt-view': { title: 'Kho Prompt', sub: 'Thư viện câu lệnh AI mẫu' },
             'settings-view': { title: 'Cài đặt', sub: 'Tùy chỉnh hệ thống' }
         };
 
@@ -193,6 +195,13 @@ const app = {
             document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
             const prNav = document.querySelector('.nav-item[data-target="payroll-view"]');
             if (prNav) prNav.classList.add('active');
+        } else if (viewId === 'prompt-view') {
+            if (typeof PromptModule !== 'undefined') {
+                PromptModule.render();
+            }
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            const pNav = document.querySelector('.nav-item[data-target="prompt-view"]');
+            if (pNav) pNav.classList.add('active');
         } else if (viewId === 'settings-view') {
             document.getElementById('setting-tg-token').value = app.state.settings.tgToken || '';
             document.getElementById('setting-tg-chatid').value = app.state.settings.tgChatId || '';
