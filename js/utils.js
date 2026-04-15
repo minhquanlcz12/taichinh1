@@ -310,7 +310,23 @@ const Utils = {
     remindAttendance: async () => {
         if (!app.state.settings || !app.state.settings.tgToken || !app.state.settings.tgChatId) return;
         const todayIso = new Date().toISOString().split('T')[0];
-        if (app.state.settings.lastAttRemindDate === todayIso) return; // Đã gửi hôm nay
+        if (app.state.settings.lastAttRemindDate === todayIso) return; // Kiểm tra nhanh cache
+
+        // Tránh nhiều máy chạy cùng lúc
+        const delay = Math.floor(Math.random() * 5000) + 1000;
+        await new Promise(r => setTimeout(r, delay));
+
+        let latestSettings = {};
+        try { latestSettings = await DB.getSettings() || {}; } catch (e) { latestSettings = app.state.settings; }
+        if (latestSettings.lastAttRemindDate === todayIso) {
+            app.state.settings = latestSettings; // Cập nhật đồng bộ nội bộ
+            return;
+        }
+
+        // Đánh dấu cờ ĐÃ GIẢI QUYẾT lên DB ngay lập tức để block các trình duyệt khác
+        latestSettings.lastAttRemindDate = todayIso;
+        app.state.settings = latestSettings;
+        await DB.saveSettings(latestSettings);
 
         let accounts = [];
         try { accounts = await Auth.getAccounts(); } catch (e) { return; }
@@ -330,16 +346,28 @@ const Utils = {
 
             await Utils.notifyTelegram(msg);
         }
-
-        // Đánh dấu đã quét nhắc nhở hôm nay (dù gửi hay không vẫn lưu cờ)
-        app.state.settings.lastAttRemindDate = todayIso;
-        await DB.saveSettings(app.state.settings);
     },
 
     checkDailyTelegramSummary: async () => {
         if (!app.state.settings || !app.state.settings.tgToken || !app.state.settings.tgChatId) return;
         const todayIso = new Date().toISOString().split('T')[0];
-        if (app.state.settings.lastTgSummaryDate === todayIso) return; // Đã gửi hôm nay
+        if (app.state.settings.lastTgSummaryDate === todayIso) return; // Kiểm tra nhanh cache
+
+        // Tránh nhiều máy chạy cùng lúc
+        const delay = Math.floor(Math.random() * 5000) + 1000;
+        await new Promise(r => setTimeout(r, delay));
+
+        let latestSettings = {};
+        try { latestSettings = await DB.getSettings() || {}; } catch (e) { latestSettings = app.state.settings; }
+        if (latestSettings.lastTgSummaryDate === todayIso) {
+            app.state.settings = latestSettings;
+            return;
+        }
+
+        // Đánh dấu cờ ĐÃ BÁO CÁO lên DB ngay lập tức để block các trình duyệt khác
+        latestSettings.lastTgSummaryDate = todayIso;
+        app.state.settings = latestSettings;
+        await DB.saveSettings(latestSettings);
 
         // 1. Lấy danh sách tasks
         let allTasks = await DB.getWorkData();
@@ -430,9 +458,5 @@ const Utils = {
         msg += `<i>Cảm ơn sự đóng góp của team hôm nay!</i> 🌙`;
 
         await Utils.notifyTelegram(msg);
-
-        // Cập nhật ngày gửi
-        app.state.settings.lastTgSummaryDate = todayIso;
-        await DB.saveSettings(app.state.settings);
     }
 };
