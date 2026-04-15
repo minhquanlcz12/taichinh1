@@ -8,6 +8,7 @@ const WorkModule = {
     },
     expandedProjects: null, // Track open folders
     currentFilterTime: 'all', // Default to all
+    allAccounts: [], // Cache danh sách tài khoản để dùng trong renderList
 
     init: async () => {
         await WorkModule.renderPlaceholder();
@@ -140,8 +141,11 @@ const WorkModule = {
                 <option value="today">Hôm nay</option>
             </select>
         `;
+        // Luôn cache danh sách accounts để dùng trong renderList
+        const accounts = await Auth.getAccounts();
+        WorkModule.allAccounts = accounts;
+
         if (isAdmin) {
-            const accounts = await Auth.getAccounts();
             let opts = `<option value="all">Tất cả nhân viên</option>`;
             accounts.forEach(a => {
                 opts += `<option value="${a.username}">${a.username} (${a.role})</option>`;
@@ -618,9 +622,19 @@ const WorkModule = {
                         <td class="col-dinhdang"><span class="task-content-text">${task.dinhDang || ''}</span></td>
                         <td class="col-order"><span class="task-content-text" style="text-align:justify;">${stripHtml(task.orderBrief)}</span></td>
                         <td class="col-phancong" style="text-align:center; vertical-align:middle;">
-                            ${task.owner
-                                ? `<span class="badge badge-orange" style="font-size:12px; padding:4px 8px;"><i class="fa-solid fa-user"></i> ${task.owner}</span>`
-                                : `<span style="color:var(--text-secondary); font-size:11px;">Chưa giao</span>`
+                            ${taskCurrentUser && taskCurrentUser.role === 'admin'
+                                ? (() => {
+                                    const accs = WorkModule.allAccounts;
+                                    let aopts = `<option value="">-- Chưa giao --</option>`;
+                                    accs.forEach(a => {
+                                        const sel = task.owner === a.username ? 'selected' : '';
+                                        aopts += `<option value="${a.username}" ${sel}>${a.username}</option>`;
+                                    });
+                                    return `<select class="form-control" style="font-size:12px; padding:3px 6px; border-radius:4px; min-width:90px;" onchange="WorkModule.assignTask('${task.id}', this.value)">${aopts}</select>`;
+                                  })()
+                                : task.owner
+                                    ? `<span class="badge badge-orange" style="font-size:12px; padding:4px 8px;"><i class="fa-solid fa-user"></i> ${task.owner}</span>`
+                                    : `<span style="color:var(--text-secondary); font-size:11px;">Chưa giao</span>`
                             }
                         </td>
                         <td class="col-trangthai">
@@ -676,6 +690,20 @@ const WorkModule = {
             task.trangThai = newStatus;
             await WorkModule.save();
             Utils.showToast('Cập nhật trạng thái thành công!', 'success');
+        }
+    },
+
+    assignTask: async (id, username) => {
+        const currentUser = Auth.currentUser;
+        if (!currentUser || currentUser.role !== 'admin') {
+            Utils.showToast('Chỉ admin mới có quyền phân công!', 'error');
+            return;
+        }
+        const task = WorkModule.data.tasks.find(t => t.id === id);
+        if (task) {
+            task.owner = username || '';
+            await WorkModule.save();
+            Utils.showToast(username ? `Đã phân công cho ${username}!` : 'Đã bỏ phân công!', 'success');
         }
     },
 
