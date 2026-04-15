@@ -418,6 +418,11 @@ const WorkModule = {
 
     deleteProject: async (projectName, event) => {
         event.stopPropagation(); // prevent toggling accordion
+        const currentUser = Auth.currentUser;
+        if (!currentUser || currentUser.role !== 'admin') {
+            Utils.showToast('Chỉ admin mới có quyền xóa bảng kế hoạch!', 'error');
+            return;
+        }
         if (await Utils.showConfirm('Xác nhận Xóa', `Bạn có chắc chắn muốn xóa toàn bộ kế hoạch "${projectName}"? Hành động này không thể hoàn tác.`)) {
             WorkModule.data.tasks = WorkModule.data.tasks.filter(t => t.project !== projectName);
             if (WorkModule.data.importedFiles) {
@@ -486,9 +491,10 @@ const WorkModule = {
                             <span class="badge badge-blue" style="font-size: 11px; margin-left: 8px;">Hoàn thành: ${doneCount}/${totalCount}</span>
                         </div>
                         <div style="display:flex; align-items:center; gap: 16px;">
-                            <button class="btn btn-danger" style="padding: 4px 12px; font-size: 12px; font-weight: bold;" onclick="WorkModule.deleteProject('${projName}', event)">
-                                <i class="fa-solid fa-trash"></i> Xóa
-                            </button>
+                            ${Auth.currentUser && Auth.currentUser.role === 'admin'
+                                ? `<button class="btn btn-danger" style="padding: 4px 12px; font-size: 12px; font-weight: bold;" onclick="WorkModule.deleteProject('${projName}', event)"><i class="fa-solid fa-trash"></i> Xóa</button>`
+                                : ''
+                            }
                             <i class="fa-solid fa-chevron-down chevron-icon"></i>
                         </div>
                     </div>
@@ -633,9 +639,10 @@ const WorkModule = {
                             </button>
                         </td>
                         <td class="col-actions" style="text-align:center; vertical-align:middle;">
-                            <button class="btn btn-danger btn-sm" title="Xóa" onclick="WorkModule.deleteTask('${task.id}')">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
+                            ${canEditStatus
+                                ? `<button class="btn btn-danger btn-sm" title="Xóa" onclick="WorkModule.deleteTask('${task.id}')"><i class="fa-solid fa-trash"></i></button>`
+                                : ''
+                            }
                         </td>
                     </tr>
                 `;
@@ -718,6 +725,13 @@ const WorkModule = {
         reader.readAsDataURL(file);
     },
     deleteTask: async (id) => {
+        const task = WorkModule.data.tasks.find(t => t.id === id);
+        if (!task) return;
+        const currentUser = Auth.currentUser;
+        if (!currentUser || (currentUser.role !== 'admin' && task.owner !== currentUser.username)) {
+            Utils.showToast('Bạn không có quyền xóa công việc này!', 'error');
+            return;
+        }
         if (await Utils.showConfirm('Xác nhận Xóa', 'Bạn có chắc muốn xóa dòng công việc này?')) {
             WorkModule.data.tasks = WorkModule.data.tasks.filter(t => t.id !== id);
             await WorkModule.save();
