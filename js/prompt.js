@@ -141,10 +141,12 @@ const PromptModule = {
         }
 
         modal.classList.add('active');
+        document.getElementById('prompt-modal').style.display = 'block';
     },
 
     closeModal: () => {
         document.getElementById('prompt-modal-overlay').classList.remove('active');
+        document.getElementById('prompt-modal').style.display = 'none';
     },
 
     savePrompt: async () => {
