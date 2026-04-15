@@ -8,11 +8,10 @@ const Attendance = {
     },
 
     loadData: async () => {
-        // Lấy dữ liệu từ DB (Local/Firebase)
         let attendanceData = [];
         try {
-            if (window.db && typeof db.getAttendance === 'function') {
-                attendanceData = await db.getAttendance() || [];
+            if (window.DB && typeof DB.getAttendance === 'function') {
+                attendanceData = await DB.getAttendance() || [];
             } else {
                 attendanceData = JSON.parse(localStorage.getItem('tl_attendance') || '[]');
             }
@@ -25,8 +24,8 @@ const Attendance = {
 
     saveData: async (data) => {
         try {
-            if (window.db && typeof db.saveAttendance === 'function') {
-                await db.saveAttendance(data);
+            if (window.DB && typeof DB.saveAttendance === 'function') {
+                await DB.saveAttendance(data);
             } else {
                 localStorage.setItem('tl_attendance', JSON.stringify(data));
             }
@@ -53,7 +52,11 @@ const Attendance = {
     loadLeaveData: async () => {
         let leaveData = [];
         try {
-            leaveData = JSON.parse(localStorage.getItem('tl_leave_requests') || '[]');
+            if (window.DB && typeof DB.getLeaveRequests === 'function') {
+                leaveData = await DB.getLeaveRequests() || [];
+            } else {
+                leaveData = JSON.parse(localStorage.getItem('tl_leave_requests') || '[]');
+            }
         } catch (e) {
             console.error("Lỗi tải dữ liệu xin nghỉ:", e);
             leaveData = JSON.parse(localStorage.getItem('tl_leave_requests') || '[]');
@@ -63,7 +66,11 @@ const Attendance = {
 
     saveLeaveData: async (data) => {
         try {
-            localStorage.setItem('tl_leave_requests', JSON.stringify(data));
+            if (window.DB && typeof DB.saveLeaveRequests === 'function') {
+                await DB.saveLeaveRequests(data);
+            } else {
+                localStorage.setItem('tl_leave_requests', JSON.stringify(data));
+            }
         } catch (e) {
             console.error("Lỗi lưu dữ liệu xin nghỉ:", e);
             localStorage.setItem('tl_leave_requests', JSON.stringify(data));

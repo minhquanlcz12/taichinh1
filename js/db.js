@@ -196,15 +196,63 @@ const DB = {
         return Utils.storage.get('backup_prompts', []);
     },
 
+    // --- LƯU TRỮ CHẤM CÔNG ---
+    saveAttendance: async (attendanceArray) => {
+        try {
+            Utils.storage.set('tl_attendance', attendanceArray);
+            await db.collection("system").doc("attendance").set({ data: attendanceArray });
+        } catch (e) {
+            console.error("Error saving attendance:", e);
+        }
+    },
+
+    getAttendance: async () => {
+        try {
+            const doc = await db.collection("system").doc("attendance").get();
+            if (doc.exists && doc.data() && doc.data().data) {
+                return doc.data().data;
+            }
+        } catch (e) {
+            console.error("Error getting attendance fallback:", e);
+        }
+        return Utils.storage.get('tl_attendance', []);
+    },
+
+    // --- LƯU TRỮ XIN NGHỈ PHÉP ---
+    saveLeaveRequests: async (leavesArray) => {
+        try {
+            Utils.storage.set('tl_leave_requests', leavesArray);
+            await db.collection("system").doc("leave_requests").set({ data: leavesArray });
+        } catch (e) {
+            console.error("Error saving leave requests:", e);
+        }
+    },
+
+    getLeaveRequests: async () => {
+        try {
+            const doc = await db.collection("system").doc("leave_requests").get();
+            if (doc.exists && doc.data() && doc.data().data) {
+                return doc.data().data;
+            }
+        } catch (e) {
+            console.error("Error getting leave requests fallback:", e);
+        }
+        return Utils.storage.get('tl_leave_requests', []);
+    },
+
     // Xóa trắng dữ liệu thiết lập lại từ đầu
     clearAll: async () => {
         try {
             Utils.storage.remove('backup_accounts');
             Utils.storage.remove('backup_finance');
             Utils.storage.remove('backup_work');
+            Utils.storage.remove('tl_attendance');
+            Utils.storage.remove('tl_leave_requests');
             await db.collection("system").doc("accounts").delete();
             await db.collection("finance").doc("main").delete();
             await db.collection("work").doc("main").delete();
+            await db.collection("system").doc("attendance").delete();
+            await db.collection("system").doc("leave_requests").delete();
             console.log("Database reset");
         } catch (e) {
             console.error("Error clearing data:", e);
