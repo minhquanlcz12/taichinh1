@@ -3,16 +3,14 @@
 const Auth = {
     accountsKey: 'tl_accounts',
     currentUserKey: 'tl_current_user',
-    adminCreds: { username: 'admin', password: '88864623456789', role: 'admin' },
 
     currentUser: null,
 
     init: async () => {
-        // Initialize default admin if not exists
+        // Verify admin account exists; if not, log a warning (do NOT auto-create with hardcoded credentials)
         let accounts = await DB.getAccounts();
-        if (!accounts.find(a => a.username === 'admin')) {
-            accounts.push(Auth.adminCreds);
-            await DB.saveAccounts(accounts);
+        if (!accounts.find(a => a.role === 'admin')) {
+            console.warn('[Auth] Không tìm thấy tài khoản admin trong database. Vui lòng tạo tài khoản admin trực tiếp trong Firebase Console.');
         }
 
         Auth.checkLogin();
