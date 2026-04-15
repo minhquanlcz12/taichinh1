@@ -538,49 +538,59 @@
                     
                     <!-- Left Column -->
                     <div style="display: flex; flex-direction: column; gap: 12px;">
-                        <!-- 1. Ngày Đăng -->
-                        <div class="form-group">
-                            <label style="color: var(--primary); font-size: 11px;">1. NGÀY ĐĂNG</label>
-                            <div id="ticket-ngay" class="ticket-readonly-box"></div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <!-- Ngày Đăng -->
+                            <div class="form-group">
+                                <label style="color: var(--primary); font-size: 11px; font-weight: 600;">NGÀY ĐĂNG</label>
+                                <div id="ticket-ngay" class="ticket-readonly-box"></div>
+                            </div>
+                            <!-- Deadline -->
+                            <div class="form-group">
+                                <label style="color: var(--primary); font-size: 11px; font-weight: 600;">DEADLINE</label>
+                                <div id="ticket-deadline" class="ticket-readonly-box"></div>
+                            </div>
                         </div>
-                        <!-- 2. Mục Tiêu -->
-                        <div class="form-group">
-                            <label style="color: var(--primary); font-size: 11px;">2. MỤC TIÊU</label>
-                            <div id="ticket-muctieu" class="ticket-readonly-box"></div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <!-- Mục Tiêu -->
+                            <div class="form-group">
+                                <label style="color: var(--primary); font-size: 11px; font-weight: 600;">MỤC TIÊU</label>
+                                <div id="ticket-muctieu" class="ticket-readonly-box"></div>
+                            </div>
+                            <!-- Chủ Đề -->
+                            <div class="form-group">
+                                <label style="color: var(--primary); font-size: 11px; font-weight: 600;">CHỦ ĐỀ (TRỤ CỘT)</label>
+                                <div id="ticket-trucot" class="ticket-readonly-box"></div>
+                            </div>
                         </div>
-                        <!-- 3. Chủ Đề -->
-                        <div class="form-group">
-                            <label style="color: var(--primary); font-size: 11px;">3. CHỦ ĐỀ (TRỤ CỘT)</label>
-                            <div id="ticket-trucot" class="ticket-readonly-box"></div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <!-- Định Dạng -->
+                            <div class="form-group">
+                                <label style="color: var(--primary); font-size: 11px; font-weight: 600;">ĐỊNH DẠNG</label>
+                                <div id="ticket-dinhdang" class="ticket-readonly-box"></div>
+                            </div>
+                            <!-- Trạng Thái -->
+                            <div class="form-group">
+                                <label style="color: var(--primary); font-size: 11px; font-weight: 600;">TRẠNG THÁI</label>
+                                <select id="ticket-trangthai" class="form-control" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-color);">
+                                    <option value="Planned">Planned</option>
+                                    <option value="Doing">Doing</option>
+                                    <option value="Done">Done</option>
+                                    <option value="Đã lên lịch FB" style="color: var(--warning);">Đã Lên Lịch FB 🕒</option>
+                                    <option value="Đã Đăng FB" style="color: var(--success);">Đã Đăng FB ✅</option>
+                                </select>
+                            </div>
                         </div>
-                        <!-- 4. Tiêu Đề -->
+
+                        <!-- Tiêu Đề -->
                         <div class="form-group">
-                            <label style="color: var(--primary); font-size: 11px;">4. TIÊU ĐỀ</label>
+                            <label style="color: var(--primary); font-size: 11px; font-weight: 600;">TIÊU ĐỀ</label>
                             <input type="text" id="ticket-tieude" class="form-control" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-color);">
                         </div>
-                        <!-- 6. Định Dạng -->
-                        <div class="form-group">
-                            <label style="color: var(--primary); font-size: 11px;">6. ĐỊNH DẠNG</label>
-                            <div id="ticket-dinhdang" class="ticket-readonly-box"></div>
-                        </div>
-                        <!-- 8. Deadline -->
-                        <div class="form-group">
-                            <label style="color: var(--primary); font-size: 11px;">8. DEADLINE</label>
-                            <div id="ticket-deadline" class="ticket-readonly-box"></div>
-                        </div>
-                        <!-- 9. Trạng Thái -->
-                        <div class="form-group">
-                            <label style="color: var(--primary); font-size: 11px;">9. TRẠNG THÁI</label>
-                            <select id="ticket-trangthai" class="form-control" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-color);">
-                                <option value="Planned">Planned</option>
-                                <option value="Doing">Doing</option>
-                                <option value="Done">Done</option>
-                                <option value="Đã lên lịch FB" style="color: var(--warning);">Đã Lên Lịch FB 🕒</option>
-                                <option value="Đã Đăng FB" style="color: var(--success);">Đã Đăng FB ✅</option>
-                            </select>
-                        </div>
                         
-                        <!-- 9.5. HẸN GIỜ ĐĂNG FB -->
+                        <!-- ĐẶT LỊCH ĐĂNG FB -->
                         <div class="form-group" style="background: rgba(41, 128, 185, 0.1); border: 1px dashed rgba(41, 128, 185, 0.5); padding: 12px; border-radius: 6px; position: relative;">
                             <div style="position: absolute; right: 12px; top: 12px; color: #3b5998; font-size: 18px;"><i class="fa-brands fa-facebook"></i></div>
                             <label style="color: #3b5998; font-size: 12px; font-weight: bold;"><i class="fa-solid fa-robot"></i> ĐẶT LỊCH ĐĂNG (AUTO-PUBLISH)</label>
@@ -631,22 +641,27 @@
                             </div>
                         </div>
 
-                        <!-- 10. Nộp Kết Quả (Ảnh) -->
-                        <div class="form-group" style="margin-top: 12px; margin-bottom: 0;">
-                            <label style="color: var(--primary); font-size: 11px;">10. Ô NỘP KẾT QUẢ / ẢNH GỢI Ý</label>
-                            <div style="display: flex; gap: 12px; align-items: flex-end;">
-                                <div id="ticket-img-preview" style="width: 80px; height: 80px; border: 1px dashed var(--border-color); border-radius: 4px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: rgba(0,0,0,0.2);">
-                                    <i class="fa-solid fa-image" style="color: var(--text-secondary);"></i>
-                                </div>
-                                <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('ticket-hidden-upload').click()">
-                                    <i class="fa-solid fa-upload"></i> Tải ảnh lên
-                                </button>
-                                <div style="margin-left: auto; display: flex; gap: 8px;">
-                                    <button type="button" class="btn btn-outline btn-sm" onclick="WorkModule.copyActiveTabContent()" style="font-weight: bold;">
-                                        <i class="fa-solid fa-copy"></i> COPY THẺ NÀY
+                        <!-- Ô Nộp Kết Quả (Ảnh) -->
+                        <div class="form-group" style="margin-top: 12px; margin-bottom: 0; background: rgba(0,0,0,0.15); border: 1px solid var(--border-color); border-radius: 6px; padding: 12px;">
+                            <label style="display: flex; justify-content: space-between; align-items: center; color: var(--primary); font-size: 12px; font-weight: 600; margin-bottom: 12px;">
+                                <span><i class="fa-solid fa-image"></i> ẢNH MINH HỌA / KẾT QUẢ</span>
+                                <div style="display: flex; gap: 8px;">
+                                    <button type="button" class="btn btn-outline btn-sm" onclick="WorkModule.copyActiveTabContent()" style="font-weight: bold; border-color: rgba(255,255,255,0.2);" title="Copy tab đang xem">
+                                        <i class="fa-solid fa-copy"></i> MỤC NÀY
                                     </button>
-                                    <button type="button" class="btn btn-success btn-sm" onclick="WorkModule.copyAllTabsContent()" style="font-weight: bold; background: linear-gradient(135deg, #10b981, #059669); border: none;">
-                                        <i class="fa-solid fa-layer-group"></i> COPY TOÀN BỘ 5 BẢNG
+                                    <button type="button" class="btn btn-success btn-sm" onclick="WorkModule.copyAllTabsContent()" style="font-weight: bold; background: linear-gradient(135deg, #10b981, #059669); border: none;" title="Copy toàn bộ 5 tab">
+                                        <i class="fa-solid fa-layer-group"></i> FULL 5 MỤC
+                                    </button>
+                                </div>
+                            </label>
+                            <div style="display: flex; gap: 16px; align-items: center;">
+                                <div id="ticket-img-preview" style="width: 80px; height: 80px; flex-shrink: 0; border: 1px dashed var(--primary); border-radius: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: rgba(0,240,255,0.05); cursor: pointer; transition: 0.3s;" onclick="document.getElementById('ticket-hidden-upload').click()" title="Click để tải ảnh lên">
+                                    <i class="fa-solid fa-plus" style="color: var(--primary); font-size: 24px;"></i>
+                                </div>
+                                <div style="font-size: 12px; color: var(--text-secondary);">
+                                    <p style="margin-bottom: 8px;">Click vào ô bên trái hoặc nút dưới đây để tải ảnh phục vụ chiến dịch.</p>
+                                    <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('ticket-hidden-upload').click()">
+                                        <i class="fa-solid fa-upload"></i> Chọn Ảnh...
                                     </button>
                                 </div>
                                 <input type="file" id="ticket-hidden-upload" accept="image/*" style="display: none;" onchange="WorkModule.handleTicketImageUpload(event)">
