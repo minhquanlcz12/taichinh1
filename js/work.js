@@ -667,69 +667,61 @@ const WorkModule = {
 
     // Tạo HTML hiển thị avatar + tên cho cột Phân công
     getAssigneeHtml: (taskId, ownerUsername, isAdmin) => {
-        const colors = ['#00b4d8','#f77f00','#06d6a0','#e63946','#7b2d8b','#457b9d','#e9c46a'];
-        const hashColor = (str) => {
-            if (!str) return colors[0];
+        const COLORS = ['#00b4d8','#f77f00','#06d6a0','#e63946','#7b2d8b','#457b9d','#e9c46a'];
+        const getColor = (name) => {
+            if (!name) return COLORS[0];
             let h = 0;
-            for (let i = 0; i < str.length; i++) h = str.charCodeAt(i) + ((h << 5) - h);
-            return colors[Math.abs(h) % colors.length];
+            for (let i = 0; i < name.length; i++) h = (h << 5) - h + name.charCodeAt(i);
+            return COLORS[Math.abs(h) % COLORS.length];
         };
 
-        const acc = WorkModule.allAccounts.find(a => a.username === ownerUsername);
-        const avatarHtml = acc && acc.profile && acc.profile.avatar
-            ? `<img src="${acc.profile.avatar}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`
-            : `<span style="font-size:15px; font-weight:700; color:#fff;">${ownerUsername ? ownerUsername[0].toUpperCase() : '?'}</span>`;
-        const bgColor = hashColor(ownerUsername);
+        const buildAvatar = (username) => {
+            const color = getColor(username);
+            const acc = WorkModule.allAccounts.find(a => a.username === username);
+            const hasAvatar = acc && acc.profile && acc.profile.avatar;
+            const initial = username ? username[0].toUpperCase() : '?';
+            const inner = hasAvatar
+                ? `<img src="${acc.profile.avatar}" style="width:38px;height:38px;object-fit:cover;border-radius:50%;display:block;">`
+                : `<b style="font-size:17px;color:#fff;line-height:38px;display:block;text-align:center;">${initial}</b>`;
+            return `<div style="width:38px;height:38px;border-radius:50%;background:${color};overflow:hidden;border:2.5px solid ${color};box-shadow:0 0 12px ${color}cc;margin:0 auto 4px;">${inner}</div>`;
+        };
 
-        const avatarCircle = `
-            <div style="width:40px; height:40px; border-radius:50%; background:${bgColor}; display:flex; align-items:center; justify-content:center; overflow:hidden; border:2px solid ${bgColor}; box-shadow:0 0 8px ${bgColor}88; flex-shrink:0;">
-                ${avatarHtml}
-            </div>`;
+        const buildSelect = (selected) => {
+            let opts = `<option value="">-- Bỏ giao --</option>`;
+            WorkModule.allAccounts.forEach(a => {
+                opts += `<option value="${a.username}"${a.username === selected ? ' selected' : ''}>${a.username}</option>`;
+            });
+            return `<select style="font-size:11px;padding:2px 4px;border-radius:4px;width:100%;max-width:120px;background:#1e1e2e;color:#e0e0e0;border:1px solid #444;" onchange="WorkModule.assignTask('${taskId}', this.value)">${opts}</select>`;
+        };
 
+        // Chưa giao
         if (!ownerUsername) {
-            // Chưa giao - chỉ admin thấy dropdown
-            if (isAdmin) {
-                const opts = WorkModule.allAccounts.map(a =>
-                    `<option value="${a.username}">${a.username}</option>`
-                ).join('');
-                return `
-                    <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
-                        <div style="width:40px; height:40px; border-radius:50%; background:#333; display:flex; align-items:center; justify-content:center; border:2px dashed #555;">
-                            <i class="fa-solid fa-user-plus" style="color:#888; font-size:14px;"></i>
-                        </div>
-                        <select class="form-control" style="font-size:11px; padding:2px 4px; border-radius:4px; min-width:80px; margin-top:2px;" onchange="WorkModule.assignTask('${taskId}', this.value)">
-                            <option value="">-- Giao --</option>${opts}
-                        </select>
-                    </div>`;
-            }
-            return `<span style="color:#555; font-size:11px; font-style:italic;">Chưa giao</span>`;
-        }
-
-        const nameTag = `<span style="font-size:11px; font-weight:600; color:#e0e0e0; max-width:80px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${ownerUsername}</span>`;
-
-        if (isAdmin) {
-            const opts = [`<option value="">-- Bỏ giao --</option>`,
-                ...WorkModule.allAccounts.map(a => {
-                    const sel = a.username === ownerUsername ? 'selected' : '';
-                    return `<option value="${a.username}" ${sel}>${a.username}</option>`;
-                })].join('');
-            return `
-                <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
-                    <div style="display:flex; align-items:center; gap:6px;">
-                        ${avatarCircle}
-                        ${nameTag}
-                    </div>
-                    <select class="form-control" style="font-size:11px; padding:2px 4px; border-radius:4px; min-width:80px;" onchange="WorkModule.assignTask('${taskId}', this.value)">
-                        ${opts}
-                    </select>
-                </div>`;
-        }
-
-        return `
-            <div style="display:flex; align-items:center; gap:6px; justify-content:center;">
-                ${avatarCircle}
-                ${nameTag}
+            if (!isAdmin) return `<span style="color:#555;font-size:11px;font-style:italic;">Chưa giao</span>`;
+            const giveOpts = WorkModule.allAccounts.map(a => `<option value="${a.username}">${a.username}</option>`).join('');
+            return `<div style="text-align:center;">
+                <div style="width:38px;height:38px;border-radius:50%;background:#2a2a2a;border:2px dashed #555;margin:0 auto 4px;line-height:36px;text-align:center;">
+                    <i class="fa-solid fa-user-plus" style="color:#777;font-size:13px;"></i>
+                </div>
+                <select style="font-size:11px;padding:2px 4px;border-radius:4px;width:100%;max-width:120px;background:#1e1e2e;color:#e0e0e0;border:1px solid #444;" onchange="WorkModule.assignTask('${taskId}', this.value)">
+                    <option value="">-- Giao --</option>${giveOpts}
+                </select>
             </div>`;
+        }
+
+        // Đã giao - admin
+        if (isAdmin) {
+            return `<div style="text-align:center;">
+                ${buildAvatar(ownerUsername)}
+                <div style="font-size:11px;font-weight:700;color:#e0e0e0;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ownerUsername}</div>
+                ${buildSelect(ownerUsername)}
+            </div>`;
+        }
+
+        // Đã giao - user thường (chỉ đọc)
+        return `<div style="text-align:center;">
+            ${buildAvatar(ownerUsername)}
+            <div style="font-size:11px;font-weight:700;color:#e0e0e0;">${ownerUsername}</div>
+        </div>`;
     },
 
     changeTaskStatus: async (id, newStatus) => {
