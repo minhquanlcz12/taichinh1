@@ -10,7 +10,7 @@ const Attendance = {
     loadData: async () => {
         let attendanceData = [];
         try {
-            if (window.DB && typeof DB.getAttendance === 'function') {
+            if (typeof DB !== 'undefined' && typeof DB.getAttendance === 'function') {
                 attendanceData = await DB.getAttendance() || [];
             } else {
                 attendanceData = JSON.parse(localStorage.getItem('tl_attendance') || '[]');
@@ -24,7 +24,7 @@ const Attendance = {
 
     saveData: async (data) => {
         try {
-            if (window.DB && typeof DB.saveAttendance === 'function') {
+            if (typeof DB !== 'undefined' && typeof DB.saveAttendance === 'function') {
                 await DB.saveAttendance(data);
             } else {
                 localStorage.setItem('tl_attendance', JSON.stringify(data));
@@ -52,7 +52,7 @@ const Attendance = {
     loadLeaveData: async () => {
         let leaveData = [];
         try {
-            if (window.DB && typeof DB.getLeaveRequests === 'function') {
+            if (typeof DB !== 'undefined' && typeof DB.getLeaveRequests === 'function') {
                 leaveData = await DB.getLeaveRequests() || [];
             } else {
                 leaveData = JSON.parse(localStorage.getItem('tl_leave_requests') || '[]');
@@ -66,7 +66,7 @@ const Attendance = {
 
     saveLeaveData: async (data) => {
         try {
-            if (window.DB && typeof DB.saveLeaveRequests === 'function') {
+            if (typeof DB !== 'undefined' && typeof DB.saveLeaveRequests === 'function') {
                 await DB.saveLeaveRequests(data);
             } else {
                 localStorage.setItem('tl_leave_requests', JSON.stringify(data));
