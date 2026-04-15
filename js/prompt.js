@@ -140,11 +140,11 @@ const PromptModule = {
             }
         }
 
-        modal.classList.add('show');
+        modal.classList.add('active');
     },
 
     closeModal: () => {
-        document.getElementById('prompt-modal-overlay').classList.remove('show');
+        document.getElementById('prompt-modal-overlay').classList.remove('active');
     },
 
     savePrompt: async () => {
