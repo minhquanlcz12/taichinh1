@@ -301,8 +301,8 @@ const Utils = {
             await Utils.remindAttendance();
         }
 
-        // 2. Tóm tắt cuối ngày lúc 17:30 PM (chạy từ 17:30 đến 18:00 nếu lỡ tắt máy)
-        if (hours === 17 && minutes >= 30) {
+        // 2. Tóm tắt cuối ngày lúc 18:00 PM (chạy từ 18:00 đến 18:30 nếu lỡ tắt máy)
+        if (hours === 18 && minutes >= 0 && minutes <= 30) {
             await Utils.checkDailyTelegramSummary();
         }
     },
