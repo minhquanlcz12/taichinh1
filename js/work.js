@@ -93,8 +93,8 @@ const WorkModule = {
                 displayTasks = displayTasks.filter(t => t.owner === filterEl.value || (!t.owner && filterEl.value === 'admin'));
             }
         } else {
-            // If not admin, only show tasks owned by this user
-            displayTasks = displayTasks.filter(t => t.owner === currentUser.username);
+            // Non-admin: xem tất cả công việc, nhưng chỉ sửa trạng thái của công việc được giao cho mình
+            // displayTasks giữ nguyên toàn bộ
         }
 
         if (WorkModule.currentFilterTime === 'today') {
@@ -118,14 +118,8 @@ const WorkModule = {
     },
 
     getTodaysTasks: () => {
-        // Return active tasks for dashboard
+        // Return active tasks for dashboard - tất cả user xem được toàn bộ
         let tasks = WorkModule.data.tasks;
-        const currentUser = Auth.currentUser;
-        if (currentUser) {
-            if (currentUser.role !== 'admin') {
-                tasks = tasks.filter(t => t.owner === currentUser.username);
-            }
-        }
 
         const todayStr = Utils.getTodayString();
 
@@ -476,10 +470,8 @@ const WorkModule = {
 
             const ownerSet = new Set(projTasks.map(t => t.owner || 'admin'));
             const ownerNames = Array.from(ownerSet).join(', ');
-            let adminBadgeHtml = '';
-            if (Auth.currentUser && Auth.currentUser.role === 'admin') {
-                adminBadgeHtml = `<span class="badge badge-orange" style="font-size: 11px; margin-left: 8px;"><i class="fa-solid fa-user"></i> ${ownerNames}</span>`;
-            }
+            // Hiện badge người được phân công cho tất cả user
+            const adminBadgeHtml = `<span class="badge badge-orange" style="font-size: 11px; margin-left: 8px;"><i class="fa-solid fa-user"></i> ${ownerNames}</span>`;
 
             const isExpanded = WorkModule.expandedProjects.has(projName) ? 'expanded' : '';
 
@@ -512,6 +504,7 @@ const WorkModule = {
                                         <th class="col-noidung th-green">Nội dung chi tiết (caption/outline)</th>
                                         <th class="col-dinhdang">Định dạng</th>
                                         <th class="col-order">Nội dung order thiết kế (brief)</th>
+                                        <th class="col-phancong" style="width: 100px; min-width: 100px; text-align: center;">Phân công</th>
                                         <th class="col-trangthai" style="width: 110px; min-width: 110px;">Trạng thái</th>
                                         <th class="col-ghichu">Ghi chú</th>
                                         <th class="col-anh">Ảnh gợi ý</th>
@@ -539,6 +532,10 @@ const WorkModule = {
                 if (isCompleted) rowClass = 'row-completed';
                 else if (isExpired) rowClass = 'row-expired';
                 else if (isDeadline) rowClass = 'row-deadline';
+
+                // Kiểm tra quyền chỉnh sửa trạng thái
+                const taskCurrentUser = Auth.currentUser;
+                const canEditStatus = taskCurrentUser && (taskCurrentUser.role === 'admin' || task.owner === taskCurrentUser.username);
 
                 // Status Dropdown Options
                 const statuses = ['Planned', 'Doing', 'Done', 'Hạn chót', 'Hết hạn'];
@@ -614,10 +611,17 @@ const WorkModule = {
                         <td class="col-noidung td-green"><span class="task-content-text" style="text-align:justify;">${stripHtml(task.noiDung)}</span></td>
                         <td class="col-dinhdang"><span class="task-content-text">${task.dinhDang || ''}</span></td>
                         <td class="col-order"><span class="task-content-text" style="text-align:justify;">${stripHtml(task.orderBrief)}</span></td>
+                        <td class="col-phancong" style="text-align:center; vertical-align:middle;">
+                            ${task.owner
+                                ? `<span class="badge badge-orange" style="font-size:12px; padding:4px 8px;"><i class="fa-solid fa-user"></i> ${task.owner}</span>`
+                                : `<span style="color:var(--text-secondary); font-size:11px;">Chưa giao</span>`
+                            }
+                        </td>
                         <td class="col-trangthai">
-                            <select class="form-control ${statusClass}" style="font-size: 13px; font-weight:600; padding:4px 8px; border-radius:4px;" onchange="WorkModule.changeTaskStatus('${task.id}', this.value)">
-                                ${statusOptions}
-                            </select>
+                            ${canEditStatus
+                                ? `<select class="form-control ${statusClass}" style="font-size: 13px; font-weight:600; padding:4px 8px; border-radius:4px;" onchange="WorkModule.changeTaskStatus('${task.id}', this.value)">${statusOptions}</select>`
+                                : `<span class="badge ${statusClass}" style="font-size:12px; padding:5px 10px; display:block; text-align:center; border-radius:4px;">${task.trangThai || 'Planned'}</span>`
+                            }
                         </td>
                         <td class="col-ghichu"><span class="task-content-text">${task.ghiChu || ''}</span></td>
                         <td class="col-anh" style="text-align:center;">
@@ -656,6 +660,12 @@ const WorkModule = {
     changeTaskStatus: async (id, newStatus) => {
         const task = WorkModule.data.tasks.find(t => t.id === id);
         if (task) {
+            const currentUser = Auth.currentUser;
+            if (!currentUser || (currentUser.role !== 'admin' && task.owner !== currentUser.username)) {
+                Utils.showToast('Bạn không có quyền thay đổi trạng thái công việc này!', 'error');
+                WorkModule.filterByRole(); // Reset dropdown về giá trị cũ
+                return;
+            }
             task.trangThai = newStatus;
             await WorkModule.save();
             Utils.showToast('Cập nhật trạng thái thành công!', 'success');
