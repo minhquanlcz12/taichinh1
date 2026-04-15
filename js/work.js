@@ -514,7 +514,7 @@ const WorkModule = {
                                         <th class="col-noidung th-green">Nội dung chi tiết (caption/outline)</th>
                                         <th class="col-dinhdang">Định dạng</th>
                                         <th class="col-order">Nội dung order thiết kế (brief)</th>
-                                        <th class="col-phancong" style="width: 100px; min-width: 100px; text-align: center;">Phân công</th>
+                                        <th class="col-phancong" style="width: 140px; min-width: 140px; text-align: center;">Phân công</th>
                                         <th class="col-trangthai" style="width: 110px; min-width: 110px;">Trạng thái</th>
                                         <th class="col-ghichu">Ghi chú</th>
                                         <th class="col-anh">Ảnh gợi ý</th>
