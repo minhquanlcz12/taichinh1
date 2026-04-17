@@ -161,6 +161,12 @@ const PromptModule = {
             return;
         }
 
+        // Tải dữ liệu mới nhất từ DB để tránh ghi đè (Race Condition)
+        const latestDbPrompts = await DB.getPrompts() || [];
+        if (latestDbPrompts.length > 0) {
+            PromptModule.data.prompts = latestDbPrompts;
+        }
+
         if (id) {
             // Cập nhật
             const idx = PromptModule.data.prompts.findIndex(x => x.id === id);
@@ -186,6 +192,12 @@ const PromptModule = {
 
     deletePrompt: async (id) => {
         if (confirm("Bạn có chắc chắn muốn xóa Prompt này?")) {
+            // Tải dữ liệu mới nhất từ DB
+            const latestDbPrompts = await DB.getPrompts() || [];
+            if (latestDbPrompts.length > 0) {
+                PromptModule.data.prompts = latestDbPrompts;
+            }
+
             PromptModule.data.prompts = PromptModule.data.prompts.filter(x => x.id !== id);
             await DB.savePrompts(PromptModule.data.prompts);
             PromptModule.render();
