@@ -177,10 +177,19 @@ const DB = {
     // --- LƯU TRỮ PROMPT VAULT ---
     savePrompts: async (promptsArray) => {
         try {
+            if (window.Utils && Utils.compressImageBase64) {
+                for (let i = 0; i < promptsArray.length; i++) {
+                    if (promptsArray[i].imgData) {
+                        promptsArray[i].imgData = await Utils.compressImageBase64(promptsArray[i].imgData);
+                    }
+                }
+            }
             Utils.storage.set('backup_prompts', promptsArray);
             await db.collection("system").doc("prompts").set({ data: promptsArray });
+            return true;
         } catch (e) {
             console.error("Error saving prompts:", e);
+            return false;
         }
     },
 
@@ -199,10 +208,19 @@ const DB = {
     // --- LƯU TRỮ CHATBOT VAULT ---
     saveChatbots: async (chatbotsArray) => {
         try {
+            if (window.Utils && Utils.compressImageBase64) {
+                for (let i = 0; i < chatbotsArray.length; i++) {
+                    if (chatbotsArray[i].imgData) {
+                        chatbotsArray[i].imgData = await Utils.compressImageBase64(chatbotsArray[i].imgData);
+                    }
+                }
+            }
             Utils.storage.set('backup_chatbots', chatbotsArray);
             await db.collection("system").doc("chatbots").set({ data: chatbotsArray });
+            return true;
         } catch (e) {
             console.error("Error saving chatbots:", e);
+            return false;
         }
     },
 
