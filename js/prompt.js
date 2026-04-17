@@ -261,10 +261,32 @@ const PromptModule = {
     _readImageFile: (file) => {
         const reader = new FileReader();
         reader.onload = (e) => {
-            const dataUrl = e.target.result;
-            document.getElementById('prompt-img-data').value = dataUrl;
-            const prevWrap = document.getElementById('prompt-img-preview-wrap');
-            if (prevWrap) prevWrap.innerHTML = `<img src="${dataUrl}" style="max-height:120px;border-radius:6px;object-fit:contain;"><p style="color:var(--success);font-size:12px;margin:6px 0 0;"><i class="fa-solid fa-check"></i> Đã chọn ảnh</p>`;
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 600;
+                const MAX_HEIGHT = 600;
+                let width = img.width;
+                let height = img.height;
+
+                if (width > height) {
+                    if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                } else {
+                    if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                
+                document.getElementById('prompt-img-data').value = dataUrl;
+                const prevWrap = document.getElementById('prompt-img-preview-wrap');
+                if (prevWrap) prevWrap.innerHTML = `<img src="${dataUrl}" style="max-height:120px;border-radius:6px;object-fit:cover;"><p style="color:var(--success);font-size:12px;margin:6px 0 0;"><i class="fa-solid fa-check"></i> Đã nén ảnh thành công</p>`;
+            };
+            img.src = e.target.result;
         };
         reader.readAsDataURL(file);
     },

@@ -59,8 +59,8 @@ const ChatbotModule = {
                                 ` : ''}
                             </div>
                             <div style="text-align: right; line-height: 1.2;">
-                                ${p.originalPrice ? `<div style="text-decoration: line-through; color: var(--text-secondary); font-size: 11px;">${p.originalPrice}đ</div>` : ''}
-                                <div style="color: #fbbf24; font-weight: 800; font-size: 15px;">${p.currentPrice || '0'} đ</div>
+                                ${p.originalPrice ? `<div style="text-decoration: line-through; color: var(--text-secondary); font-size: 11px;">${Utils.formatCurrency ? Utils.formatCurrency(p.originalPrice) : (!isNaN(parseInt(p.originalPrice.replace(/\\D/g,''))) ? parseInt(p.originalPrice.replace(/\\D/g,'')).toLocaleString('vi-VN') + 'đ' : p.originalPrice)}</div>` : ''}
+                                <div style="color: #fbbf24; font-weight: 800; font-size: 15px;">${(!p.currentPrice || p.currentPrice == '0') ? '0đ' : (!isNaN(parseInt(p.currentPrice.replace(/\\D/g,''))) ? parseInt(p.currentPrice.replace(/\\D/g,'')).toLocaleString('vi-VN') + 'đ' : p.currentPrice)}</div>
                             </div>
                         </div>
                         
@@ -217,10 +217,33 @@ const ChatbotModule = {
     _readImageFile: (file) => {
         const reader = new FileReader();
         reader.onload = (e) => {
-            const dataUrl = e.target.result;
-            document.getElementById('chatbot-img-data').value = dataUrl;
-            const prevWrap = document.getElementById('chatbot-img-preview-wrap');
-            if (prevWrap) prevWrap.innerHTML = `<img src="${dataUrl}" style="max-height:120px;border-radius:6px;object-fit:cover;"><p style="color:var(--success);font-size:12px;margin:6px 0 0;"><i class="fa-solid fa-check"></i> Đã chọn ảnh</p>`;
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 600;
+                const MAX_HEIGHT = 600;
+                let width = img.width;
+                let height = img.height;
+
+                if (width > height) {
+                    if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                } else {
+                    if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                // Mức nén 0.8 cho JPEG
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                
+                document.getElementById('chatbot-img-data').value = dataUrl;
+                const prevWrap = document.getElementById('chatbot-img-preview-wrap');
+                if (prevWrap) prevWrap.innerHTML = `<img src="${dataUrl}" style="max-height:120px;border-radius:6px;object-fit:cover;"><p style="color:var(--success);font-size:12px;margin:6px 0 0;"><i class="fa-solid fa-check"></i> Đã chọn & Nén ảnh</p>`;
+            };
+            img.src = e.target.result;
         };
         reader.readAsDataURL(file);
     },
