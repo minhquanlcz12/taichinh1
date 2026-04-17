@@ -165,6 +165,11 @@ const PromptModule = {
     },
 
     savePrompt: async () => {
+        // Bảo mật: Chỉ Admin mới được lưu
+        if (!Auth.currentUser || Auth.currentUser.role !== 'admin') {
+            Utils.showToast("⛔ Bạn không có quyền thực hiện thao tác này!", "error");
+            return;
+        }
         const id = document.getElementById('prompt-id').value;
         const title = document.getElementById('prompt-title').value.trim();
         const category = document.getElementById('prompt-category').value;
@@ -208,6 +213,11 @@ const PromptModule = {
     },
 
     deletePrompt: async (id) => {
+        // Bảo mật: Chỉ Admin mới được xóa
+        if (!Auth.currentUser || Auth.currentUser.role !== 'admin') {
+            Utils.showToast("⛔ Bạn không có quyền xóa Prompt!", "error");
+            return;
+        }
         if (confirm("Bạn có chắc chắn muốn xóa Prompt này?")) {
             // Tải dữ liệu mới nhất từ DB
             const latestDbPrompts = await DB.getPrompts() || [];

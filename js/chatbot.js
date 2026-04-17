@@ -139,6 +139,11 @@ const ChatbotModule = {
     },
 
     saveChatbot: async () => {
+        // Bảo mật: Chỉ Admin mới được lưu
+        if (!Auth.currentUser || Auth.currentUser.role !== 'admin') {
+            Utils.showToast("⛔ Bạn không có quyền thực hiện thao tác này!", "error");
+            return;
+        }
         const id = document.getElementById('chatbot-id').value;
         const title = document.getElementById('chatbot-title').value.trim();
         const icon = document.getElementById('chatbot-icon').value.trim() || '🤖';
@@ -166,6 +171,11 @@ const ChatbotModule = {
     },
 
     deleteChatbot: async (id) => {
+        // Bảo mật: Chỉ Admin mới được xóa
+        if (!Auth.currentUser || Auth.currentUser.role !== 'admin') {
+            Utils.showToast("⛔ Bạn không có quyền xóa Chatbot!", "error");
+            return;
+        }
         if (!confirm("Xóa Chatbot này?")) return;
         const latestDb = await DB.getChatbots() || [];
         if (latestDb.length > 0) ChatbotModule.data.chatbots = latestDb;
