@@ -55,11 +55,20 @@ const PromptModule = {
                         <p style="color: var(--text-secondary); margin: 0; font-size: 13px;">Lưu trữ và gọi nhanh các câu lệnh AI tốt nhất</p>
                     </div>
                 </div>
-                ${isAdmin ? `
-                <button class="btn btn-primary" onclick="PromptModule.showModal()">
-                    <i class="fa-solid fa-plus" style="margin-right: 8px;"></i>Thêm Prompt Mới
-                </button>
-                ` : `<span class="badge badge-blue">Quyền Nhân Viên (Chỉ xem)</span>`}
+                
+                <div style="display: flex; gap: 8px;">
+                    ${isAdmin ? `
+                    <button type="button" class="btn btn-outline" onclick="PromptModule.setChatbotLink()" title="Cài Link GPT" style="padding: 10px 14px;">
+                        <i class="fa-solid fa-link"></i>
+                    </button>
+                    <button class="btn btn-primary" onclick="PromptModule.showModal()">
+                        <i class="fa-solid fa-plus" style="margin-right: 8px;"></i>Thêm Prompt
+                    </button>
+                    ` : `<span class="badge badge-blue">Quyền Nhân Viên</span>`}
+                    <button type="button" class="btn btn-success" onclick="PromptModule.openChatbot()" style="background: linear-gradient(135deg, #10b981, #059669); border: none;">
+                        <i class="fa-solid fa-robot" style="margin-right: 8px;"></i>Mở Chatbot
+                    </button>
+                </div>
             </div>
             
             <!-- Category Filter Tabs -->
@@ -82,30 +91,31 @@ const PromptModule = {
         } else {
             filteredPrompts.forEach(p => {
                 html += `
-                    <div class="glass-card" style="display: flex; flex-direction: column; padding: 20px; transition: transform 0.2s; border-top: 3px solid var(--primary);">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
-                            <div>
-                                <h4 style="color: #fff; margin: 0 0 6px 0; font-size: 16px; line-height: 1.3;">${p.title}</h4>
-                                <span class="badge badge-purple" style="font-size: 11px;">${p.category || 'Khác'}</span>
-                            </div>
+                    <div class="glass-card prompt-card" style="padding: 16px; border-left: 4px solid var(--primary); display: flex; flex-direction: column; gap: 12px; height: 100%;">
+                        <div>
+                            <h4 style="color: #fff; margin: 0 0 8px 0; font-size: 16px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;">${p.title}</h4>
+                            <p style="color: var(--warning); font-size: 13px; margin: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.5; font-style: italic;">
+                                <i class="fa-solid fa-tag" style="margin-right: 4px;"></i>${p.desc}
+                            </p>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto; padding-top: 12px; border-top: 1px dashed rgba(255,255,255,0.1);">
+                            <span class="badge badge-purple" style="font-size: 11px;">${p.category || 'Khác'}</span>
                             
-                            ${isAdmin ? `
-                            <div style="display: flex; gap: 8px; flex-shrink: 0; margin-left: 12px;">
-                                <button type="button" class="btn btn-outline btn-sm" onclick="PromptModule.showModal('${p.id}')" style="padding: 4px 8px; height: max-content;" title="Sửa">
+                            <div style="display: flex; gap: 8px;">
+                                ${isAdmin ? `
+                                <button type="button" class="btn btn-outline btn-sm" onclick="PromptModule.showModal('${p.id}')" style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;" title="Sửa">
                                     <i class="fa-solid fa-pen"></i>
                                 </button>
-                                <button type="button" class="btn btn-outline btn-sm" onclick="PromptModule.deletePrompt('${p.id}')" style="padding: 4px 8px; height: max-content; color: var(--danger); border-color: rgba(248, 113, 113, 0.3);" title="Xóa">
+                                <button type="button" class="btn btn-outline btn-sm" onclick="PromptModule.deletePrompt('${p.id}')" style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; color: var(--danger); border-color: rgba(248, 113, 113, 0.3);" title="Xóa">
                                     <i class="fa-solid fa-trash"></i>
                                 </button>
-                            </div>` : ''}
+                                ` : ''}
+                                <button type="button" class="btn btn-success btn-sm" onclick="PromptModule.copyToClipboard('${p.id}', this)" style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #10b981, #059669); border: none;" title="Copy Prompt">
+                                    <i class="fa-solid fa-copy"></i>
+                                </button>
+                            </div>
                         </div>
-                        <p style="color: var(--warning); font-size: 12px; margin-bottom: 16px; font-style: italic; display: flex; align-items: center; gap: 6px;">
-                            <i class="fa-solid fa-tag"></i>${p.desc}
-                        </p>
-                        <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); padding: 12px; border-radius: 6px; font-size: 13px; color: var(--text-secondary); height: 100px; overflow-y: auto; flex: 1; margin-bottom: 16px; white-space: pre-wrap; font-family: 'Courier New', monospace; line-height: 1.5;">${p.content}</div>
-                        <button type="button" class="btn btn-success" onclick="PromptModule.copyToClipboard('${p.id}', this)" style="width: 100%; font-weight: bold; background: linear-gradient(135deg, #10b981, #059669); border: none; font-size: 13px;">
-                            <i class="fa-solid fa-copy" style="margin-right: 8px;"></i>COPY PROMPT
-                        </button>
                     </div>
                 `;
             });
@@ -210,10 +220,10 @@ const PromptModule = {
         if (p && p.content) {
             navigator.clipboard.writeText(p.content).then(() => {
                 Utils.showToast("Đã sao chép prompt vào Clipboard!", "success");
-                // Hiệu ứng nút
+                // Hiệu ứng nút (giữ nguyên size ô vuông nhỏ)
                 const originalHtml = btnEl.innerHTML;
                 const originalBg = btnEl.style.background;
-                btnEl.innerHTML = '<i class="fa-solid fa-check" style="margin-right: 8px;"></i>ĐÃ SAO CHÉP';
+                btnEl.innerHTML = '<i class="fa-solid fa-check"></i>';
                 btnEl.style.background = 'linear-gradient(135deg, #059669, #047857)';
                 setTimeout(() => {
                     btnEl.innerHTML = originalHtml;
@@ -224,5 +234,21 @@ const PromptModule = {
                 console.error(err);
             });
         }
+    },
+
+    setChatbotLink: async () => {
+        const currentLink = (app.state.settings && app.state.settings.chatbotLink) ? app.state.settings.chatbotLink : 'https://chatgpt.com';
+        const link = await Utils.showPrompt("Nhập link Chatbot GPT (Vd: https://chatgpt.com/g/g-xxxxx):", currentLink);
+        if (link !== null && link.trim() !== '') {
+            if (!app.state.settings) app.state.settings = {};
+            app.state.settings.chatbotLink = link.trim();
+            await DB.saveSettings(app.state.settings);
+            Utils.showToast("Đã lưu Link Chatbot!", "success");
+        }
+    },
+
+    openChatbot: () => {
+        const link = (app.state.settings && app.state.settings.chatbotLink) ? app.state.settings.chatbotLink : 'https://chatgpt.com';
+        window.open(link, '_blank');
     }
 };
