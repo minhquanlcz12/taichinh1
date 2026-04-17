@@ -2,10 +2,21 @@
 const PromptModule = {
     data: {
         prompts: [],
-        currentCategory: 'ALL'
+        currentCategory: 'ALL',
+        categories: []
     },
 
     init: async () => {
+        // Build settings & categories
+        const settings = await DB.getSettings() || {};
+        if (settings.promptCategories && settings.promptCategories.length > 0) {
+            PromptModule.data.categories = settings.promptCategories;
+        } else {
+            PromptModule.data.categories = ['Video', 'SEO', 'Chatbot', 'Sale', 'Khác'];
+            settings.promptCategories = PromptModule.data.categories;
+            await DB.saveSettings(settings);
+        }
+
         // Load prompts from DB
         const dbPrompts = await DB.getPrompts();
         if (dbPrompts && dbPrompts.length > 0) {
@@ -58,6 +69,9 @@ const PromptModule = {
                 
                 <div style="display: flex; gap: 8px;">
                     ${isAdmin ? `
+                    <button class="btn btn-outline" onclick="PromptModule.manageCategories()" style="padding: 10px 14px; margin-right: 8px;">
+                        <i class="fa-solid fa-list-ul" style="margin-right: 8px;"></i>Quản lý Danh mục
+                    </button>
                     <button class="btn btn-primary" onclick="PromptModule.showModal()">
                         <i class="fa-solid fa-plus" style="margin-right: 8px;"></i>Thêm Prompt
                     </button>
@@ -67,8 +81,9 @@ const PromptModule = {
             
             <!-- Category Filter Tabs -->
             <div style="display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 16px;">
-                ${['ALL', 'Video', 'SEO', 'Chatbot', 'Sale', 'Khác'].map(cat => `
-                    <button type="button" class="btn btn-sm ${PromptModule.data.currentCategory === cat ? 'btn-primary' : 'btn-text'}" style="border-radius: 20px; font-size: 13px; font-weight: 600;" onclick="PromptModule.setCategory('${cat}')">${cat === 'ALL' ? 'Tất cả' : cat}</button>
+                <button type="button" class="btn btn-sm ${PromptModule.data.currentCategory === 'ALL' ? 'btn-primary' : 'btn-text'}" style="border-radius: 20px; font-size: 13px; font-weight: 600;" onclick="PromptModule.setCategory('ALL')">Tất cả</button>
+                ${PromptModule.data.categories.map(cat => `
+                    <button type="button" class="btn btn-sm ${PromptModule.data.currentCategory === cat ? 'btn-primary' : 'btn-text'}" style="border-radius: 20px; font-size: 13px; font-weight: 600;" onclick="PromptModule.setCategory('${cat}')">${cat}</button>
                 `).join('')}
             </div>
 
@@ -134,6 +149,12 @@ const PromptModule = {
         document.getElementById('prompt-id').value = '';
         document.getElementById('prompt-category').value = 'Khác';
 
+        // Dynamic inject categories
+        const catSelect = document.getElementById('prompt-category');
+        if (catSelect) {
+            catSelect.innerHTML = PromptModule.data.categories.map(c => `<option value="${c}">${c}</option>`).join('');
+        }
+
         if (id) {
             const p = PromptModule.data.prompts.find(x => x.id === id);
             if (p) {
@@ -162,6 +183,64 @@ const PromptModule = {
     closeModal: () => {
         document.getElementById('prompt-modal-overlay').classList.remove('active');
         document.getElementById('prompt-modal').style.display = 'none';
+    },
+
+    manageCategories: () => {
+        if (!Auth.currentUser || Auth.currentUser.role !== 'admin') return;
+        const cats = PromptModule.data.categories || [];
+        let html = `
+            <div style="margin-bottom: 16px;">
+                <p style="color:var(--warning); font-size:12px; margin-top:0;"><i class="fa-solid fa-triangle-exclamation"></i> Xóa danh mục sẽ chuyển các Prompt bên trong sang "Khác".</p>
+                <ul id="prompt-cat-list" style="list-style:none; padding:0; margin:0; max-height:200px; overflow-y:auto; background:rgba(0,0,0,0.2); border-radius:8px;">
+                    ${cats.map(c => `
+                        <li style="display:flex; justify-content:space-between; padding: 10px 12px; border-bottom: 1px dashed rgba(255,255,255,0.05); color:#fff; align-items:center;">
+                            <span>${c}</span>
+                            ${c === 'Khác' ? '' : `<button onclick="PromptModule.deleteCategory('${c}')" style="color:var(--danger); background:none; border:none; cursor:pointer; padding:4px;"><i class="fa-solid fa-trash"></i></button>`}
+                        </li>
+                    `).join('')}
+                </ul>
+            </div>
+            <div style="display:flex; gap: 8px;">
+                <input type="text" id="new-prompt-cat" class="form-control" style="background:rgba(255,255,255,0.05); color:#fff;" placeholder="Tên danh mục mới...">
+                <button type="button" class="btn btn-primary" onclick="PromptModule.addCategory()">Thêm</button>
+            </div>
+        `;
+        Utils.showModal("🛠 Quản lý Danh mục", html, null, null);
+    },
+
+    addCategory: async () => {
+        const val = document.getElementById('new-prompt-cat').value.trim();
+        if (!val) return;
+        if (PromptModule.data.categories.includes(val)) {
+            Utils.showToast("Danh mục đã tồn tại!", "error"); return;
+        }
+        PromptModule.data.categories.push(val);
+        const settings = await DB.getSettings() || {};
+        settings.promptCategories = PromptModule.data.categories;
+        await DB.saveSettings(settings);
+        PromptModule.render();
+        PromptModule.manageCategories();
+        Utils.showToast("Đã thêm danh mục!", "success");
+    },
+
+    deleteCategory: async (catName) => {
+        if(!confirm(`Xóa danh mục "${catName}"?`)) return;
+        PromptModule.data.categories = PromptModule.data.categories.filter(c => c !== catName);
+        if (!PromptModule.data.categories.includes('Khác')) PromptModule.data.categories.push('Khác');
+        
+        const settings = await DB.getSettings() || {};
+        settings.promptCategories = PromptModule.data.categories;
+        await DB.saveSettings(settings);
+        
+        let changed = false;
+        PromptModule.data.prompts.forEach(p => {
+            if(p.category === catName) { p.category = 'Khác'; changed = true; }
+        });
+        if(changed) await DB.savePrompts(PromptModule.data.prompts);
+
+        PromptModule.render();
+        PromptModule.manageCategories();
+        Utils.showToast("Đã xóa danh mục!", "success");
     },
 
     savePrompt: async () => {
