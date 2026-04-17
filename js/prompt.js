@@ -58,16 +58,10 @@ const PromptModule = {
                 
                 <div style="display: flex; gap: 8px;">
                     ${isAdmin ? `
-                    <button type="button" class="btn btn-outline" onclick="PromptModule.setChatbotLink()" title="Cài Link GPT" style="padding: 10px 14px;">
-                        <i class="fa-solid fa-link"></i>
-                    </button>
                     <button class="btn btn-primary" onclick="PromptModule.showModal()">
                         <i class="fa-solid fa-plus" style="margin-right: 8px;"></i>Thêm Prompt
                     </button>
                     ` : `<span class="badge badge-blue">Quyền Nhân Viên</span>`}
-                    <button type="button" class="btn btn-success" onclick="PromptModule.openChatbot()" style="background: linear-gradient(135deg, #10b981, #059669); border: none;">
-                        <i class="fa-solid fa-robot" style="margin-right: 8px;"></i>Mở Chatbot
-                    </button>
                 </div>
             </div>
             
