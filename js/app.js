@@ -204,6 +204,13 @@ const app = {
             document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
             const pNav = document.querySelector('.nav-item[data-target="prompt-view"]');
             if (pNav) pNav.classList.add('active');
+        } else if (viewId === 'chatbot-view') {
+            if (typeof ChatbotModule !== 'undefined') {
+                ChatbotModule.render();
+            }
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            const cbNav = document.querySelector('.nav-item[data-target="chatbot-view"]');
+            if (cbNav) cbNav.classList.add('active');
         } else if (viewId === 'settings-view') {
             document.getElementById('setting-tg-token').value = app.state.settings.tgToken || '';
             document.getElementById('setting-tg-chatid').value = app.state.settings.tgChatId || '';
