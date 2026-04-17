@@ -206,7 +206,11 @@ const PromptModule = {
             });
         }
 
-        await DB.savePrompts(PromptModule.data.prompts);
+        const success = await DB.savePrompts(PromptModule.data.prompts);
+        if(!success) {
+            Utils.showToast("⛔ Lỗi lưu dữ liệu! Vượt quá dung lượng 1MB.", "error");
+            return;
+        }
         PromptModule.closeModal();
         PromptModule.render();
         Utils.showToast("Đã lưu Prompt thành công!", "success");
@@ -226,7 +230,11 @@ const PromptModule = {
             }
 
             PromptModule.data.prompts = PromptModule.data.prompts.filter(x => x.id !== id);
-            await DB.savePrompts(PromptModule.data.prompts);
+            const success = await DB.savePrompts(PromptModule.data.prompts);
+            if(!success) {
+                Utils.showToast("⛔ Lỗi xóa dữ liệu!", "error");
+                return;
+            }
             PromptModule.render();
             Utils.showToast("Đã xóa Prompt!", "success");
         }
@@ -264,8 +272,8 @@ const PromptModule = {
             const img = new Image();
             img.onload = () => {
                 const canvas = document.createElement('canvas');
-                const MAX_WIDTH = 600;
-                const MAX_HEIGHT = 600;
+                const MAX_WIDTH = 400;
+                const MAX_HEIGHT = 400;
                 let width = img.width;
                 let height = img.height;
 
@@ -280,7 +288,7 @@ const PromptModule = {
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
 
-                const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                const dataUrl = canvas.toDataURL('image/webp', 0.6);
                 
                 document.getElementById('prompt-img-data').value = dataUrl;
                 const prevWrap = document.getElementById('prompt-img-preview-wrap');

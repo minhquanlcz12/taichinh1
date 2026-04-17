@@ -220,8 +220,8 @@ const ChatbotModule = {
             const img = new Image();
             img.onload = () => {
                 const canvas = document.createElement('canvas');
-                const MAX_WIDTH = 600;
-                const MAX_HEIGHT = 600;
+                const MAX_WIDTH = 400;
+                const MAX_HEIGHT = 400;
                 let width = img.width;
                 let height = img.height;
 
@@ -236,8 +236,8 @@ const ChatbotModule = {
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
                 
-                // Mức nén 0.8 cho JPEG
-                const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                // Mức nén 0.6 cho WebP (Cực nhẹ, < 10KB)
+                const dataUrl = canvas.toDataURL('image/webp', 0.6);
                 
                 document.getElementById('chatbot-img-data').value = dataUrl;
                 const prevWrap = document.getElementById('chatbot-img-preview-wrap');
@@ -278,8 +278,13 @@ const ChatbotModule = {
             ChatbotModule.data.chatbots.push({ id: Utils.generateId(), title, icon, desc, url, originalPrice, currentPrice, imgData });
         }
 
-        await DB.saveChatbots(ChatbotModule.data.chatbots);
+        const success = await DB.saveChatbots(ChatbotModule.data.chatbots);
+        if(!success) {
+            Utils.showToast("⛔ Lỗi lưu dữ liệu! Vượt quá dung lượng 1MB. Vui lòng thử lại với ảnh nhỏ hơn.", "error");
+            return;
+        }
         ChatbotModule.render();
+        ChatbotModule.closeModal();
         Utils.showToast("Đã lưu Chatbot thành công!", "success");
     },
 
@@ -294,7 +299,11 @@ const ChatbotModule = {
         if (latestDb.length > 0) ChatbotModule.data.chatbots = latestDb;
         
         ChatbotModule.data.chatbots = ChatbotModule.data.chatbots.filter(x => x.id !== id);
-        await DB.saveChatbots(ChatbotModule.data.chatbots);
+        const success = await DB.saveChatbots(ChatbotModule.data.chatbots);
+        if(!success) {
+            Utils.showToast("⛔ Lỗi xóa dữ liệu!", "error");
+            return;
+        }
         ChatbotModule.render();
         Utils.showToast("Đã xóa Chatbot!", "success");
     }
