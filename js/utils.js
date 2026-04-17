@@ -462,14 +462,14 @@ const Utils = {
 
     compressImageBase64: async (base64) => {
         if (!base64 || !base64.startsWith('data:image/')) return base64;
-        if (base64.length < 80000) return base64;
+        if (base64.length < 15000) return base64; // ~10KB bypass only
         
         return new Promise((resolve) => {
             const img = new Image();
             img.onload = () => {
                 const canvas = document.createElement('canvas');
                 let width = img.width; let height = img.height;
-                const MAX_WIDTH = 400; const MAX_HEIGHT = 400;
+                const MAX_WIDTH = 250; const MAX_HEIGHT = 250;
                 if (width > height) { if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; } } 
                 else { if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; } }
                 
