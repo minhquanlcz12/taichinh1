@@ -97,6 +97,7 @@ const PromptModule = {
                             <p style="color: var(--warning); font-size: 13px; margin: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.5; font-style: italic;">
                                 <i class="fa-solid fa-tag" style="margin-right: 4px;"></i>${p.desc}
                             </p>
+                            ${p.imgData ? `<img src="${p.imgData}" style="width:100%;max-height:140px;object-fit:cover;border-radius:6px;margin-top:10px;border:1px solid rgba(255,255,255,0.08);">` : ''}
                         </div>
                         
                         <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto; padding-top: 12px; border-top: 1px dashed rgba(255,255,255,0.1);">
@@ -147,7 +148,17 @@ const PromptModule = {
                 document.getElementById('prompt-category').value = p.category || 'Khác';
                 document.getElementById('prompt-desc').value = p.desc || '';
                 document.getElementById('prompt-content').value = p.content || '';
+                // Load image preview if exists
+                document.getElementById('prompt-img-data').value = p.imgData || '';
+                const prevWrap = document.getElementById('prompt-img-preview-wrap');
+                if (p.imgData && prevWrap) {
+                    prevWrap.innerHTML = `<img src="${p.imgData}" style="max-height:100px;border-radius:6px;object-fit:contain;">`;
+                }
             }
+        } else {
+            document.getElementById('prompt-img-data').value = '';
+            const prevWrap = document.getElementById('prompt-img-preview-wrap');
+            if (prevWrap) prevWrap.innerHTML = `<i class="fa-solid fa-cloud-arrow-up" style="font-size:24px;color:var(--primary);opacity:0.5;"></i><p style="color:var(--text-secondary);margin:8px 0 0;font-size:13px;">Nhấp hoặc kéo thả ảnh vào đây</p>`;
         }
 
         modal.classList.add('active');
@@ -165,6 +176,7 @@ const PromptModule = {
         const category = document.getElementById('prompt-category').value;
         const desc = document.getElementById('prompt-desc').value.trim();
         const content = document.getElementById('prompt-content').value.trim();
+        const imgData = document.getElementById('prompt-img-data').value;
 
         if (!title || !content) {
             Utils.showToast("Vui lòng nhập Tên Prompt và Nội dung!", "error");
@@ -181,7 +193,7 @@ const PromptModule = {
             // Cập nhật
             const idx = PromptModule.data.prompts.findIndex(x => x.id === id);
             if (idx !== -1) {
-                PromptModule.data.prompts[idx] = { id, title, category, desc, content };
+                PromptModule.data.prompts[idx] = { id, title, category, desc, content, imgData };
             }
         } else {
             // Thêm mới
@@ -190,7 +202,8 @@ const PromptModule = {
                 title,
                 category,
                 desc,
-                content
+                content,
+                imgData
             });
         }
 
@@ -220,25 +233,41 @@ const PromptModule = {
         if (p && p.content) {
             navigator.clipboard.writeText(p.content).then(() => {
                 Utils.showToast("Đã sao chép prompt vào Clipboard!", "success");
-                // Hiệu ứng nút (giữ nguyên size ô vuông nhỏ)
                 const originalHtml = btnEl.innerHTML;
                 const originalBg = btnEl.style.background;
                 btnEl.innerHTML = '<i class="fa-solid fa-check"></i>';
                 btnEl.style.background = 'linear-gradient(135deg, #059669, #047857)';
-                setTimeout(() => {
-                    btnEl.innerHTML = originalHtml;
-                    btnEl.style.background = originalBg;
-                }, 1500);
+                setTimeout(() => { btnEl.innerHTML = originalHtml; btnEl.style.background = originalBg; }, 1500);
             }).catch(err => {
-                Utils.showToast("Không thể sao chép. Vui lòng thử lại.", "error");
-                console.error(err);
+                Utils.showToast("Không thể sao chép.", "error");
             });
         }
     },
 
+    handleImageSelect: (event) => {
+        const file = event.target.files[0];
+        if (file) PromptModule._readImageFile(file);
+    },
+
+    handleImageDrop: (event) => {
+        const file = event.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) PromptModule._readImageFile(file);
+    },
+
+    _readImageFile: (file) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const dataUrl = e.target.result;
+            document.getElementById('prompt-img-data').value = dataUrl;
+            const prevWrap = document.getElementById('prompt-img-preview-wrap');
+            if (prevWrap) prevWrap.innerHTML = `<img src="${dataUrl}" style="max-height:120px;border-radius:6px;object-fit:contain;"><p style="color:var(--success);font-size:12px;margin:6px 0 0;"><i class="fa-solid fa-check"></i> Đã chọn ảnh</p>`;
+        };
+        reader.readAsDataURL(file);
+    },
+
     setChatbotLink: async () => {
         const currentLink = (app.state.settings && app.state.settings.chatbotLink) ? app.state.settings.chatbotLink : 'https://chatgpt.com';
-        const link = await Utils.showPrompt("Nhập link Chatbot GPT (Vd: https://chatgpt.com/g/g-xxxxx):", currentLink);
+        const link = await Utils.showPrompt("Nhập link Chatbot GPT:", currentLink);
         if (link !== null && link.trim() !== '') {
             if (!app.state.settings) app.state.settings = {};
             app.state.settings.chatbotLink = link.trim();

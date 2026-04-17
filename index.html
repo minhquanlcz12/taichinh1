@@ -196,7 +196,7 @@
                     <span>Lương / Thưởng</span>
                 </li>
                 <li class="nav-item" data-target="prompt-view">
-                    <i class="fa-solid fa-terminal"></i>
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
                     <span>Kho Prompt</span>
                 </li>
                 <li class="nav-item" data-target="chatbot-view">
@@ -535,6 +535,19 @@
                         <label>Nội dung Prompt</label>
                         <textarea id="prompt-content" class="form-control" rows="8" placeholder="Đóng vai chuyên gia content, hãy viết..." style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-primary); padding: 12px; resize: vertical;" required></textarea>
                     </div>
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 6px;">
+                            <i class="fa-solid fa-image" style="color: var(--primary);"></i> Ảnh tham chiếu (tùy chọn)
+                        </label>
+                        <div id="prompt-img-dropzone" style="border: 2px dashed rgba(0,240,255,0.3); border-radius: 8px; padding: 16px; text-align: center; cursor: pointer; transition: all 0.2s; background: rgba(0,240,255,0.02);" onclick="document.getElementById('prompt-img-input').click()" ondragover="event.preventDefault();this.style.background='rgba(0,240,255,0.08)'" ondragleave="this.style.background='rgba(0,240,255,0.02)'" ondrop="event.preventDefault();this.style.background='rgba(0,240,255,0.02)';PromptModule.handleImageDrop(event)">
+                            <div id="prompt-img-preview-wrap">
+                                <i class="fa-solid fa-cloud-arrow-up" style="font-size: 24px; color: var(--primary); opacity: 0.5;"></i>
+                                <p style="color: var(--text-secondary); margin: 8px 0 0; font-size: 13px;">Nhấp hoặc kéo thả ảnh vào đây</p>
+                            </div>
+                        </div>
+                        <input type="file" id="prompt-img-input" accept="image/*" style="display:none" onchange="PromptModule.handleImageSelect(event)">
+                        <input type="hidden" id="prompt-img-data">
+                    </div>
                 </form>
             </div>
             <div class="modal-footer" style="border-top: 1px solid var(--border-color); padding-top: 16px;">
@@ -748,7 +761,7 @@
     <script src="js/payroll.js?v=25.1"></script>
     <script src="js/chat.js?v=25.1"></script>
     <script src="js/prompt.js?v=25.4"></script>
-    <script src="js/chatbot.js?v=25.1"></script>
+    <script src="js/chatbot.js?v=25.2"></script>
     <script src="js/auth.js?v=25.1"></script>
     <script src="js/app.js?v=25.1"></script>
 
