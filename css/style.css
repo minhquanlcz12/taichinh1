@@ -1,4 +1,4 @@
-﻿:root {
+:root {
     /* Color Palette - Light Theme */
     --bg-color: #f0f2f5;
     --text-primary: #1c1e21;
@@ -52,6 +52,21 @@ body.dark-theme {
     padding: 0;
     box-sizing: border-box;
     font-family: 'Rajdhani', sans-serif;
+}
+
+/* --- NEON TYPOGRAPHY GLOBALS --- */
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Orbitron', 'Rajdhani', sans-serif;
+    letter-spacing: 1.5px;
+}
+
+.title-glow {
+    color: #fff !important;
+    text-shadow: 
+        0 0 8px rgba(255,255,255,0.7),
+        0 0 20px var(--primary),
+        0 0 35px var(--primary) !important;
+    font-weight: 700;
 }
 
 body {

@@ -102,7 +102,7 @@ const PromptModule = {
                 html += `
                     <div class="glass-card prompt-card" style="padding: 16px; border-left: 4px solid var(--primary); display: flex; flex-direction: column; gap: 12px; height: 100%;">
                         <div>
-                            <h4 style="color: #fff; margin: 0 0 8px 0; font-size: 16px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;">${p.title}</h4>
+                            <h4 class="title-glow" style="margin: 0 0 8px 0; font-size: 16px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;">${p.title}</h4>
                             <p style="color: var(--warning); font-size: 13px; margin: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.5; font-style: italic;">
                                 <i class="fa-solid fa-tag" style="margin-right: 4px;"></i>${p.desc}
                             </p>

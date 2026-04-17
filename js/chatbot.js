@@ -46,7 +46,7 @@ const ChatbotModule = {
                     <!-- Bottom Info -->
                     <div style="padding: 16px; display: flex; flex-direction: column; flex: 1;">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-                            <h4 style="color: #fff; margin: 0; font-size: 15px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; flex: 1; margin-right: 8px;">${p.title}</h4>
+                            <h4 class="title-glow" style="color: #fff; margin: 0; font-size: 15px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; flex: 1; margin-right: 8px;">${p.title}</h4>
                             <span style="border: 1px solid rgba(0,240,255,0.3); color: rgba(0,240,255,0.8); padding: 2px 6px; border-radius: 4px; font-size: 10px; flex-shrink: 0;"><i class="fa-solid fa-tag"></i> v1.0</span>
                         </div>
                         <p style="color: var(--text-secondary); font-size: 12px; margin: 0 0 16px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.5; height: 36px;">${p.desc}</p>
