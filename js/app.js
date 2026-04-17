@@ -27,6 +27,7 @@ const app = {
         WorkModule.init();
         if (typeof PayrollModule !== 'undefined') PayrollModule.init();
         if (typeof PromptModule !== 'undefined') PromptModule.init();
+        if (typeof ChatbotModule !== 'undefined') ChatbotModule.init();
 
         // Bật vòng lặp kiểm tra các sự kiện theo thời gian (nhắc telegram, v.v)
         setTimeout(() => {
@@ -155,6 +156,7 @@ const app = {
             'work-view': { title: 'Công việc & Lịch', sub: 'Sắp xếp kế hoạch hiệu quả' },
             'attendance-view': { title: 'Chấm Công Tự Động', sub: 'Quản lý ngày làm việc và chuyên cần' },
             'prompt-view': { title: 'Kho Prompt', sub: 'Thư viện câu lệnh AI mẫu' },
+            'chatbot-view': { title: 'Thư viện Chatbot', sub: 'Trạm lưu trữ các Cỗ máy AI đa nhiệm' },
             'settings-view': { title: 'Cài đặt', sub: 'Tùy chỉnh hệ thống' }
         };
 

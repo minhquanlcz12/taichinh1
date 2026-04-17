@@ -196,6 +196,28 @@ const DB = {
         return Utils.storage.get('backup_prompts', []);
     },
 
+    // --- LƯU TRỮ CHATBOT VAULT ---
+    saveChatbots: async (chatbotsArray) => {
+        try {
+            Utils.storage.set('backup_chatbots', chatbotsArray);
+            await db.collection("system").doc("chatbots").set({ data: chatbotsArray });
+        } catch (e) {
+            console.error("Error saving chatbots:", e);
+        }
+    },
+
+    getChatbots: async () => {
+        try {
+            const doc = await db.collection("system").doc("chatbots").get();
+            if (doc.exists && doc.data() && doc.data().data) {
+                return doc.data().data;
+            }
+        } catch (e) {
+            console.error("Error getting chatbots fallback:", e);
+        }
+        return Utils.storage.get('backup_chatbots', []);
+    },
+
     // --- LƯU TRỮ CHẤM CÔNG ---
     saveAttendance: async (attendanceArray) => {
         try {
@@ -248,11 +270,15 @@ const DB = {
             Utils.storage.remove('backup_work');
             Utils.storage.remove('tl_attendance');
             Utils.storage.remove('tl_leave_requests');
+            Utils.storage.remove('backup_prompts');
+            Utils.storage.remove('backup_chatbots');
             await db.collection("system").doc("accounts").delete();
             await db.collection("finance").doc("main").delete();
             await db.collection("work").doc("main").delete();
             await db.collection("system").doc("attendance").delete();
             await db.collection("system").doc("leave_requests").delete();
+            await db.collection("system").doc("prompts").delete();
+            await db.collection("system").doc("chatbots").delete();
             console.log("Database reset");
         } catch (e) {
             console.error("Error clearing data:", e);
