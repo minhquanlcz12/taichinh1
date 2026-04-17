@@ -261,7 +261,10 @@ const ChatbotModule = {
         const url = document.getElementById('chatbot-url').value.trim();
         const originalPrice = document.getElementById('chatbot-original-price').value.trim();
         const currentPrice = document.getElementById('chatbot-current-price').value.trim();
-        const imgData = document.getElementById('chatbot-img-data').value;
+        let imgData = document.getElementById('chatbot-img-data').value;
+
+        // Nếu ảnh lấy từ DB cũ chưa được nén, ta bắt đầu nén lại nó.
+        imgData = await Utils.compressImageBase64(imgData);
 
         if (!title || !url) {
             Utils.showToast("Vui lòng nhập Tên và URL!", "error");

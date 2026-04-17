@@ -175,7 +175,10 @@ const PromptModule = {
         const category = document.getElementById('prompt-category').value;
         const desc = document.getElementById('prompt-desc').value.trim();
         const content = document.getElementById('prompt-content').value.trim();
-        const imgData = document.getElementById('prompt-img-data').value;
+        let imgData = document.getElementById('prompt-img-data').value;
+
+        // Ép nén lại nếu ảnh từ DB cũ kéo xuống quá to
+        imgData = await Utils.compressImageBase64(imgData);
 
         if (!title || !content) {
             Utils.showToast("Vui lòng nhập Tên Prompt và Nội dung!", "error");
