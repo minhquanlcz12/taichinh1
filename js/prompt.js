@@ -106,7 +106,7 @@ const PromptModule = {
                             <p style="color: var(--warning); font-size: 13px; margin: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.5; font-style: italic;">
                                 <i class="fa-solid fa-tag" style="margin-right: 4px;"></i>${p.desc}
                             </p>
-                            ${p.imgData ? `<img src="${p.imgData}" style="width:100%;max-height:140px;object-fit:cover;border-radius:6px;margin-top:10px;border:1px solid rgba(255,255,255,0.08);">` : ''}
+                            ${p.imgData ? `<img src="${p.imgData}" style="width:100%;max-height:140px;object-fit:contain;border-radius:6px;margin-top:10px;border:1px solid rgba(255,255,255,0.08);background:rgba(0,0,0,0.2);">` : ''}
                         </div>
                         
                         <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto; padding-top: 12px; border-top: 1px dashed rgba(255,255,255,0.1);">
@@ -374,7 +374,7 @@ const PromptModule = {
                 
                 document.getElementById('prompt-img-data').value = dataUrl;
                 const prevWrap = document.getElementById('prompt-img-preview-wrap');
-                if (prevWrap) prevWrap.innerHTML = `<img src="${dataUrl}" style="max-height:120px;border-radius:6px;object-fit:cover;"><p style="color:var(--success);font-size:12px;margin:6px 0 0;"><i class="fa-solid fa-check"></i> Đã nén ảnh thành công</p>`;
+                if (prevWrap) prevWrap.innerHTML = `<img src="${dataUrl}" style="max-height:120px;border-radius:6px;object-fit:contain;background:rgba(0,0,0,0.2);"><p style="color:var(--success);font-size:12px;margin:6px 0 0;"><i class="fa-solid fa-check"></i> Đã nén ảnh thành công</p>`;
             };
             img.src = e.target.result;
         };
