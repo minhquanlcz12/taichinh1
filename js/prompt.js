@@ -224,7 +224,8 @@ const PromptModule = {
     },
 
     deleteCategory: async (catName) => {
-        if(!confirm(`Xóa danh mục "${catName}"?`)) return;
+        const isConfirmed = await Utils.showConfirm("Xác nhận Xóa", `Xóa danh mục "<b>${catName}</b>"?`, "Xóa", "Hủy");
+        if(!isConfirmed) return;
         PromptModule.data.categories = PromptModule.data.categories.filter(c => c !== catName);
         if (!PromptModule.data.categories.includes('Khác')) PromptModule.data.categories.push('Khác');
         
@@ -304,7 +305,8 @@ const PromptModule = {
             Utils.showToast("⛔ Bạn không có quyền xóa Prompt!", "error");
             return;
         }
-        if (confirm("Bạn có chắc chắn muốn xóa Prompt này?")) {
+        const isConfirmed = await Utils.showConfirm("Xác nhận Xóa", "Bạn có chắc chắn muốn xóa Prompt này?", "Xóa", "Hủy");
+        if (isConfirmed) {
             // Tải dữ liệu mới nhất từ DB
             const latestDbPrompts = await DB.getPrompts() || [];
             if (latestDbPrompts.length > 0) {

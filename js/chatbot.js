@@ -175,7 +175,11 @@ const ChatbotModule = {
             return;
         }
 
-        if (!confirm(`Xác nhận MUA "${bot.title}" với giá ${price.toLocaleString('vi-VN')}đ?\n\nSố dư hiện tại: ${balance.toLocaleString('vi-VN')}đ\nSau khi mua: ${(balance - price).toLocaleString('vi-VN')}đ`)) return;
+        const isConfirmed = await Utils.showConfirm(
+            "Xác nhận Mua Chatbot",
+            `Xác nhận MUA "<b>${bot.title}</b>" với giá <b style="color:var(--warning)">${price.toLocaleString('vi-VN')}đ</b>?<br><br><div style="text-align:left; background:rgba(0,0,0,0.2); padding:10px; border-radius:8px; font-size:13px; color:var(--text-secondary);">Số dư hiện tại: <b>${balance.toLocaleString('vi-VN')}đ</b><br>Sau khi mua: <b>${(balance - price).toLocaleString('vi-VN')}đ</b></div>`
+        );
+        if (!isConfirmed) return;
 
         const accounts = await Auth.getAccounts();
         const acc = accounts.find(a => a.username === Auth.currentUser.username);
@@ -328,7 +332,8 @@ const ChatbotModule = {
     },
 
     rejectTopup: async (reqId) => {
-        if (!confirm("Từ chối yêu cầu nạp tiền này?")) return;
+        const isConfirmed = await Utils.showConfirm("Xác nhận", "Từ chối yêu cầu nạp tiền này?", "Từ chối", "Đóng");
+        if (!isConfirmed) return;
         const requests = await DB.getTopupRequests() || [];
         const req = requests.find(r => r.id === reqId);
         if (!req) return;
@@ -447,7 +452,8 @@ const ChatbotModule = {
 
     deleteChatbot: async (id) => {
         if (!Auth.currentUser || Auth.currentUser.role !== 'admin') { Utils.showToast("⛔ Không có quyền!", "error"); return; }
-        if (!confirm("Xóa Chatbot này?")) return;
+        const isConfirmed = await Utils.showConfirm("Xác nhận Xóa", "Xóa Chatbot này khỏi thư viện?", "Xóa", "Hủy");
+        if (!isConfirmed) return;
         const latestDb = await DB.getChatbots() || [];
         if (latestDb.length > 0) ChatbotModule.data.chatbots = latestDb;
         ChatbotModule.data.chatbots = ChatbotModule.data.chatbots.filter(x => x.id !== id);
