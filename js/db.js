@@ -280,6 +280,30 @@ const DB = {
         return Utils.storage.get('tl_leave_requests', []);
     },
 
+    // --- LƯU TRỮ YÊU CẦU NẠP TIỀN ---
+    saveTopupRequests: async (requestsArray) => {
+        try {
+            Utils.storage.set('backup_topup_reqs', requestsArray);
+            await db.collection("system").doc("topup_requests").set({ data: requestsArray });
+            return true;
+        } catch (e) {
+            console.error("Error saving topup requests:", e);
+            return false;
+        }
+    },
+
+    getTopupRequests: async () => {
+        try {
+            const doc = await db.collection("system").doc("topup_requests").get();
+            if (doc.exists && doc.data() && doc.data().data) {
+                return doc.data().data;
+            }
+        } catch (e) {
+            console.error("Error getting topup requests:", e);
+        }
+        return Utils.storage.get('backup_topup_reqs', []);
+    },
+
     // Xóa trắng dữ liệu thiết lập lại từ đầu
     clearAll: async () => {
         try {
@@ -290,6 +314,7 @@ const DB = {
             Utils.storage.remove('tl_leave_requests');
             Utils.storage.remove('backup_prompts');
             Utils.storage.remove('backup_chatbots');
+            Utils.storage.remove('backup_topup_reqs');
             await db.collection("system").doc("accounts").delete();
             await db.collection("finance").doc("main").delete();
             await db.collection("work").doc("main").delete();
@@ -297,6 +322,7 @@ const DB = {
             await db.collection("system").doc("leave_requests").delete();
             await db.collection("system").doc("prompts").delete();
             await db.collection("system").doc("chatbots").delete();
+            await db.collection("system").doc("topup_requests").delete();
             console.log("Database reset");
         } catch (e) {
             console.error("Error clearing data:", e);

@@ -133,6 +133,18 @@ const Auth = {
         }
         profileEl.setAttribute('title', `Role: ${Auth.currentUser.role}`);
 
+        // Wallet Balance Badge
+        let walletBadge = document.getElementById('wallet-balance-badge');
+        if (!walletBadge) {
+            walletBadge = document.createElement('div');
+            walletBadge.id = 'wallet-balance-badge';
+            walletBadge.style.cssText = 'display:flex;align-items:center;gap:6px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);padding:8px 14px;border-radius:20px;cursor:pointer;font-weight:600;color:#10b981;font-size:14px;';
+            walletBadge.onclick = () => { if (typeof ChatbotModule !== 'undefined') ChatbotModule.showTopupModal(); };
+            document.querySelector('.user-profile').insertBefore(walletBadge, document.querySelector('.user-profile .avatar'));
+        }
+        const bal = Auth.currentUser.balance || 0;
+        walletBadge.innerHTML = `<i class="fa-solid fa-wallet"></i> ${bal.toLocaleString('vi-VN')}đ`;
+
         Auth.renderSettings();
 
         app.init(); // Boot the main app layout now that user is logged in
@@ -148,7 +160,7 @@ const Auth = {
         const found = accounts.find(a => a.username === userIn && a.password === passIn);
 
         if (found) {
-            Auth.currentUser = { username: found.username, role: found.role, profile: found.profile || {} };
+            Auth.currentUser = { username: found.username, role: found.role, profile: found.profile || {}, balance: found.balance || 0, purchasedBots: found.purchasedBots || [] };
             Utils.storage.set(Auth.currentUserKey, Auth.currentUser); // Keep current user locally for session
             Utils.showToast('Đăng nhập thành công!', 'success');
             Auth.showApp();
@@ -176,7 +188,7 @@ const Auth = {
             return;
         }
 
-        accounts.push({ username: userIn, password: passIn, role: 'user', profile: {} });
+        accounts.push({ username: userIn, password: passIn, role: 'user', profile: {}, balance: 0, purchasedBots: [] });
         await Auth.saveAccounts(accounts);
 
         // --- NEW: Lời chào Telegram khi có nhân viên mới ---
