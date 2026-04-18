@@ -139,3 +139,7 @@ body { font-size: 15px !important; }
 #chatbot-modal * { font-size: 15px; }
 #topup-overlay * { font-size: 15px; }
 
+
+/* --- INTER FONT BUMP --- */
+body, h1, h2, h3, h4, h5, h6, p, span, div, input, button, textarea, select { font-family: 'Inter', sans-serif !important; }
+

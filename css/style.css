@@ -51,12 +51,12 @@ body.dark-theme {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Inter', sans-serif;
 }
 
 /* --- NEON TYPOGRAPHY GLOBALS --- */
 h1, h2, h3, h4, h5, h6 {
-    font-family: 'Orbitron', 'Poppins', sans-serif;
+    font-family: 'Inter', 'Inter', sans-serif;
     letter-spacing: 1.5px;
 }
 
@@ -175,7 +175,7 @@ body {
     clip-path: polygon(0 0, 100% 0, calc(100% - 10px) 100%, 10px 100%);
 }
 .hud-title-text {
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Inter', sans-serif;
     color: #00f0ff;
     font-weight: 700;
     font-size: 16px;
@@ -2681,3 +2681,4 @@ body.dark-theme .avatar-preview-box {
 .nav-item { font-size: 15px !important; }
 .form-group label { font-size: 13px !important; }
 .form-control { font-size: 15px !important; }
+
