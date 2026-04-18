@@ -225,7 +225,7 @@ const ChatbotModule = {
                 <div style="color:#333;font-weight:600;font-size:13px;">Quét mã chuyển tiền đến</div>
                 <div style="color:#333;font-weight:800;font-size:16px;margin:4px 0;">DAO THANH LONG</div>
                 <div style="color:#666;font-size:13px;margin-bottom:12px;">TK: 033096666666 — LPBank</div>
-                <img src="assets/qr_lpbank.png" style="max-width:200px;width:100%;border-radius:8px;" alt="QR LPBank">
+                <img src="assets/qr_lpbank.jpg" style="max-width:200px;width:100%;border-radius:8px;" alt="QR LPBank">
             </div>
             
             <div style="background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.3);border-radius:8px;padding:12px;margin-bottom:16px;font-size:13px;color:#fbbf24;">
