@@ -1,4 +1,4 @@
-:root {
+﻿:root {
     /* Color Palette - Light Theme */
     --bg-color: #f0f2f5;
     --text-primary: #1c1e21;
@@ -51,12 +51,12 @@ body.dark-theme {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Rajdhani', sans-serif;
+    font-family: 'Poppins', sans-serif;
 }
 
 /* --- NEON TYPOGRAPHY GLOBALS --- */
 h1, h2, h3, h4, h5, h6 {
-    font-family: 'Orbitron', 'Rajdhani', sans-serif;
+    font-family: 'Orbitron', 'Poppins', sans-serif;
     letter-spacing: 1.5px;
 }
 
@@ -84,7 +84,7 @@ body {
     left: 0;
     width: 100vw;
     height: 100vh;
-    /* Giáº£m Ä‘á»™ che phá»§ Ä‘á»ƒ hÃ¬nh rá»“ng ná»n hiá»‡n ra rá»±c rá»¡ */
+    /* GiÃ¡ÂºÂ£m Ã„â€˜Ã¡Â»â„¢ che phÃ¡Â»Â§ Ã„â€˜Ã¡Â»Æ’ hÃƒÂ¬nh rÃ¡Â»â€œng nÃ¡Â»Ân hiÃ¡Â»â€¡n ra rÃ¡Â»Â±c rÃ¡Â»Â¡ */
     background: linear-gradient(rgba(4, 9, 20, 0.4), rgba(4, 9, 20, 0.7)), url('../assets/bg-login-v2.jpg') center/cover no-repeat !important;
     display: none;
     align-items: center;
@@ -112,11 +112,11 @@ body {
 .auth-card {
     width: 100%;
     padding: 30px 24px 20px 24px;
-    background: rgba(4, 9, 20, 0.85); /* KhÃ´i phá»¥c Ä‘á»™ trong suá»‘t thá»§y tinh */
+    background: rgba(4, 9, 20, 0.85); /* KhÃƒÂ´i phÃ¡Â»Â¥c Ã„â€˜Ã¡Â»â„¢ trong suÃ¡Â»â€˜t thÃ¡Â»Â§y tinh */
     border: 1px solid rgba(0, 240, 255, 0.1);
     box-shadow: inset 0 0 40px rgba(0, 240, 255, 0.05);
 
-    /* VÃ¡t gÃ³c (Notched corners) */
+    /* VÃƒÂ¡t gÃƒÂ³c (Notched corners) */
     clip-path: polygon(
         15px 0, 
         calc(50% - 70px) 0, calc(50% - 60px) 15px, calc(50% + 60px) 15px, calc(50% + 70px) 0, 
@@ -163,7 +163,7 @@ body {
     align-items: center;
     border: 1px solid rgba(0, 240, 255, 0.3);
     border-top: none;
-    background: rgba(4, 9, 20, 0.95); /* Tá»‡p vá»›i ná»n xÃ¡m bÃ³ng Ä‘Ãªm */
+    background: rgba(4, 9, 20, 0.95); /* TÃ¡Â»â€¡p vÃ¡Â»â€ºi nÃ¡Â»Ân xÃƒÂ¡m bÃƒÂ³ng Ã„â€˜ÃƒÂªm */
     padding: 8px 16px 12px 16px;
     position: absolute;
     top: 0;
@@ -175,7 +175,7 @@ body {
     clip-path: polygon(0 0, 100% 0, calc(100% - 10px) 100%, 10px 100%);
 }
 .hud-title-text {
-    font-family: 'Rajdhani', sans-serif;
+    font-family: 'Poppins', sans-serif;
     color: #00f0ff;
     font-weight: 700;
     font-size: 16px;
@@ -397,7 +397,7 @@ body {
     border-radius: var(--radius-lg) !important;
 }
 
-/* Yellow/Gold Neon Card (Sá» DÆ¯) */
+/* Yellow/Gold Neon Card (SÃ¡Â»Â DÃ†Â¯) */
 .neon-card-yellow {
     border: 1px solid rgba(250, 204, 21, 0.5) !important;
     box-shadow: 0 0 15px rgba(250, 204, 21, 0.15), inset 0 0 25px rgba(250, 204, 21, 0.08) !important;
@@ -409,7 +409,7 @@ body {
     text-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
 }
 
-/* Green Neon Card (THU NHáº¬P) */
+/* Green Neon Card (THU NHÃ¡ÂºÂ¬P) */
 .neon-card-green {
     border: 1px solid rgba(52, 211, 153, 0.5) !important;
     box-shadow: 0 0 15px rgba(52, 211, 153, 0.15), inset 0 0 25px rgba(52, 211, 153, 0.08) !important;
@@ -421,7 +421,7 @@ body {
     text-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
 }
 
-/* Red Neon Card (CHI TIÃŠU) */
+/* Red Neon Card (CHI TIÃƒÅ U) */
 .neon-card-red {
     border: 1px solid rgba(248, 113, 113, 0.5) !important;
     box-shadow: 0 0 15px rgba(248, 113, 113, 0.15), inset 0 0 25px rgba(248, 113, 113, 0.08) !important;
@@ -743,7 +743,7 @@ body {
 
 .summary-card .card-inner {
     position: relative;
-    background: rgba(10, 15, 25, 0.85); /* Ná»n kÃ­nh má» */
+    background: rgba(10, 15, 25, 0.85); /* NÃ¡Â»Ân kÃƒÂ­nh mÃ¡Â»Â */
     border-radius: 10px;
     padding: 20px;
     height: 100%;
@@ -1316,7 +1316,7 @@ body.dark-theme .task-item.completed {
 
 .data-table th,
 .data-table td {
-    padding: 6px 8px; /* Tá»‘i Æ°u padding gá»n hÆ¡n */
+    padding: 6px 8px; /* TÃ¡Â»â€˜i Ã†Â°u padding gÃ¡Â»Ân hÃ†Â¡n */
     text-align: left;
     border: 1px solid var(--glass-border);
     vertical-align: top;
@@ -1347,7 +1347,7 @@ body.light-theme .data-table th {
 
 /* Specific Column Widths */
 .col-stt {
-    width: 25px; /* ÄÃ£ tá»‘i Æ°u nhá» nháº¥t */
+    width: 25px; /* Ã„ÂÃƒÂ£ tÃ¡Â»â€˜i Ã†Â°u nhÃ¡Â»Â nhÃ¡ÂºÂ¥t */
     padding: 2px;
     text-align: center;
 }
@@ -1367,7 +1367,7 @@ body.light-theme .data-table th {
 }
 
 .col-noidung {
-    width: 320px; /* Ná»™i dung cÃ³ thá»ƒ xuá»‘ng dÃ²ng, tá»‘i Æ°u khÃ´ng gian rá»™ng */
+    width: 320px; /* NÃ¡Â»â„¢i dung cÃƒÂ³ thÃ¡Â»Æ’ xuÃ¡Â»â€˜ng dÃƒÂ²ng, tÃ¡Â»â€˜i Ã†Â°u khÃƒÂ´ng gian rÃ¡Â»â„¢ng */
 }
 
 .col-dinhdang {
@@ -1375,7 +1375,7 @@ body.light-theme .data-table th {
 }
 
 .col-order {
-    width: 300px; /* TÆ°Æ¡ng tá»± ná»™i dung chi tiáº¿t */
+    width: 300px; /* TÃ†Â°Ã†Â¡ng tÃ¡Â»Â± nÃ¡Â»â„¢i dung chi tiÃ¡ÂºÂ¿t */
 }
 
 .col-deadline {
@@ -1435,7 +1435,7 @@ body.dark-theme .data-table tbody tr:hover {
     background-color: rgba(255, 255, 255, 0.05);
 }
 
-/* Tráº¡ng thÃ¡i Styling */
+/* TrÃ¡ÂºÂ¡ng thÃƒÂ¡i Styling */
 .status-planned {
     color: var(--warning);
 }
@@ -1801,7 +1801,7 @@ body.dark-theme .avatar-preview-box {
 }
 
 /* =========================================================================
-   DASHBOARD TASK LIST STYLES (CÃ”NG VIá»†C HÃ”M NAY)
+   DASHBOARD TASK LIST STYLES (CÃƒâ€NG VIÃ¡Â»â€ C HÃƒâ€M NAY)
    ========================================================================= */
 .task-item {
     display: flex;
@@ -2562,10 +2562,10 @@ body.dark-theme .avatar-preview-box {
  } 
  
  . t l - t a b l e   t b o d y   t r : h o v e r   { 
-         b a c k g r o u n d - c o l o r :   r g b a ( 2 5 5 ,   2 5 5 ,   2 5 5 ,   0 . 0 5 ) ;   / *   T ù y   c h Én h   m à u   h o v e r   c h o   n h ¹  n h à n g   t r ê n   n Án   t Ñi   * / 
+         b a c k g r o u n d - c o l o r :   r g b a ( 2 5 5 ,   2 5 5 ,   2 5 5 ,   0 . 0 5 ) ;   / *   T Ã¹ y   c h Ã‰n h   m Ã  u   h o v e r   c h o   n h Â¹  n h Ã  n g   t r Ãª n   n Ãn   t Ã‘i   * / 
  } 
  
- / *   C á c   c e l l   §u   v à   c u Ñi   n ê n   b o   g ó c   n ¿u   t h í c h   * / 
+ / *   C Ã¡ c   c e l l   Â§u   v Ã    c u Ã‘i   n Ãª n   b o   g Ã³ c   n Â¿u   t h Ã­ c h   * / 
  . t l - t a b l e   t h : f i r s t - c h i l d   {   b o r d e r - t o p - l e f t - r a d i u s :   8 p x ;   } 
  . t l - t a b l e   t h : l a s t - c h i l d   {   b o r d e r - t o p - r i g h t - r a d i u s :   8 p x ;   } 
  
