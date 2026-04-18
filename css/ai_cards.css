@@ -124,3 +124,18 @@ body.dark-theme .ai-ytuong-card { background: rgba(255,255,255,0.05); }
     margin-bottom: 12px;
 }
 body.dark-theme .ai-ytuong-number { color: #64b5f6; }
+
+/* --- ACCESSIBILITY BUMP (USER REQUEST) --- */
+body { font-size: 15px !important; }
+.data-table th { font-size: 15px !important; padding: 14px !important; }
+.data-table td { font-size: 14px !important; padding: 14px !important; }
+.task-title { font-size: 16px !important; }
+.task-desc { font-size: 15px !important; line-height: 1.5 !important; }
+.badge { font-size: 12px !important; padding: 4px 8px !important; }
+.btn { font-size: 15px !important; }
+.nav-item { font-size: 15px !important; }
+.form-group label { font-size: 14px !important; }
+.form-control { font-size: 15px !important; }
+#chatbot-modal * { font-size: 15px; }
+#topup-overlay * { font-size: 15px; }
+
