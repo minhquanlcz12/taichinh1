@@ -236,11 +236,21 @@ const Attendance = {
 
     renderAdminView: async (container) => {
         const allData = await Attendance.loadData();
+        const allLeaves = await Attendance.loadLeaveData();
         
         // Phân nhóm theo User và Tháng hiện tại
         const now = new Date();
-        const currentMonthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth();
+        const currentMonthPrefix = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
         
+        // Tính số ngày làm việc đã qua trong tháng (Loại trừ Chủ nhật)
+        let passedWorkingDays = 0;
+        for (let day = 1; day <= now.getDate(); day++) {
+             let d = new Date(currentYear, currentMonth, day);
+             if (d.getDay() !== 0) passedWorkingDays++;
+        }
+
         const summary = {};
         allData.forEach(r => {
             if (r.dateStr.startsWith(currentMonthPrefix)) {
@@ -257,7 +267,22 @@ const Attendance = {
             }
         });
 
-        const usersList = Object.keys(summary);
+        const approvedLeaves = {};
+        allLeaves.forEach(l => {
+            if (l.status === 'approved' && l.startDate.startsWith(currentMonthPrefix)) {
+                if (!approvedLeaves[l.username]) approvedLeaves[l.username] = 0;
+                approvedLeaves[l.username] += parseFloat(l.days) || 0;
+            }
+        });
+
+        // Lấy tất cả user từ DB (loại admin) để hiển thị kể cả khi chưa điểm danh
+        const accounts = (typeof Auth !== 'undefined' && await Auth.getAccounts()) || [];
+        const usersList = accounts.filter(a => a.role !== 'admin').map(a => a.username);
+        
+        // Cứ thêm user có dữ liệu điểm danh lỡ như tài khoản bị xoá
+        Object.keys(summary).forEach(u => {
+            if (!usersList.includes(u) && u !== 'admin') usersList.push(u);
+        });
         
         let adminHtml = `
             <div class="glass-panel admin-cyber-box" style="padding: 24px; border: 1px solid rgba(100, 255, 218, 0.5); box-shadow: 0 0 10px rgba(100, 255, 218, 0.1);">
@@ -291,16 +316,26 @@ const Attendance = {
                             </thead>
                             <tbody>
                                 ${usersList.length === 0 ? '<tr><td colspan="6" style="text-align:center; padding: 16px;">Chưa có dữ liệu tháng này</td></tr>' : ''}
-                                ${usersList.map(u => `
+                                ${usersList.map(u => {
+                                    const s = summary[u] || { totalDays: 0, onTime: 0, late: 0, totalLateMinutes: 0 };
+                                    const leaves = approvedLeaves[u] || 0;
+                                    let absent = passedWorkingDays - s.totalDays - leaves;
+                                    if (absent < 0) absent = 0;
+                                    
+                                    return `
                                     <tr style="background: rgba(4, 9, 20, 0.8); border-radius: 8px; box-shadow: inset 0 0 0 1px rgba(100, 255, 218, 0.4);">
                                         <td style="font-weight: 600; padding: 12px 16px; color: #fff; border-top-left-radius: 8px; border-bottom-left-radius: 8px; border-top: 1px solid rgba(100, 255, 218, 0.4); border-bottom: 1px solid rgba(100, 255, 218, 0.4); border-left: 1px solid rgba(100, 255, 218, 0.4);">${u}</td>
-                                        <td style="padding: 12px 16px; color: var(--text-secondary); border-top: 1px solid rgba(100, 255, 218, 0.4); border-bottom: 1px solid rgba(100, 255, 218, 0.4);"><i class="fa-regular fa-calendar" style="margin-right: 6px;"></i> ${summary[u].totalDays}</td>
-                                        <td style="color: var(--success); font-weight: bold; padding: 12px 16px; border-top: 1px solid rgba(100, 255, 218, 0.4); border-bottom: 1px solid rgba(100, 255, 218, 0.4);">${summary[u].onTime}</td>
-                                        <td style="color: var(--danger); font-weight: bold; padding: 12px 16px; border-top: 1px solid rgba(100, 255, 218, 0.4); border-bottom: 1px solid rgba(100, 255, 218, 0.4);">0</td> <!-- TODO: Tính toán vắng nếu cần -->
-                                        <td style="color: var(--danger); font-weight: bold; padding: 12px 16px; border-top: 1px solid rgba(100, 255, 218, 0.4); border-bottom: 1px solid rgba(100, 255, 218, 0.4);">${summary[u].late}</td>
-                                        <td style="padding: 12px 16px; border-top-right-radius: 8px; border-bottom-right-radius: 8px; border-top: 1px solid rgba(100, 255, 218, 0.4); border-bottom: 1px solid rgba(100, 255, 218, 0.4); border-right: 1px solid rgba(100, 255, 218, 0.4);"><span style="color: #64ffda; font-weight: 500; display: inline-flex; align-items: center; gap: 6px;"><i class="fa-regular fa-clock"></i> ${summary[u].totalLateMinutes} p</span></td>
+                                        <td style="padding: 12px 16px; color: var(--text-secondary); border-top: 1px solid rgba(100, 255, 218, 0.4); border-bottom: 1px solid rgba(100, 255, 218, 0.4);"><i class="fa-regular fa-calendar" style="margin-right: 6px;"></i> ${s.totalDays} / ${passedWorkingDays}</td>
+                                        <td style="color: var(--success); font-weight: bold; padding: 12px 16px; border-top: 1px solid rgba(100, 255, 218, 0.4); border-bottom: 1px solid rgba(100, 255, 218, 0.4);">${s.onTime}</td>
+                                        <td style="color: var(--danger); font-weight: bold; padding: 12px 16px; border-top: 1px solid rgba(100, 255, 218, 0.4); border-bottom: 1px solid rgba(100, 255, 218, 0.4);">
+                                            ${absent}
+                                            ${leaves > 0 ? `<br><small style="color:var(--warning);font-size:10px;font-style:italic;">(Nghỉ phép: ${leaves})</small>` : ''}
+                                        </td>
+                                        <td style="color: var(--danger); font-weight: bold; padding: 12px 16px; border-top: 1px solid rgba(100, 255, 218, 0.4); border-bottom: 1px solid rgba(100, 255, 218, 0.4);">${s.late}</td>
+                                        <td style="padding: 12px 16px; border-top-right-radius: 8px; border-bottom-right-radius: 8px; border-top: 1px solid rgba(100, 255, 218, 0.4); border-bottom: 1px solid rgba(100, 255, 218, 0.4); border-right: 1px solid rgba(100, 255, 218, 0.4);"><span style="color: #64ffda; font-weight: 500; display: inline-flex; align-items: center; gap: 6px;"><i class="fa-regular fa-clock"></i> ${s.totalLateMinutes} p</span></td>
                                     </tr>
-                                `).join('')}
+                                    `;
+                                }).join('')}
                             </tbody>
                         </table>
                     </div>
@@ -428,6 +463,10 @@ const Attendance = {
             status = 'late';
             const diffMs = now - deadline;
             lateMinutes = Math.floor(diffMs / 60000);
+            
+            // Thông báo lên Bot Telegram nếu đi muộn
+            const msg = `⚠️ <b>[BÁO CÁO ĐI MUỘN]</b>\n👤 Nhân viên: <b>${user.username}</b>\n⏰ Điểm danh lúc: ${now.toLocaleTimeString('vi-VN')}\n⏳ Đi muộn: ${lateMinutes} phút so với giờ quy định (08:30).`;
+            Utils.notifyTelegram(msg);
         }
 
         const newRecord = {
