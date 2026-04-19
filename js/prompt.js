@@ -106,7 +106,7 @@ const PromptModule = {
                             <p style="color: var(--warning); font-size: 13px; margin: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.5; font-style: italic;">
                                 <i class="fa-solid fa-tag" style="margin-right: 4px;"></i>${p.desc}
                             </p>
-                            ${p.imgData ? `<div style="width:100%; max-height:140px; overflow:hidden; border-radius:6px; margin-top:10px; border:1px solid rgba(255,255,255,0.08); background:rgba(0,0,0,0.2);"><img src="${p.imgData}" style="width:100%; max-height:140px; object-fit:contain; transition: transform 0.3s ease; transform-origin: center; cursor: zoom-in; display: block;" onmouseover="this.style.transform='scale(2)';" onmouseout="this.style.transform='scale(1)';"></div>` : ''}
+                            ${p.imgData ? `<img src="${p.imgData}" style="width:100%; max-height:140px; object-fit:contain; border-radius:6px; margin-top:10px; border:1px solid rgba(255,255,255,0.08); background:rgba(0,0,0,0.2); cursor: crosshair;" onmouseenter="PromptModule.showPreview(this.src)" onmouseleave="PromptModule.hidePreview()">` : ''}
                         </div>
                         
                         <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto; padding-top: 12px; border-top: 1px dashed rgba(255,255,255,0.1);">
@@ -133,6 +133,28 @@ const PromptModule = {
 
         html += `</div>`;
         container.innerHTML = html;
+    },
+
+    showPreview: (src) => {
+        let preview = document.getElementById('global-prompt-image-preview');
+        if (!preview) {
+            preview = document.createElement('div');
+            preview.id = 'global-prompt-image-preview';
+            preview.style.cssText = 'position: fixed; top: 90px; right: 40px; z-index: 9999; max-width: 450px; max-height: 450px; background: rgba(5, 10, 20, 0.95); border: 1px solid var(--primary); border-radius: 8px; box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 240, 255, 0.15); padding: 8px; pointer-events: none; transition: opacity 0.2s ease; opacity: 0;';
+            preview.innerHTML = '<img id="global-prompt-image-preview-src" src="" style="width: 100%; height: 100%; max-height: 430px; object-fit: contain; border-radius: 4px;">';
+            document.body.appendChild(preview);
+        }
+        document.getElementById('global-prompt-image-preview-src').src = src;
+        preview.style.display = 'block';
+        setTimeout(() => preview.style.opacity = '1', 10);
+    },
+
+    hidePreview: () => {
+        const preview = document.getElementById('global-prompt-image-preview');
+        if (preview) {
+            preview.style.opacity = '0';
+            setTimeout(() => { if (preview.style.opacity === '0') preview.style.display = 'none'; }, 200);
+        }
     },
 
     showModal: (id = null) => {
