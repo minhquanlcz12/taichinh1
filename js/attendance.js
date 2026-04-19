@@ -121,7 +121,9 @@ const Attendance = {
                 <div class="attendance-status success-ring">
                     <i class="fa-solid fa-check-circle" style="font-size: 48px; color: var(--success); margin-bottom: 16px;"></i>
                     <h3 style="color: var(--success);">Đã Điểm Danh</h3>
-                    <p style="color: var(--text-secondary); margin-top: 8px;">Thời gian: <strong>${new Date(todayRecord.timestamp).toLocaleTimeString('vi-VN')}</strong></p>
+                    <p style="color: var(--text-secondary); margin-top: 8px;">Vào lúc: <strong>${new Date(todayRecord.timestamp).toLocaleTimeString('vi-VN')}</strong>
+                        ${todayRecord.location ? `<br><small style="color: var(--primary);"><i class="fa-solid fa-location-dot"></i> GPS Xác thực</small>` : ''}
+                    </p>
                     <p style="margin-top: 8px;">Trạng thái: 
                         <span class="badge ${todayRecord.status === 'on_time' ? 'bg-success' : 'bg-danger'}">
                             ${todayRecord.status === 'on_time' ? 'Đúng giờ' : `Đi muộn ${todayRecord.lateMinutes} phút`}
@@ -129,6 +131,24 @@ const Attendance = {
                     </p>
                 </div>
             `;
+            
+            // Nếu đã checkin nhưng chưa checkout
+            if (!todayRecord.checkoutTimestamp) {
+                checkInHtml += `
+                <div style="text-align: center; margin-top: 20px;">
+                    <button class="btn" style="background: var(--info); color: #fff; padding: 12px 24px; font-weight: bold; border-radius: 30px; box-shadow: 0 4px 15px rgba(0, 240, 255, 0.3);" onclick="Attendance.showCheckoutModal()">
+                        <i class="fa-solid fa-person-walking-arrow-right" style="margin-right: 8px;"></i> BÁO CÁO RA VÊ (CHECK-OUT)
+                    </button>
+                    <p style="color: var(--text-secondary); font-size: 12px; margin-top: 8px;">Vui lòng làm báo cáo EOD trước khi kết thúc ngày.</p>
+                </div>`;
+            } else {
+                checkInHtml += `
+                <div class="glass-panel" style="margin-top: 20px; padding: 16px; border-color: var(--success);">
+                    <h4 style="color: var(--success); margin-bottom: 8px;"><i class="fa-solid fa-clipboard-check"></i> Đã hoàn thành ngày làm việc</h4>
+                    <p style="color: var(--text-secondary); font-size: 13px; margin: 0;">Ra về lúc: <strong>${new Date(todayRecord.checkoutTimestamp).toLocaleTimeString('vi-VN')}</strong></p>
+                </div>`;
+            }
+
         } else {
             checkInHtml = `
                 <div class="check-in-box">
@@ -138,6 +158,7 @@ const Attendance = {
                         <div class="radar-scan"></div>
                     </button>
                     <p style="margin-top: 24px; color: var(--text-secondary);">Nhấp vào vòng tròn để xác nhận có mặt hôm nay.</p>
+                    <small style="color: var(--warning); display: block; margin-top: 8px;"><i class="fa-solid fa-location-dot"></i> Yêu cầu cấp quyền truy cập vị trí (GPS) để xác minh.</small>
                 </div>
             `;
         }
@@ -174,7 +195,7 @@ const Attendance = {
                             ${userHistory.map(r => `
                                 <tr>
                                     <td>${r.dateStr}</td>
-                                    <td>${new Date(r.timestamp).toLocaleTimeString('vi-VN')}</td>
+                                    <td>${new Date(r.timestamp).toLocaleTimeString('vi-VN')} ${r.checkoutTimestamp ? `<br><small style="color:var(--success)">Ra: ${new Date(r.checkoutTimestamp).toLocaleTimeString('vi-VN')}</small>` : ''}</td>
                                     <td>
                                         <span class="badge ${r.status === 'on_time' ? 'bg-success' : 'bg-danger'}">
                                             ${r.status === 'on_time' ? 'Đúng giờ' : `Muộn ${r.lateMinutes}p`}
@@ -286,9 +307,12 @@ const Attendance = {
         
         let adminHtml = `
             <div class="glass-panel admin-cyber-box" style="padding: 24px; border: 1px solid rgba(100, 255, 218, 0.5); box-shadow: 0 0 10px rgba(100, 255, 218, 0.1);">
-                <h2 style="color: var(--primary); margin-bottom: 24px; font-size: 18px; letter-spacing: 1px; display: flex; align-items: center; gap: 8px;">
-                    <i class="fa-solid fa-list-check"></i> Tổng hợp Chấm Công (Tháng ${now.getMonth() + 1}/${now.getFullYear()})
-                </h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                    <h2 style="color: var(--primary); font-size: 18px; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; margin: 0;">
+                        <i class="fa-solid fa-list-check"></i> Tổng hợp Chấm Công (Tháng ${now.getMonth() + 1}/${now.getFullYear()})
+                    </h2>
+                    <button class="btn btn-success" onclick="Attendance.exportAttendanceCSV()"><i class="fa-solid fa-file-excel" style="margin-right: 6px;"></i> Xuất Excel</button>
+                </div>
                 
                 <div style="display: flex; gap: 24px; align-items: stretch;">
                     <!-- Cục Nhân sự bên trái -->
@@ -449,6 +473,30 @@ const Attendance = {
         const user = Auth.currentUser;
         if (!user) return;
 
+        // Yêu cầu Location (GPS) Validation
+        const btn = document.getElementById('btn-check-in');
+        if (btn) btn.disabled = true; // Ngăn bấm nhiều lần
+
+        if (!navigator.geolocation) {
+            Utils.showToast('Trình duyệt của bạn không hỗ trợ định vị GPS để chấm công.', 'error');
+            if (btn) btn.disabled = false;
+            return;
+        }
+
+        Utils.showToast('Đang lấy vị trí GPS...', 'info');
+        
+        navigator.geolocation.getCurrentPosition(async (position) => {
+            await Attendance._processCheckinWithLocation(position.coords.latitude, position.coords.longitude);
+        }, async (error) => {
+            console.error("Lỗi lấy vị trí:", error);
+            // Một số nơi có thể ép buộc phải có GPS mới cho checkin. Tạm thời vẫn cho checkin nhưng lưu là ko có GPS.
+            Utils.showToast('Không thể lấy vị trí GPS. Đã ghi nhận chấm công không có vị trí.', 'warning');
+            await Attendance._processCheckinWithLocation(null, null);
+        }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+    },
+
+    _processCheckinWithLocation: async (lat, lng) => {
+        const user = Auth.currentUser;
         const now = new Date();
         const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
         
@@ -465,7 +513,8 @@ const Attendance = {
             lateMinutes = Math.floor(diffMs / 60000);
             
             // Thông báo lên Bot Telegram nếu đi muộn
-            const msg = `⚠️ <b>[BÁO CÁO ĐI MUỘN]</b>\n👤 Nhân viên: <b>${user.username}</b>\n⏰ Điểm danh lúc: ${now.toLocaleTimeString('vi-VN')}\n⏳ Đi muộn: ${lateMinutes} phút so với giờ quy định (08:30).`;
+            let locStr = lat ? `\n📍 Vị trí: https://google.com/maps?q=${lat},${lng}` : '';
+            const msg = `⚠️ <b>[BÁO CÁO ĐI MUỘN]</b>\n👤 Nhân viên: <b>${user.username}</b>\n⏰ Điểm danh lúc: ${now.toLocaleTimeString('vi-VN')}\n⏳ Đi muộn: ${lateMinutes} phút so với giờ quy định (08:30).${locStr}`;
             Utils.notifyTelegram(msg);
         }
 
@@ -476,6 +525,7 @@ const Attendance = {
             dateStr: dateStr,
             status: status,
             lateMinutes: lateMinutes,
+            location: lat ? { lat, lng } : null,
             note: ''
         };
 
@@ -574,5 +624,113 @@ const Attendance = {
             Utils.showToast(`Đã ${newStatus === 'approved' ? 'duyệt' : 'từ chối'} yêu cầu thành công!`, "success");
             Attendance.render(); // Tải lại view Admin
         }
+    },
+
+    showCheckoutModal: () => {
+        document.getElementById('checkout-form').reset();
+        document.getElementById('checkout-modal-overlay').classList.add('active');
+    },
+
+    closeCheckoutModal: () => {
+        document.getElementById('checkout-modal-overlay').classList.remove('active');
+    },
+
+    submitCheckout: async () => {
+        const user = Auth.currentUser;
+        if (!user) return;
+
+        const report = document.getElementById('checkout-report').value.trim();
+        if (!report) {
+            Utils.showToast("Vui lòng nhập báo cáo công việc!", "error");
+            return;
+        }
+
+        const now = new Date();
+        const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        
+        const allData = await Attendance.loadData();
+        const todayRecord = allData.find(r => r.username === user.username && r.dateStr === dateStr);
+        
+        if (todayRecord) {
+            todayRecord.checkoutTimestamp = now.getTime();
+            todayRecord.checkoutReport = report;
+            await Attendance.saveData(allData);
+
+            // Gửi Telegram EOD Report
+            const msg = `✅ <b>[BÁO CÁO CUỐI NGÀY DỰ ÁN]</b>\n👤 Nhân viên: <b>${user.username}</b>\n⏰ Ra về lúc: ${now.toLocaleTimeString('vi-VN')}\n\n📝 <b>Công việc đã hoàn thành:</b>\n${report}`;
+            Utils.notifyTelegram(msg);
+
+            Attendance.closeCheckoutModal();
+            Utils.showToast("Gửi báo cáo và Ra về thành công!", "success");
+            Attendance.render();
+        } else {
+            Utils.showToast("Không tìm thấy dữ liệu điểm danh ban sáng?", "error");
+        }
+    },
+
+    exportAttendanceCSV: async () => {
+        const allData = await Attendance.loadData();
+        const allLeaves = await Attendance.loadLeaveData();
+        
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth();
+        const currentMonthPrefix = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
+        
+        let passedWorkingDays = 0;
+        for (let day = 1; day <= now.getDate(); day++) {
+             let d = new Date(currentYear, currentMonth, day);
+             if (d.getDay() !== 0) passedWorkingDays++;
+        }
+
+        const summary = {};
+        allData.forEach(r => {
+            if (r.dateStr.startsWith(currentMonthPrefix)) {
+                if (!summary[r.username]) summary[r.username] = { totalDays: 0, onTime: 0, late: 0, totalLateMinutes: 0 };
+                summary[r.username].totalDays++;
+                if (r.status === 'on_time') summary[r.username].onTime++;
+                else {
+                    summary[r.username].late++;
+                    summary[r.username].totalLateMinutes += r.lateMinutes || 0;
+                }
+            }
+        });
+
+        const approvedLeaves = {};
+        allLeaves.forEach(l => {
+            if (l.status === 'approved' && l.startDate.startsWith(currentMonthPrefix)) {
+                if (!approvedLeaves[l.username]) approvedLeaves[l.username] = 0;
+                approvedLeaves[l.username] += parseFloat(l.days) || 0;
+            }
+        });
+
+        const accounts = (typeof Auth !== 'undefined' && await Auth.getAccounts()) || [];
+        const usersList = accounts.filter(a => a.role !== 'admin').map(a => a.username);
+        Object.keys(summary).forEach(u => {
+            if (!usersList.includes(u) && u !== 'admin') usersList.push(u);
+        });
+
+        // Tạo nội dung CSV (UTF-8 BOM hỗ trợ tiếng Việt)
+        let csvContent = "\uFEFF"; // BOM cho Excel
+        csvContent += "Tài xế/Nhân viên,Tổng ngày công đã qua,Đã đi làm,Đúng giờ,Vắng,Nghỉ phép duyệt,Đi muộn (lần),Tổng phút đi muộn\n";
+
+        usersList.forEach(u => {
+            const s = summary[u] || { totalDays: 0, onTime: 0, late: 0, totalLateMinutes: 0 };
+            const leaves = approvedLeaves[u] || 0;
+            let absent = passedWorkingDays - s.totalDays - leaves;
+            if (absent < 0) absent = 0;
+            
+            csvContent += `"${u}",${passedWorkingDays},${s.totalDays},${s.onTime},${absent},${leaves},${s.late},${s.totalLateMinutes}\n`;
+        });
+
+        // Tải xuống
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.setAttribute('href', url);
+        a.setAttribute('download', `Bang_Cham_Cong_Thang_${currentMonth + 1}_${currentYear}.csv`);
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
     }
 };
