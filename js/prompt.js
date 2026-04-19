@@ -106,7 +106,7 @@ const PromptModule = {
                             <p style="color: var(--warning); font-size: 13px; margin: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.5; font-style: italic;">
                                 <i class="fa-solid fa-tag" style="margin-right: 4px;"></i>${p.desc}
                             </p>
-                            ${p.imgData ? `<img src="${p.imgData}" style="width:100%; max-height:140px; object-fit:contain; border-radius:6px; margin-top:10px; border:1px solid rgba(255,255,255,0.08); background:rgba(0,0,0,0.2); cursor: crosshair;" onmouseenter="PromptModule.showPreview(this.src)" onmouseleave="PromptModule.hidePreview()">` : ''}
+                            ${p.imgData ? `<img src="${p.imgData}" style="width:100%; max-height:140px; object-fit:contain; border-radius:6px; margin-top:10px; border:1px solid rgba(255,255,255,0.08); background:rgba(0,0,0,0.2); cursor: crosshair;" onmouseenter="PromptModule.showPreview(this.src, this)" onmouseleave="PromptModule.hidePreview()">` : ''}
                         </div>
                         
                         <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto; padding-top: 12px; border-top: 1px dashed rgba(255,255,255,0.1);">
@@ -135,25 +135,56 @@ const PromptModule = {
         container.innerHTML = html;
     },
 
-    showPreview: (src) => {
+    showPreview: (src, imgElem) => {
         let preview = document.getElementById('global-prompt-image-preview');
         if (!preview) {
             preview = document.createElement('div');
             preview.id = 'global-prompt-image-preview';
-            preview.style.cssText = 'position: fixed; top: 90px; right: 40px; z-index: 9999; max-width: 450px; max-height: 450px; background: rgba(5, 10, 20, 0.95); border: 1px solid var(--primary); border-radius: 8px; box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 240, 255, 0.15); padding: 8px; pointer-events: none; transition: opacity 0.2s ease; opacity: 0;';
-            preview.innerHTML = '<img id="global-prompt-image-preview-src" src="" style="width: 100%; height: 100%; max-height: 430px; object-fit: contain; border-radius: 4px;">';
+            preview.style.cssText = 'position: fixed; z-index: 99999; max-width: 450px; background: rgba(5, 10, 20, 0.95); border: 1px solid var(--primary); border-radius: 8px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 240, 255, 0.2); padding: 8px; pointer-events: none; transition: opacity 0.15s ease, transform 0.15s ease; opacity: 0; transform: scale(0.95) translateY(10px); display: flex; transform-origin: bottom center;';
+            preview.innerHTML = '<img id="global-prompt-image-preview-src" src="" style="width: 100%; height: auto; max-height: 480px; object-fit: contain; border-radius: 4px;">';
             document.body.appendChild(preview);
         }
+        
         document.getElementById('global-prompt-image-preview-src').src = src;
         preview.style.display = 'block';
-        setTimeout(() => preview.style.opacity = '1', 10);
+
+        if (imgElem) {
+            const card = imgElem.closest('.prompt-card') || imgElem;
+            const cardRect = card.getBoundingClientRect();
+            preview.style.bottom = (window.innerHeight - cardRect.top + 10) + 'px';
+            preview.style.top = 'auto';
+
+            // Căn lề phải của popup trùng với lề phải của thẻ card
+            let rightPos = window.innerWidth - cardRect.right;
+            if (rightPos < 10) rightPos = 10; // Không sát mép màn hình quá
+            preview.style.right = rightPos + 'px';
+            preview.style.left = 'auto';
+
+            // Nếu card ở quá gần mép trên làm hình bị che, đẩy xuống dưới card
+            if (cardRect.top < 300) {
+                preview.style.top = (cardRect.bottom + 10) + 'px';
+                preview.style.bottom = 'auto';
+                preview.style.transformOrigin = 'top center';
+                preview.style.transform = 'scale(0.95) translateY(-10px)';
+            } else {
+                preview.style.transformOrigin = 'bottom center';
+                preview.style.transform = 'scale(0.95) translateY(10px)';
+            }
+        }
+        
+        setTimeout(() => {
+            preview.style.opacity = '1';
+            preview.style.transform = 'scale(1) translateY(0)';
+        }, 10);
     },
 
     hidePreview: () => {
         const preview = document.getElementById('global-prompt-image-preview');
         if (preview) {
             preview.style.opacity = '0';
-            setTimeout(() => { if (preview.style.opacity === '0') preview.style.display = 'none'; }, 200);
+            const originText = preview.style.transformOrigin;
+            preview.style.transform = originText.includes('top') ? 'scale(0.95) translateY(-10px)' : 'scale(0.95) translateY(10px)';
+            setTimeout(() => { if (preview.style.opacity === '0') preview.style.display = 'none'; }, 150);
         }
     },
 
