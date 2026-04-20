@@ -158,7 +158,7 @@ const app = {
             'prompt-view': { title: 'Kho Prompt', sub: 'Thư viện câu lệnh AI mẫu' },
             'chatbot-view': { title: 'Thư viện Chatbot', sub: 'Trạm lưu trữ các Cỗ máy AI đa nhiệm' },
             'settings-view': { title: 'Cài đặt', sub: 'Tùy chỉnh hệ thống' },
-            'music-view': { title: '🎧 Zing MP3', sub: 'Nghe nhạc trực tuyến ngay trong ứng dụng' }
+            'music-view': { title: '🎵 YouTube Music', sub: 'Nghe nhạc & xem MV ngay trong ứng dụng' }
         };
 
         const titleInfo = titles[viewId] || titles['dashboard-view'];
