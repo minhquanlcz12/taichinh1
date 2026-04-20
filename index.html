@@ -416,79 +416,9 @@
                     <!-- Sẽ được inject bởi auth.js -> Auth.renderSettings -->
                 </div>
 
-                <!-- Zing MP3 Music View -->
+                <!-- In-App Music Player -->
                 <div id="music-view" class="view">
-                    <div style="width:100%; min-height: calc(100vh - 120px); display:flex; flex-direction:column; align-items:center; justify-content:center; background: linear-gradient(135deg, #1a0533 0%, #0d001a 50%, #1a0a2e 100%); border-radius: 16px; border: 1px solid rgba(148,0,211,0.2); padding: 40px 20px; position: relative; overflow: hidden;">
-                        <!-- Background glow effects -->
-                        <div style="position:absolute; width:300px; height:300px; background:radial-gradient(circle, rgba(155,89,182,0.15), transparent 70%); top:-50px; left:-50px; pointer-events:none;"></div>
-                        <div style="position:absolute; width:250px; height:250px; background:radial-gradient(circle, rgba(52,152,219,0.1), transparent 70%); bottom:-30px; right:-30px; pointer-events:none;"></div>
-
-                        <!-- Main Icon -->
-                        <div style="width:120px; height:120px; border-radius:50%; background: linear-gradient(135deg, #9b59b6, #8e44ad); display:flex; align-items:center; justify-content:center; margin-bottom:28px; box-shadow: 0 0 50px rgba(155,89,182,0.4); animation: musicPulse 2s ease-in-out infinite;">
-                            <i class="fa-solid fa-headphones" style="font-size:48px; color:#fff;"></i>
-                        </div>
-
-                        <h2 style="color:#fff; font-size:28px; margin-bottom:8px; font-weight:800;">Nghe Nhạc Online</h2>
-                        <p style="color:rgba(255,255,255,0.5); margin-bottom:40px; font-size:15px; text-align:center; max-width:400px;">Chọn nền tảng yêu thích, bật nhạc và làm việc hiệu quả hơn 🎶</p>
-
-                        <!-- Music Buttons Grid -->
-                        <div style="display:flex; flex-wrap:wrap; gap:16px; justify-content:center; max-width:600px;">
-                            <!-- Zing MP3 -->
-                            <button onclick="window.open('https://zingmp3.vn','_blank')" style="display:flex; align-items:center; gap:14px; background: linear-gradient(135deg, #9b59b6, #6c3483); color:#fff; border:none; padding:16px 28px; border-radius:14px; cursor:pointer; font-size:16px; font-weight:700; box-shadow:0 6px 25px rgba(155,89,182,0.35); transition:all 0.3s; min-width:220px;">
-                                <div style="width:44px;height:44px;border-radius:10px;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;">
-                                    <i class="fa-solid fa-music" style="font-size:20px;"></i>
-                                </div>
-                                <div style="text-align:left;">
-                                    <div style="font-size:16px;">Zing MP3</div>
-                                    <div style="font-size:11px; opacity:0.7; font-weight:400;">zingmp3.vn</div>
-                                </div>
-                            </button>
-
-                            <!-- NhacCuaTui -->
-                            <button onclick="window.open('https://www.nhaccuatui.com','_blank')" style="display:flex; align-items:center; gap:14px; background: linear-gradient(135deg, #e74c3c, #c0392b); color:#fff; border:none; padding:16px 28px; border-radius:14px; cursor:pointer; font-size:16px; font-weight:700; box-shadow:0 6px 25px rgba(231,76,60,0.35); transition:all 0.3s; min-width:220px;">
-                                <div style="width:44px;height:44px;border-radius:10px;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;">
-                                    <i class="fa-solid fa-compact-disc" style="font-size:20px;"></i>
-                                </div>
-                                <div style="text-align:left;">
-                                    <div style="font-size:16px;">NhacCuaTui</div>
-                                    <div style="font-size:11px; opacity:0.7; font-weight:400;">nhaccuatui.com</div>
-                                </div>
-                            </button>
-
-                            <!-- YouTube Music -->
-                            <button onclick="window.open('https://music.youtube.com','_blank')" style="display:flex; align-items:center; gap:14px; background: linear-gradient(135deg, #e74c3c, #2d2d2d); color:#fff; border:none; padding:16px 28px; border-radius:14px; cursor:pointer; font-size:16px; font-weight:700; box-shadow:0 6px 25px rgba(231,76,60,0.25); transition:all 0.3s; min-width:220px;">
-                                <div style="width:44px;height:44px;border-radius:10px;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;">
-                                    <i class="fa-brands fa-youtube" style="font-size:22px;"></i>
-                                </div>
-                                <div style="text-align:left;">
-                                    <div style="font-size:16px;">YouTube Music</div>
-                                    <div style="font-size:11px; opacity:0.7; font-weight:400;">music.youtube.com</div>
-                                </div>
-                            </button>
-
-                            <!-- Spotify -->
-                            <button onclick="window.open('https://open.spotify.com','_blank')" style="display:flex; align-items:center; gap:14px; background: linear-gradient(135deg, #1DB954, #148a3c); color:#fff; border:none; padding:16px 28px; border-radius:14px; cursor:pointer; font-size:16px; font-weight:700; box-shadow:0 6px 25px rgba(29,185,84,0.3); transition:all 0.3s; min-width:220px;">
-                                <div style="width:44px;height:44px;border-radius:10px;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;">
-                                    <i class="fa-brands fa-spotify" style="font-size:22px;"></i>
-                                </div>
-                                <div style="text-align:left;">
-                                    <div style="font-size:16px;">Spotify</div>
-                                    <div style="font-size:11px; opacity:0.7; font-weight:400;">open.spotify.com</div>
-                                </div>
-                            </button>
-                        </div>
-
-                        <p style="color:rgba(255,255,255,0.3); margin-top:36px; font-size:12px;"><i class="fa-solid fa-info-circle" style="margin-right:4px;"></i>Nhạc sẽ mở trong cửa sổ riêng để đảm bảo chất lượng phát tốt nhất</p>
-                    </div>
-
-                    <style>
-                        @keyframes musicPulse {
-                            0%, 100% { box-shadow: 0 0 50px rgba(155,89,182,0.4); }
-                            50% { box-shadow: 0 0 70px rgba(155,89,182,0.6), 0 0 100px rgba(155,89,182,0.2); }
-                        }
-                        #music-view button:hover { transform: translateY(-3px) scale(1.02); }
-                        #music-view button:active { transform: scale(0.97); }
-                    </style>
+                    <!-- Rendered by js/music.js -->
                 </div>
             </div>
         </main>
@@ -859,6 +789,7 @@
     <script src="js/chat.js?v=25.1"></script>
     <script src="js/prompt.js?v=27.3"></script>
     <script src="js/chatbot.js?v=28.1"></script>
+    <script src="js/music.js?v=1.0"></script>
     <script src="js/auth.js?v=27.0"></script>
     <script src="js/app.js?v=25.1"></script>
 

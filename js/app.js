@@ -219,6 +219,7 @@ const app = {
             const settingsNav = document.querySelector('.nav-item[data-target="settings-view"]');
             if (settingsNav) settingsNav.classList.add('active');
         } else if (viewId === 'music-view') {
+            if (typeof MusicPlayer !== 'undefined') MusicPlayer.render();
             document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
             const musicNav = document.querySelector('.nav-item[data-target="music-view"]');
             if (musicNav) musicNav.classList.add('active');
