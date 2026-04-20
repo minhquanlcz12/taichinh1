@@ -367,8 +367,7 @@ const Attendance = {
             </div>
         `;
         
-        // Hiển thị danh sách xin nghỉ (Admin)
-        const allLeaves = await Attendance.loadLeaveData();
+        // Hiển thị danh sách xin nghỉ (Admin) — reuse allLeaves from line 260
         const pendingLeaves = allLeaves.filter(l => l.status === 'pending').sort((a,b) => a.timestamp - b.timestamp);
         const resolvedLeaves = allLeaves.filter(l => l.status !== 'pending').sort((a,b) => b.timestamp - a.timestamp).slice(0, 20);
 

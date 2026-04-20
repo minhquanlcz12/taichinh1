@@ -157,7 +157,8 @@ const app = {
             'attendance-view': { title: 'Chấm Công Tự Động', sub: 'Quản lý ngày làm việc và chuyên cần' },
             'prompt-view': { title: 'Kho Prompt', sub: 'Thư viện câu lệnh AI mẫu' },
             'chatbot-view': { title: 'Thư viện Chatbot', sub: 'Trạm lưu trữ các Cỗ máy AI đa nhiệm' },
-            'settings-view': { title: 'Cài đặt', sub: 'Tùy chỉnh hệ thống' }
+            'settings-view': { title: 'Cài đặt', sub: 'Tùy chỉnh hệ thống' },
+            'music-view': { title: '🎧 Zing MP3', sub: 'Nghe nhạc trực tuyến ngay trong ứng dụng' }
         };
 
         const titleInfo = titles[viewId] || titles['dashboard-view'];
@@ -217,6 +218,10 @@ const app = {
             document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
             const settingsNav = document.querySelector('.nav-item[data-target="settings-view"]');
             if (settingsNav) settingsNav.classList.add('active');
+        } else if (viewId === 'music-view') {
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            const musicNav = document.querySelector('.nav-item[data-target="music-view"]');
+            if (musicNav) musicNav.classList.add('active');
         }
     },
 

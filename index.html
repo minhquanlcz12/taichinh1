@@ -206,6 +206,10 @@
                     <i class="fa-solid fa-gear"></i>
                     <span>Cài đặt</span>
                 </li>
+                <li class="nav-item" data-target="music-view" style="background: linear-gradient(135deg, rgba(148,0,211,0.15), rgba(75,0,130,0.15)); border: 1px solid rgba(148,0,211,0.3);">
+                    <i class="fa-solid fa-headphones" style="color: #9b59b6;"></i>
+                    <span>Zing MP3</span>
+                </li>
             </ul>
 
             <div class="theme-toggle" id="theme-toggle-btn">
@@ -410,6 +414,21 @@
                 <!-- Settings View Placeholder -->
                 <div id="settings-view" class="view">
                     <!-- Sẽ được inject bởi auth.js -> Auth.renderSettings -->
+                </div>
+
+                <!-- Zing MP3 Music View -->
+                <div id="music-view" class="view">
+                    <div style="width:100%; height: calc(100vh - 80px); position: relative; border-radius: 12px; overflow: hidden; border: 1px solid rgba(148,0,211,0.3); box-shadow: 0 0 30px rgba(148,0,211,0.15);">
+                        <iframe id="zing-mp3-iframe" src="about:blank" style="width:100%; height:100%; border:none; background:#000;" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>
+                        <div id="zing-mp3-placeholder" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background: linear-gradient(135deg, #1a0533 0%, #0d001a 50%, #1a0a2e 100%); z-index:2;">
+                            <i class="fa-solid fa-headphones" style="font-size: 64px; color: #9b59b6; margin-bottom: 24px; filter: drop-shadow(0 0 20px rgba(155,89,182,0.5));"></i>
+                            <h2 style="color: #fff; margin-bottom: 8px; font-size: 24px;">Zing MP3</h2>
+                            <p style="color: rgba(255,255,255,0.5); margin-bottom: 32px; font-size: 14px;">Nghe nhạc trực tuyến ngay trong ứng dụng</p>
+                            <button class="btn" onclick="document.getElementById('zing-mp3-iframe').src='https://zingmp3.vn'; document.getElementById('zing-mp3-placeholder').style.display='none';" style="background: linear-gradient(135deg, #9b59b6, #8e44ad); color:#fff; padding: 14px 32px; font-size: 16px; font-weight: 700; border: none; border-radius: 30px; cursor: pointer; box-shadow: 0 4px 20px rgba(155,89,182,0.4); transition: all 0.3s;">
+                                <i class="fa-solid fa-play" style="margin-right: 8px;"></i>Mở Zing MP3
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
