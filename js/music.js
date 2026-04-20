@@ -1,5 +1,7 @@
 const MusicPlayer = {
     _rendered: false,
+    _results: [],    // Lưu kết quả tìm kiếm hiện tại
+    _currentIdx: -1, // Vị trí bài đang phát trong kết quả
     _apis: [
         'https://pipedapi.kavin.rocks',
         'https://pipedapi.frontendfriendly.xyz',
@@ -16,13 +18,10 @@ const MusicPlayer = {
 
         container.innerHTML = `
             <div style="width:100%; min-height:calc(100vh - 100px); background:linear-gradient(160deg,#0a0a1a 0%,#111 100%); border-radius:14px; overflow:hidden; border:1px solid rgba(231,76,60,0.12);">
-
-                <!-- Player Section -->
-                <div style="display:grid; grid-template-columns:1fr 340px; min-height:calc(100vh - 100px);">
+                <div style="display:grid; grid-template-columns:1fr 300px; min-height:calc(100vh - 100px);">
 
                     <!-- LEFT: Player + Search -->
                     <div style="padding:20px; display:flex; flex-direction:column;">
-                        <!-- Header -->
                         <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
                             <i class="fa-brands fa-youtube" style="color:#e74c3c;font-size:24px;"></i>
                             <h3 style="color:#fff;margin:0;font-size:17px;font-weight:700;">YouTube Music</h3>
@@ -33,10 +32,26 @@ const MusicPlayer = {
                             <iframe id="yt-player" src="https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=0" style="width:100%;height:100%;border:none;" allow="autoplay;encrypted-media;picture-in-picture" allowfullscreen></iframe>
                         </div>
 
-                        <!-- Now Playing -->
-                        <div id="yt-now-playing" style="margin-top:10px;padding:8px 12px;border-radius:8px;background:rgba(231,76,60,0.08);border:1px solid rgba(231,76,60,0.15);display:none;">
-                            <p style="color:#fff;font-size:13px;font-weight:600;margin:0;" id="yt-now-title"></p>
-                            <p style="color:rgba(255,255,255,0.4);font-size:11px;margin:4px 0 0;" id="yt-now-channel"></p>
+                        <!-- Now Playing Bar with controls -->
+                        <div id="yt-now-playing" style="margin-top:10px;padding:10px 14px;border-radius:10px;background:rgba(231,76,60,0.08);border:1px solid rgba(231,76,60,0.15);display:none;">
+                            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+                                <div style="min-width:0;flex:1;">
+                                    <p style="color:#fff;font-size:13px;font-weight:600;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="yt-now-title"></p>
+                                    <p style="color:rgba(255,255,255,0.4);font-size:11px;margin:2px 0 0;" id="yt-now-channel"></p>
+                                </div>
+                                <div style="display:flex;gap:6px;flex-shrink:0;">
+                                    <button onclick="MusicPlayer.prev()" title="Bài trước" style="width:32px;height:32px;border-radius:50%;border:1px solid rgba(255,255,255,0.15);background:transparent;color:rgba(255,255,255,0.6);cursor:pointer;font-size:12px;">
+                                        <i class="fa-solid fa-backward-step"></i>
+                                    </button>
+                                    <button onclick="MusicPlayer.next()" title="Bài tiếp (nếu lỗi bấm đây)" style="width:32px;height:32px;border-radius:50%;border:1px solid rgba(231,76,60,0.4);background:rgba(231,76,60,0.1);color:#e74c3c;cursor:pointer;font-size:12px;">
+                                        <i class="fa-solid fa-forward-step"></i>
+                                    </button>
+                                    <a id="yt-open-link" href="#" target="_blank" title="Mở trên YouTube (nếu embed lỗi)" style="width:32px;height:32px;border-radius:50%;border:1px solid rgba(255,255,255,0.15);background:transparent;color:rgba(255,255,255,0.6);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;text-decoration:none;">
+                                        <i class="fa-solid fa-up-right-from-square"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <p style="color:rgba(255,255,255,0.2);font-size:10px;margin:6px 0 0;"><i class="fa-solid fa-circle-info" style="margin-right:3px;"></i>Video lỗi? Bấm <b>▶▶</b> để chuyển bài hoặc <b>↗</b> để mở YouTube</p>
                         </div>
 
                         <!-- Search Bar -->
@@ -56,19 +71,17 @@ const MusicPlayer = {
                         <h4 style="color:rgba(255,255,255,0.3);font-size:11px;text-transform:uppercase;letter-spacing:1.5px;margin:0 0 12px;">
                             <i class="fa-solid fa-fire" style="margin-right:5px;color:#e74c3c;"></i>Tìm nhanh
                         </h4>
-                        <div style="display:flex;flex-direction:column;gap:6px;" id="yt-quick-list">
-                            ${MusicPlayer._quickBtn('Nhạc Việt hot 2024')}
-                            ${MusicPlayer._quickBtn('Lofi chill study')}
-                            ${MusicPlayer._quickBtn('Sơn Tùng MTP')}
-                            ${MusicPlayer._quickBtn('Nhạc không lời piano')}
-                            ${MusicPlayer._quickBtn('Acoustic cover hay')}
-                            ${MusicPlayer._quickBtn('EDM remix việt')}
-                            ${MusicPlayer._quickBtn('Bolero trữ tình')}
-                            ${MusicPlayer._quickBtn('Nhạc Trịnh Công Sơn')}
-                            ${MusicPlayer._quickBtn('US UK pop hits')}
-                            ${MusicPlayer._quickBtn('K-Pop hot nhất')}
-                            ${MusicPlayer._quickBtn('Rap Việt hay nhất')}
-                            ${MusicPlayer._quickBtn('Hà Anh Tuấn')}
+                        <div style="display:flex;flex-direction:column;gap:6px;">
+                            ${[
+                                'Nhạc Việt hot 2024','Lofi chill study','Sơn Tùng MTP',
+                                'Nhạc không lời piano','Acoustic cover hay','EDM remix việt',
+                                'Bolero trữ tình','Nhạc Trịnh Công Sơn','US UK pop hits',
+                                'K-Pop hot nhất','Rap Việt hay nhất','Hà Anh Tuấn'
+                            ].map(t => `
+                                <button class="yt-quick" onclick="MusicPlayer.quickSearch('${t}')" style="text-align:left;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);color:rgba(255,255,255,0.6);cursor:pointer;font-size:12px;font-weight:500;transition:all 0.2s;">
+                                    <i class="fa-solid fa-play" style="margin-right:6px;font-size:9px;opacity:0.4;"></i>${t}
+                                </button>
+                            `).join('')}
                         </div>
                     </div>
                 </div>
@@ -77,24 +90,17 @@ const MusicPlayer = {
             <style>
                 .yt-quick:hover{background:rgba(231,76,60,0.15)!important;border-color:rgba(231,76,60,0.3)!important;color:#e74c3c!important;}
                 .yt-result-card:hover{background:rgba(231,76,60,0.08)!important;border-color:rgba(231,76,60,0.3)!important;}
+                .yt-result-card.active{background:rgba(231,76,60,0.12)!important;border-color:rgba(231,76,60,0.4)!important;}
                 @media(max-width:900px){#music-view [style*="grid-template-columns"]{grid-template-columns:1fr!important;}}
             </style>
         `;
 
-        // Enter key
         document.getElementById('yt-search').addEventListener('keydown', e => {
             if (e.key === 'Enter') MusicPlayer.search();
         });
 
-        // Auto-search nhạc hot khi mở lần đầu
         MusicPlayer._doSearch('nhạc việt hot 2024');
     },
-
-    _quickBtn: (text) => `
-        <button class="yt-quick" onclick="MusicPlayer.quickSearch('${text}')" style="text-align:left;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);color:rgba(255,255,255,0.6);cursor:pointer;font-size:12px;font-weight:500;transition:all 0.2s;">
-            <i class="fa-solid fa-play" style="margin-right:6px;font-size:9px;opacity:0.4;"></i>${text}
-        </button>
-    `,
 
     quickSearch: (query) => {
         document.getElementById('yt-search').value = query;
@@ -107,16 +113,33 @@ const MusicPlayer = {
         MusicPlayer._doSearch(q);
     },
 
+    next: () => {
+        if (MusicPlayer._results.length === 0) return;
+        const nextIdx = MusicPlayer._currentIdx + 1;
+        if (nextIdx < MusicPlayer._results.length) {
+            const v = MusicPlayer._results[nextIdx];
+            MusicPlayer.play(v.id, v.title, v.channel, nextIdx);
+        } else {
+            Utils.showToast('Đã hết danh sách. Tìm kiếm bài mới nhé!', 'info');
+        }
+    },
+
+    prev: () => {
+        if (MusicPlayer._results.length === 0 || MusicPlayer._currentIdx <= 0) return;
+        const prevIdx = MusicPlayer._currentIdx - 1;
+        const v = MusicPlayer._results[prevIdx];
+        MusicPlayer.play(v.id, v.title, v.channel, prevIdx);
+    },
+
     _doSearch: async (query) => {
         const btn = document.getElementById('yt-search-btn');
         const results = document.getElementById('yt-results');
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang tìm...';
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Tìm...';
         btn.disabled = true;
         results.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(255,255,255,0.3);"><i class="fa-solid fa-spinner fa-spin" style="font-size:24px;"></i><p style="margin-top:10px;">Đang tìm kiếm...</p></div>';
 
         let videos = null;
 
-        // Thử Piped API trước (trả về format khác Invidious)
         for (const api of MusicPlayer._apis) {
             try {
                 const isPiped = !api.includes('inv.');
@@ -129,22 +152,25 @@ const MusicPlayer = {
                 const data = await resp.json();
 
                 if (isPiped && data.items) {
-                    videos = data.items.filter(v => v.type === 'stream').slice(0, 12).map(v => ({
+                    videos = data.items.filter(v => v.type === 'stream' && v.duration > 0).slice(0, 20).map(v => ({
                         id: v.url ? v.url.replace('/watch?v=', '') : '',
-                        title: v.title || 'Không rõ',
+                        title: v.title || '',
                         channel: v.uploaderName || v.uploader || '',
                         duration: v.duration || 0,
                         thumbnail: v.thumbnail || `https://i.ytimg.com/vi/${v.url?.replace('/watch?v=','')}/mqdefault.jpg`
                     }));
                 } else if (!isPiped && Array.isArray(data)) {
-                    videos = data.filter(v => v.type === 'video').slice(0, 12).map(v => ({
+                    videos = data.filter(v => v.type === 'video' && v.lengthSeconds > 0).slice(0, 20).map(v => ({
                         id: v.videoId,
-                        title: v.title || 'Không rõ',
+                        title: v.title || '',
                         channel: v.author || '',
                         duration: v.lengthSeconds || 0,
                         thumbnail: `https://i.ytimg.com/vi/${v.videoId}/mqdefault.jpg`
                     }));
                 }
+
+                // Lọc video có ID hợp lệ
+                if (videos) videos = videos.filter(v => v.id && v.id.length === 11);
 
                 if (videos && videos.length > 0) break;
             } catch(e) { continue; }
@@ -154,37 +180,56 @@ const MusicPlayer = {
         btn.disabled = false;
 
         if (!videos || videos.length === 0) {
-            results.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(255,255,255,0.3);"><i class="fa-solid fa-face-sad-tear" style="font-size:32px;margin-bottom:10px;display:block;"></i>Không tìm thấy kết quả.<br>Thử từ khóa khác nhé!</div>';
+            results.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(255,255,255,0.3);"><i class="fa-solid fa-face-sad-tear" style="font-size:32px;margin-bottom:10px;display:block;"></i>Không tìm thấy. Thử từ khóa khác!</div>';
             return;
         }
 
+        MusicPlayer._results = videos;
+        MusicPlayer._currentIdx = -1;
+
         results.innerHTML = `
-            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;">
-                ${videos.map(v => `
-                    <div class="yt-result-card" onclick="MusicPlayer.play('${v.id}','${v.title.replace(/'/g,"\\'")}','${v.channel.replace(/'/g,"\\'")}')" style="display:flex;gap:10px;padding:8px;border-radius:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);cursor:pointer;transition:all 0.2s;">
+            <div style="display:flex;flex-direction:column;gap:6px;">
+                ${videos.map((v, i) => `
+                    <div class="yt-result-card" id="yt-card-${i}" onclick="MusicPlayer.play('${v.id}',\`${v.title.replace(/`/g,'')}\`,\`${v.channel.replace(/`/g,'')}\`,${i})" style="display:flex;gap:10px;padding:8px;border-radius:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);cursor:pointer;transition:all 0.2s;">
                         <div style="position:relative;flex-shrink:0;">
-                            <img src="${v.thumbnail}" style="width:140px;height:78px;border-radius:6px;object-fit:cover;background:#222;" onerror="this.src='https://i.ytimg.com/vi/default/mqdefault.jpg'">
-                            ${v.duration ? `<span style="position:absolute;bottom:4px;right:4px;background:rgba(0,0,0,0.8);color:#fff;font-size:10px;padding:1px 5px;border-radius:3px;">${MusicPlayer._fmt(v.duration)}</span>` : ''}
+                            <img src="${v.thumbnail}" style="width:120px;height:68px;border-radius:6px;object-fit:cover;background:#222;" onerror="this.src='https://i.ytimg.com/vi/default/mqdefault.jpg'">
+                            ${v.duration ? `<span style="position:absolute;bottom:3px;right:3px;background:rgba(0,0,0,0.85);color:#fff;font-size:10px;padding:1px 4px;border-radius:3px;">${MusicPlayer._fmt(v.duration)}</span>` : ''}
                         </div>
-                        <div style="overflow:hidden;display:flex;flex-direction:column;justify-content:center;min-width:0;">
+                        <div style="overflow:hidden;display:flex;flex-direction:column;justify-content:center;min-width:0;flex:1;">
                             <div style="color:#fff;font-weight:600;font-size:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.4;">${v.title}</div>
-                            <div style="color:rgba(255,255,255,0.3);font-size:11px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${v.channel}</div>
+                            <div style="color:rgba(255,255,255,0.3);font-size:11px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${v.channel}</div>
+                        </div>
+                        <div style="display:flex;align-items:center;flex-shrink:0;">
+                            <i class="fa-solid fa-play" style="color:rgba(255,255,255,0.15);font-size:14px;"></i>
                         </div>
                     </div>
                 `).join('')}
             </div>
         `;
+
+        // Auto-phát bài đầu tiên
+        if (videos.length > 0) {
+            MusicPlayer.play(videos[0].id, videos[0].title, videos[0].channel, 0);
+        }
     },
 
-    play: (videoId, title, channel) => {
+    play: (videoId, title, channel, idx) => {
         document.getElementById('yt-player').src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
 
+        MusicPlayer._currentIdx = idx !== undefined ? idx : -1;
+
+        // Update now playing
         const np = document.getElementById('yt-now-playing');
         np.style.display = 'block';
         document.getElementById('yt-now-title').textContent = title || '';
         document.getElementById('yt-now-channel').textContent = channel || '';
+        document.getElementById('yt-open-link').href = `https://www.youtube.com/watch?v=${videoId}`;
 
-        // Scroll lên player
+        // Highlight active card
+        document.querySelectorAll('.yt-result-card').forEach(c => c.classList.remove('active'));
+        const activeCard = document.getElementById(`yt-card-${idx}`);
+        if (activeCard) activeCard.classList.add('active');
+
         document.getElementById('yt-player-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
     },
 
