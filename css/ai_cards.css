@@ -143,3 +143,165 @@ body { font-size: 15px !important; }
 /* --- INTER FONT BUMP --- */
 body, h1, h2, h3, h4, h5, h6, p, span, div, input, button, textarea, select { font-family: 'Inter', sans-serif !important; }
 
+/* ============================================================
+   ATTENDANCE USER VIEW - Radar Check-In Button & Layout
+   ============================================================ */
+
+.attendance-user-container {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 20px 0;
+}
+
+/* ---------- Check-in Box ---------- */
+.check-in-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+}
+
+/* ---------- Radar Cyber Button ---------- */
+.btn-radar-cyber {
+    position: relative;
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    border: 3px solid var(--primary, #10b981);
+    background: radial-gradient(circle at 40% 40%, rgba(16, 185, 129, 0.25), rgba(0, 0, 0, 0.6));
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    transition: box-shadow 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 0 30px rgba(16, 185, 129, 0.25), inset 0 0 20px rgba(16, 185, 129, 0.08);
+}
+.btn-radar-cyber:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 50px rgba(16, 185, 129, 0.45), inset 0 0 30px rgba(16, 185, 129, 0.15);
+}
+.btn-radar-cyber:active {
+    transform: scale(0.97);
+}
+
+/* Radar Text */
+.radar-text {
+    position: relative;
+    z-index: 3;
+    font-size: 18px;
+    font-weight: 800;
+    color: #fff;
+    text-align: center;
+    line-height: 1.4;
+    text-shadow: 0 0 15px rgba(16, 185, 129, 0.8);
+    letter-spacing: 2px;
+}
+
+/* Radar Expanding Ring */
+.radar-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 2px solid rgba(16, 185, 129, 0.6);
+    transform: translate(-50%, -50%) scale(0.6);
+    animation: radarPulse 2s ease-out infinite;
+    pointer-events: none;
+}
+
+@keyframes radarPulse {
+    0% { transform: translate(-50%, -50%) scale(0.6); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1.8); opacity: 0; }
+}
+
+/* Radar Sweep Line */
+.radar-scan {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 2px;
+    height: 50%;
+    background: linear-gradient(to top, rgba(16, 185, 129, 0.7), transparent);
+    transform-origin: bottom center;
+    animation: radarSweep 3s linear infinite;
+    pointer-events: none;
+    z-index: 2;
+}
+
+@keyframes radarSweep {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ---------- Success Status ---------- */
+.attendance-status {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 30px 20px;
+    text-align: center;
+}
+.attendance-status.success-ring {
+    animation: successFadeIn 0.5s ease;
+}
+
+@keyframes successFadeIn {
+    0% { opacity: 0; transform: scale(0.85); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+/* ---------- Glass Panel for attendance ---------- */
+.attendance-user-container .glass-panel {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    backdrop-filter: blur(6px);
+}
+
+/* ---------- Table Styles ---------- */
+.attendance-user-container .tl-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.attendance-user-container .tl-table th {
+    text-align: left;
+    padding: 12px 16px;
+    color: var(--primary, #10b981);
+    font-weight: 600;
+    font-size: 13px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.attendance-user-container .tl-table td {
+    padding: 10px 16px;
+    font-size: 13px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    color: var(--text-secondary, #94a3b8);
+}
+.attendance-user-container .tl-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+/* ---------- Badge Helpers ---------- */
+.badge.bg-success { background: rgba(46, 204, 113, 0.2); color: #2ecc71; padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 12px; }
+.badge.bg-danger  { background: rgba(231, 76, 60, 0.2);  color: #e74c3c; padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 12px; }
+.badge.bg-warning { background: rgba(241, 196, 15, 0.2); color: #f1c40f; padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 12px; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 600px) {
+    .btn-radar-cyber {
+        width: 140px;
+        height: 140px;
+    }
+    .radar-text {
+        font-size: 14px;
+    }
+    .attendance-user-container .tl-table th,
+    .attendance-user-container .tl-table td {
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+}
+
