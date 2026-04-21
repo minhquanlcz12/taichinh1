@@ -119,14 +119,14 @@ const Attendance = {
         if (todayRecord) {
             checkInHtml = `
                 <div class="attendance-status success-ring">
-                    <i class="fa-solid fa-check-circle" style="font-size: 48px; color: var(--success); margin-bottom: 16px;"></i>
-                    <h3 style="color: var(--success);">Đã Điểm Danh</h3>
-                    <p style="color: var(--text-secondary); margin-top: 8px;">Vào lúc: <strong>${new Date(todayRecord.timestamp).toLocaleTimeString('vi-VN')}</strong>
-                        ${todayRecord.location ? `<br><small style="color: var(--primary);"><i class="fa-solid fa-location-dot"></i> GPS Xác thực</small>` : ''}
+                    <div style="font-size: 48px; margin-bottom: 16px;">🪵✅</div>
+                    <h3 style="color: #ffd700;">🙏 Đã Tích Công Đức</h3>
+                    <p style="color: var(--text-secondary); margin-top: 8px;">Gõ mõ lúc: <strong>${new Date(todayRecord.timestamp).toLocaleTimeString('vi-VN')}</strong>
+                        ${todayRecord.location ? `<br><small style="color: #daa520;"><i class="fa-solid fa-location-dot"></i> Đã xác minh vị trí chùa... à nhầm, công ty 😄</small>` : ''}
                     </p>
                     <p style="margin-top: 8px;">Trạng thái: 
                         <span class="badge ${todayRecord.status === 'on_time' ? 'bg-success' : 'bg-danger'}">
-                            ${todayRecord.status === 'on_time' ? 'Đúng giờ' : `Đi muộn ${todayRecord.lateMinutes} phút`}
+                            ${todayRecord.status === 'on_time' ? '🏆 Đúng giờ — Công đức +2' : `⏰ Đi muộn ${todayRecord.lateMinutes} phút — Công đức +1`}
                         </span>
                     </p>
                 </div>
@@ -153,12 +153,12 @@ const Attendance = {
             checkInHtml = `
                 <div class="check-in-box">
                     <button id="btn-check-in" class="btn-radar-cyber" onclick="Attendance.handleCheckIn()">
-                        <span class="radar-text">ĐIỂM DANH<br>NGAY</span>
+                        <span class="radar-text">🪵 GÕ MÕ<br>ĐIỂM DANH</span>
                         <div class="radar-ring"></div>
                         <div class="radar-scan"></div>
                     </button>
-                    <p style="margin-top: 24px; color: var(--text-secondary);">Nhấp vào vòng tròn để xác nhận có mặt hôm nay.</p>
-                    <small style="color: var(--warning); display: block; margin-top: 8px;"><i class="fa-solid fa-location-dot"></i> Yêu cầu cấp quyền truy cập vị trí (GPS) để xác minh.</small>
+                    <p style="margin-top: 24px; color: #daa520; font-weight: 600;">🙏 Gõ mõ để tích công đức đi làm hôm nay!</p>
+                    <small style="color: var(--warning); display: block; margin-top: 8px;"><i class="fa-solid fa-location-dot"></i> Yêu cầu GPS để xác minh vị trí tại chùa... à nhầm, tại công ty 😄</small>
                 </div>
             `;
         }
@@ -180,7 +180,7 @@ const Attendance = {
         const userLeaves = allLeaves.filter(l => l.username === user.username).sort((a,b) => b.timestamp - a.timestamp);
         let historyHtml = `
             <div class="glass-panel" style="margin-top: 30px; padding: 20px;">
-                <h3 style="margin-bottom: 16px; color: var(--primary);">Lịch sử điểm danh (30 ngày)</h3>
+                <h3 style="margin-bottom: 16px; color: #daa520;">🪵 Sổ Công Đức (30 ngày gần nhất)</h3>
                 <div class="table-responsive">
                     <table class="tl-table">
                         <thead>
@@ -538,15 +538,51 @@ const Attendance = {
         allData.push(newRecord);
         await Attendance.saveData(allData);
 
-        // Hiệu ứng và Render lại
+        // Hiệu ứng MÕ và Render lại
         const btn = document.getElementById('btn-check-in');
         if (btn) {
-            btn.innerHTML = '<i class="fa-solid fa-check" style="font-size:40px; color: #fff;"></i>';
-            btn.style.background = 'var(--success)';
-            btn.style.boxShadow = '0 0 30px var(--success)';
+            // Phát tiếng mõ bằng Web Audio API
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                // Tiếng "tốc" của mõ gỗ
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(180, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(60, audioCtx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.8, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                osc.connect(gain).connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.5);
+                // Tiếng vang
+                const osc2 = audioCtx.createOscillator();
+                const gain2 = audioCtx.createGain();
+                osc2.type = 'triangle';
+                osc2.frequency.setValueAtTime(120, audioCtx.currentTime + 0.05);
+                osc2.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.4);
+                gain2.gain.setValueAtTime(0.4, audioCtx.currentTime + 0.05);
+                gain2.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.8);
+                osc2.connect(gain2).connect(audioCtx.destination);
+                osc2.start(audioCtx.currentTime + 0.05);
+                osc2.stop(audioCtx.currentTime + 0.8);
+            } catch(e) { console.log('Audio not supported'); }
+
+            // Hiệu ứng +1 Công Đức nổi lên
+            const floatEl = document.createElement('div');
+            floatEl.className = 'cong-duc-float';
+            floatEl.innerHTML = '🙏 +1 Công Đức Đi Làm!';
+            btn.parentElement.style.position = 'relative';
+            btn.parentElement.appendChild(floatEl);
+            setTimeout(() => floatEl.remove(), 2000);
+
+            btn.innerHTML = '<div style="font-size:40px;">🪵✅</div><div style="color:#ffd700;font-weight:800;font-size:14px;margin-top:4px;">CÔNG ĐỨC +1</div>';
+            btn.style.background = 'radial-gradient(circle, rgba(218,165,32,0.3), rgba(0,0,0,0.5))';
+            btn.style.boxShadow = '0 0 40px rgba(255,215,0,0.5)';
+            btn.style.borderColor = '#ffd700';
             setTimeout(() => {
                 Attendance.render();
-            }, 1000);
+            }, 2000);
         } else {
             Attendance.render();
         }
