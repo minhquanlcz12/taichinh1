@@ -4,7 +4,7 @@
  */
 const AttendanceMusic = {
     _player: null,
-    _enabled: false,
+    _enabled: true,
     _initialized: false,
     _videoId: '5FCcXCchXDk',
     _startTime: 0,
@@ -32,8 +32,8 @@ const AttendanceMusic = {
             firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
         }
 
-        // Initialize enabled state from storage
-        AttendanceMusic._enabled = Utils.storage.get('wf_ambient_enabled', false);
+        // Initialize enabled state - Always true for this feature
+        AttendanceMusic._enabled = true;
     },
 
     onYouTubeIframeAPIReady: () => {
@@ -91,7 +91,6 @@ const AttendanceMusic = {
 
     toggle: (state) => {
         AttendanceMusic._enabled = state;
-        Utils.storage.set('wf_ambient_enabled', state);
         if (state) {
             if (app.state.currentView === 'attendance-view') AttendanceMusic.play();
         } else {

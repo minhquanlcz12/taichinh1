@@ -1,4 +1,4 @@
-﻿const Attendance = {
+const Attendance = {
     // Thá»i háº¡n cháº¥m cÃ´ng Ä‘Ãºng giá»: 08:30 AM
     DEADLINE_HOURS: 8,
     DEADLINE_MINUTES: 30,
@@ -120,6 +120,11 @@
             const meritPts = todayRecord.status === 'on_time' ? 2 : 1;
             checkInHtml = `
                 <div class="wf-success">
+                <div class="monk-video-container" style="margin: 0 auto 24px; width: fit-content; border-radius: 16px; overflow: hidden; border: 2px solid rgba(218,165,32,0.2); box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+                    <video autoplay loop muted playsinline style="width: 100%; max-width: 280px; display: block;">
+                        <source src="assets/videos/monk_mo.mp4" type="video/mp4">
+                    </video>
+                </div>
                     <div class="wf-success-icon" style="color:#daa520;">
                         <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M12,2C6.47,2,2,6.47,2,12s4.47,10,10,10,10-4.47,10-10S17.53,2,12,2Zm0,18c-4.41,0-8-3.59-8-8s3.59-8,8-8,8,3.59,8,8-3.59,8-8,8ZM11,7h2v6h-2V7Zm0,8h2v2h-2v-2Z" opacity=".3"/>
@@ -152,7 +157,12 @@
             }
         } else {
             checkInHtml = `
-                <div class="check-in-box">
+                <div class="check-in-box" style="text-align: center;">
+                <div class="monk-video-container" style="margin: 0 auto 24px; width: fit-content; border-radius: 16px; overflow: hidden; border: 2px solid rgba(218,165,32,0.2); box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+                    <video autoplay loop muted playsinline style="width: 100%; max-width: 280px; display: block;">
+                        <source src="assets/videos/monk_mo.mp4" type="video/mp4">
+                    </video>
+                </div>
                     <button id="btn-check-in" class="wf-assembly" data-state="idle" type="button"
                             aria-label="GÃµ mÃµ Ä‘iá»ƒm danh" onclick="Attendance.handleCheckIn()">
                         <div class="wf-aura"></div>
@@ -263,22 +273,11 @@
 
         container.innerHTML = `
             <div class="attendance-user-container">
-                                <div class="glass-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 24px; padding: 15px 20px; background: rgba(255,165,0,0.05); border-radius: 12px; border: 1px solid rgba(255,165,0,0.1);">
+                                <div class="glass-header" style="text-align: center; margin-bottom: 24px; padding: 15px 20px; background: rgba(255,165,0,0.05); border-radius: 12px; border: 1px solid rgba(255,165,0,0.1);">
                     <div>
-                        <h2 style="color:var(--primary); margin:0; font-size: 18px;"><i class="fa-solid fa-user-check"></i> CHáº¤M CÃ”NG HÃ€NG NGÃ€Y</h2>
-                        <p style="font-size:12px; color:var(--text-secondary); margin:4px 0 0;">Háº¡n chá»‘t: <span style="color:var(--warning);font-weight:bold;">08:30 AM</span></p>
+                        <h2 style="color:var(--primary); margin:0; font-size: 18px;"><i class="fa-solid fa-user-check"></i> CHẤM CÔNG HÀNG NGÀY</h2>
+                        <p style="font-size:12px; color:var(--text-secondary); margin:4px 0 0;">Hạn chốt: <span style="color:var(--warning);font-weight:bold;">08:30 AM</span></p>
                     </div>
-                    <div style="display:flex; align-items:center; gap:12px;">
-                        <span style="font-size:11px; color:#daa520; font-weight:600;"><i class="fa-solid fa-music"></i> NHáº C Ná»€N CHÃ™A</span>
-                        <label class="switch">
-                            <input type="checkbox" id="wf-ambient-toggle" onchange="AttendanceMusic.toggle(this.checked)">
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
-                </div>
-                <div style="display:none;">
-                    <h2 style="color: var(--primary); text-transform: uppercase; letter-spacing: 2px;">Cháº¥m CÃ´ng HÃ ng NgÃ y</h2>
-                    <p style="color: var(--text-secondary);">Háº¡n chÃ³t: <strong>08:30 AM</strong></p>
                 </div>
                 ${checkInHtml}
                 ${historyHtml}
