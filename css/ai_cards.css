@@ -144,188 +144,405 @@ body { font-size: 15px !important; }
 body, h1, h2, h3, h4, h5, h6, p, span, div, input, button, textarea, select { font-family: 'Inter', sans-serif !important; }
 
 /* ============================================================
-   ATTENDANCE USER VIEW - Radar Check-In Button & Layout
+   WOODEN FISH CHECK-IN — "Gõ Mõ Công Đức"
+   Premium dark theme · gold/amber · 3D CSS · gamified
    ============================================================ */
 
-.attendance-user-container {
-    max-width: 700px;
-    margin: 0 auto;
-    padding: 20px 0;
-}
+/* --- Layout --- */
+.attendance-user-container { max-width: 720px; margin: 0 auto; padding: 24px 0; }
 
-/* ---------- Check-in Box ---------- */
 .check-in-box {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 40px 20px;
+    padding: 48px 20px 32px;
+    position: relative;
 }
 
-/* ---------- Mõ (Wooden Fish) Check-In Button ---------- */
-.btn-radar-cyber {
+/* --- 3D Wooden Fish Assembly --- */
+.wf-assembly {
     position: relative;
-    width: 200px;
-    height: 200px;
-    border-radius: 50%;
-    border: 3px solid rgba(218, 165, 32, 0.6);
-    background: radial-gradient(circle at 45% 40%, rgba(218, 165, 32, 0.15), rgba(139, 69, 19, 0.2), rgba(0, 0, 0, 0.5));
+    width: 220px;
+    height: 220px;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: visible;
-    transition: box-shadow 0.3s ease, transform 0.2s ease;
-    box-shadow: 0 0 30px rgba(218, 165, 32, 0.2), inset 0 0 20px rgba(218, 165, 32, 0.05);
-    background-image: url('../img/mo.png');
-    background-size: 80%;
-    background-position: center;
-    background-repeat: no-repeat;
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+    border: none;
+    background: none;
+    padding: 0;
 }
-.btn-radar-cyber:hover {
-    transform: scale(1.08);
-    box-shadow: 0 0 50px rgba(218, 165, 32, 0.45), inset 0 0 30px rgba(218, 165, 32, 0.1);
-}
-.btn-radar-cyber:active {
-    transform: scale(0.95);
-    animation: moStrike 0.3s ease;
+.wf-assembly:focus-visible {
+    outline: 2px solid #daa520;
+    outline-offset: 8px;
+    border-radius: 50%;
 }
 
-/* Mõ Text */
-.radar-text {
-    position: relative;
-    z-index: 3;
-    font-size: 16px;
+/* Aura breathing ring */
+.wf-aura {
+    position: absolute;
+    inset: -18px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(218, 165, 32, 0.15);
+    animation: wf-breathe 3.5s ease-in-out infinite;
+    pointer-events: none;
+}
+.wf-aura::after {
+    content: '';
+    position: absolute;
+    inset: -12px;
+    border-radius: 50%;
+    border: 1px solid rgba(218, 165, 32, 0.06);
+    animation: wf-breathe 3.5s ease-in-out infinite 0.8s;
+}
+@keyframes wf-breathe {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.08); opacity: 1; }
+}
+
+/* 3D Mõ (wooden fish body) */
+.wf-body {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background:
+        radial-gradient(ellipse 60% 50% at 40% 35%, rgba(255,220,130,0.25), transparent 70%),
+        radial-gradient(circle at 55% 60%, #5c3a1e 0%, #3a200d 50%, #1a0e05 100%);
+    box-shadow:
+        0 8px 32px rgba(0,0,0,0.6),
+        0 2px 8px rgba(218,165,32,0.15),
+        inset 0 -8px 20px rgba(0,0,0,0.5),
+        inset 0 4px 12px rgba(255,220,130,0.1);
+    transition: transform 0.15s ease;
+    overflow: hidden;
+}
+/* Rim light */
+.wf-body::before {
+    content: '';
+    position: absolute;
+    inset: 2px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(218,165,32,0.25);
+    pointer-events: none;
+}
+/* Wood-grain line */
+.wf-body::after {
+    content: '';
+    position: absolute;
+    top: 48%;
+    left: 20%;
+    width: 60%;
+    height: 1px;
+    background: rgba(218,165,32,0.12);
+    border-radius: 50%;
+}
+/* Wooden fish image overlay */
+.wf-body-img {
+    position: absolute;
+    inset: 15%;
+    background: url('../img/mo.png') center/contain no-repeat;
+    opacity: 0.85;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));
+}
+
+/* Mallet (dùi gõ) */
+.wf-mallet {
+    position: absolute;
+    right: -30px;
+    top: 10px;
+    width: 80px;
+    height: 30px;
+    transform-origin: left center;
+    transform: rotate(-25deg);
+    transition: transform 0.08s ease;
+    z-index: 5;
+    pointer-events: none;
+}
+.wf-mallet-handle {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 55px;
+    height: 10px;
+    background: linear-gradient(180deg, #8B6914, #6B4C0A, #4A3505);
+    border-radius: 3px 1px 1px 3px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+}
+.wf-mallet-head {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #B8860B, #8B6914, #5C3A1E);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.5), inset 0 1px 3px rgba(255,220,130,0.2);
+}
+
+/* Label */
+.wf-label {
+    position: absolute;
+    bottom: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 6;
+    font-size: 13px;
     font-weight: 800;
     color: #ffd700;
     text-align: center;
-    line-height: 1.4;
-    text-shadow: 0 0 15px rgba(218, 165, 32, 0.8), 0 2px 4px rgba(0,0,0,0.5);
-    letter-spacing: 2px;
-    background: rgba(0,0,0,0.5);
-    padding: 6px 12px;
-    border-radius: 8px;
+    line-height: 1.3;
+    text-shadow: 0 0 10px rgba(218,165,32,0.6), 0 1px 3px rgba(0,0,0,0.8);
+    letter-spacing: 1.5px;
+    background: rgba(0,0,0,0.65);
+    padding: 5px 14px;
+    border-radius: 6px;
+    border: 1px solid rgba(218,165,32,0.2);
+    white-space: nowrap;
+    pointer-events: none;
 }
 
-/* Mõ Glow Ring */
-.radar-ring {
+/* --- States --- */
+
+/* Idle: subtle float */
+.wf-assembly[data-state="idle"] .wf-body {
+    animation: wf-idle-float 4s ease-in-out infinite;
+}
+@keyframes wf-idle-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+}
+
+/* Hover */
+.wf-assembly[data-state="idle"]:hover .wf-body {
+    transform: scale(1.03);
+    box-shadow:
+        0 10px 40px rgba(0,0,0,0.65),
+        0 0 25px rgba(218,165,32,0.2),
+        inset 0 -8px 20px rgba(0,0,0,0.5),
+        inset 0 4px 12px rgba(255,220,130,0.15);
+}
+.wf-assembly[data-state="idle"]:hover .wf-mallet {
+    transform: rotate(-30deg);
+}
+
+/* Press */
+.wf-assembly:active .wf-body {
+    transform: scale(0.98) !important;
+}
+
+/* Animating: mallet strikes */
+.wf-assembly[data-state="animating"] .wf-mallet {
+    animation: wf-strike 0.45s ease-out forwards;
+}
+@keyframes wf-strike {
+    0%   { transform: rotate(-25deg); }
+    25%  { transform: rotate(-55deg); }
+    50%  { transform: rotate(8deg); }
+    65%  { transform: rotate(-3deg); }
+    80%  { transform: rotate(1deg); }
+    100% { transform: rotate(-5deg); }
+}
+
+/* Mõ impact squash */
+.wf-assembly[data-state="animating"] .wf-body {
+    animation: wf-impact 0.5s ease-out forwards;
+}
+@keyframes wf-impact {
+    0%   { transform: scale(1); }
+    25%  { transform: scale(0.97, 1.03); }
+    40%  { transform: scale(1.02, 0.98); }
+    55%  { transform: scale(0.995, 1.005); }
+    70%  { transform: scale(1.003, 0.997); }
+    100% { transform: scale(1); }
+}
+
+/* Impact flash */
+.wf-impact-ring {
     position: absolute;
     top: 50%;
     left: 50%;
     width: 100%;
     height: 100%;
     border-radius: 50%;
-    border: 2px solid rgba(218, 165, 32, 0.5);
-    transform: translate(-50%, -50%) scale(0.6);
-    animation: moGlow 2.5s ease-out infinite;
+    border: 2px solid rgba(255,215,0,0.7);
+    transform: translate(-50%,-50%) scale(0.5);
+    opacity: 0;
     pointer-events: none;
 }
-
-@keyframes moGlow {
-    0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.8; border-color: rgba(218, 165, 32, 0.6); }
-    50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.4; border-color: rgba(255, 215, 0, 0.4); }
-    100% { transform: translate(-50%, -50%) scale(1.6); opacity: 0; border-color: rgba(218, 165, 32, 0); }
+.wf-impact-ring.active {
+    animation: wf-ring-burst 0.6s ease-out forwards;
+}
+@keyframes wf-ring-burst {
+    0%   { transform: translate(-50%,-50%) scale(0.5); opacity: 0.9; border-color: rgba(255,215,0,0.8); }
+    100% { transform: translate(-50%,-50%) scale(1.8); opacity: 0; border-color: rgba(218,165,32,0); }
 }
 
-/* Mõ Wobble (replaces radar sweep) */
-.radar-scan {
-    display: none;
-}
-
-/* Strike Animation */
-@keyframes moStrike {
-    0% { transform: scale(1); }
-    30% { transform: scale(0.92) rotate(-3deg); }
-    60% { transform: scale(1.05) rotate(1deg); }
-    100% { transform: scale(1); }
-}
-
-/* +1 Công Đức floating animation */
-@keyframes congDucFloat {
-    0% { opacity: 1; transform: translateY(0) scale(1); }
-    30% { opacity: 1; transform: translateY(-30px) scale(1.2); }
-    100% { opacity: 0; transform: translateY(-100px) scale(0.8); }
-}
-.cong-duc-float {
+/* Gold particles (6 particles via spans) */
+.wf-particle {
     position: absolute;
-    top: -20px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 22px;
-    font-weight: 900;
-    color: #ffd700;
-    text-shadow: 0 0 15px rgba(255,215,0,0.8), 0 2px 4px rgba(0,0,0,0.5);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #ffd700;
     pointer-events: none;
-    animation: congDucFloat 1.5s ease-out forwards;
-    z-index: 100;
-    white-space: nowrap;
+    opacity: 0;
+}
+.wf-particle.active {
+    animation: wf-particle-fly 0.7s ease-out forwards;
+}
+@keyframes wf-particle-fly {
+    0%   { opacity: 1; transform: translate(0,0) scale(1); }
+    100% { opacity: 0; transform: var(--wf-p-dir) scale(0.3); }
 }
 
-/* ---------- Success Status ---------- */
-.attendance-status {
+/* +1 Công Đức float text */
+.wf-cong-duc {
+    position: absolute;
+    top: 10%;
+    left: 50%;
+    transform: translateX(-50%) translateY(0);
+    font-size: 20px;
+    font-weight: 800;
+    color: #ffd700;
+    text-shadow: 0 0 12px rgba(255,215,0,0.6), 0 2px 4px rgba(0,0,0,0.6);
+    pointer-events: none;
+    z-index: 50;
+    white-space: nowrap;
+    opacity: 0;
+}
+.wf-cong-duc.active {
+    animation: wf-float-up 1.4s ease-out forwards;
+}
+@keyframes wf-float-up {
+    0%   { opacity: 1; transform: translateX(-50%) translateY(0) scale(0.8); }
+    20%  { opacity: 1; transform: translateX(-50%) translateY(-15px) scale(1.15); }
+    100% { opacity: 0; transform: translateX(-50%) translateY(-90px) scale(0.9); }
+}
+
+/* --- Success State (already checked in) --- */
+.wf-success {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 30px 20px;
+    padding: 36px 20px;
     text-align: center;
+    animation: wf-fade-in 0.4s ease;
 }
-.attendance-status.success-ring {
-    animation: successFadeIn 0.5s ease;
+@keyframes wf-fade-in {
+    0% { opacity: 0; transform: translateY(8px); }
+    100% { opacity: 1; transform: translateY(0); }
 }
+.wf-success-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, rgba(218,165,32,0.2), rgba(0,0,0,0.4));
+    border: 2px solid rgba(218,165,32,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 20px rgba(218,165,32,0.15);
+}
+.wf-success h3 { color: #daa520; margin: 0 0 8px; font-size: 18px; }
+.wf-success p { color: #94a3b8; margin: 4px 0; font-size: 14px; }
+.wf-success .wf-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 12px;
+    margin-top: 6px;
+}
+.wf-badge.on-time { background: rgba(46,204,113,0.15); color: #2ecc71; }
+.wf-badge.late { background: rgba(231,76,60,0.15); color: #e74c3c; }
 
-@keyframes successFadeIn {
-    0% { opacity: 0; transform: scale(0.85); }
-    100% { opacity: 1; transform: scale(1); }
-}
-
-/* ---------- Glass Panel for attendance ---------- */
-.attendance-user-container .glass-panel {
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+/* --- History Table (Sổ Công Đức) --- */
+.wf-history-panel {
+    margin-top: 30px;
+    padding: 20px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(218,165,32,0.1);
     border-radius: 12px;
-    backdrop-filter: blur(6px);
+    backdrop-filter: blur(4px);
 }
-
-/* ---------- Table Styles ---------- */
-.attendance-user-container .tl-table {
-    width: 100%;
-    border-collapse: collapse;
+.wf-history-panel h3 {
+    color: #daa520;
+    font-size: 16px;
+    margin: 0 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
+.wf-history-panel .wf-stat {
+    margin-left: auto;
+    font-size: 11px;
+    color: rgba(218,165,32,0.5);
+    font-weight: 400;
+}
+.attendance-user-container .tl-table { width: 100%; border-collapse: collapse; }
 .attendance-user-container .tl-table th {
     text-align: left;
-    padding: 12px 16px;
-    color: var(--primary, #10b981);
+    padding: 10px 14px;
+    color: #daa520;
     font-weight: 600;
-    font-size: 13px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid rgba(218,165,32,0.12);
 }
 .attendance-user-container .tl-table td {
-    padding: 10px 16px;
+    padding: 10px 14px;
     font-size: 13px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-    color: var(--text-secondary, #94a3b8);
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    color: #94a3b8;
 }
-.attendance-user-container .tl-table tbody tr:hover {
-    background: rgba(255, 255, 255, 0.03);
+.attendance-user-container .tl-table tbody tr:hover { background: rgba(218,165,32,0.04); }
+.wf-merit-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    background: rgba(218,165,32,0.12);
+    color: #daa520;
+    margin-left: 6px;
 }
 
-/* ---------- Badge Helpers ---------- */
-.badge.bg-success { background: rgba(46, 204, 113, 0.2); color: #2ecc71; padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 12px; }
-.badge.bg-danger  { background: rgba(231, 76, 60, 0.2);  color: #e74c3c; padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 12px; }
-.badge.bg-warning { background: rgba(241, 196, 15, 0.2); color: #f1c40f; padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 12px; }
+/* --- Glass Panel (legacy compat) --- */
+.attendance-user-container .glass-panel {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px;
+    backdrop-filter: blur(4px);
+}
 
-/* ---------- Responsive ---------- */
+/* --- Badge Helpers --- */
+.badge.bg-success { background: rgba(46,204,113,0.15); color: #2ecc71; padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 12px; }
+.badge.bg-danger  { background: rgba(231,76,60,0.15);  color: #e74c3c; padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 12px; }
+.badge.bg-warning { background: rgba(241,196,15,0.15); color: #f1c40f; padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 12px; }
+
+/* --- Reduced Motion --- */
+@media (prefers-reduced-motion: reduce) {
+    .wf-assembly[data-state="idle"] .wf-body,
+    .wf-aura, .wf-aura::after,
+    .wf-assembly[data-state="animating"] .wf-mallet,
+    .wf-assembly[data-state="animating"] .wf-body,
+    .wf-impact-ring.active, .wf-particle.active, .wf-cong-duc.active {
+        animation: none !important;
+    }
+    .wf-cong-duc.active { opacity: 1; transform: translateX(-50%) translateY(-40px); }
+}
+
+/* --- Responsive --- */
 @media (max-width: 600px) {
-    .btn-radar-cyber {
-        width: 140px;
-        height: 140px;
-    }
-    .radar-text {
-        font-size: 14px;
-    }
+    .wf-assembly { width: 170px; height: 170px; }
+    .wf-mallet { right: -20px; top: 15px; width: 60px; height: 22px; }
+    .wf-mallet-handle { width: 40px; height: 8px; }
+    .wf-mallet-head { width: 18px; height: 18px; }
+    .wf-label { font-size: 11px; padding: 4px 10px; }
     .attendance-user-container .tl-table th,
-    .attendance-user-container .tl-table td {
-        padding: 8px 10px;
-        font-size: 12px;
-    }
+    .attendance-user-container .tl-table td { padding: 8px 10px; font-size: 12px; }
 }
-

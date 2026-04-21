@@ -117,48 +117,56 @@ const Attendance = {
         let checkInHtml = '';
 
         if (todayRecord) {
+            const meritPts = todayRecord.status === 'on_time' ? 2 : 1;
             checkInHtml = `
-                <div class="attendance-status success-ring">
-                    <div style="font-size: 48px; margin-bottom: 16px;">🪵✅</div>
-                    <h3 style="color: #ffd700;">🙏 Đã Tích Công Đức</h3>
-                    <p style="color: var(--text-secondary); margin-top: 8px;">Gõ mõ lúc: <strong>${new Date(todayRecord.timestamp).toLocaleTimeString('vi-VN')}</strong>
-                        ${todayRecord.location ? `<br><small style="color: #daa520;"><i class="fa-solid fa-location-dot"></i> Đã xác minh vị trí chùa... à nhầm, công ty 😄</small>` : ''}
-                    </p>
-                    <p style="margin-top: 8px;">Trạng thái: 
-                        <span class="badge ${todayRecord.status === 'on_time' ? 'bg-success' : 'bg-danger'}">
-                            ${todayRecord.status === 'on_time' ? '🏆 Đúng giờ — Công đức +2' : `⏰ Đi muộn ${todayRecord.lateMinutes} phút — Công đức +1`}
-                        </span>
-                    </p>
+                <div class="wf-success">
+                    <div class="wf-success-icon">🪵</div>
+                    <h3>✅ Công đức hôm nay đã ghi nhận</h3>
+                    <p>Gõ mõ lúc: <strong style="color:#daa520;">${new Date(todayRecord.timestamp).toLocaleTimeString('vi-VN')}</strong></p>
+                    ${todayRecord.location ? `<p style="font-size:12px;"><i class="fa-solid fa-location-dot" style="color:#daa520;"></i> GPS xác minh vị trí tại công ty</p>` : ''}
+                    <span class="wf-badge ${todayRecord.status === 'on_time' ? 'on-time' : 'late'}">
+                        ${todayRecord.status === 'on_time' ? `🏆 Đúng giờ — Công đức +${meritPts}` : `⏰ Muộn ${todayRecord.lateMinutes}p — Công đức +${meritPts}`}
+                    </span>
                 </div>
             `;
-            
-            // Nếu đã checkin nhưng chưa checkout
             if (!todayRecord.checkoutTimestamp) {
                 checkInHtml += `
-                <div style="text-align: center; margin-top: 20px;">
-                    <button class="btn" style="background: var(--info); color: #fff; padding: 12px 24px; font-weight: bold; border-radius: 30px; box-shadow: 0 4px 15px rgba(0, 240, 255, 0.3);" onclick="Attendance.showCheckoutModal()">
-                        <i class="fa-solid fa-person-walking-arrow-right" style="margin-right: 8px;"></i> BÁO CÁO RA VÊ (CHECK-OUT)
+                <div style="text-align:center;margin-top:20px;">
+                    <button class="btn" style="background:var(--info);color:#fff;padding:12px 24px;font-weight:bold;border-radius:30px;box-shadow:0 4px 15px rgba(0,240,255,0.3);" onclick="Attendance.showCheckoutModal()">
+                        <i class="fa-solid fa-person-walking-arrow-right" style="margin-right:8px;"></i> CHECK-OUT
                     </button>
-                    <p style="color: var(--text-secondary); font-size: 12px; margin-top: 8px;">Vui lòng làm báo cáo EOD trước khi kết thúc ngày.</p>
+                    <p style="color:var(--text-secondary);font-size:12px;margin-top:8px;">Báo cáo EOD trước khi kết thúc ngày.</p>
                 </div>`;
             } else {
                 checkInHtml += `
-                <div class="glass-panel" style="margin-top: 20px; padding: 16px; border-color: var(--success);">
-                    <h4 style="color: var(--success); margin-bottom: 8px;"><i class="fa-solid fa-clipboard-check"></i> Đã hoàn thành ngày làm việc</h4>
-                    <p style="color: var(--text-secondary); font-size: 13px; margin: 0;">Ra về lúc: <strong>${new Date(todayRecord.checkoutTimestamp).toLocaleTimeString('vi-VN')}</strong></p>
+                <div class="glass-panel" style="margin-top:20px;padding:16px;border-color:rgba(218,165,32,0.2);">
+                    <h4 style="color:#daa520;margin-bottom:8px;"><i class="fa-solid fa-clipboard-check"></i> Hoàn thành ngày làm việc</h4>
+                    <p style="color:var(--text-secondary);font-size:13px;margin:0;">Ra về lúc: <strong>${new Date(todayRecord.checkoutTimestamp).toLocaleTimeString('vi-VN')}</strong></p>
                 </div>`;
             }
-
         } else {
             checkInHtml = `
                 <div class="check-in-box">
-                    <button id="btn-check-in" class="btn-radar-cyber" onclick="Attendance.handleCheckIn()">
-                        <span class="radar-text">🪵 GÕ MÕ<br>ĐIỂM DANH</span>
-                        <div class="radar-ring"></div>
-                        <div class="radar-scan"></div>
+                    <button id="btn-check-in" class="wf-assembly" data-state="idle" type="button"
+                            aria-label="Gõ mõ điểm danh" onclick="Attendance.handleCheckIn()">
+                        <div class="wf-aura"></div>
+                        <div class="wf-body"><div class="wf-body-img"></div></div>
+                        <div class="wf-mallet">
+                            <div class="wf-mallet-handle"></div>
+                            <div class="wf-mallet-head"></div>
+                        </div>
+                        <div class="wf-impact-ring"></div>
+                        <span class="wf-particle" style="top:45%;left:30%;--wf-p-dir:translate(-30px,-25px)"></span>
+                        <span class="wf-particle" style="top:35%;left:55%;--wf-p-dir:translate(10px,-35px)"></span>
+                        <span class="wf-particle" style="top:55%;left:65%;--wf-p-dir:translate(25px,15px)"></span>
+                        <span class="wf-particle" style="top:60%;left:35%;--wf-p-dir:translate(-20px,20px)"></span>
+                        <span class="wf-particle" style="top:30%;left:40%;--wf-p-dir:translate(-15px,-30px)"></span>
+                        <span class="wf-particle" style="top:50%;left:70%;--wf-p-dir:translate(30px,-5px)"></span>
+                        <div class="wf-cong-duc">🙏 +1 Công Đức Đi Làm</div>
+                        <span class="wf-label">🪵 GÕ MÕ ĐIỂM DANH</span>
                     </button>
-                    <p style="margin-top: 24px; color: #daa520; font-weight: 600;">🙏 Gõ mõ để tích công đức đi làm hôm nay!</p>
-                    <small style="color: var(--warning); display: block; margin-top: 8px;"><i class="fa-solid fa-location-dot"></i> Yêu cầu GPS để xác minh vị trí tại chùa... à nhầm, tại công ty 😄</small>
+                    <p style="margin-top:28px;color:#daa520;font-weight:600;font-size:14px;">🙏 Gõ mõ để tích công đức đi làm hôm nay!</p>
+                    <small style="color:rgba(255,255,255,0.35);display:block;margin-top:6px;"><i class="fa-solid fa-location-dot" style="color:#daa520;"></i> GPS xác minh vị trí tại công ty</small>
                 </div>
             `;
         }
@@ -178,9 +186,10 @@ const Attendance = {
         // Lấy lịch sử xin nghỉ
         const allLeaves = await Attendance.loadLeaveData();
         const userLeaves = allLeaves.filter(l => l.username === user.username).sort((a,b) => b.timestamp - a.timestamp);
+        const totalMerit = userHistory.reduce((acc, r) => acc + (r.status === 'on_time' ? 2 : 1), 0);
         let historyHtml = `
-            <div class="glass-panel" style="margin-top: 30px; padding: 20px;">
-                <h3 style="margin-bottom: 16px; color: #daa520;">🪵 Sổ Công Đức (30 ngày gần nhất)</h3>
+            <div class="wf-history-panel">
+                <h3>🪵 Sổ Công Đức <span class="wf-stat">Tích lũy: ${totalMerit} công đức</span></h3>
                 <div class="table-responsive">
                     <table class="tl-table">
                         <thead>
@@ -191,18 +200,21 @@ const Attendance = {
                             </tr>
                         </thead>
                         <tbody>
-                            ${userHistory.length === 0 ? '<tr><td colspan="3" style="text-align:center;">Chưa có dữ liệu</td></tr>' : ''}
-                            ${userHistory.map(r => `
+                            ${userHistory.length === 0 ? '<tr><td colspan="3" style="text-align:center;color:rgba(218,165,32,0.3);">Chưa có công đức nào</td></tr>' : ''}
+                            ${userHistory.map(r => {
+                                const pts = r.status === 'on_time' ? 2 : 1;
+                                return `
                                 <tr>
                                     <td>${r.dateStr}</td>
-                                    <td>${new Date(r.timestamp).toLocaleTimeString('vi-VN')} ${r.checkoutTimestamp ? `<br><small style="color:var(--success)">Ra: ${new Date(r.checkoutTimestamp).toLocaleTimeString('vi-VN')}</small>` : ''}</td>
+                                    <td>${new Date(r.timestamp).toLocaleTimeString('vi-VN')} ${r.checkoutTimestamp ? `<br><small style="color:#2ecc71">Ra: ${new Date(r.checkoutTimestamp).toLocaleTimeString('vi-VN')}</small>` : ''}</td>
                                     <td>
                                         <span class="badge ${r.status === 'on_time' ? 'bg-success' : 'bg-danger'}">
                                             ${r.status === 'on_time' ? 'Đúng giờ' : `Muộn ${r.lateMinutes}p`}
                                         </span>
+                                        <span class="wf-merit-badge">+${pts}</span>
                                     </td>
                                 </tr>
-                            `).join('')}
+                            `}).join('')}
                         </tbody>
                     </table>
                 </div>
@@ -468,124 +480,147 @@ const Attendance = {
         </style>`;
     },
 
+    /* --- Wooden Fish Sound Engine --- */
+    _playWoodenFishSound: () => {
+        // Try real audio file first, fall back to Web Audio synthesis
+        const tryFile = new Audio('sounds/wooden-fish-hit.mp3');
+        tryFile.volume = 0.7;
+        const filePromise = tryFile.play().catch(() => null);
+        filePromise.then(result => {
+            if (result === null) {
+                // File not available or blocked — synthesize
+                try {
+                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    const t = ctx.currentTime;
+                    // Deep "tok"
+                    const o1 = ctx.createOscillator(); const g1 = ctx.createGain();
+                    o1.type = 'sine';
+                    o1.frequency.setValueAtTime(200, t);
+                    o1.frequency.exponentialRampToValueAtTime(55, t + 0.12);
+                    g1.gain.setValueAtTime(0.9, t);
+                    g1.gain.exponentialRampToValueAtTime(0.01, t + 0.4);
+                    o1.connect(g1).connect(ctx.destination);
+                    o1.start(t); o1.stop(t + 0.4);
+                    // Resonance
+                    const o2 = ctx.createOscillator(); const g2 = ctx.createGain();
+                    o2.type = 'triangle';
+                    o2.frequency.setValueAtTime(130, t + 0.04);
+                    o2.frequency.exponentialRampToValueAtTime(35, t + 0.35);
+                    g2.gain.setValueAtTime(0.35, t + 0.04);
+                    g2.gain.exponentialRampToValueAtTime(0.001, t + 0.7);
+                    o2.connect(g2).connect(ctx.destination);
+                    o2.start(t + 0.04); o2.stop(t + 0.7);
+                } catch(e) { /* Audio fully unsupported */ }
+            }
+        });
+    },
+
     handleCheckIn: async () => {
         const user = Auth.currentUser;
         if (!user) return;
 
-        // Yêu cầu Location (GPS) Validation
         const btn = document.getElementById('btn-check-in');
-        if (btn) btn.disabled = true; // Ngăn bấm nhiều lần
+        if (!btn || btn.dataset.state === 'animating' || btn.dataset.state === 'loading') return;
+
+        // --- State: loading ---
+        btn.dataset.state = 'loading';
+        const label = btn.querySelector('.wf-label');
+        if (label) label.textContent = '📍 Đang lấy GPS...';
 
         if (!navigator.geolocation) {
-            Utils.showToast('Trình duyệt của bạn không hỗ trợ định vị GPS để chấm công.', 'error');
-            if (btn) btn.disabled = false;
+            Utils.showToast('Trình duyệt không hỗ trợ GPS.', 'error');
+            btn.dataset.state = 'idle';
+            if (label) label.textContent = '🪵 GÕ MÕ ĐIỂM DANH';
             return;
         }
 
-        Utils.showToast('Đang lấy vị trí GPS...', 'info');
-        
-        navigator.geolocation.getCurrentPosition(async (position) => {
-            await Attendance._processCheckinWithLocation(position.coords.latitude, position.coords.longitude);
-        }, async (error) => {
-            console.error("Lỗi lấy vị trí:", error);
-            // Một số nơi có thể ép buộc phải có GPS mới cho checkin. Tạm thời vẫn cho checkin nhưng lưu là ko có GPS.
-            Utils.showToast('Không thể lấy vị trí GPS. Đã ghi nhận chấm công không có vị trí.', 'warning');
-            await Attendance._processCheckinWithLocation(null, null);
-        }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+        navigator.geolocation.getCurrentPosition(
+            async (pos) => Attendance._runCheckin(pos.coords.latitude, pos.coords.longitude),
+            async () => {
+                Utils.showToast('GPS không khả dụng. Chấm công không vị trí.', 'warning');
+                Attendance._runCheckin(null, null);
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
     },
 
-    _processCheckinWithLocation: async (lat, lng) => {
+    _runCheckin: async (lat, lng) => {
         const user = Auth.currentUser;
+        const btn = document.getElementById('btn-check-in');
         const now = new Date();
-        const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-        
-        // Tính toán độ trễ
+        const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+
         const deadline = new Date(now);
         deadline.setHours(Attendance.DEADLINE_HOURS, Attendance.DEADLINE_MINUTES, 0, 0);
 
-        let status = 'on_time';
-        let lateMinutes = 0;
-
+        let status = 'on_time', lateMinutes = 0;
         if (now > deadline) {
             status = 'late';
-            const diffMs = now - deadline;
-            lateMinutes = Math.floor(diffMs / 60000);
-            
-            // Thông báo lên Bot Telegram nếu đi muộn
-            let locStr = lat ? `\n📍 Vị trí: https://google.com/maps?q=${lat},${lng}` : '';
-            const msg = `⚠️ <b>[BÁO CÁO ĐI MUỘN]</b>\n👤 Nhân viên: <b>${user.username}</b>\n⏰ Điểm danh lúc: ${now.toLocaleTimeString('vi-VN')}\n⏳ Đi muộn: ${lateMinutes} phút so với giờ quy định (08:30).${locStr}`;
-            Utils.notifyTelegram(msg);
+            lateMinutes = Math.floor((now - deadline) / 60000);
+            const locStr = lat ? `\n📍 https://google.com/maps?q=${lat},${lng}` : '';
+            Utils.notifyTelegram(`⚠️ <b>[ĐI MUỘN]</b>\n👤 ${user.username}\n⏰ ${now.toLocaleTimeString('vi-VN')}\n⏳ Muộn ${lateMinutes}p${locStr}`);
         }
 
         const newRecord = {
-            id: 'att_' + Date.now(),
-            username: user.username,
-            timestamp: now.getTime(),
-            dateStr: dateStr,
-            status: status,
-            lateMinutes: lateMinutes,
-            location: lat ? { lat, lng } : null,
-            note: ''
+            id: 'att_' + Date.now(), username: user.username,
+            timestamp: now.getTime(), dateStr, status, lateMinutes,
+            location: lat ? { lat, lng } : null, note: ''
         };
 
-        const allData = await Attendance.loadData();
-        // Cẩn thận double click
-        if (allData.find(r => r.username === user.username && r.dateStr === dateStr)) {
-            Utils.showToast('Hôm nay bạn đã điểm danh rồi!', 'info');
+        try {
+            const allData = await Attendance.loadData();
+            if (allData.find(r => r.username === user.username && r.dateStr === dateStr)) {
+                Utils.showToast('Hôm nay đã điểm danh rồi!', 'info');
+                if (btn) btn.dataset.state = 'idle';
+                return;
+            }
+            allData.push(newRecord);
+            await Attendance.saveData(allData);
+        } catch (err) {
+            Utils.showToast('Lỗi lưu dữ liệu. Thử lại!', 'error');
+            if (btn) {
+                btn.dataset.state = 'idle';
+                const l = btn.querySelector('.wf-label');
+                if (l) l.textContent = '🪵 GÕ MÕ ĐIỂM DANH';
+            }
             return;
         }
 
-        allData.push(newRecord);
-        await Attendance.saveData(allData);
+        // --- State: animating ---
+        if (!btn) { Attendance.render(); return; }
+        btn.dataset.state = 'animating';
+        const label = btn.querySelector('.wf-label');
+        if (label) label.textContent = 'Đang gõ mõ...';
 
-        // Hiệu ứng MÕ và Render lại
-        const btn = document.getElementById('btn-check-in');
-        if (btn) {
-            // Phát tiếng mõ bằng Web Audio API
-            try {
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                // Tiếng "tốc" của mõ gỗ
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(180, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(60, audioCtx.currentTime + 0.15);
-                gain.gain.setValueAtTime(0.8, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-                osc.connect(gain).connect(audioCtx.destination);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.5);
-                // Tiếng vang
-                const osc2 = audioCtx.createOscillator();
-                const gain2 = audioCtx.createGain();
-                osc2.type = 'triangle';
-                osc2.frequency.setValueAtTime(120, audioCtx.currentTime + 0.05);
-                osc2.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.4);
-                gain2.gain.setValueAtTime(0.4, audioCtx.currentTime + 0.05);
-                gain2.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.8);
-                osc2.connect(gain2).connect(audioCtx.destination);
-                osc2.start(audioCtx.currentTime + 0.05);
-                osc2.stop(audioCtx.currentTime + 0.8);
-            } catch(e) { console.log('Audio not supported'); }
+        // Play sound at impact moment (~200ms into the mallet swing)
+        setTimeout(() => Attendance._playWoodenFishSound(), 200);
 
-            // Hiệu ứng +1 Công Đức nổi lên
-            const floatEl = document.createElement('div');
-            floatEl.className = 'cong-duc-float';
-            floatEl.innerHTML = '🙏 +1 Công Đức Đi Làm!';
-            btn.parentElement.style.position = 'relative';
-            btn.parentElement.appendChild(floatEl);
-            setTimeout(() => floatEl.remove(), 2000);
+        // Trigger impact ring
+        setTimeout(() => {
+            const ring = btn.querySelector('.wf-impact-ring');
+            if (ring) { ring.classList.add('active'); setTimeout(() => ring.classList.remove('active'), 700); }
+        }, 220);
 
-            btn.innerHTML = '<div style="font-size:40px;">🪵✅</div><div style="color:#ffd700;font-weight:800;font-size:14px;margin-top:4px;">CÔNG ĐỨC +1</div>';
-            btn.style.background = 'radial-gradient(circle, rgba(218,165,32,0.3), rgba(0,0,0,0.5))';
-            btn.style.boxShadow = '0 0 40px rgba(255,215,0,0.5)';
-            btn.style.borderColor = '#ffd700';
-            setTimeout(() => {
-                Attendance.render();
-            }, 2000);
-        } else {
-            Attendance.render();
-        }
+        // Trigger particles
+        setTimeout(() => {
+            btn.querySelectorAll('.wf-particle').forEach(p => {
+                p.classList.add('active');
+                setTimeout(() => p.classList.remove('active'), 800);
+            });
+        }, 250);
+
+        // Float +1 Công Đức
+        setTimeout(() => {
+            const cd = btn.querySelector('.wf-cong-duc');
+            if (cd) { cd.classList.add('active'); setTimeout(() => cd.classList.remove('active'), 1500); }
+        }, 300);
+
+        // After animation, show success
+        setTimeout(() => {
+            if (label) label.textContent = '✅ Công Đức +1';
+            btn.dataset.state = 'success';
+            setTimeout(() => Attendance.render(), 1200);
+        }, 900);
     },
 
     showLeaveModal: () => {
