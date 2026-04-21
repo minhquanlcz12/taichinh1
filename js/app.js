@@ -148,6 +148,9 @@ const app = {
         document.getElementById(viewId).classList.add('active');
         app.state.currentView = viewId;
 
+        // Sync Ambient Music
+        if (typeof AttendanceMusic !== 'undefined') AttendanceMusic.updateTabState(viewId);
+
         // Update topbar title
         const titles = {
             'dashboard-view': { title: 'Tổng quan', sub: 'Cập nhật diễn biến nhanh chóng' },

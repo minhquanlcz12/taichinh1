@@ -147,6 +147,7 @@ const Auth = {
 
         Auth.renderSettings();
 
+        if (typeof AttendanceMusic !== 'undefined') AttendanceMusic.init();
         app.init(); // Boot the main app layout now that user is logged in
         if (typeof ChatModule !== 'undefined') ChatModule.startListening();
     },
