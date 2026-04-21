@@ -120,8 +120,14 @@ const Attendance = {
             const meritPts = todayRecord.status === 'on_time' ? 2 : 1;
             checkInHtml = `
                 <div class="wf-success">
-                    <div class="wf-success-icon">🪵</div>
-                    <h3>✅ Công đức hôm nay đã ghi nhận</h3>
+                    <div class="wf-success-icon" style="color:#daa520;">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12,2C6.47,2,2,6.47,2,12s4.47,10,10,10,10-4.47,10-10S17.53,2,12,2Zm0,18c-4.41,0-8-3.59-8-8s3.59-8,8-8,8,3.59,8,8-3.59,8-8,8ZM11,7h2v6h-2V7Zm0,8h2v2h-2v-2Z" opacity=".3"/>
+                            <path d="M12,4c-4.42,0-8,3.58-8,8s3.58,8,8,8,8-3.58,8-8-3.58-8-8-8Zm0,14c-3.31,0-6-2.69-6-6s2.69-6,6-6,6,2.69,6,6-2.69,6-6,6Z"/>
+                            <circle cx="12" cy="12" r="3" />
+                        </svg>
+                    </div>
+                    <h3><i class="fa-solid fa-circle-check" style="color:#2ecc71;margin-right:8px;"></i> Công đức hôm nay đã ghi nhận</h3>
                     <p>Gõ mõ lúc: <strong style="color:#daa520;">${new Date(todayRecord.timestamp).toLocaleTimeString('vi-VN')}</strong></p>
                     ${todayRecord.location ? `<p style="font-size:12px;"><i class="fa-solid fa-location-dot" style="color:#daa520;"></i> GPS xác minh vị trí tại công ty</p>` : ''}
                     <span class="wf-badge ${todayRecord.status === 'on_time' ? 'on-time' : 'late'}">
@@ -162,8 +168,8 @@ const Attendance = {
                         <span class="wf-particle" style="top:60%;left:35%;--wf-p-dir:translate(-20px,20px)"></span>
                         <span class="wf-particle" style="top:30%;left:40%;--wf-p-dir:translate(-15px,-30px)"></span>
                         <span class="wf-particle" style="top:50%;left:70%;--wf-p-dir:translate(30px,-5px)"></span>
-                        <div class="wf-cong-duc">🙏 +1 Công Đức Đi Làm</div>
-                        <span class="wf-label">🪵 GÕ MÕ ĐIỂM DANH</span>
+                        <div class="wf-cong-duc"><i class="fa-solid fa-hands-praying"></i> +1 Công Đức Đi Làm</div>
+                        <span class="wf-label"><i class="fa-solid fa-gavel" style="margin-right:6px;"></i> GÕ MÕ ĐIỂM DANH</span>
                     </button>
                     <p style="margin-top:28px;color:#daa520;font-weight:600;font-size:14px;">🙏 Gõ mõ để tích công đức đi làm hôm nay!</p>
                     <small style="color:rgba(255,255,255,0.35);display:block;margin-top:6px;"><i class="fa-solid fa-location-dot" style="color:#daa520;"></i> GPS xác minh vị trí tại công ty</small>
@@ -189,7 +195,7 @@ const Attendance = {
         const totalMerit = userHistory.reduce((acc, r) => acc + (r.status === 'on_time' ? 2 : 1), 0);
         let historyHtml = `
             <div class="wf-history-panel">
-                <h3>🪵 Sổ Công Đức <span class="wf-stat">Tích lũy: ${totalMerit} công đức</span></h3>
+                <h3><i class="fa-solid fa-scroll" style="margin-right:8px;"></i> Sổ Công Đức <span class="wf-stat">Tích lũy: ${totalMerit} công đức</span></h3>
                 <div class="table-responsive">
                     <table class="tl-table">
                         <thead>
@@ -617,7 +623,7 @@ const Attendance = {
 
         // After animation, show success
         setTimeout(() => {
-            if (label) label.textContent = '✅ Công Đức +1';
+            if (label) label.textContent = 'Công Đức +1';
             btn.dataset.state = 'success';
             setTimeout(() => Attendance.render(), 1200);
         }, 900);
