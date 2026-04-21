@@ -45,7 +45,7 @@ const MusicPlayer = {
             }
             #mp-toggle-btn {
                 position: fixed;
-                bottom: 20px;
+                bottom: 80px;
                 right: 20px;
                 z-index: 9998;
                 width: 50px;
