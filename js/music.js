@@ -1,17 +1,68 @@
 /**
- * MusicPlayer - Full-page YouTube search + embed player
- * Phiên bản ổn định nhất, đã được test hoạt động
+ * MusicPlayer — Curated embeddable YouTube music library
+ * Pre-loaded with verified embeddable videos by genre
  */
 const MusicPlayer = {
     _rendered: false,
+    _catalog: {
+        'Lofi & Chill': [
+            { id: 'jfKfPfyJRdk', title: 'Lofi Hip Hop Radio 📚', channel: 'Lofi Girl', live: true },
+            { id: 'rUxyKA_-grg', title: 'Lofi Sleep/Chill Radio 🌙', channel: 'Lofi Girl', live: true },
+            { id: '4oStw0r33so', title: '3 Hour Lofi Mix', channel: 'Lofi Girl' },
+            { id: 'yIQd2Ya0Zlk', title: 'Lofi Beats to Study', channel: 'Chill Music Lab' },
+            { id: 'lP26UCnoH9s', title: 'Coffee Shop Lofi ☕', channel: 'STARTER' },
+        ],
+        'Nhạc Không Lời': [
+            { id: '77ZozI0rw7w', title: 'Beautiful Piano Music 24/7', channel: 'Relaxing Music', live: true },
+            { id: 'lE6RYpe9IT0', title: 'Relaxing Sleep Music', channel: 'Soothing Relaxation' },
+            { id: 'hlWiI4xVXKY', title: '10 Hours Study Music', channel: 'Greenred Productions' },
+            { id: '2OEL4P1Rz04', title: 'Peaceful Piano', channel: 'Soothing Relaxation' },
+            { id: 'qYnA9wWFHLI', title: 'Morning Music for Positive Energy', channel: 'OCB Relax Music' },
+        ],
+        'EDM & NCS': [
+            { id: '7tNtU5XFwwU', title: 'NCS 24/7 Live Radio 🎵', channel: 'NoCopyrightSounds', live: true },
+            { id: 'bM7SZ5SBzyY', title: 'Alan Walker - Faded', channel: 'Alan Walker' },
+            { id: 'J2X5mJ3HDYE', title: 'NEFFEX Greatest Hits', channel: 'NEFFEX' },
+            { id: '36YnV9STBqc', title: 'Top 50 NCS Songs', channel: 'NCS' },
+            { id: 'n1WpP7iowLc', title: 'Elektronomia - Sky High', channel: 'NCS' },
+        ],
+        'Pop Quốc Tế': [
+            { id: 'kJQP7kiw5Fk', title: 'Luis Fonsi - Despacito', channel: 'Luis Fonsi' },
+            { id: 'JGwWNGJdvx8', title: 'Ed Sheeran - Shape of You', channel: 'Ed Sheeran' },
+            { id: 'RgKAFK5djSk', title: 'Wiz Khalifa - See You Again', channel: 'Wiz Khalifa' },
+            { id: 'CevxZvSJLk8', title: 'Katy Perry - Roar', channel: 'Katy Perry' },
+            { id: '09R8_2nJtjg', title: 'Maroon 5 - Sugar', channel: 'Maroon 5' },
+        ],
+        'K-Pop': [
+            { id: '9bZkp7q19f0', title: 'PSY - Gangnam Style', channel: 'PSY' },
+            { id: 'gdZLi9oWNZg', title: 'BTS - Dynamite', channel: 'BTS' },
+            { id: 'IHNzOHi8sJs', title: 'BLACKPINK - How You Like That', channel: 'BLACKPINK' },
+            { id: 'UBURTj20HXI', title: 'NewJeans - Super Shy', channel: 'HYBE' },
+            { id: 'dyRsYk0LyA8', title: 'LISA - LALISA', channel: 'BLACKPINK' },
+        ],
+        'Acoustic & Cover': [
+            { id: 'kgx4WGK0oNU', title: 'Best Acoustic Songs 2024', channel: 'Acoustic Music' },
+            { id: 'wAPCSnAhhC8', title: 'Boyce Avenue Greatest Hits', channel: 'Boyce Avenue' },
+            { id: 'yjQ0UkOBpRg', title: 'Acoustic Guitar Music', channel: 'Background Music' },
+            { id: 'ZbZSe6N_BXs', title: 'Acoustic Pop Covers', channel: 'Eddie van der Meer' },
+            { id: 'qGTkHlVOoWg', title: 'Coffee Shop Acoustic', channel: 'Chill Station' },
+        ],
+        'Classical & Orchestral': [
+            { id: 'VBmaJFPrRak', title: 'Bach — Best Of', channel: 'HALIDONMUSIC' },
+            { id: 'g1uLrHq9TDg', title: 'Chopin — Classical Piano', channel: 'HALIDONMUSIC' },
+            { id: 'lCjyiEOZAYI', title: 'Mozart — Complete Works', channel: 'HALIDONMUSIC' },
+            { id: 'BOZv6MOLOIM', title: 'Vivaldi — Four Seasons', channel: 'HALIDONMUSIC' },
+            { id: 'sPlhKP0nZII', title: 'Beethoven — Moonlight Sonata', channel: 'Rousseau' },
+        ],
+        'Jazz & Blues': [
+            { id: 'neV3EPgvZ3g', title: 'Jazz Relaxing Music ☕', channel: 'Cafe Music BGM' },
+            { id: 'fEvM-OUbaKs', title: 'Night Jazz Lounge', channel: 'Jazz Lounge' },
+            { id: 'Dx5qFachd3A', title: 'Smooth Jazz', channel: 'Dr. SaxLove' },
+        ],
+    },
+    _currentCat: null,
     _results: [],
     _currentIdx: -1,
-    _apis: [
-        'https://pipedapi.kavin.rocks',
-        'https://pipedapi.frontendfriendly.xyz',
-        'https://api.piped.projectsegfau.lt',
-        'https://inv.nadeko.net',
-    ],
 
     render: () => {
         if (MusicPlayer._rendered) return;
@@ -20,72 +71,84 @@ const MusicPlayer = {
         const container = document.getElementById('music-view');
         if (!container) return;
 
+        const cats = Object.keys(MusicPlayer._catalog);
+
         container.innerHTML = `
             <div style="width:100%; min-height:calc(100vh - 100px); background:linear-gradient(160deg,#0a0a1a 0%,#111 100%); border-radius:14px; overflow:hidden; border:1px solid rgba(231,76,60,0.12);">
-                <div style="display:grid; grid-template-columns:1fr 300px; min-height:calc(100vh - 100px);" id="mp-grid">
+                <div style="display:grid; grid-template-columns:1fr 320px; min-height:calc(100vh - 100px);" id="mp-grid">
 
-                    <!-- LEFT: Player + Search -->
+                    <!-- LEFT: Player -->
                     <div style="padding:20px; display:flex; flex-direction:column;">
                         <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
                             <i class="fa-brands fa-youtube" style="color:#e74c3c;font-size:24px;"></i>
                             <h3 style="color:#fff;margin:0;font-size:17px;font-weight:700;">YouTube Music</h3>
-                            <span style="color:rgba(255,255,255,0.2);font-size:11px;">• Nghe nhạc ngay trong app</span>
+                            <span style="color:rgba(255,255,255,0.2);font-size:11px;">• Thư viện nhạc tích hợp</span>
                         </div>
 
-                        <!-- YouTube Embed Player -->
+                        <!-- YouTube Player -->
                         <div id="yt-player-wrap" style="width:100%;aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:#000;border:1px solid rgba(255,255,255,0.06);box-shadow:0 8px 30px rgba(0,0,0,0.5);">
                             <iframe id="yt-player" src="https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=0" style="width:100%;height:100%;border:none;" allow="autoplay;encrypted-media;picture-in-picture" allowfullscreen></iframe>
                         </div>
 
-                        <!-- Now Playing Bar -->
-                        <div id="yt-now-playing" style="margin-top:10px;padding:10px 14px;border-radius:10px;background:rgba(231,76,60,0.08);border:1px solid rgba(231,76,60,0.15);">
+                        <!-- Now Playing Controls -->
+                        <div style="margin-top:10px;padding:10px 14px;border-radius:10px;background:rgba(231,76,60,0.08);border:1px solid rgba(231,76,60,0.15);">
                             <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
                                 <div style="min-width:0;flex:1;">
-                                    <p style="color:#fff;font-size:13px;font-weight:600;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="yt-now-title">Lofi Girl Radio — live 24/7</p>
-                                    <p style="color:rgba(255,255,255,0.4);font-size:11px;margin:2px 0 0;" id="yt-now-channel">Bấm tìm kiếm hoặc chọn playlist bên phải</p>
+                                    <p style="color:#fff;font-size:13px;font-weight:600;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="yt-now-title">Lofi Hip Hop Radio 📚</p>
+                                    <p style="color:rgba(255,255,255,0.4);font-size:11px;margin:2px 0 0;" id="yt-now-channel">Lofi Girl • Chọn thể loại bên phải để nghe</p>
                                 </div>
                                 <div style="display:flex;gap:6px;flex-shrink:0;">
-                                    <button onclick="MusicPlayer.prev()" title="Bài trước" style="width:32px;height:32px;border-radius:50%;border:1px solid rgba(255,255,255,0.15);background:transparent;color:rgba(255,255,255,0.6);cursor:pointer;font-size:12px;">
+                                    <button onclick="MusicPlayer.prev()" title="Bài trước" style="width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,0.15);background:transparent;color:rgba(255,255,255,0.6);cursor:pointer;font-size:13px;">
                                         <i class="fa-solid fa-backward-step"></i>
                                     </button>
-                                    <button onclick="MusicPlayer.next()" title="Bài tiếp (skip lỗi)" style="width:32px;height:32px;border-radius:50%;border:1px solid rgba(231,76,60,0.4);background:rgba(231,76,60,0.1);color:#e74c3c;cursor:pointer;font-size:12px;">
+                                    <button onclick="MusicPlayer.next()" title="Bài tiếp" style="width:34px;height:34px;border-radius:50%;border:1px solid rgba(231,76,60,0.4);background:rgba(231,76,60,0.15);color:#e74c3c;cursor:pointer;font-size:13px;">
                                         <i class="fa-solid fa-forward-step"></i>
                                     </button>
-                                    <a id="yt-open-link" href="https://www.youtube.com/watch?v=jfKfPfyJRdk" target="_blank" title="Mở trên YouTube" style="width:32px;height:32px;border-radius:50%;border:1px solid rgba(255,255,255,0.15);background:transparent;color:rgba(255,255,255,0.6);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;text-decoration:none;">
+                                    <a id="yt-open-link" href="https://www.youtube.com/watch?v=jfKfPfyJRdk" target="_blank" title="Mở YouTube" style="width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,0.15);background:transparent;color:rgba(255,255,255,0.6);display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:13px;">
                                         <i class="fa-solid fa-up-right-from-square"></i>
                                     </a>
                                 </div>
                             </div>
-                            <p style="color:rgba(255,255,255,0.2);font-size:10px;margin:6px 0 0;"><i class="fa-solid fa-circle-info" style="margin-right:3px;"></i>Video lỗi? Bấm ⏭ chuyển bài hoặc ↗ mở YouTube trực tiếp</p>
                         </div>
 
-                        <!-- Search Bar -->
+                        <!-- Search (optional) -->
                         <div style="margin-top:14px;display:flex;gap:8px;">
-                            <input id="yt-search" type="text" placeholder="🔍 Tìm bài hát... (VD: Sơn Tùng, See Tình, Lofi chill...)" style="flex:1;padding:11px 16px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:#fff;font-size:14px;outline:none;" onfocus="this.style.borderColor='#e74c3c'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
-                            <button onclick="MusicPlayer.search()" id="yt-search-btn" style="padding:11px 18px;border-radius:10px;background:#e74c3c;color:#fff;border:none;cursor:pointer;font-weight:700;font-size:13px;white-space:nowrap;">
-                                <i class="fa-solid fa-magnifying-glass" style="margin-right:5px;"></i>Tìm
+                            <input id="yt-search" type="text" placeholder="🔍 Tìm thêm trên YouTube..." style="flex:1;padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);color:#fff;font-size:13px;outline:none;" onfocus="this.style.borderColor='#e74c3c'" onblur="this.style.borderColor='rgba(255,255,255,0.08)'">
+                            <button onclick="MusicPlayer.search()" id="yt-search-btn" style="padding:10px 14px;border-radius:10px;background:rgba(231,76,60,0.8);color:#fff;border:none;cursor:pointer;font-weight:700;font-size:12px;">
+                                <i class="fa-solid fa-magnifying-glass"></i>
                             </button>
                         </div>
 
-                        <!-- Search Results -->
-                        <div id="yt-results" style="margin-top:14px;flex:1;overflow-y:auto;"></div>
+                        <!-- Search Results (hidden until search) -->
+                        <div id="yt-results" style="margin-top:10px;flex:1;overflow-y:auto;display:none;"></div>
                     </div>
 
-                    <!-- RIGHT: Sidebar -->
-                    <div style="background:rgba(0,0,0,0.3);border-left:1px solid rgba(255,255,255,0.05);padding:16px;overflow-y:auto;">
-                        <h4 style="color:rgba(255,255,255,0.3);font-size:11px;text-transform:uppercase;letter-spacing:1.5px;margin:0 0 12px;">
-                            <i class="fa-solid fa-fire" style="margin-right:5px;color:#e74c3c;"></i>Tìm nhanh
-                        </h4>
-                        <div style="display:flex;flex-direction:column;gap:6px;" id="yt-quick-list">
-                            ${[
-                                'Nhạc Việt hot 2024', 'Lofi chill study', 'Sơn Tùng MTP',
-                                'Nhạc không lời piano', 'Acoustic cover hay nhất', 'EDM remix việt',
-                                'Bolero trữ tình', 'Nhạc Trịnh Công Sơn', 'US UK pop hits 2024',
-                                'K-Pop hot nhất', 'Rap Việt hay nhất', 'Hà Anh Tuấn playlist'
-                            ].map(t => `
-                                <button class="yt-quick" onclick="MusicPlayer.quickSearch('${t}')" style="text-align:left;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);color:rgba(255,255,255,0.6);cursor:pointer;font-size:12px;font-weight:500;transition:all 0.2s;">
-                                    <i class="fa-solid fa-play" style="margin-right:6px;font-size:9px;opacity:0.4;"></i>${t}
-                                </button>
+                    <!-- RIGHT: Music Library Sidebar -->
+                    <div style="background:rgba(0,0,0,0.3);border-left:1px solid rgba(255,255,255,0.05);padding:0;overflow-y:auto;">
+                        <div style="padding:14px 14px 6px;position:sticky;top:0;background:rgba(10,10,26,0.97);z-index:2;">
+                            <h4 style="color:#e74c3c;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;margin:0;">
+                                <i class="fa-solid fa-music" style="margin-right:5px;"></i>Thư viện nhạc
+                            </h4>
+                        </div>
+                        <div id="yt-library" style="padding:0 10px 14px;">
+                            ${cats.map(cat => `
+                                <div style="margin-bottom:4px;">
+                                    <button class="yt-cat-btn" onclick="MusicPlayer.toggleCat('${cat}')" style="width:100%;text-align:left;padding:10px 12px;border-radius:8px;border:none;background:rgba(255,255,255,0.03);color:rgba(255,255,255,0.7);cursor:pointer;font-size:13px;font-weight:600;transition:all 0.2s;display:flex;align-items:center;justify-content:space-between;">
+                                        <span>${cat} <span style="color:rgba(255,255,255,0.2);font-weight:400;font-size:11px;">(${MusicPlayer._catalog[cat].length})</span></span>
+                                        <i class="fa-solid fa-chevron-down" style="font-size:10px;opacity:0.3;transition:transform 0.2s;" id="cat-arrow-${cat.replace(/[^a-zA-Z]/g,'')}"></i>
+                                    </button>
+                                    <div id="cat-list-${cat.replace(/[^a-zA-Z]/g,'')}" style="display:none;padding:4px 0 4px 8px;">
+                                        ${MusicPlayer._catalog[cat].map((v, i) => `
+                                            <div class="yt-lib-item" onclick="MusicPlayer.playCat('${cat}',${i})" style="display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:6px;cursor:pointer;transition:all 0.2s;border-left:2px solid transparent;">
+                                                <img src="https://i.ytimg.com/vi/${v.id}/default.jpg" style="width:40px;height:30px;border-radius:3px;object-fit:cover;background:#222;flex-shrink:0;">
+                                                <div style="min-width:0;flex:1;">
+                                                    <div style="color:#fff;font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${v.title}</div>
+                                                    <div style="color:rgba(255,255,255,0.25);font-size:10px;">${v.channel}${v.live ? ' • 🔴 LIVE' : ''}</div>
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
                             `).join('')}
                         </div>
                     </div>
@@ -93,9 +156,10 @@ const MusicPlayer = {
             </div>
 
             <style>
-                .yt-quick:hover{background:rgba(231,76,60,0.15)!important;border-color:rgba(231,76,60,0.3)!important;color:#e74c3c!important;}
-                .yt-result-card:hover{background:rgba(231,76,60,0.08)!important;border-color:rgba(231,76,60,0.3)!important;}
-                .yt-result-card.active{background:rgba(231,76,60,0.12)!important;border-color:rgba(231,76,60,0.4)!important;}
+                .yt-cat-btn:hover{background:rgba(231,76,60,0.1)!important;color:#e74c3c!important;}
+                .yt-lib-item:hover{background:rgba(231,76,60,0.1)!important;border-left-color:#e74c3c!important;}
+                .yt-lib-item.active{background:rgba(231,76,60,0.12)!important;border-left-color:#e74c3c!important;}
+                .yt-result-card:hover{background:rgba(231,76,60,0.08)!important;}
                 @media(max-width:900px){#mp-grid{grid-template-columns:1fr!important;}}
             </style>
         `;
@@ -104,14 +168,66 @@ const MusicPlayer = {
             if (e.key === 'Enter') MusicPlayer.search();
         });
 
-        // Auto-search nhạc hot
-        MusicPlayer._doSearch('nhạc việt hot nhất 2024');
+        // Auto-mở category đầu tiên
+        MusicPlayer.toggleCat(cats[0]);
     },
 
-    quickSearch: (q) => {
-        document.getElementById('yt-search').value = q;
-        MusicPlayer.search();
+    toggleCat: (cat) => {
+        const key = cat.replace(/[^a-zA-Z]/g, '');
+        const list = document.getElementById('cat-list-' + key);
+        const arrow = document.getElementById('cat-arrow-' + key);
+        if (!list) return;
+
+        const isOpen = list.style.display !== 'none';
+        list.style.display = isOpen ? 'none' : 'block';
+        if (arrow) arrow.style.transform = isOpen ? '' : 'rotate(180deg)';
     },
+
+    playCat: (cat, idx) => {
+        const videos = MusicPlayer._catalog[cat];
+        if (!videos || !videos[idx]) return;
+        MusicPlayer._results = videos;
+        MusicPlayer._currentIdx = idx;
+        MusicPlayer._currentCat = cat;
+
+        const v = videos[idx];
+        document.getElementById('yt-player').src = `https://www.youtube.com/embed/${v.id}?autoplay=1`;
+        document.getElementById('yt-now-title').textContent = v.title;
+        document.getElementById('yt-now-channel').textContent = `${v.channel} • ${cat}`;
+        document.getElementById('yt-open-link').href = `https://www.youtube.com/watch?v=${v.id}`;
+
+        // Highlight
+        document.querySelectorAll('.yt-lib-item').forEach(el => el.classList.remove('active'));
+        const key = cat.replace(/[^a-zA-Z]/g, '');
+        const items = document.getElementById('cat-list-' + key)?.querySelectorAll('.yt-lib-item');
+        if (items && items[idx]) items[idx].classList.add('active');
+
+        document.getElementById('yt-player-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    },
+
+    next: () => {
+        if (MusicPlayer._results.length === 0) return;
+        let nextIdx = MusicPlayer._currentIdx + 1;
+        if (nextIdx >= MusicPlayer._results.length) nextIdx = 0; // Loop
+        if (MusicPlayer._currentCat) {
+            MusicPlayer.playCat(MusicPlayer._currentCat, nextIdx);
+        }
+    },
+
+    prev: () => {
+        if (MusicPlayer._results.length === 0) return;
+        let prevIdx = MusicPlayer._currentIdx - 1;
+        if (prevIdx < 0) prevIdx = MusicPlayer._results.length - 1; // Loop
+        if (MusicPlayer._currentCat) {
+            MusicPlayer.playCat(MusicPlayer._currentCat, prevIdx);
+        }
+    },
+
+    // Optional search for finding more videos
+    _apis: [
+        'https://pipedapi.kavin.rocks',
+        'https://inv.nadeko.net',
+    ],
 
     search: () => {
         const q = document.getElementById('yt-search').value.trim();
@@ -119,129 +235,69 @@ const MusicPlayer = {
         MusicPlayer._doSearch(q);
     },
 
-    next: () => {
-        if (MusicPlayer._results.length === 0) return;
-        let nextIdx = MusicPlayer._currentIdx + 1;
-        if (nextIdx < MusicPlayer._results.length) {
-            MusicPlayer.playIdx(nextIdx);
-        }
-    },
-
-    prev: () => {
-        if (MusicPlayer._currentIdx > 0) {
-            MusicPlayer.playIdx(MusicPlayer._currentIdx - 1);
-        }
-    },
-
     _doSearch: async (query) => {
         const btn = document.getElementById('yt-search-btn');
-        const resultDiv = document.getElementById('yt-results');
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Tìm...';
+        const rd = document.getElementById('yt-results');
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
         btn.disabled = true;
-        resultDiv.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(255,255,255,0.3);"><i class="fa-solid fa-spinner fa-spin" style="font-size:24px;"></i><p style="margin-top:10px;">Đang tìm kiếm...</p></div>';
+        rd.style.display = 'block';
+        rd.innerHTML = '<p style="color:rgba(255,255,255,0.3);text-align:center;padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i> Đang tìm...</p>';
 
         let videos = null;
-
         for (const api of MusicPlayer._apis) {
             try {
                 const isPiped = !api.includes('inv.');
                 const url = isPiped
-                    ? `${api}/search?q=${encodeURIComponent(query)}&filter=music_songs`
+                    ? `${api}/search?q=${encodeURIComponent(query)}&filter=videos`
                     : `${api}/api/v1/search?q=${encodeURIComponent(query)}&type=video`;
-
                 const resp = await fetch(url, { signal: AbortSignal.timeout(6000) });
-                if (!resp.ok) {
-                    // Piped music_songs filter might fail, try videos filter
-                    if (isPiped) {
-                        const resp2 = await fetch(`${api}/search?q=${encodeURIComponent(query)}&filter=videos`, { signal: AbortSignal.timeout(6000) });
-                        if (resp2.ok) {
-                            const data2 = await resp2.json();
-                            if (data2.items) {
-                                videos = data2.items.filter(v => v.type === 'stream' && v.duration > 0).slice(0, 20).map(v => ({
-                                    id: v.url ? v.url.replace('/watch?v=', '') : '',
-                                    title: v.title || '', channel: v.uploaderName || v.uploader || '',
-                                    duration: v.duration || 0,
-                                    thumbnail: v.thumbnail || `https://i.ytimg.com/vi/${v.url?.replace('/watch?v=','')}/mqdefault.jpg`
-                                }));
-                            }
-                        }
-                    }
-                    if (!videos || videos.length === 0) continue;
-                } else {
-                    const data = await resp.json();
-                    if (isPiped && data.items) {
-                        videos = data.items.filter(v => (v.type === 'stream' || v.type === 'song') && v.duration > 0).slice(0, 20).map(v => ({
-                            id: v.url ? v.url.replace('/watch?v=', '') : '',
-                            title: v.title || '', channel: v.uploaderName || v.uploader || '',
-                            duration: v.duration || 0,
-                            thumbnail: v.thumbnail || `https://i.ytimg.com/vi/${v.url?.replace('/watch?v=','')}/mqdefault.jpg`
-                        }));
-                    } else if (!isPiped && Array.isArray(data)) {
-                        videos = data.filter(v => v.type === 'video' && v.lengthSeconds > 0).slice(0, 20).map(v => ({
-                            id: v.videoId, title: v.title || '', channel: v.author || '',
-                            duration: v.lengthSeconds || 0,
-                            thumbnail: `https://i.ytimg.com/vi/${v.videoId}/mqdefault.jpg`
-                        }));
-                    }
+                if (!resp.ok) continue;
+                const data = await resp.json();
+                if (isPiped && data.items) {
+                    videos = data.items.filter(v => v.type === 'stream' && v.duration > 0).slice(0, 10).map(v => ({
+                        id: v.url ? v.url.replace('/watch?v=', '') : '',
+                        title: v.title || '', channel: v.uploaderName || '',
+                        duration: v.duration || 0,
+                    }));
+                } else if (!isPiped && Array.isArray(data)) {
+                    videos = data.filter(v => v.type === 'video').slice(0, 10).map(v => ({
+                        id: v.videoId, title: v.title || '', channel: v.author || '',
+                        duration: v.lengthSeconds || 0,
+                    }));
                 }
-
                 if (videos) videos = videos.filter(v => v.id && v.id.length === 11);
                 if (videos && videos.length > 0) break;
             } catch(e) { continue; }
         }
 
-        btn.innerHTML = '<i class="fa-solid fa-magnifying-glass" style="margin-right:5px;"></i>Tìm';
+        btn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i>';
         btn.disabled = false;
 
         if (!videos || videos.length === 0) {
-            resultDiv.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(255,255,255,0.3);"><i class="fa-solid fa-face-sad-tear" style="font-size:32px;margin-bottom:10px;display:block;"></i>Không tìm thấy. Thử từ khóa khác!</div>';
+            rd.innerHTML = '<p style="color:rgba(255,255,255,0.3);text-align:center;padding:20px;">Không tìm thấy</p>';
             return;
         }
 
-        MusicPlayer._results = videos;
-        MusicPlayer._currentIdx = -1;
-
-        resultDiv.innerHTML = `
-            <div style="display:flex;flex-direction:column;gap:6px;">
-                ${videos.map((v, i) => `
-                    <div class="yt-result-card" id="yt-card-${i}" onclick="MusicPlayer.playIdx(${i})" style="display:flex;gap:10px;padding:8px;border-radius:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);cursor:pointer;transition:all 0.2s;">
-                        <div style="position:relative;flex-shrink:0;">
-                            <img src="${v.thumbnail}" style="width:120px;height:68px;border-radius:6px;object-fit:cover;background:#222;" onerror="this.style.display='none'">
-                            ${v.duration ? `<span style="position:absolute;bottom:3px;right:3px;background:rgba(0,0,0,0.85);color:#fff;font-size:10px;padding:1px 4px;border-radius:3px;">${MusicPlayer._fmt(v.duration)}</span>` : ''}
-                        </div>
-                        <div style="overflow:hidden;display:flex;flex-direction:column;justify-content:center;min-width:0;flex:1;">
-                            <div style="color:#fff;font-weight:600;font-size:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.4;">${v.title}</div>
-                            <div style="color:rgba(255,255,255,0.3);font-size:11px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${v.channel}</div>
-                        </div>
-                        <div style="display:flex;align-items:center;flex-shrink:0;"><i class="fa-solid fa-play" style="color:rgba(255,255,255,0.15);font-size:14px;"></i></div>
-                    </div>
-                `).join('')}
+        rd.innerHTML = videos.map((v, i) => `
+            <div class="yt-result-card" onclick="MusicPlayer._playSearch(${i})" style="display:flex;gap:8px;padding:7px;border-radius:8px;cursor:pointer;transition:all 0.2s;margin-bottom:4px;">
+                <img src="https://i.ytimg.com/vi/${v.id}/default.jpg" style="width:60px;height:34px;border-radius:4px;object-fit:cover;background:#222;">
+                <div style="min-width:0;flex:1;">
+                    <div style="color:#fff;font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${v.title}</div>
+                    <div style="color:rgba(255,255,255,0.3);font-size:10px;">${v.channel}</div>
+                </div>
             </div>
-        `;
+        `).join('');
 
-        // Auto-play first result
-        MusicPlayer.playIdx(0);
+        MusicPlayer._searchResults = videos;
     },
 
-    playIdx: (idx) => {
-        if (idx < 0 || idx >= MusicPlayer._results.length) return;
-        const v = MusicPlayer._results[idx];
-        MusicPlayer._currentIdx = idx;
-
+    _searchResults: [],
+    _playSearch: (idx) => {
+        const v = MusicPlayer._searchResults[idx];
+        if (!v) return;
         document.getElementById('yt-player').src = `https://www.youtube.com/embed/${v.id}?autoplay=1`;
         document.getElementById('yt-now-title').textContent = v.title;
         document.getElementById('yt-now-channel').textContent = v.channel;
         document.getElementById('yt-open-link').href = `https://www.youtube.com/watch?v=${v.id}`;
-
-        // Highlight
-        document.querySelectorAll('.yt-result-card').forEach((el, i) => el.classList.toggle('active', i === idx));
-        document.getElementById('yt-player-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
     },
-
-    _fmt: (s) => {
-        if (!s || s <= 0) return '';
-        const m = Math.floor(s / 60);
-        const sec = s % 60;
-        return `${m}:${String(sec).padStart(2, '0')}`;
-    }
 };
