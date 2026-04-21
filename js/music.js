@@ -5,56 +5,67 @@
 const MusicPlayer = {
     _rendered: false,
     _catalog: {
-        'Lofi & Chill': [
+        '🇻🇳 Nam Em': [
+            { id: 'QDR-9wgkeu0', title: 'Áng Mây Sẽ Nở Hoa', channel: 'Nam Em Official' },
+            { id: 'QAxWxbZO_n4', title: 'Giá Như Cha Còn Ở Trên Đời', channel: 'Nam Em Official' },
+            { id: '9FDdozo3dLs', title: 'Ngày Mai Em Đi Mất', channel: 'Nam Em Official' },
+            { id: 'NHnynJKDS6w', title: 'Live Session M\' 1975 [Full Show]', channel: 'Nam Em Official' },
+            { id: 'J8oO3ygSvuM', title: 'Live Bùng Nổ Cảm Xúc (Hắc Nguyệt Quang)', channel: 'Nam Em Official' },
+            { id: 'KZxT_Kv2l00', title: 'Đơn Phương (Cover)', channel: 'Nam Em Official' },
+        ],
+        '🇻🇳 Chu Thúy Quỳnh': [
+            { id: '5QmxIW-YWa0', title: 'Ít Nhưng Dài Lâu (ft. Yan Nguyễn)', channel: 'Chu Thúy Quỳnh' },
+            { id: 'kVG9XjbX1Ig', title: 'Thương Ly Biệt', channel: 'Chu Thúy Quỳnh' },
+            { id: 'fIS81oY1aZ8', title: 'Xem Như Em Chẳng May', channel: 'Chu Thúy Quỳnh' },
+            { id: 'djyPhWBEEgQ', title: 'Yêu 3 Năm Dại 1 Giờ', channel: 'Chu Thúy Quỳnh' },
+            { id: 'd4a34dd8VeQ', title: 'Thằng Hầu (ft. Nhật Phong)', channel: 'Chu Thúy Quỳnh' },
+        ],
+        '🇻🇳 Sơn Tùng M-TP': [
+            { id: 'abPmZCZZrFA', title: 'Đừng Làm Trái Tim Anh Đau', channel: 'Sơn Tùng M-TP' },
+            { id: 'psZ1g9fMfeo', title: 'Chúng Ta Của Hiện Tại', channel: 'Sơn Tùng M-TP' },
+            { id: 'Llw9Q6akRo4', title: 'Lạc Trôi', channel: 'Sơn Tùng M-TP' },
+            { id: 'FN7ALfpGxiI', title: 'Nơi Này Có Anh', channel: 'Sơn Tùng M-TP' },
+            { id: 'knW7-x7Y7RE', title: 'Hãy Trao Cho Anh (ft. Snoop Dogg)', channel: 'Sơn Tùng M-TP' },
+        ],
+        '🇻🇳 V-Pop Hot': [
+            { id: 'JAhdeizXpaQ', title: 'Để Mị Nói Cho Mà Nghe', channel: 'Hoàng Thùy Linh' },
+            { id: 'gJHSDZfJrRY', title: 'See Tình', channel: 'Hoàng Thùy Linh' },
+            { id: 'Q6ZNsHvspEg', title: 'Gieo Quẻ (ft. ĐEN)', channel: 'Hoàng Thùy Linh' },
+            { id: 'kJQP7kiw5Fk', title: 'Despacito (Vietnamese Fav)', channel: 'Luis Fonsi' },
+            { id: 'RgKAFK5djSk', title: 'See You Again', channel: 'Wiz Khalifa' },
+        ],
+        '🎧 Lofi & Chill': [
             { id: 'jfKfPfyJRdk', title: 'Lofi Hip Hop Radio 📚', channel: 'Lofi Girl', live: true },
             { id: 'rUxyKA_-grg', title: 'Lofi Sleep/Chill Radio 🌙', channel: 'Lofi Girl', live: true },
             { id: '4oStw0r33so', title: '3 Hour Lofi Mix', channel: 'Lofi Girl' },
-            { id: 'yIQd2Ya0Zlk', title: 'Lofi Beats to Study', channel: 'Chill Music Lab' },
-            { id: 'lP26UCnoH9s', title: 'Coffee Shop Lofi ☕', channel: 'STARTER' },
         ],
-        'Nhạc Không Lời': [
-            { id: '77ZozI0rw7w', title: 'Beautiful Piano Music 24/7', channel: 'Relaxing Music', live: true },
+        '🎹 Nhạc Không Lời': [
             { id: 'lE6RYpe9IT0', title: 'Relaxing Sleep Music', channel: 'Soothing Relaxation' },
-            { id: 'hlWiI4xVXKY', title: '10 Hours Study Music', channel: 'Greenred Productions' },
             { id: '2OEL4P1Rz04', title: 'Peaceful Piano', channel: 'Soothing Relaxation' },
-            { id: 'qYnA9wWFHLI', title: 'Morning Music for Positive Energy', channel: 'OCB Relax Music' },
+            { id: 'qYnA9wWFHLI', title: 'Morning Positive Energy', channel: 'OCB Relax Music' },
         ],
-        'EDM & NCS': [
-            { id: '7tNtU5XFwwU', title: 'NCS 24/7 Live Radio 🎵', channel: 'NoCopyrightSounds', live: true },
+        '🎵 EDM & NCS': [
             { id: 'bM7SZ5SBzyY', title: 'Alan Walker - Faded', channel: 'Alan Walker' },
-            { id: 'J2X5mJ3HDYE', title: 'NEFFEX Greatest Hits', channel: 'NEFFEX' },
-            { id: '36YnV9STBqc', title: 'Top 50 NCS Songs', channel: 'NCS' },
             { id: 'n1WpP7iowLc', title: 'Elektronomia - Sky High', channel: 'NCS' },
+            { id: '36YnV9STBqc', title: 'Top 50 NCS Songs', channel: 'NCS' },
         ],
-        'Pop Quốc Tế': [
-            { id: 'kJQP7kiw5Fk', title: 'Luis Fonsi - Despacito', channel: 'Luis Fonsi' },
-            { id: 'JGwWNGJdvx8', title: 'Ed Sheeran - Shape of You', channel: 'Ed Sheeran' },
-            { id: 'RgKAFK5djSk', title: 'Wiz Khalifa - See You Again', channel: 'Wiz Khalifa' },
-            { id: 'CevxZvSJLk8', title: 'Katy Perry - Roar', channel: 'Katy Perry' },
-            { id: '09R8_2nJtjg', title: 'Maroon 5 - Sugar', channel: 'Maroon 5' },
-        ],
-        'K-Pop': [
+        '🇰🇷 K-Pop': [
             { id: '9bZkp7q19f0', title: 'PSY - Gangnam Style', channel: 'PSY' },
             { id: 'gdZLi9oWNZg', title: 'BTS - Dynamite', channel: 'BTS' },
             { id: 'IHNzOHi8sJs', title: 'BLACKPINK - How You Like That', channel: 'BLACKPINK' },
             { id: 'UBURTj20HXI', title: 'NewJeans - Super Shy', channel: 'HYBE' },
-            { id: 'dyRsYk0LyA8', title: 'LISA - LALISA', channel: 'BLACKPINK' },
         ],
-        'Acoustic & Cover': [
-            { id: 'kgx4WGK0oNU', title: 'Best Acoustic Songs 2024', channel: 'Acoustic Music' },
-            { id: 'wAPCSnAhhC8', title: 'Boyce Avenue Greatest Hits', channel: 'Boyce Avenue' },
-            { id: 'yjQ0UkOBpRg', title: 'Acoustic Guitar Music', channel: 'Background Music' },
-            { id: 'ZbZSe6N_BXs', title: 'Acoustic Pop Covers', channel: 'Eddie van der Meer' },
-            { id: 'qGTkHlVOoWg', title: 'Coffee Shop Acoustic', channel: 'Chill Station' },
+        '🌍 Pop Quốc Tế': [
+            { id: 'JGwWNGJdvx8', title: 'Ed Sheeran - Shape of You', channel: 'Ed Sheeran' },
+            { id: 'CevxZvSJLk8', title: 'Katy Perry - Roar', channel: 'Katy Perry' },
+            { id: '09R8_2nJtjg', title: 'Maroon 5 - Sugar', channel: 'Maroon 5' },
         ],
-        'Classical & Orchestral': [
+        '🎻 Classical': [
             { id: 'VBmaJFPrRak', title: 'Bach — Best Of', channel: 'HALIDONMUSIC' },
             { id: 'g1uLrHq9TDg', title: 'Chopin — Classical Piano', channel: 'HALIDONMUSIC' },
-            { id: 'lCjyiEOZAYI', title: 'Mozart — Complete Works', channel: 'HALIDONMUSIC' },
-            { id: 'BOZv6MOLOIM', title: 'Vivaldi — Four Seasons', channel: 'HALIDONMUSIC' },
             { id: 'sPlhKP0nZII', title: 'Beethoven — Moonlight Sonata', channel: 'Rousseau' },
         ],
-        'Jazz & Blues': [
+        '🎷 Jazz': [
             { id: 'neV3EPgvZ3g', title: 'Jazz Relaxing Music ☕', channel: 'Cafe Music BGM' },
             { id: 'fEvM-OUbaKs', title: 'Night Jazz Lounge', channel: 'Jazz Lounge' },
             { id: 'Dx5qFachd3A', title: 'Smooth Jazz', channel: 'Dr. SaxLove' },
