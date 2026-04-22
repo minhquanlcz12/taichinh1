@@ -21,10 +21,11 @@ const PayrollModule = {
             <div class="finance-header" style="display:flex; justify-content:space-between; margin-bottom: 24px; align-items:center; flex-wrap: wrap; gap: 12px;">
                 <h3 style="font-size: 20px; color: var(--success);"><i class="fa-solid fa-money-check-dollar" style="margin-right: 8px;"></i>${currentUser.role === 'admin' ? 'Bảng Lương Tổng Hợp' : 'Bảng Lương Cá Nhân'}</h3>
                 
-                <div style="display: flex; gap: 12px; align-items: center;">
+                <div style="display: flex; gap: 8px; align-items: center;">
                     <label style="color: var(--text-secondary); font-size: 13px;">Chọn tháng:</label>
                     <input type="month" id="payroll-month" class="form-control" style="width: auto; display: inline-block; height: 38px;" value="${PayrollModule.currentMonth}" onchange="PayrollModule.changeMonth(this.value)">
-                    ${currentUser.role === 'admin' ? '<button class="btn btn-outline" style="border-color: #f1c40f; color: #f1c40f;" onclick="PayrollModule.exportToPDF()"><i class="fa-solid fa-file-pdf"></i> Xuất Bảng Lương</button>' : ''}
+                    <button class="btn btn-success" onclick="PayrollModule.exportToExcel()"><i class="fa-solid fa-file-excel"></i> Excel</button>
+                    <button class="btn btn-outline" style="border-color: #f1c40f; color: #f1c40f;" onclick="PayrollModule.exportToPDF()"><i class="fa-solid fa-file-pdf"></i> PDF</button>
                 </div>
             </div>
             
@@ -334,9 +335,20 @@ const PayrollModule = {
                     <p style="font-weight: bold; margin-bottom: 80px;">Người Lập Bảng</p>
                     <p>Kế toán</p>
                 </div>
-                <div style="width: 200px;">
-                    <p style="font-weight: bold; margin-bottom: 80px;">Giám Đốc</p>
-                    <p>ĐÀO THANH LONG</p>
+                <div style="width: 250px; position: relative;">
+                    <p style="font-weight: bold; margin-bottom: 15px;">Giám Đốc</p>
+                    <div style="margin: 0 auto; width: 160px; height: 160px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="160" height="160">
+                            <circle cx="100" cy="100" r="92" fill="none" stroke="#da251d" stroke-width="4" opacity="0.85"/>
+                            <circle cx="100" cy="100" r="82" fill="none" stroke="#da251d" stroke-width="1.5" opacity="0.6"/>
+                            <path d="M 100 35 Q 115 50 110 65 Q 125 55 130 70 Q 120 75 125 90 Q 135 85 140 95 Q 130 100 125 110 Q 115 105 110 115 Q 105 105 100 110 Q 95 105 90 115 Q 85 105 75 110 Q 70 100 60 95 Q 65 85 75 90 Q 80 75 70 70 Q 75 55 90 65 Q 85 50 100 35" fill="#da251d" opacity="0.7"/>
+                            <text x="100" y="148" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#da251d">THANH LONG WORK</text>
+                            <text x="100" y="165" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#da251d">GIÁM ĐỐC</text>
+                            <line x1="55" y1="130" x2="145" y2="130" stroke="#da251d" stroke-width="0.8" opacity="0.5"/>
+                            <text x="100" y="182" text-anchor="middle" font-family="Arial,sans-serif" font-size="7" fill="#da251d" opacity="0.6">★ Since 2026 ★</text>
+                        </svg>
+                    </div>
+                    <p style="margin-top: 10px; font-weight: bold;">ĐÀO THANH LONG</p>
                 </div>
             </div>
         `;
@@ -374,5 +386,78 @@ const PayrollModule = {
             console.error("Lỗi xuất PDF:", err);
             Utils.showToast("Lỗi xuất báo cáo PDF", "error");
         });
+    },
+
+    exportToExcel: async () => {
+        Utils.showToast("Đang tạo Excel...", "info");
+        const tbody = document.getElementById('payroll-table-body');
+        if (!tbody) { Utils.showToast("Không có dữ liệu", "error"); return; }
+
+        const currentUser = Auth.currentUser;
+        let accounts = await Auth.getAccounts();
+        if (currentUser.role !== 'admin') {
+            accounts = accounts.filter(a => a.username === currentUser.username);
+        }
+
+        const allAttendance = await Attendance.loadData();
+        const allLeaves = await Attendance.loadLeaveData();
+        const allCustomBonuses = await DB.getCustomBonuses();
+        const monthlyBonuses = allCustomBonuses[PayrollModule.currentMonth] || {};
+
+        const selectedDate = new Date(PayrollModule.currentMonth + '-01');
+        const targetMonth = selectedDate.getMonth();
+        const targetYear = selectedDate.getFullYear();
+        const now = new Date();
+        const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+
+        const data = accounts.map(acc => {
+            const username = acc.username;
+            const baseSalary = acc.baseSalary || 0;
+            let onTimeDays = 0, lateDays = 0, approvedLeaveDays = 0;
+
+            allAttendance.forEach(a => {
+                if (a.username === username && a.dateStr < todayStr) {
+                    const d = new Date(a.dateStr);
+                    if (d.getMonth() === targetMonth && d.getFullYear() === targetYear) {
+                        if (a.status === 'on_time') onTimeDays++;
+                        else if (a.status === 'late') lateDays++;
+                    }
+                }
+            });
+
+            allLeaves.forEach(l => {
+                if (l.username === username && l.status === 'approved' && l.date < todayStr) {
+                    const d = new Date(l.date);
+                    if (d.getMonth() === targetMonth && d.getFullYear() === targetYear) {
+                        approvedLeaveDays += (parseInt(l.days) || 1);
+                    }
+                }
+            });
+
+            const dailyRate = baseSalary / PayrollModule.STANDARD_WORK_DAYS;
+            const paidDays = onTimeDays + lateDays + approvedLeaveDays;
+            const attendancePay = paidDays * dailyRate;
+            const latePenaltyTotal = lateDays * PayrollModule.LATE_PENALTY;
+            const customBonus = parseFloat(monthlyBonuses[username]) || 0;
+            const netSalary = Math.round(Math.max(0, attendancePay + customBonus - latePenaltyTotal));
+
+            return {
+                'Nhân sự': username,
+                'Vai trò': acc.role,
+                'Lương cứng': baseSalary,
+                'Đúng giờ': onTimeDays,
+                'Đi muộn': lateDays,
+                'Nghỉ phép': approvedLeaveDays,
+                'Phạt muộn': -latePenaltyTotal,
+                'Thưởng/Phạt khác': customBonus,
+                'Thực lĩnh': netSalary
+            };
+        });
+
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Luong_' + PayrollModule.currentMonth);
+        XLSX.writeFile(wb, `Bang_Luong_${PayrollModule.currentMonth}.xlsx`);
+        Utils.showToast("Đã xuất Bảng Lương ra Excel!", "success");
     }
 };
