@@ -242,6 +242,8 @@ body, h1, h2, h3, h4, h5, h6, p, span, div, input, button, textarea, select { fo
     background: url('../img/mo.png') center/contain no-repeat;
     opacity: 0.85;
     filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));
+    border-radius: 50%;
+    overflow: hidden;
 }
 
 /* Mallet (dùi gõ) */

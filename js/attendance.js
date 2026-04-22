@@ -143,7 +143,7 @@ const Attendance = {
             if (!todayRecord.checkoutTimestamp) {
                 checkInHtml += `
                 <div style="text-align:center;margin-top:20px;">
-                    <button class="btn" style="background:var(--info);color:#fff;padding:12px 24px;font-weight:bold;border-radius:30px;box-shadow:0 4px 15px rgba(0,240,255,0.3);" onclick="Attendance.showCheckoutModal()">
+                    <button class="btn" style="background:#daa520;color:#000;padding:12px 24px;font-weight:bold;border-radius:30px;box-shadow:0 4px 15px rgba(218,165,32,0.4);" onclick="Attendance.showCheckoutModal()">
                         <i class="fa-solid fa-person-walking-arrow-right" style="margin-right:8px;"></i> CHECK-OUT
                     </button>
                     <p style="color:var(--text-secondary);font-size:12px;margin-top:8px;">Báo cáo EOD trước khi kết thúc ngày.</p>
@@ -273,9 +273,9 @@ const Attendance = {
 
         container.innerHTML = `
             <div class="attendance-user-container">
-                <div class="glass-header" style="text-align: center; margin-bottom: 24px; padding: 15px 20px; background: rgba(255,165,0,0.05); border-radius: 12px; border: 1px solid rgba(255,165,0,0.1);">
+                <div class="glass-header" style="text-align: center; margin-bottom: 24px; padding: 15px 20px; background: rgba(218,165,32,0.05); border-radius: 12px; border: 1px solid rgba(218,165,32,0.1);">
                     <div>
-                        <h2 style="color:var(--primary); margin:0; font-size: 18px;"><i class="fa-solid fa-user-check"></i> CHẤM CÔNG HÀNG NGÀY</h2>
+                        <h2 style="color:#daa520; margin:0; font-size: 18px;"><i class="fa-solid fa-user-check"></i> CHẤM CÔNG HÀNG NGÀY</h2>
                         <p style="font-size:12px; color:var(--text-secondary); margin:4px 0 0;">Hạn chốt: <span style="color:var(--warning);font-weight:bold;">08:30 AM</span></p>
                     </div>
                 </div>
