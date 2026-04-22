@@ -516,26 +516,39 @@ Admin đã CẤP QUYỀN sửa/xóa giao dịch cho bạn:
         const monthInput = document.getElementById('pdf-month-filter');
         const selectedMonth = monthInput ? monthInput.value : new Date().toISOString().slice(0, 7);
         
+        // Month-specific records for the table
         let txs = FinanceModule.data.transactions.filter(t => t.date.startsWith(selectedMonth));
         
         let userTitle = '';
+        let selectedUser = 'all';
+
         if (isAdmin) {
             const userFilter = document.getElementById('finance-user-filter');
-            const selectedUser = userFilter ? userFilter.value : 'all';
+            selectedUser = userFilter ? userFilter.value : 'all';
             if (selectedUser !== 'all') {
                 txs = txs.filter(t => t.owner === selectedUser || (!t.owner && selectedUser === 'admin'));
                 userTitle = ` - NV: ${selectedUser}`;
             }
         } else {
-            txs = txs.filter(t => t.owner === currentUser.username);
-            userTitle = ` - ${currentUser.username}`;
+            selectedUser = currentUser.username;
+            txs = txs.filter(t => t.owner === selectedUser);
+            userTitle = ` - ${selectedUser}`;
+        }
+
+        // Calculate CUMULATIVE BALANCE (all-time) for the selected group/user
+        let allTxs = FinanceModule.data.transactions;
+        if (selectedUser !== 'all') {
+            allTxs = allTxs.filter(t => t.owner === selectedUser || (selectedUser === 'admin' && !t.owner));
         }
         
+        const cumulativeSummary = FinanceModule.getSummary(allTxs);
+        const accountBalance = cumulativeSummary.balance;
+        
         const title = `BÁO CÁO TÀI CHÍNH THÁNG ${selectedMonth}${userTitle}`;
-        FinanceModule.exportToPDF(txs, title);
+        FinanceModule.exportToPDF(txs, title, accountBalance);
     },
 
-    exportToPDF: (transactionsToExport, title = 'BÁO CÁO TÀI CHÍNH') => {
+    exportToPDF: (transactionsToExport, title = 'BÁO CÁO TÀI CHÍNH', currentBalance = null) => {
         const txs = transactionsToExport || FinanceModule.data.transactions;
         const sortedTxs = [...txs].sort((a,b) => new Date(b.date) - new Date(a.date));
         const isAdmin = Auth.currentUser && Auth.currentUser.role === 'admin';
@@ -564,10 +577,21 @@ Admin đã CẤP QUYỀN sửa/xóa giao dịch cho bạn:
                 <p>Ngày xuất: ${today}</p>
             </div>
             
-            <div style="display:flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold;">
-                <div style="color: #10b981;">Tổng Thu: ${Utils.formatCurrency(totalInc)}đ</div>
-                <div style="color: #3b82f6;">Số dư: ${Utils.formatCurrency(totalInc - totalExp)}đ</div>
-                <div style="color: #ef4444;">Tổng Chi: ${Utils.formatCurrency(totalExp)}đ</div>
+            <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; text-align: center; border: 1px solid #eee; padding: 15px; border-radius: 8px;">
+                <div>
+                    <div style="font-size: 11px; color: #666; text-transform: uppercase;">Thu nhập (Tháng)</div>
+                    <div style="font-size: 18px; font-weight: bold; color: #10b981;">+${Utils.formatCurrency(totalInc)}đ</div>
+                </div>
+                <div>
+                    <div style="font-size: 11px; color: #666; text-transform: uppercase;">SỐ DƯ THỰC TẾ</div>
+                    <div style="font-size: 22px; font-weight: 900; color: #3b82f6; text-shadow: 1px 1px 1px rgba(0,0,0,0.05);">
+                        ${currentBalance !== null ? Utils.formatCurrency(currentBalance) : Utils.formatCurrency(totalInc - totalExp)}đ
+                    </div>
+                </div>
+                <div>
+                    <div style="font-size: 11px; color: #666; text-transform: uppercase;">Chi tiêu (Tháng)</div>
+                    <div style="font-size: 18px; font-weight: bold; color: #ef4444;">-${Utils.formatCurrency(totalExp)}đ</div>
+                </div>
             </div>
 
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 40px; font-size: 13px;">
