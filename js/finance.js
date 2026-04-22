@@ -134,7 +134,9 @@ const FinanceModule = {
                     <button class="btn btn-outline" style="border-color: var(--primary); color: var(--primary);" onclick="ReportsModule.render()">
                         <i class="fa-solid fa-chart-pie"></i> Xem Báo cáo
                     </button>
-                    ${isAdmin ? '<button class="btn btn-outline" style="border-color: #f1c40f; color: #f1c40f;" onclick="FinanceModule.exportToPDF()"><i class="fa-solid fa-file-pdf"></i> Xuất PDF</button>' : ''}
+                    <button class="btn btn-outline" style="border-color: #f1c40f; color: #f1c40f;" onclick="FinanceModule.exportToPDF(null, 'BÁO CÁO TỔNG QUAN TẤT CẢ GIAO DỊCH')">
+                        <i class="fa-solid fa-file-pdf"></i> Xuất Toàn bộ (PDF)
+                    </button>
                 </div>
             </div>
             
@@ -504,9 +506,11 @@ Admin đã CẤP QUYỀN sửa/xóa giao dịch cho bạn:
         }
     },
 
-    exportToPDF: () => {
-        const listContainer = document.getElementById('finance-list-container');
-        if (!listContainer || listContainer.innerHTML.includes('Chưa có giao dịch lịch sử')) {
+    exportToPDF: (transactionsToExport, title = 'BÁO CÁO TÀI CHÍNH') => {
+        const txs = transactionsToExport || FinanceModule.data.transactions;
+        const sortedTxs = [...txs].sort((a,b) => new Date(b.date) - new Date(a.date));
+
+        if (sortedTxs.length === 0) {
             Utils.showToast("Không có dữ liệu để xuất", "error");
             return;
         }
@@ -526,7 +530,7 @@ Admin đã CẤP QUYỀN sửa/xóa giao dịch cho bạn:
         clone.innerHTML = `
             <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #da251d; padding-bottom: 20px;">
                 <h1 style="color: #da251d; margin-bottom: 5px;">THANH LONG WORK</h1>
-                <h3>BÁO CÁO TÀI CHÍNH</h3>
+                <h3>${title}</h3>
                 <p>Ngày xuất: ${today}</p>
             </div>
             
@@ -546,13 +550,13 @@ Admin đã CẤP QUYỀN sửa/xóa giao dịch cho bạn:
                     </tr>
                 </thead>
                 <tbody>
-                    ${FinanceModule.data.transactions.sort((a,b) => new Date(b.date) - new Date(a.date)).map(tx => `
+                    ${sortedTxs.map(tx => `
                         <tr>
                             <td style="padding: 10px; border: 1px solid #d1d5db;">${Utils.formatDate(tx.date)}</td>
                             <td style="padding: 10px; border: 1px solid #d1d5db; color: ${tx.type === 'income' ? '#10b981' : '#ef4444'}; font-weight: bold;">${tx.type === 'income' ? 'Thu' : 'Chi'}</td>
                             <td style="padding: 10px; border: 1px solid #d1d5db;">${tx.category}</td>
                             <td style="padding: 10px; border: 1px solid #d1d5db;">${tx.note || ''}</td>
-                            <td style="padding: 10px; border: 1px solid #d1d5db; text-align: right; color: ${tx.type === 'income' ? '#10b981' : '#ef4444'};">${tx.type === 'income' ? '+' : '-'}${Utils.formatCurrency(tx.amount)}đ</td>
+                            <td style="padding: 10px; border: 1px solid #d1d5db; text-align: right; color: ${tx.type === 'income' ? '#10b981' : '#ef4444'};">${tx.type === 'income' ? '+' : '-'}${Utils.formatCurrency(tx.amount)}đ ${isAdmin ? `<br><small style="color:#666">(${tx.owner || 'admin'})</small>` : ''}</td>
                         </tr>
                     `).join('')}
                 </tbody>

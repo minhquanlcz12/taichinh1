@@ -46,10 +46,13 @@ const ReportsModule = {
                     <div style="display: flex; gap: 12px;">
                         <input type="month" class="form-control" value="${ReportsModule.data.currentMonth}" onchange="ReportsModule.setMonth(this.value)" style="width: auto;">
                         <button class="btn btn-success" onclick="ReportsModule.exportToExcel()">
-                            <i class="fa-solid fa-file-excel"></i> Xuất Excel
+                            <i class="fa-solid fa-file-excel"></i> Excel
+                        </button>
+                        <button class="btn btn-outline" style="border-color: #ef4444; color: #ef4444;" onclick="ReportsModule.exportToPDF()">
+                            <i class="fa-solid fa-file-pdf"></i> PDF
                         </button>
                         <button class="btn btn-outline" onclick="FinanceModule.render()">
-                            <i class="fa-solid fa-arrow-left"></i> Quay lại
+                            <i class="fa-solid fa-arrow-left"></i> Thoát
                         </button>
                     </div>
                 </div>
@@ -83,111 +86,24 @@ const ReportsModule = {
         `;
 
         container.innerHTML = html;
-        
-        // Render Charts after DOM update
-        setTimeout(() => {
-            ReportsModule.renderCharts(transactions);
-        }, 100);
-    },
-
-    renderCharts: (txs) => {
-        // Line Chart for daily balance
-        const daysInMonth = new Date(ReportsModule.data.currentMonth.split('-')[0], ReportsModule.data.currentMonth.split('-')[1], 0).getDate();
-        const labels = Array.from({length: daysInMonth}, (_, i) => i + 1);
-        
-        const incomeData = new Array(daysInMonth).fill(0);
-        const expenseData = new Array(daysInMonth).fill(0);
-
-        txs.forEach(t => {
-            const day = new Date(t.date).getDate();
-            if (t.type === 'income') incomeData[day-1] += t.amount;
-            else expenseData[day-1] += t.amount;
-        });
-
-        const ctxL = document.getElementById('balanceChart').getContext('2d');
-        new Chart(ctxL, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [
-                    {
-                        label: 'Thu nhập',
-                        data: incomeData,
-                        borderColor: '#10b981',
-                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                        fill: true,
-                        tension: 0.4
-                    },
-                    {
-                        label: 'Chi tiêu',
-                        data: expenseData,
-                        borderColor: '#ef4444',
-                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                        fill: true,
-                        tension: 0.4
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } },
-                    x: { grid: { display: false } }
-                },
-                plugins: {
-                    legend: { labels: { color: '#fff' } }
-                }
-            }
-        });
-
-        // Pie Chart for categories
-        const catMap = {};
-        txs.filter(t => t.type === 'expense').forEach(t => {
-            catMap[t.category] = (catMap[t.category] || 0) + t.amount;
-        });
-
-        const ctxP = document.getElementById('categoryChart').getContext('2d');
-        new Chart(ctxP, {
-            type: 'doughnut',
-            data: {
-                labels: Object.keys(catMap),
-                datasets: [{
-                    data: Object.values(catMap),
-                    backgroundColor: [
-                        '#3498db', '#e74c3c', '#2ecc71', '#f1c40f', '#9b59b6', '#1abc9c', '#e67e22'
-                    ],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'right',
-                        labels: { color: '#fff', padding: 20 }
-                    }
-                }
-            }
-        });
     },
 
     exportToExcel: () => {
         const currentUser = Auth.currentUser;
         const isAdmin = currentUser && currentUser.role === 'admin';
-        let txs = FinanceModule.data.transactions.filter(t => t.date.startsWith(ReportsModule.data.currentMonth));
+        let transactions = FinanceModule.data.transactions.filter(t => t.date.startsWith(ReportsModule.data.currentMonth));
         
-        if (!isAdmin) {
-            txs = txs.filter(t => t.owner === currentUser.username);
-        } else {
-            const userFilter = document.getElementById('finance-user-filter');
-            if (userFilter && userFilter.value !== 'all') {
-                txs = txs.filter(t => t.owner === userFilter.value);
+        if (isAdmin) {
+            const reportUserFilter = document.getElementById('report-user-filter');
+            const selectedUser = reportUserFilter ? reportUserFilter.value : 'all';
+            if (selectedUser !== 'all') {
+                transactions = transactions.filter(t => t.owner === selectedUser || (!t.owner && selectedUser === 'admin'));
             }
+        } else {
+            transactions = transactions.filter(t => t.owner === currentUser.username);
         }
 
-        const data = txs.map(t => ({
+        const data = transactions.map(t => ({
             'Ngày': Utils.formatDate(t.date),
             'Loại': t.type === 'income' ? 'Thu nhập' : 'Chi tiêu',
             'Danh mục': t.category,
@@ -201,5 +117,27 @@ const ReportsModule = {
         XLSX.utils.book_append_sheet(wb, ws, "BaoCao_" + ReportsModule.data.currentMonth);
         XLSX.writeFile(wb, `baocao_taichinh_${ReportsModule.data.currentMonth}.xlsx`);
         Utils.showToast("Đã trích xuất file Excel!", "success");
+    },
+
+    exportToPDF: () => {
+        const currentUser = Auth.currentUser;
+        const isAdmin = currentUser && currentUser.role === 'admin';
+        let transactions = FinanceModule.data.transactions.filter(t => t.date.startsWith(ReportsModule.data.currentMonth));
+        
+        let userTitle = 'Tất cả nhân viên';
+        if (isAdmin) {
+            const reportUserFilter = document.getElementById('report-user-filter');
+            const selectedUser = reportUserFilter ? reportUserFilter.value : 'all';
+            if (selectedUser !== 'all') {
+                transactions = transactions.filter(t => t.owner === selectedUser || (!t.owner && selectedUser === 'admin'));
+                userTitle = `Nhân viên: ${selectedUser}`;
+            }
+        } else {
+            transactions = transactions.filter(t => t.owner === currentUser.username);
+            userTitle = `Tài khoản: ${currentUser.username}`;
+        }
+
+        const title = `BÁO CÁO TÀI CHÍNH THÁNG ${ReportsModule.data.currentMonth}\n(${userTitle})`;
+        FinanceModule.exportToPDF(transactions, title);
     }
 };
