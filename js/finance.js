@@ -538,6 +538,7 @@ Admin đã CẤP QUYỀN sửa/xóa giao dịch cho bạn:
     exportToPDF: (transactionsToExport, title = 'BÁO CÁO TÀI CHÍNH') => {
         const txs = transactionsToExport || FinanceModule.data.transactions;
         const sortedTxs = [...txs].sort((a,b) => new Date(b.date) - new Date(a.date));
+        const isAdmin = Auth.currentUser && Auth.currentUser.role === 'admin';
 
         if (sortedTxs.length === 0) {
             Utils.showToast("Không có dữ liệu để xuất", "error");
