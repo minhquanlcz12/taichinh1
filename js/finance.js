@@ -131,10 +131,8 @@ const FinanceModule = {
         container.innerHTML = `
             <div class="finance-header" style="display:flex; justify-content:space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
                 <h3 style="font-size: 20px;">Danh sách Giao dịch</h3>
-                <div style="display: flex; gap: 12px; align-items: center;">
-                    ${filterHtml}
-                    <button class="btn btn-primary" onclick="FinanceModule.showAddModal()">
-                        <i class="fa-solid fa-plus"></i> Thêm Giao dịch
+                    <button class="btn btn-outline" style="border-color: var(--primary); color: var(--primary);" onclick="ReportsModule.render()">
+                        <i class="fa-solid fa-chart-pie"></i> Xem Báo cáo
                     </button>
                     ${isAdmin ? '<button class="btn btn-outline" style="border-color: #f1c40f; color: #f1c40f;" onclick="FinanceModule.exportToPDF()"><i class="fa-solid fa-file-pdf"></i> Xuất PDF</button>' : ''}
                 </div>
