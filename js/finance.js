@@ -554,8 +554,8 @@ Admin đã CẤP QUYỀN sửa/xóa giao dịch cho bạn:
         clone.style.fontFamily = 'Arial, sans-serif';
 
         const today = new Date().toLocaleDateString('vi-VN');
-        const totalInc = FinanceModule.data.transactions.filter(t=>t.type==='income').reduce((sum,t)=>sum+t.amount,0);
-        const totalExp = FinanceModule.data.transactions.filter(t=>t.type==='expense').reduce((sum,t)=>sum+t.amount,0);
+        const totalInc = sortedTxs.filter(t=>t.type==='income').reduce((sum,t)=>sum+t.amount,0);
+        const totalExp = sortedTxs.filter(t=>t.type==='expense').reduce((sum,t)=>sum+t.amount,0);
 
         clone.innerHTML = `
             <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #da251d; padding-bottom: 20px;">
