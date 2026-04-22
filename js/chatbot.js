@@ -176,14 +176,9 @@ const ChatbotModule = {
         const topups = await DB.getTopupRequests() || [];
         const userTopups = topups.filter(r => r.username === user.username && r.status !== 'approved');
 
-        // 2. Get Finance Transactions (for Approved Deposits & Purchases)
-        let transactions = [];
-        if (typeof FinanceModule !== 'undefined' && FinanceModule.data.transactions) {
-            transactions = FinanceModule.data.transactions.filter(t => 
-                t.owner === user.username && 
-                (t.category === 'Nạp tiền' || t.category === 'Mua Chatbot')
-            );
-        }
+        // 2. Get Finance Transactions (REPLACED with Dedicated History)
+        const transactions = await DB.getChatbotHistory() || [];
+        const userTransactions = transactions.filter(t => t.username === user.username);
 
         // Combine and Sort by Date
         const allHistory = [
@@ -195,13 +190,13 @@ const ChatbotModule = {
                 status: r.status,
                 note: r.status === 'pending' ? 'Đang chờ xử lý...' : 'Yêu cầu bị từ chối'
             })),
-            ...transactions.map(t => ({
+            ...userTransactions.map(t => ({
                 id: t.id,
                 date: t.date,
-                type: t.type === 'income' ? 'deposit' : 'purchase',
+                type: t.type === 'deposit' ? 'deposit' : 'purchase',
                 amount: t.amount,
                 status: 'approved',
-                note: t.note || (t.type === 'income' ? 'Nạp tiền thành công' : 'Mua chatbot')
+                note: t.note
             }))
         ].sort((a,b) => new Date(b.date) - new Date(a.date));
 
@@ -302,16 +297,12 @@ const ChatbotModule = {
         ChatbotModule.render();
         Utils.showToast(`🎉 Mua thành công "${bot.title}"!`, 'success');
         
-        // Log transaction to Finance
-        if (typeof FinanceModule !== 'undefined') {
-            await FinanceModule.addTransaction(
-                'expense', 
-                price, 
-                'Mua Chatbot', 
-                new Date().toISOString().split('T')[0], 
-                `Mua bot: ${bot.title}`
-            );
-        }
+        // Log to dedicated chatbot history
+        await ChatbotModule.logTransaction(
+            'purchase', 
+            price, 
+            `Mua bot: ${bot.title}`
+        );
 
         setTimeout(() => window.open(bot.url, '_blank'), 800);
     },
@@ -442,16 +433,13 @@ const ChatbotModule = {
         }
         Utils.showToast(`✅ Đã duyệt nạp ${req.amount.toLocaleString('vi-VN')}đ cho ${req.username}!`, 'success');
         
-        // Log transaction to Finance
-        if (typeof FinanceModule !== 'undefined') {
-            await FinanceModule.addTransaction(
-                'income', 
-                req.amount, 
-                'Nạp tiền', 
-                new Date().toISOString().split('T')[0], 
-                `Nạp tiền (Duyệt yêu cầu: ${req.id})`
-            );
-        }
+        // Log to dedicated chatbot history
+        await ChatbotModule.logTransaction(
+            'deposit', 
+            req.amount, 
+            `Nạp tiền (Duyệt yêu cầu: ${req.id})`,
+            req.username
+        );
 
         ChatbotModule.showTopupApproval();
     },
@@ -466,6 +454,31 @@ const ChatbotModule = {
         await DB.saveTopupRequests(requests);
         Utils.showToast("Đã từ chối yêu cầu.", "success");
         ChatbotModule.showTopupApproval();
+    },
+
+    // ===== HELPER: LOG CHATBOT TRANSACTION =====
+    logTransaction: async (type, amount, note, targetUser = null) => {
+        const username = targetUser || (Auth.currentUser ? Auth.currentUser.username : 'admin');
+        const history = await DB.getChatbotHistory() || [];
+        
+        history.push({
+            id: Utils.generateId(),
+            username,
+            type, // 'deposit' or 'purchase'
+            amount: parseFloat(amount),
+            note,
+            date: new Date().toISOString()
+        });
+
+        await DB.saveChatbotHistory(history);
+        
+        // Trigger re-render of history if we are on the chatbot view
+        if (app.state.currentView === 'chatbot-view') {
+            const historySection = document.getElementById('chatbot-history-section');
+            if (historySection) {
+                historySection.innerHTML = await ChatbotModule.renderHistory();
+            }
+        }
     },
 
     // ===== CHATBOT CRUD (Admin) =====

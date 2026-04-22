@@ -304,6 +304,30 @@ const DB = {
         return Utils.storage.get('backup_topup_reqs', []);
     },
 
+    // --- LƯU TRỮ LỊCH SỬ GIAO DỊCH CHATBOT (TÁCH BIỆT TÀI CHÍNH CÁ NHÂN) ---
+    saveChatbotHistory: async (historyArray) => {
+        try {
+            Utils.storage.set('backup_cb_history', historyArray);
+            await db.collection("system").doc("chatbot_history").set({ data: historyArray });
+            return true;
+        } catch (e) {
+            console.error("Error saving chatbot history:", e);
+            return false;
+        }
+    },
+
+    getChatbotHistory: async () => {
+        try {
+            const doc = await db.collection("system").doc("chatbot_history").get();
+            if (doc.exists && doc.data() && doc.data().data) {
+                return doc.data().data;
+            }
+        } catch (e) {
+            console.error("Error getting chatbot history:", e);
+        }
+        return Utils.storage.get('backup_cb_history', []);
+    },
+
     // Xóa trắng dữ liệu thiết lập lại từ đầu
     clearAll: async () => {
         try {
@@ -315,6 +339,7 @@ const DB = {
             Utils.storage.remove('backup_prompts');
             Utils.storage.remove('backup_chatbots');
             Utils.storage.remove('backup_topup_reqs');
+            Utils.storage.remove('backup_cb_history');
             await db.collection("system").doc("accounts").delete();
             await db.collection("finance").doc("main").delete();
             await db.collection("work").doc("main").delete();
@@ -323,6 +348,7 @@ const DB = {
             await db.collection("system").doc("prompts").delete();
             await db.collection("system").doc("chatbots").delete();
             await db.collection("system").doc("topup_requests").delete();
+            await db.collection("system").doc("chatbot_history").delete();
             console.log("Database reset");
         } catch (e) {
             console.error("Error clearing data:", e);
