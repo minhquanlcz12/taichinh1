@@ -566,6 +566,7 @@ Admin đã CẤP QUYỀN sửa/xóa giao dịch cho bạn:
             
             <div style="display:flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold;">
                 <div style="color: #10b981;">Tổng Thu: ${Utils.formatCurrency(totalInc)}đ</div>
+                <div style="color: #3b82f6;">Số dư: ${Utils.formatCurrency(totalInc - totalExp)}đ</div>
                 <div style="color: #ef4444;">Tổng Chi: ${Utils.formatCurrency(totalExp)}đ</div>
             </div>
 
