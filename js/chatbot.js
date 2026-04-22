@@ -40,7 +40,7 @@ const ChatbotModule = {
         </button>`;
     },
 
-    render: () => {
+    render: async () => {
         const container = document.getElementById('chatbot-view');
         if (!container) return;
         const isAdmin = Auth.currentUser && Auth.currentUser.role === 'admin';
@@ -157,8 +157,109 @@ const ChatbotModule = {
             <div class="dashboard-grid" style="grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;">
                 ${cardsHtml}
             </div>
+            
+            <!-- Transaction History Section -->
+            <div id="chatbot-history-section" style="margin-top: 40px;">
+                ${await ChatbotModule.renderHistory()}
+            </div>
 
             ${modalHtml}
+        `;
+    },
+
+    // ===== TRANSACTION HISTORY VIEW =====
+    renderHistory: async () => {
+        const user = Auth.currentUser;
+        if (!user) return '';
+
+        // 1. Get Topup Requests (for Pending/Rejected)
+        const topups = await DB.getTopupRequests() || [];
+        const userTopups = topups.filter(r => r.username === user.username && r.status !== 'approved');
+
+        // 2. Get Finance Transactions (for Approved Deposits & Purchases)
+        let transactions = [];
+        if (typeof FinanceModule !== 'undefined' && FinanceModule.data.transactions) {
+            transactions = FinanceModule.data.transactions.filter(t => 
+                t.owner === user.username && 
+                (t.category === 'Nạp tiền' || t.category === 'Mua Chatbot')
+            );
+        }
+
+        // Combine and Sort by Date
+        const allHistory = [
+            ...userTopups.map(r => ({
+                id: r.id,
+                date: r.createdAt,
+                type: 'deposit',
+                amount: r.amount,
+                status: r.status,
+                note: r.status === 'pending' ? 'Đang chờ xử lý...' : 'Yêu cầu bị từ chối'
+            })),
+            ...transactions.map(t => ({
+                id: t.id,
+                date: t.date,
+                type: t.type === 'income' ? 'deposit' : 'purchase',
+                amount: t.amount,
+                status: 'approved',
+                note: t.note || (t.type === 'income' ? 'Nạp tiền thành công' : 'Mua chatbot')
+            }))
+        ].sort((a,b) => new Date(b.date) - new Date(a.date));
+
+        let rowsHtml = '';
+        if (allHistory.length === 0) {
+            rowsHtml = `<tr><td colspan="4" style="text-align:center; padding:30px; color:var(--text-secondary); font-style:italic;">Chưa có lịch sử giao dịch nào.</td></tr>`;
+        } else {
+            allHistory.forEach(h => {
+                const dateStr = new Date(h.date).toLocaleString('vi-VN');
+                const isDeposit = h.type === 'deposit';
+                const amountColor = isDeposit ? '#10b981' : '#f87171';
+                const symbol = isDeposit ? '+' : '-';
+                
+                let statusBadge = '';
+                if (h.status === 'approved') statusBadge = '<span class="badge bg-success">Thành công</span>';
+                else if (h.status === 'pending') statusBadge = '<span class="badge bg-warning" style="color:#000;">Đang xử lý</span>';
+                else statusBadge = '<span class="badge bg-danger">Từ chối</span>';
+
+                rowsHtml += `
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <td style="padding:16px 12px; color:var(--text-secondary); font-size:13px;">${dateStr}</td>
+                    <td style="padding:16px 12px;">
+                        <div style="font-weight:600; color:#fff; font-size:14px;">${isDeposit ? 'Nạp tiền vào ví' : 'Mua Chatbot'}</div>
+                        <div style="font-size:11px; color:var(--text-secondary); margin-top:2px;">${h.note}</div>
+                    </td>
+                    <td style="padding:16px 12px; font-weight:800; color:${amountColor}; font-size:15px; text-align:right;">
+                        ${symbol}${h.amount.toLocaleString('vi-VN')}đ
+                    </td>
+                    <td style="padding:16px 12px; text-align:right;">${statusBadge}</td>
+                </tr>`;
+            });
+        }
+
+        return `
+            <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+                <div style="width:32px; height:32px; background:rgba(251,191,36,0.1); border-radius:8px; display:flex; align-items:center; justify-content:center;">
+                    <i class="fa-solid fa-clock-rotate-left" style="color:#fbbf24; font-size:14px;"></i>
+                </div>
+                <h3 style="color:#fff; margin:0; font-size:18px;">Lịch sử Giao dịch</h3>
+            </div>
+            
+            <div class="glass-card" style="padding:0; overflow:hidden; border-radius:12px; background: rgba(20,24,35,0.6);">
+                <div class="table-responsive">
+                    <table style="width:100%; border-collapse: collapse; text-align:left;">
+                        <thead>
+                            <tr style="background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <th style="padding:12px; color:var(--text-secondary); font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:1px;">Ngày giờ</th>
+                                <th style="padding:12px; color:var(--text-secondary); font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:1px;">Nội dung</th>
+                                <th style="padding:12px; color:var(--text-secondary); font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:1px; text-align:right;">Số tiền</th>
+                                <th style="padding:12px; color:var(--text-secondary); font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:1px; text-align:right;">Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHtml}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         `;
     },
 
@@ -200,6 +301,18 @@ const ChatbotModule = {
 
         ChatbotModule.render();
         Utils.showToast(`🎉 Mua thành công "${bot.title}"!`, 'success');
+        
+        // Log transaction to Finance
+        if (typeof FinanceModule !== 'undefined') {
+            await FinanceModule.addTransaction(
+                'expense', 
+                price, 
+                'Mua Chatbot', 
+                new Date().toISOString().split('T')[0], 
+                `Mua bot: ${bot.title}`
+            );
+        }
+
         setTimeout(() => window.open(bot.url, '_blank'), 800);
     },
 
@@ -328,6 +441,18 @@ const ChatbotModule = {
             }
         }
         Utils.showToast(`✅ Đã duyệt nạp ${req.amount.toLocaleString('vi-VN')}đ cho ${req.username}!`, 'success');
+        
+        // Log transaction to Finance
+        if (typeof FinanceModule !== 'undefined') {
+            await FinanceModule.addTransaction(
+                'income', 
+                req.amount, 
+                'Nạp tiền', 
+                new Date().toISOString().split('T')[0], 
+                `Nạp tiền (Duyệt yêu cầu: ${req.id})`
+            );
+        }
+
         ChatbotModule.showTopupApproval();
     },
 
