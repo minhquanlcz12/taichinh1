@@ -22,7 +22,7 @@ const PromptModule = {
         if (dbPrompts && dbPrompts.length > 0) {
             PromptModule.data.prompts = dbPrompts;
         } else {
-            // Default prompts if empty
+            // Default prompts if empty (In memory only, do not auto-save to DB to prevent overwriting)
             PromptModule.data.prompts = [
                 {
                     id: Utils.generateId(),
@@ -39,8 +39,6 @@ const PromptModule = {
                     content: 'Đóng vai chuyên gia Content SEO xuất sắc. \n\nHãy viết một bài blog dài khoảng 1000 chữ về chủ đề "[Chủ đề của bạn]".\nYêu cầu:\n- Tiêu đề chính (H1) chứa từ khóa, thu hút sự chú ý.\n- Cấu trúc: H2, H3 rõ ràng, có list dạng bullet.\n- Mật độ từ khóa rải đều tự nhiên, không nhồi nhét.\n- Văn phong chuyên nghiệp nhưng dễ hiểu.\n- Đoạn kết luận súc tích và có Call to Action rõ ràng cuối bài.'
                 }
             ];
-            // Save defaults
-            await DB.savePrompts(PromptModule.data.prompts);
         }
     },
 
