@@ -127,16 +127,19 @@ const FinanceModule = {
             `;
         }
 
+        const currentMonth = new Date().toISOString().slice(0, 7);
+
         const container = document.getElementById('finance-view');
         container.innerHTML = `
             <div class="finance-header" style="display:flex; justify-content:space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
                 <h3 style="font-size: 20px;">Danh sách Giao dịch</h3>
-                    <button class="btn btn-outline" style="border-color: var(--primary); color: var(--primary);" onclick="ReportsModule.render()">
-                        <i class="fa-solid fa-chart-pie"></i> Xem Báo cáo
+                <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                    ${filterHtml}
+                    <button class="btn btn-primary" onclick="FinanceModule.showAddModal()">
+                        <i class="fa-solid fa-plus"></i> Thêm Giao dịch
                     </button>
-                    <button class="btn btn-outline" style="border-color: #f1c40f; color: #f1c40f;" onclick="FinanceModule.exportToPDF(null, 'BÁO CÁO TỔNG QUAN TẤT CẢ GIAO DỊCH')">
-                        <i class="fa-solid fa-file-pdf"></i> Xuất Toàn bộ (PDF)
-                    </button>
+                    <input type="month" id="pdf-month-filter" class="form-control" value="${currentMonth}" style="width: auto; height: 38px;">
+                    ${isAdmin ? '<button class="btn btn-outline" style="border-color: #f1c40f; color: #f1c40f;" onclick="FinanceModule.exportFilteredPDF()"><i class="fa-solid fa-file-pdf"></i> Xuất PDF</button>' : '<button class="btn btn-outline" style="border-color: #f1c40f; color: #f1c40f;" onclick="FinanceModule.exportFilteredPDF()"><i class="fa-solid fa-file-pdf"></i> Xuất PDF</button>'}
                 </div>
             </div>
             
@@ -504,6 +507,32 @@ Admin đã CẤP QUYỀN sửa/xóa giao dịch cho bạn:
 
             Utils.showToast('Đã xoá giao dịch!', 'success');
         }
+    },
+
+    exportFilteredPDF: () => {
+        const currentUser = Auth.currentUser;
+        const isAdmin = currentUser && currentUser.role === 'admin';
+        
+        const monthInput = document.getElementById('pdf-month-filter');
+        const selectedMonth = monthInput ? monthInput.value : new Date().toISOString().slice(0, 7);
+        
+        let txs = FinanceModule.data.transactions.filter(t => t.date.startsWith(selectedMonth));
+        
+        let userTitle = '';
+        if (isAdmin) {
+            const userFilter = document.getElementById('finance-user-filter');
+            const selectedUser = userFilter ? userFilter.value : 'all';
+            if (selectedUser !== 'all') {
+                txs = txs.filter(t => t.owner === selectedUser || (!t.owner && selectedUser === 'admin'));
+                userTitle = ` - NV: ${selectedUser}`;
+            }
+        } else {
+            txs = txs.filter(t => t.owner === currentUser.username);
+            userTitle = ` - ${currentUser.username}`;
+        }
+        
+        const title = `BÁO CÁO TÀI CHÍNH THÁNG ${selectedMonth}${userTitle}`;
+        FinanceModule.exportToPDF(txs, title);
     },
 
     exportToPDF: (transactionsToExport, title = 'BÁO CÁO TÀI CHÍNH') => {
