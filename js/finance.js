@@ -580,17 +580,17 @@ Admin đã CẤP QUYỀN sửa/xóa giao dịch cho bạn:
             <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; text-align: center; border: 1px solid #eee; padding: 15px; border-radius: 8px;">
                 <div>
                     <div style="font-size: 11px; color: #666; text-transform: uppercase;">Thu nhập (Tháng)</div>
-                    <div style="font-size: 18px; font-weight: bold; color: #10b981;">+${Utils.formatCurrency(totalInc)}đ</div>
+                    <div style="font-size: 18px; font-weight: bold; color: #10b981;">+${Utils.formatCurrency(totalInc)}</div>
                 </div>
                 <div>
                     <div style="font-size: 11px; color: #666; text-transform: uppercase;">SỐ DƯ THỰC TẾ</div>
                     <div style="font-size: 22px; font-weight: 900; color: #3b82f6; text-shadow: 1px 1px 1px rgba(0,0,0,0.05);">
-                        ${currentBalance !== null ? Utils.formatCurrency(currentBalance) : Utils.formatCurrency(totalInc - totalExp)}đ
+                        ${currentBalance !== null ? Utils.formatCurrency(currentBalance) : Utils.formatCurrency(totalInc - totalExp)}
                     </div>
                 </div>
                 <div>
                     <div style="font-size: 11px; color: #666; text-transform: uppercase;">Chi tiêu (Tháng)</div>
-                    <div style="font-size: 18px; font-weight: bold; color: #ef4444;">-${Utils.formatCurrency(totalExp)}đ</div>
+                    <div style="font-size: 18px; font-weight: bold; color: #ef4444;">-${Utils.formatCurrency(totalExp)}</div>
                 </div>
             </div>
 
@@ -611,7 +611,7 @@ Admin đã CẤP QUYỀN sửa/xóa giao dịch cho bạn:
                             <td style="padding: 10px; border: 1px solid #d1d5db; color: ${tx.type === 'income' ? '#10b981' : '#ef4444'}; font-weight: bold;">${tx.type === 'income' ? 'Thu' : 'Chi'}</td>
                             <td style="padding: 10px; border: 1px solid #d1d5db;">${tx.category}</td>
                             <td style="padding: 10px; border: 1px solid #d1d5db;">${tx.note || ''}</td>
-                            <td style="padding: 10px; border: 1px solid #d1d5db; text-align: right; color: ${tx.type === 'income' ? '#10b981' : '#ef4444'};">${tx.type === 'income' ? '+' : '-'}${Utils.formatCurrency(tx.amount)}đ ${isAdmin ? `<br><small style="color:#666">(${tx.owner || 'admin'})</small>` : ''}</td>
+                            <td style="padding: 10px; border: 1px solid #d1d5db; text-align: right; color: ${tx.type === 'income' ? '#10b981' : '#ef4444'};">${tx.type === 'income' ? '+' : '-'}${Utils.formatCurrency(tx.amount)} ${isAdmin ? `<br><small style="color:#666">(${tx.owner || 'admin'})</small>` : ''}</td>
                         </tr>
                     `).join('')}
                 </tbody>

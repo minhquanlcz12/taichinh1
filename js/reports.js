@@ -83,16 +83,16 @@ const ReportsModule = {
 
                 <div class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 24px; gap: 16px;">
                     <div class="glass-card" style="border-left: 4px solid #10b981; padding: 20px; background: rgba(16, 185, 129, 0.05);">
-                        <p style="color: var(--text-secondary); margin-bottom: 8px; font-size: 14px;">Thu nhập</p>
-                        <h2 class="text-success" style="font-size: 24px; margin: 0;">${Utils.formatCurrency(summary.income)}đ</h2>
+                        <h2 class="text-success" style="font-size: 24px; margin: 0;">${Utils.formatCurrency(summary.income)}</h2>
+                        <div class="text-secondary" style="font-size: 12px; text-transform: uppercase; margin-top: 4px;">Thu nhập</div>
                     </div>
                     <div class="glass-card" style="border-left: 4px solid #ef4444; padding: 20px; background: rgba(239, 68, 68, 0.05);">
-                        <p style="color: var(--text-secondary); margin-bottom: 8px; font-size: 14px;">Chi tiêu</p>
-                        <h2 class="text-danger" style="font-size: 24px; margin: 0;">${Utils.formatCurrency(summary.expense)}đ</h2>
+                        <h2 class="text-danger" style="font-size: 24px; margin: 0;">${Utils.formatCurrency(summary.expense)}</h2>
+                        <div class="text-secondary" style="font-size: 12px; text-transform: uppercase; margin-top: 4px;">Chi tiêu</div>
                     </div>
                     <div class="glass-card" style="border-left: 4px solid var(--primary); padding: 20px; background: rgba(0, 240, 255, 0.05);">
-                        <p style="color: var(--text-secondary); margin-bottom: 8px; font-size: 14px;">Số dư</p>
-                        <h2 class="title-glow" style="font-size: 24px; margin: 0;">${Utils.formatCurrency(summary.income - summary.expense)}đ</h2>
+                        <h2 class="title-glow" style="font-size: 24px; margin: 0;">${Utils.formatCurrency(summary.income - summary.expense)}</h2>
+                        <div class="text-secondary" style="font-size: 12px; text-transform: uppercase; margin-top: 4px;">Số dư (Tháng)</div>
                     </div>
                 </div>
 

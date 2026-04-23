@@ -29,7 +29,7 @@ const Utils = {
 
     // Formatters
     formatCurrency: (amount) => {
-        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+        return new Intl.NumberFormat('vi-VN').format(amount || 0) + 'đ';
     },
 
     formatDate: (dateString) => {
@@ -437,8 +437,8 @@ const Utils = {
         // 4. Build tin nhắn Report
         let msg = `<b>📊 BÁO CÁO TỔNG HỢP CUỐI NGÀY</b>\n\n`;
         msg += `<b>MẢNG 1: TÀI CHÍNH</b>\n`;
-        msg += `+ Tổng Thu: <b>${Utils.formatCurrency(incomeToday)}đ</b>\n`;
-        msg += `- Tổng Chi: <b>${Utils.formatCurrency(expenseToday)}đ</b>\n\n`;
+        msg += `+ Tổng Thu: <b>${Utils.formatCurrency(incomeToday)}</b>\n`;
+        msg += `- Tổng Chi: <b>${Utils.formatCurrency(expenseToday)}</b>\n\n`;
 
         msg += `<b>MẢNG 2: NHÂN SỰ</b>\n`;
         if (missingUsers.length > 0) {

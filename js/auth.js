@@ -749,7 +749,7 @@ const Auth = {
         if (accIdx > -1) {
             accounts[accIdx].baseSalary = newSalary;
             await Auth.saveAccounts(accounts);
-            Utils.showToast(`Đã lưu Lương cơ bản của ${username}: ${Utils.formatCurrency(newSalary)}đ`, 'success');
+            Utils.showToast(`Đã lưu Lương cơ bản của ${username}: ${Utils.formatCurrency(newSalary)}`, 'success');
         }
     }
 };

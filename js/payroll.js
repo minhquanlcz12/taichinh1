@@ -49,7 +49,7 @@ const PayrollModule = {
 
             <div style="margin-top: 16px; font-size: 11px; color: var(--text-secondary); display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
                 <span><i class="fa-solid fa-circle-info text-primary"></i> Lương ngày = Lương cứng / ${PayrollModule.STANDARD_WORK_DAYS} ngày</span>
-                <span><i class="fa-solid fa-circle-info text-warning"></i> Phạt đi muộn = ${Utils.formatCurrency(PayrollModule.LATE_PENALTY)}đ / lần</span>
+                <span><i class="fa-solid fa-circle-info text-warning"></i> Phạt đi muộn = ${Utils.formatCurrency(PayrollModule.LATE_PENALTY)} / lần</span>
                 <span><i class="fa-solid fa-circle-info text-success"></i> Thưởng/Phạt Tuỳ chỉnh: Do Admin tự đánh giá nhập tay dựa trên hiệu suất (Task Done)</span>
             </div>
         `;
@@ -246,7 +246,7 @@ const PayrollModule = {
                             <span class="badge ${acc.role === 'admin' ? 'badge-orange' : 'badge-blue'}" style="font-size: 10px; margin-top: 4px;">${acc.role}</span>
                         </td>
                         <td style="text-align: right; color: var(--text-secondary);">
-                            ${Utils.formatCurrency(baseSalary)}đ
+                            ${Utils.formatCurrency(baseSalary)}
                         </td>
                         <td style="text-align: center; font-size: 13px;">
                             <span style="color: var(--success);" title="Đúng giờ"><i class="fa-solid fa-check-circle"></i> ${onTimeDays}</span> &nbsp;|&nbsp; 
@@ -260,12 +260,12 @@ const PayrollModule = {
                         <td style="text-align: right; font-size: 13px;">
                             ${currentUser.role === 'admin' ? 
                             `<input type="number" class="form-control" style="width: 100px; padding: 4px 8px; font-size: 13px; text-align: right; display: inline-block; color: ${customBonus >= 0 ? 'var(--success)' : 'var(--danger)'}; border-color: rgba(255,255,255,0.1);" value="${customBonus}" placeholder="0" onchange="PayrollModule.saveCustomBonus('${username}', this.value)">` 
-                            : `<strong style="color: ${customBonus >= 0 ? 'var(--success)' : 'var(--danger)'};">${customBonus > 0 ? '+' : ''}${Utils.formatCurrency(customBonus)}đ</strong>`}
-                            ${latePenaltyTotal > 0 ? `<div style="color: var(--warning); font-size: 11px; margin-top: 4px;">Phạt muộn: -${Utils.formatCurrency(latePenaltyTotal)}đ</div>` : ''}
+                            : `<strong style="color: ${customBonus >= 0 ? 'var(--success)' : 'var(--danger)'};">${customBonus > 0 ? '+' : ''}${Utils.formatCurrency(customBonus)}</strong>`}
+                            ${latePenaltyTotal > 0 ? `<div style="color: var(--warning); font-size: 11px; margin-top: 4px;">Phạt muộn: -${Utils.formatCurrency(latePenaltyTotal)}</div>` : ''}
                         </td>
                         <td style="text-align: right;">
                             <strong style="font-size: 16px; color: ${netSalary >= 0 ? 'var(--success)' : 'var(--danger)'};">
-                                ${netSalary >= 0 ? '' : '-'}${Utils.formatCurrency(Math.abs(Math.round(netSalary)))}đ
+                                ${netSalary >= 0 ? '' : '-'}${Utils.formatCurrency(Math.abs(Math.round(netSalary)))}
                             </strong>
                         </td>
                     </tr>
