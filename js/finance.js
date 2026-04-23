@@ -111,12 +111,13 @@ const FinanceModule = {
 
     renderPlaceholder: async () => {
         const currentUser = Auth.currentUser;
-        const isAdmin = currentUser && currentUser.role === 'admin';
+        if (!currentUser) return;
 
+        const isAdmin = currentUser.role === 'admin';
         let filterHtml = '';
         if (isAdmin) {
-            const accounts = await Auth.getAccounts();
-            let opts = `<option value="all">Tất cả nhân viên</option>`;
+            const accounts = (typeof Auth !== 'undefined' && await Auth.getAccounts()) || [];
+            let opts = '<option value="all">Tất cả nhân viên</option>';
             accounts.forEach(a => {
                 opts += `<option value="${a.username}">${a.username} (${a.role})</option>`;
             });
@@ -138,7 +139,10 @@ const FinanceModule = {
                     <button class="btn btn-primary" onclick="FinanceModule.showAddModal()">
                         <i class="fa-solid fa-plus"></i> Thêm Giao dịch
                     </button>
-                    <input type="month" id="pdf-month-filter" class="form-control" value="${currentMonth}" style="width: auto; height: 38px;">
+                    <button id="finance-month-btn" class="btn btn-outline" style="min-width: 160px; border-color: var(--glass-border); color: #fff; background: rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="FinanceModule.openMonthPicker()">
+                        <i class="fa-solid fa-calendar-days" style="color: var(--primary);"></i>
+                        <span>Tháng ${FinanceModule.currentFilterMonth.split('-')[1]} ${FinanceModule.currentFilterMonth.split('-')[0]}</span>
+                    </button>
                     ${isAdmin ? '<button class="btn btn-outline" style="border-color: #f1c40f; color: #f1c40f;" onclick="FinanceModule.exportFilteredPDF()"><i class="fa-solid fa-file-pdf"></i> Xuất PDF</button>' : '<button class="btn btn-outline" style="border-color: #f1c40f; color: #f1c40f;" onclick="FinanceModule.exportFilteredPDF()"><i class="fa-solid fa-file-pdf"></i> Xuất PDF</button>'}
                 </div>
             </div>
@@ -650,5 +654,19 @@ Admin đã CẤP QUYỀN sửa/xóa giao dịch cho bạn:
             console.error("Lỗi xuất PDF:", err);
             Utils.showToast("Lỗi khi xuất PDF", "error");
         });
+    },
+
+    openMonthPicker: async () => {
+        const newVal = await Utils.showMonthPicker(FinanceModule.currentFilterMonth);
+        if (newVal) {
+            FinanceModule.currentFilterMonth = newVal;
+            // Update button text
+            const btn = document.getElementById('finance-month-btn');
+            if (btn) {
+                const [y, m] = newVal.split('-');
+                btn.querySelector('span').textContent = `Tháng ${m} ${y}`;
+            }
+            FinanceModule.filterByRole();
+        }
     }
 };

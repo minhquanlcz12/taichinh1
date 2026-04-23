@@ -23,7 +23,10 @@ const PayrollModule = {
                 
                 <div style="display: flex; gap: 8px; align-items: center;">
                     <label style="color: var(--text-secondary); font-size: 13px;">Chọn tháng:</label>
-                    <input type="month" id="payroll-month" class="form-control" style="width: auto; display: inline-block; height: 38px;" value="${PayrollModule.currentMonth}" onchange="PayrollModule.changeMonth(this.value)">
+                    <button id="payroll-month-btn" class="btn btn-outline" style="min-width: 140px; border-color: rgba(255,255,255,0.1); color: #fff; background: rgba(0,0,0,0.1); height: 38px; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="PayrollModule.openMonthPicker()">
+                        <i class="fa-solid fa-calendar-check" style="color: var(--success);"></i>
+                        <span>Tháng ${PayrollModule.currentMonth.split('-')[1]} ${PayrollModule.currentMonth.split('-')[0]}</span>
+                    </button>
                     <button class="btn btn-success" onclick="PayrollModule.exportToExcel()"><i class="fa-solid fa-file-excel"></i> Excel</button>
                     <button class="btn btn-outline" style="border-color: #f1c40f; color: #f1c40f;" onclick="PayrollModule.exportToPDF()"><i class="fa-solid fa-file-pdf"></i> PDF</button>
                 </div>
@@ -386,6 +389,13 @@ const PayrollModule = {
             console.error("Lỗi xuất PDF:", err);
             Utils.showToast("Lỗi xuất báo cáo PDF", "error");
         });
+    },
+
+    openMonthPicker: async () => {
+        const newVal = await Utils.showMonthPicker(PayrollModule.currentMonth);
+        if (newVal) {
+            PayrollModule.changeMonth(newVal);
+        }
     },
 
     exportToExcel: async () => {

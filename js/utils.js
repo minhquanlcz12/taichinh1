@@ -223,6 +223,120 @@ const Utils = {
         });
     },
 
+    // Custom Month Picker Modal (Returns Promise)
+    /**
+     * @param {string} initialValue - format: 'YYYY-MM'
+     */
+    showMonthPicker: (initialValue) => {
+        return new Promise((resolve) => {
+            const [initYear, initMonth] = (initialValue || new Date().toISOString().slice(0, 7)).split('-').map(Number);
+            let viewingYear = initYear;
+
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay active';
+            overlay.style.zIndex = '10000';
+            overlay.style.backdropFilter = 'blur(8px)';
+            
+            const renderPicker = (year) => {
+                const months = [
+                    'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4',
+                    'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8',
+                    'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'
+                ];
+                
+                const currentMonthIdx = new Date().getMonth();
+                const currentYear = new Date().getFullYear();
+
+                overlay.innerHTML = `
+                    <div class="modal glass-card" style="width: 90%; max-width: 320px; padding: 20px; animation: scaleIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); border-radius: 16px; background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(255,255,255,0.1);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 0 5px;">
+                            <button id="prev-year" class="btn btn-text" style="color: var(--primary); font-size: 20px; padding: 5px 12px;"><i class="fa-solid fa-chevron-left"></i></button>
+                            <h2 style="font-size: 20px; font-weight: 700; color: #fff; margin: 0; letter-spacing: 1px;">Năm ${year}</h2>
+                            <button id="next-year" class="btn btn-text" style="color: var(--primary); font-size: 20px; padding: 5px 12px;"><i class="fa-solid fa-chevron-right"></i></button>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 5px;">
+                            ${months.map((m, i) => {
+                                const mNum = i + 1;
+                                const isSelected = year === initYear && mNum === initMonth;
+                                const isCurrent = year === currentYear && i === currentMonthIdx;
+                                
+                                return `
+                                    <button class="month-btn" data-month="${mNum}" style="
+                                        padding: 12px 0;
+                                        border: none;
+                                        border-radius: 10px;
+                                        font-size: 14px;
+                                        font-weight: ${isSelected ? '700' : '500'};
+                                        cursor: pointer;
+                                        transition: all 0.2s;
+                                        background: ${isSelected ? 'var(--primary)' : isCurrent ? 'rgba(0, 240, 255, 0.1)' : 'rgba(255,255,255,0.03)'};
+                                        color: ${isSelected ? '#000' : isCurrent ? 'var(--primary)' : 'rgba(255,255,255,0.7)'};
+                                        ${isCurrent && !isSelected ? 'border: 1px solid rgba(0, 240, 255, 0.3);' : ''}
+                                    ">
+                                        ${m}
+                                    </button>
+                                `;
+                            }).join('')}
+                        </div>
+                        
+                        <div style="margin-top: 20px; display: flex; justify-content: center; gap: 10px;">
+                            <button class="btn btn-text" id="picker-cancel" style="font-size: 13px; color: var(--text-secondary);">Hủy bỏ</button>
+                            ${year !== currentYear || initMonth !== (currentMonthIdx + 1) ? `<button class="btn btn-text" id="picker-today" style="font-size: 13px; color: var(--primary);">Tháng này</button>` : ''}
+                        </div>
+                    </div>
+                `;
+
+                // Events
+                document.getElementById('prev-year').onclick = () => { viewingYear--; renderPicker(viewingYear); };
+                document.getElementById('next-year').onclick = () => { viewingYear++; renderPicker(viewingYear); };
+                document.getElementById('picker-cancel').onclick = () => { overlay.remove(); resolve(null); };
+                
+                const todayBtn = document.getElementById('picker-today');
+                if (todayBtn) {
+                    todayBtn.onclick = () => {
+                        const now = new Date();
+                        const val = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+                        overlay.remove();
+                        resolve(val);
+                    };
+                }
+
+                overlay.querySelectorAll('.month-btn').forEach(btn => {
+                    btn.onclick = () => {
+                        const month = String(btn.dataset.month).padStart(2, '0');
+                        const finalVal = `${year}-${month}`;
+                        overlay.remove();
+                        resolve(finalVal);
+                    };
+                    
+                    // Hover effects
+                    btn.onmouseenter = () => {
+                        if (btn.style.background.includes('var(--primary)')) return;
+                        btn.style.background = 'rgba(255,255,255,0.08)';
+                        btn.style.color = '#fff';
+                    };
+                    btn.onmouseleave = () => {
+                        if (btn.style.background.includes('var(--primary)')) return;
+                        const isC = year === currentYear && parseInt(btn.dataset.month)-1 === currentMonthIdx;
+                        btn.style.background = isC ? 'rgba(0, 240, 255, 0.1)' : 'rgba(255,255,255,0.03)';
+                        btn.style.color = isC ? 'var(--primary)' : 'rgba(255,255,255,0.7)';
+                    };
+                });
+            };
+
+            document.body.appendChild(overlay);
+            renderPicker(viewingYear);
+            
+            overlay.onclick = (e) => {
+                if (e.target === overlay) {
+                    overlay.remove();
+                    resolve(null);
+                }
+            };
+        });
+    },
+
     // Toast Notification Builder
     showToast: (message, type = 'success') => {
         const container = document.getElementById('toast-container');
