@@ -12,7 +12,7 @@ const PromptModule = {
         if (settings.promptCategories && settings.promptCategories.length > 0) {
             PromptModule.data.categories = settings.promptCategories;
         } else {
-            PromptModule.data.categories = ['Video', 'SEO', 'Chatbot', 'Sale', 'Khác'];
+            PromptModule.data.categories = ['Video', 'SEO', 'Khác'];
             settings.promptCategories = PromptModule.data.categories;
             await DB.saveSettings(settings);
         }

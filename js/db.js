@@ -46,7 +46,8 @@ const DB = {
     saveSettings: async (settingsObj) => {
         try {
             Utils.storage.set('backup_settings', settingsObj);
-            await db.collection("system").doc("settings").set(settingsObj);
+            // Use merge:true to avoid overwriting other settings fields
+            await db.collection("system").doc("settings").set(settingsObj, { merge: true });
         } catch (e) {
             console.error("Error saving settings:", e);
         }
