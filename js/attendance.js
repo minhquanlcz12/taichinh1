@@ -196,6 +196,29 @@ const Attendance = {
             </div>
         `;
 
+        // Tính lương tạm tính cho user
+        let salaryPreviewHtml = '';
+        try {
+            const estSalary = await PayrollModule.calculateUserSalary(user.username, new Date().toISOString().slice(0, 7));
+            const now2 = new Date();
+            const workingDaysInMonth = PayrollModule.getWorkingDaysInMonth(now2.getFullYear(), now2.getMonth());
+            const passedWorkDays = PayrollModule.getWorkedWorkingDays(now2.getFullYear(), now2.getMonth());
+            salaryPreviewHtml = `
+                <div class="glass-card" style="margin-bottom: 20px; padding: 16px; border-color: rgba(46,204,113,0.2); background: rgba(46,204,113,0.03);">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;"><i class="fa-solid fa-coins" style="color:var(--success); margin-right: 5px;"></i>Lương Tạm Tính (T/Này)</div>
+                            <div style="font-size: 26px; font-weight: 900; color: var(--success);">${Utils.formatCurrency(estSalary)}</div>
+                        </div>
+                        <div style="text-align: right; font-size: 12px; color: var(--text-secondary);">
+                            <div><i class="fa-solid fa-calendar-days" style="color: var(--primary); margin-right: 4px;"></i>${passedWorkDays} / ${workingDaysInMonth} ngày công</div>
+                            <div style="margin-top: 4px; font-size: 10px; color: rgba(255,255,255,0.3);">Cập nhật theo chấm công</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } catch(e) { console.warn('Salary preview error:', e); }
+
         // Lấy lịch sử 30 ngày gần nhất
         const userHistory = allData.filter(r => r.username === user.username).sort((a,b) => b.timestamp - a.timestamp).slice(0, 30);
         
@@ -274,11 +297,17 @@ const Attendance = {
         container.innerHTML = `
             <div class="attendance-user-container">
                 <div class="glass-header" style="text-align: center; margin-bottom: 24px; padding: 15px 20px; background: rgba(218,165,32,0.05); border-radius: 12px; border: 1px solid rgba(218,165,32,0.1);">
-                    <div>
-                        <h2 style="color:#daa520; margin:0; font-size: 18px;"><i class="fa-solid fa-user-check"></i> CHẤM CÔNG HÀNG NGÀY</h2>
-                        <p style="font-size:12px; color:var(--text-secondary); margin:4px 0 0;">Hạn chốt: <span style="color:var(--warning);font-weight:bold;">08:30 AM</span></p>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h2 style="color:#daa520; margin:0; font-size: 18px;"><i class="fa-solid fa-user-check"></i> CHẤM CÔNG HÀNG NGÀY</h2>
+                            <p style="font-size:12px; color:var(--text-secondary); margin:4px 0 0;">Hạn chốt: <span style="color:var(--warning);font-weight:bold;">08:30 SÁNG & 14:00 CHIỀU</span></p>
+                        </div>
+                        <button class="btn btn-outline" style="border-color: #f1c40f; color: #f1c40f; font-size: 12px; padding: 6px 12px;" onclick="Attendance.exportUserAttendancePDF('${user.username}')">
+                            <i class="fa-solid fa-file-pdf"></i> Xuất PDF
+                        </button>
                     </div>
                 </div>
+                ${salaryPreviewHtml}
                 ${checkInHtml}
                 ${historyHtml}
             </div>
@@ -825,14 +854,118 @@ const Attendance = {
         document.body.removeChild(a);
     },
 
-    exportAttendancePDF: async () => {
-        Utils.showToast("Đang tạo PDF Chấm Công...", "info");
-        const now = new Date();
-        const currentYear = now.getFullYear();
-        const currentMonth = now.getMonth();
-        const currentMonthPrefix = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
-
+    exportUserAttendancePDF: async (username) => {
+        Utils.showToast("Đang tạo PDF chấm công cá nhân...", "info");
         const allData = await Attendance.loadData();
+        const allLeaves = await Attendance.loadLeaveData();
+        
+        const now = new Date();
+        const currentMonthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        
+        // Filter by this user + current month
+        const userRecords = allData
+            .filter(r => r.username === username && r.dateStr.startsWith(currentMonthPrefix))
+            .sort((a, b) => a.dateStr.localeCompare(b.dateStr));
+        
+        const userLeaves = allLeaves
+            .filter(l => l.username === username && l.startDate.startsWith(currentMonthPrefix));
+        
+        const totalOnTime = userRecords.filter(r => r.status === 'on_time').length;
+        const totalLate = userRecords.filter(r => r.status === 'late').length;
+        const totalLeave = userLeaves.filter(l => l.status === 'approved').reduce((s, l) => s + (parseFloat(l.days) || 1), 0);
+        
+        const clone = document.createElement('div');
+        clone.style.cssText = 'padding:30px;background:#fff;color:#000;font-family:Arial,sans-serif;';
+        
+        const stamp = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="120" height="120"><circle cx="100" cy="100" r="92" fill="none" stroke="#da251d" stroke-width="4" opacity="0.85"/><circle cx="100" cy="100" r="82" fill="none" stroke="#da251d" stroke-width="1.5" opacity="0.6"/><path d="M 100 35 Q 115 50 110 65 Q 125 55 130 70 Q 120 75 125 90 Q 135 85 140 95 Q 130 100 125 110 Q 115 105 110 115 Q 105 105 100 110 Q 95 105 90 115 Q 85 105 75 110 Q 70 100 60 95 Q 65 85 75 90 Q 80 75 70 70 Q 75 55 90 65 Q 85 50 100 35" fill="#da251d" opacity="0.7"/><text x="100" y="148" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#da251d">THANH LONG WORK</text><text x="100" y="165" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#da251d">GIÁM ĐỐC</text></svg>`;
+        
+        clone.innerHTML = `
+            <div style="text-align:center;margin-bottom:30px;border-bottom:2px solid #da251d;padding-bottom:20px;">
+                <h1 style="color:#da251d;margin-bottom:5px;">THANH LONG WORK</h1>
+                <h3>LỊCH SỬ CHẤM CÔNG CÁ NHÂN</h3>
+                <p><strong>${username}</strong> &bull; Tháng ${now.getMonth() + 1}/${now.getFullYear()} &bull; Ngày xuất: ${now.toLocaleDateString('vi-VN')}</p>
+            </div>
+            
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-bottom:25px;text-align:center;border:1px solid #eee;padding:15px;border-radius:8px;">
+                <div><div style="font-size:11px;color:#666;text-transform:uppercase;">Đúng giờ</div><div style="font-size:24px;font-weight:bold;color:#10b981;">${totalOnTime}</div></div>
+                <div><div style="font-size:11px;color:#666;text-transform:uppercase;">Đi muộn</div><div style="font-size:24px;font-weight:bold;color:#f59e0b;">${totalLate}</div></div>
+                <div><div style="font-size:11px;color:#666;text-transform:uppercase;">Nghỉ phép</div><div style="font-size:24px;font-weight:bold;color:#3b82f6;">${totalLeave}</div></div>
+            </div>
+            
+            <h4 style="color:#333;margin-bottom:12px;border-bottom:1px solid #eee;padding-bottom:6px;">Chi tiết chấm công</h4>
+            <table style="width:100%;border-collapse:collapse;margin-bottom:30px;font-size:13px;">
+                <thead><tr style="background:#f3f4f6;">
+                    <th style="padding:8px;border:1px solid #d1d5db;text-align:left;">Ngày</th>
+                    <th style="padding:8px;border:1px solid #d1d5db;text-align:center;">Giờ vào</th>
+                    <th style="padding:8px;border:1px solid #d1d5db;text-align:center;">Giờ ra</th>
+                    <th style="padding:8px;border:1px solid #d1d5db;text-align:center;">Trạng thái</th>
+                    <th style="padding:8px;border:1px solid #d1d5db;text-align:left;">Báo cáo EOD</th>
+                </tr></thead>
+                <tbody>
+                    ${userRecords.map(r => {
+                        const st = r.status === 'on_time' ? '<span style="color:#10b981;font-weight:bold;">Đúng giờ</span>' : `<span style="color:#f59e0b;font-weight:bold;">Muộn ${r.lateMinutes || 0}p</span>`;
+                        const checkIn = new Date(r.timestamp).toLocaleTimeString('vi-VN');
+                        const checkOut = r.checkoutTimestamp ? new Date(r.checkoutTimestamp).toLocaleTimeString('vi-VN') : '—';
+                        return `<tr>
+                            <td style="padding:8px;border:1px solid #d1d5db;">${r.dateStr}</td>
+                            <td style="padding:8px;border:1px solid #d1d5db;text-align:center;">${checkIn}</td>
+                            <td style="padding:8px;border:1px solid #d1d5db;text-align:center;">${checkOut}</td>
+                            <td style="padding:8px;border:1px solid #d1d5db;text-align:center;">${st}</td>
+                            <td style="padding:8px;border:1px solid #d1d5db;font-size:11px;color:#666;">${r.checkoutReport || ''}</td>
+                        </tr>`;
+                    }).join('')}
+                    ${userRecords.length === 0 ? '<tr><td colspan="5" style="text-align:center;padding:15px;color:#999;">Chưa có dữ liệu chấm công tháng này</td></tr>' : ''}
+                </tbody>
+            </table>
+            
+            ${userLeaves.length > 0 ? `
+            <h4 style="color:#333;margin-bottom:12px;border-bottom:1px solid #eee;padding-bottom:6px;">Lịch sử Nghỉ phép</h4>
+            <table style="width:100%;border-collapse:collapse;margin-bottom:40px;font-size:13px;">
+                <thead><tr style="background:#f3f4f6;">
+                    <th style="padding:8px;border:1px solid #d1d5db;">Từ ngày</th>
+                    <th style="padding:8px;border:1px solid #d1d5db;text-align:center;">Số ngày</th>
+                    <th style="padding:8px;border:1px solid #d1d5db;">Lý do</th>
+                    <th style="padding:8px;border:1px solid #d1d5db;text-align:center;">Trạng thái</th>
+                </tr></thead>
+                <tbody>
+                    ${userLeaves.map(l => {
+                        const stLeave = l.status === 'approved' ? '<span style="color:#10b981;">Đã duyệt</span>' : l.status === 'pending' ? '<span style="color:#f59e0b;">Chờ duyệt</span>' : '<span style="color:#ef4444;">Từ chối</span>';
+                        return `<tr>
+                            <td style="padding:8px;border:1px solid #d1d5db;">${l.startDate}</td>
+                            <td style="padding:8px;border:1px solid #d1d5db;text-align:center;">${l.days}</td>
+                            <td style="padding:8px;border:1px solid #d1d5db;">${l.reason}</td>
+                            <td style="padding:8px;border:1px solid #d1d5db;text-align:center;">${stLeave}</td>
+                        </tr>`;
+                    }).join('')}
+                </tbody>
+            </table>` : ''}
+            
+            <div style="display:flex;justify-content:flex-end;margin-top:30px;text-align:center;">
+                <div style="width:200px;">
+                    <p style="font-weight:bold;margin-bottom:10px;">Giám Đốc</p>
+                    ${stamp}
+                    <p style="margin-top:8px;font-weight:bold;">ĐÀO THANH LONG</p>
+                </div>
+            </div>
+        `;
+        
+        html2pdf().set({
+            margin: 0.5,
+            filename: `ChamCong_${username}_T${now.getMonth() + 1}_${now.getFullYear()}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+        }).from(clone).save().then(() => {
+            Utils.showToast("Đã xuất PDF chấm công cá nhân!", "success");
+        }).catch(e => {
+            console.error(e);
+            Utils.showToast("Lỗi xuất PDF", "error");
+        });
+    }
+};
+
+
+
         const allLeaves = await Attendance.loadLeaveData();
         const accounts = (typeof Auth !== 'undefined' && await Auth.getAccounts()) || [];
         const usersList = accounts.filter(a => a.role !== 'admin').map(a => a.username);

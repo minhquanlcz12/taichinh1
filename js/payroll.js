@@ -3,7 +3,29 @@
 const PayrollModule = {
     currentMonth: new Date().toISOString().slice(0, 7), // YYYY-MM
     LATE_PENALTY: 20000,
-    STANDARD_WORK_DAYS: 22,
+
+    // Đếm số ngày làm việc Thứ 2 - Thứ 7 trong tháng
+    getWorkingDaysInMonth: (year, month) => {
+        let count = 0;
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        for (let d = 1; d <= daysInMonth; d++) {
+            const day = new Date(year, month, d).getDay();
+            if (day !== 0) count++; // Bỏ Chủ nhật (0)
+        }
+        return count;
+    },
+
+    // Đếm số ngày Mon-Sat còn lại trong tháng đến hôm nay
+    getWorkedWorkingDays: (year, month) => {
+        const now = new Date();
+        const endDay = (year === now.getFullYear() && month === now.getMonth()) ? now.getDate() - 1 : new Date(year, month + 1, 0).getDate();
+        let count = 0;
+        for (let d = 1; d <= endDay; d++) {
+            const day = new Date(year, month, d).getDay();
+            if (day !== 0) count++;
+        }
+        return count;
+    },
 
     init: () => {
         // Nothing heavy on init, data is fetched on render
@@ -51,9 +73,9 @@ const PayrollModule = {
             </div>
 
             <div style="margin-top: 16px; font-size: 11px; color: var(--text-secondary); display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
-                <span><i class="fa-solid fa-circle-info text-primary"></i> Lương ngày = Lương cứng / ${PayrollModule.STANDARD_WORK_DAYS} ngày</span>
+                <span><i class="fa-solid fa-circle-info text-primary"></i> Lịch làm việc: <b>Thứ 2 - Thứ 7</b> (nghỉ Chủ nhật)</span>
                 <span><i class="fa-solid fa-circle-info text-warning"></i> Phạt đi muộn = ${Utils.formatCurrency(PayrollModule.LATE_PENALTY)} / lần</span>
-                <span><i class="fa-solid fa-circle-info text-success"></i> Thưởng/Phạt Tuỳ chỉnh: Do Admin tự đánh giá nhập tay dựa trên hiệu suất (Task Done)</span>
+                <span><i class="fa-solid fa-circle-info text-success"></i> Thưởng/Phạt Tuỳ chỉnh: Do Admin tự đánh giá</span>
             </div>
         `;
 
@@ -89,6 +111,7 @@ const PayrollModule = {
             let onTimeDays = 0, lateDays = 0, approvedLeaveDays = 0;
             const targetMonth = parseInt(monthStr.split('-')[1]) - 1;
             const targetYear = parseInt(monthStr.split('-')[0]);
+            const workingDays = PayrollModule.getWorkingDaysInMonth(targetYear, targetMonth);
 
             // Lấy ngày hôm nay
             const now = new Date();
@@ -113,7 +136,7 @@ const PayrollModule = {
                 }
             });
 
-            const dailyRate = baseSalary / PayrollModule.STANDARD_WORK_DAYS;
+            const dailyRate = baseSalary / workingDays;
             const paidDays = onTimeDays + lateDays + approvedLeaveDays;
             
             const attendancePay = paidDays * dailyRate;
@@ -164,6 +187,7 @@ const PayrollModule = {
             const selectedDate = new Date(PayrollModule.currentMonth + '-01');
             const targetMonth = selectedDate.getMonth();
             const targetYear = selectedDate.getFullYear();
+            const workingDays = PayrollModule.getWorkingDaysInMonth(targetYear, targetMonth);
 
             // Lấy ngày hôm nay theo YYYY-MM-DD timezone Local
             const now = new Date();
@@ -231,7 +255,7 @@ const PayrollModule = {
                 });
 
                 // 3. Calculation
-                const dailyRate = baseSalary / PayrollModule.STANDARD_WORK_DAYS;
+                const dailyRate = baseSalary / workingDays;
                 const paidDays = onTimeDays + lateDays + approvedLeaveDays;
                 
                 const attendancePay = paidDays * dailyRate;
