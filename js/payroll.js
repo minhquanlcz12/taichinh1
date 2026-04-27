@@ -128,8 +128,9 @@ const PayrollModule = {
             });
 
             allLeaves.forEach(l => {
-                if (l.username === username && l.status === 'approved' && l.date < todayStr) {
-                    const d = new Date(l.date);
+                const lDate = l.startDate || l.date || '';
+                if (l.username === username && l.status === 'approved' && lDate < todayStr) {
+                    const d = new Date(lDate);
                     if (d.getMonth() === targetMonth && d.getFullYear() === targetYear) {
                         approvedLeaveDays += (parseInt(l.days) || 1);
                     }
@@ -215,9 +216,10 @@ const PayrollModule = {
 
                 // Scan leaves
                 allLeaves.forEach(l => {
-                    if (l.username === username && l.status === 'approved' && l.date < todayStr) {
-                        // Assuming l.date is YYYY-MM-DD
-                        const d = new Date(l.date);
+                    const lDate = l.startDate || l.date || '';
+                    if (l.username === username && l.status === 'approved' && lDate < todayStr) {
+                        // Assuming lDate is YYYY-MM-DD
+                        const d = new Date(lDate);
                         if (d.getMonth() === targetMonth && d.getFullYear() === targetYear) {
                             approvedLeaveDays += (parseInt(l.days) || 1);
                         }
@@ -460,15 +462,17 @@ const PayrollModule = {
             });
 
             allLeaves.forEach(l => {
-                if (l.username === username && l.status === 'approved' && l.date < todayStr) {
-                    const d = new Date(l.date);
+                const lDate = l.startDate || l.date || '';
+                if (l.username === username && l.status === 'approved' && lDate < todayStr) {
+                    const d = new Date(lDate);
                     if (d.getMonth() === targetMonth && d.getFullYear() === targetYear) {
                         approvedLeaveDays += (parseInt(l.days) || 1);
                     }
                 }
             });
 
-            const dailyRate = baseSalary / PayrollModule.STANDARD_WORK_DAYS;
+            const workingDays = PayrollModule.getWorkingDaysInMonth(targetYear, targetMonth);
+            const dailyRate = baseSalary / workingDays;
             const paidDays = onTimeDays + lateDays + approvedLeaveDays;
             const attendancePay = paidDays * dailyRate;
             const latePenaltyTotal = lateDays * PayrollModule.LATE_PENALTY;

@@ -349,7 +349,8 @@ const Attendance = {
 
         const approvedLeaves = {};
         allLeaves.forEach(l => {
-            if (l.status === 'approved' && l.startDate.startsWith(currentMonthPrefix)) {
+            const lStart = l.startDate || l.date || '';
+            if (l.status === 'approved' && lStart.startsWith(currentMonthPrefix)) {
                 if (!approvedLeaves[l.username]) approvedLeaves[l.username] = 0;
                 approvedLeaves[l.username] += parseFloat(l.days) || 0;
             }
@@ -964,103 +965,3 @@ const Attendance = {
     }
 };
 
-
-
-        const allLeaves = await Attendance.loadLeaveData();
-        const accounts = (typeof Auth !== 'undefined' && await Auth.getAccounts()) || [];
-        const usersList = accounts.filter(a => a.role !== 'admin').map(a => a.username);
-
-        let passedWorkingDays = 0;
-        for (let day = 1; day <= now.getDate(); day++) {
-            let d = new Date(currentYear, currentMonth, day);
-            if (d.getDay() !== 0) passedWorkingDays++;
-        }
-
-        const summary = {};
-        allData.forEach(r => {
-            if (r.dateStr.startsWith(currentMonthPrefix)) {
-                if (!summary[r.username]) summary[r.username] = { totalDays: 0, onTime: 0, late: 0, totalLateMinutes: 0 };
-                summary[r.username].totalDays++;
-                if (r.status === 'on_time') summary[r.username].onTime++;
-                else { summary[r.username].late++; summary[r.username].totalLateMinutes += r.lateMinutes || 0; }
-            }
-        });
-
-        const approvedLeaves = {};
-        allLeaves.forEach(l => {
-            if (l.status === 'approved' && l.startDate && l.startDate.startsWith(currentMonthPrefix)) {
-                if (!approvedLeaves[l.username]) approvedLeaves[l.username] = 0;
-                approvedLeaves[l.username] += parseFloat(l.days) || 0;
-            }
-        });
-
-        const clone = document.createElement('div');
-        clone.style.cssText = 'padding:30px;background:#fff;color:#000;font-family:Arial,sans-serif;';
-        const today = now.toLocaleDateString('vi-VN');
-
-        let rowsHtml = usersList.map(u => {
-            const s = summary[u] || { totalDays: 0, onTime: 0, late: 0, totalLateMinutes: 0 };
-            const leaves = approvedLeaves[u] || 0;
-            let absent = passedWorkingDays - s.totalDays - leaves;
-            if (absent < 0) absent = 0;
-            return `<tr>
-                <td style="padding:10px;border:1px solid #d1d5db;font-weight:bold;">${u}</td>
-                <td style="padding:10px;border:1px solid #d1d5db;text-align:center;">${passedWorkingDays}</td>
-                <td style="padding:10px;border:1px solid #d1d5db;text-align:center;">${s.totalDays}</td>
-                <td style="padding:10px;border:1px solid #d1d5db;text-align:center;color:#10b981;">${s.onTime}</td>
-                <td style="padding:10px;border:1px solid #d1d5db;text-align:center;color:#ef4444;">${absent}</td>
-                <td style="padding:10px;border:1px solid #d1d5db;text-align:center;color:#3b82f6;">${leaves}</td>
-                <td style="padding:10px;border:1px solid #d1d5db;text-align:center;color:#f59e0b;">${s.late}</td>
-                <td style="padding:10px;border:1px solid #d1d5db;text-align:center;">${s.totalLateMinutes}p</td>
-            </tr>`;
-        }).join('');
-
-        clone.innerHTML = `
-            <div style="text-align:center;margin-bottom:30px;border-bottom:2px solid #da251d;padding-bottom:20px;">
-                <h1 style="color:#da251d;margin-bottom:5px;">THANH LONG WORK</h1>
-                <h3>BẢNG CHẤM CÔNG TỔNG HỢP</h3>
-                <p>Tháng ${currentMonth + 1}/${currentYear} &bull; Ngày xuất: ${today}</p>
-            </div>
-            <table style="width:100%;border-collapse:collapse;margin-bottom:40px;font-size:13px;">
-                <thead><tr style="background:#f3f4f6;">
-                    <th style="padding:10px;border:1px solid #d1d5db;">Nhân viên</th>
-                    <th style="padding:10px;border:1px solid #d1d5db;text-align:center;">Ngày công</th>
-                    <th style="padding:10px;border:1px solid #d1d5db;text-align:center;">Đi làm</th>
-                    <th style="padding:10px;border:1px solid #d1d5db;text-align:center;">Đúng giờ</th>
-                    <th style="padding:10px;border:1px solid #d1d5db;text-align:center;">Vắng</th>
-                    <th style="padding:10px;border:1px solid #d1d5db;text-align:center;">Nghỉ phép</th>
-                    <th style="padding:10px;border:1px solid #d1d5db;text-align:center;">Muộn</th>
-                    <th style="padding:10px;border:1px solid #d1d5db;text-align:center;">Phút trễ</th>
-                </tr></thead>
-                <tbody>${rowsHtml}</tbody>
-            </table>
-            <div style="display:flex;justify-content:flex-end;margin-top:50px;text-align:center;">
-                <div style="width:250px;position:relative;">
-                    <p style="font-weight:bold;margin-bottom:15px;">Giám Đốc</p>
-                    <div style="margin:0 auto;width:160px;height:160px;">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="160" height="160">
-                            <circle cx="100" cy="100" r="92" fill="none" stroke="#da251d" stroke-width="4" opacity="0.85"/>
-                            <circle cx="100" cy="100" r="82" fill="none" stroke="#da251d" stroke-width="1.5" opacity="0.6"/>
-                            <path d="M 100 35 Q 115 50 110 65 Q 125 55 130 70 Q 120 75 125 90 Q 135 85 140 95 Q 130 100 125 110 Q 115 105 110 115 Q 105 105 100 110 Q 95 105 90 115 Q 85 105 75 110 Q 70 100 60 95 Q 65 85 75 90 Q 80 75 70 70 Q 75 55 90 65 Q 85 50 100 35" fill="#da251d" opacity="0.7"/>
-                            <text x="100" y="148" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#da251d">THANH LONG WORK</text>
-                            <text x="100" y="165" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#da251d">GIÁM ĐỐC</text>
-                            <line x1="55" y1="130" x2="145" y2="130" stroke="#da251d" stroke-width="0.8" opacity="0.5"/>
-                            <text x="100" y="182" text-anchor="middle" font-family="Arial,sans-serif" font-size="7" fill="#da251d" opacity="0.6">★ Since 2026 ★</text>
-                        </svg>
-                    </div>
-                    <p style="margin-top:10px;font-weight:bold;">ĐÀO THANH LONG</p>
-                </div>
-            </div>`;
-
-        html2pdf().set({
-            margin: 0.5, filename: `Bang_Cham_Cong_T${currentMonth+1}_${currentYear}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 },
-            jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
-        }).from(clone).save().then(() => {
-            Utils.showToast("Đã xuất Bảng Chấm Công ra PDF!", "success");
-        }).catch(e => {
-            console.error(e);
-            Utils.showToast("Lỗi xuất PDF", "error");
-        });
-    }
-};
