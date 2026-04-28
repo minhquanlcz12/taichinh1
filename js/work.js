@@ -238,7 +238,7 @@ const WorkModule = {
                     const row = rawJson[i];
                     if (!row || row.length === 0) continue;
 
-                    const rowStr = row.map(c => String(c).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()).join(' ');
+                    const rowStr = row.map(c => String(c).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/đ/g, 'd')).join(' ');
                     if (rowStr.includes('stt') || rowStr.includes('#') || rowStr.includes('ngay dang') || rowStr.includes('tieu de') || rowStr.includes('muc tieu') || rowStr.includes('ngay')) {
                         headerRowIndex = i;
                         // Build mapping dictionary
@@ -246,7 +246,7 @@ const WorkModule = {
                             if (!colName) return;
                             const name = String(colName).toLowerCase().trim();
                             // Chuẩn hóa loại bỏ dấu tiếng Việt để so khớp an toàn hơn
-                            const normName = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                            const normName = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, 'd');
 
                             if (name === 'stt' || name === '#' || normName.includes('so tt') || normName.includes('thu tu')) colMap.stt = idx;
                             else if (normName.includes('deadline') || normName.includes('han chot') || normName.match(/^han$/)) colMap.deadline = idx;
