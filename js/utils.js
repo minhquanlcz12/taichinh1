@@ -426,21 +426,34 @@ const Utils = {
         const todayIso = new Date().toISOString().split('T')[0];
         if (app.state.settings.lastAttRemindDate === todayIso) return; // Kiểm tra nhanh cache
 
-        // Tránh nhiều máy chạy cùng lúc
-        const delay = Math.floor(Math.random() * 5000) + 1000;
-        await new Promise(r => setTimeout(r, delay));
-
-        let latestSettings = {};
-        try { latestSettings = await DB.getSettings() || {}; } catch (e) { latestSettings = app.state.settings; }
-        if (latestSettings.lastAttRemindDate === todayIso) {
-            app.state.settings = latestSettings; // Cập nhật đồng bộ nội bộ
+        let shouldSend = false;
+        try {
+            const settingsRef = db.collection("system").doc("settings");
+            await db.runTransaction(async (transaction) => {
+                const doc = await transaction.get(settingsRef);
+                if (!doc.exists) {
+                    transaction.set(settingsRef, { lastAttRemindDate: todayIso }, { merge: true });
+                    shouldSend = true;
+                } else {
+                    const data = doc.data();
+                    if (data.lastAttRemindDate !== todayIso) {
+                        transaction.set(settingsRef, { lastAttRemindDate: todayIso }, { merge: true });
+                        shouldSend = true;
+                    }
+                }
+            });
+        } catch (e) {
+            console.error("Transaction failed in remindAttendance:", e);
             return;
         }
 
-        // Đánh dấu cờ ĐÃ GIẢI QUYẾT lên DB ngay lập tức để block các trình duyệt khác
-        latestSettings.lastAttRemindDate = todayIso;
-        app.state.settings = latestSettings;
-        await DB.saveSettings(latestSettings);
+        if (!shouldSend) {
+            app.state.settings.lastAttRemindDate = todayIso;
+            return;
+        }
+
+        // Đánh dấu cờ nội bộ để ngăn lặp
+        app.state.settings.lastAttRemindDate = todayIso;
 
         let accounts = [];
         try { accounts = await Auth.getAccounts(); } catch (e) { return; }
@@ -467,21 +480,34 @@ const Utils = {
         const todayIso = new Date().toISOString().split('T')[0];
         if (app.state.settings.lastTgSummaryDate === todayIso) return; // Kiểm tra nhanh cache
 
-        // Tránh nhiều máy chạy cùng lúc
-        const delay = Math.floor(Math.random() * 5000) + 1000;
-        await new Promise(r => setTimeout(r, delay));
-
-        let latestSettings = {};
-        try { latestSettings = await DB.getSettings() || {}; } catch (e) { latestSettings = app.state.settings; }
-        if (latestSettings.lastTgSummaryDate === todayIso) {
-            app.state.settings = latestSettings;
+        let shouldSend = false;
+        try {
+            const settingsRef = db.collection("system").doc("settings");
+            await db.runTransaction(async (transaction) => {
+                const doc = await transaction.get(settingsRef);
+                if (!doc.exists) {
+                    transaction.set(settingsRef, { lastTgSummaryDate: todayIso }, { merge: true });
+                    shouldSend = true;
+                } else {
+                    const data = doc.data();
+                    if (data.lastTgSummaryDate !== todayIso) {
+                        transaction.set(settingsRef, { lastTgSummaryDate: todayIso }, { merge: true });
+                        shouldSend = true;
+                    }
+                }
+            });
+        } catch (e) {
+            console.error("Transaction failed in checkDailyTelegramSummary:", e);
             return;
         }
 
-        // Đánh dấu cờ ĐÃ BÁO CÁO lên DB ngay lập tức để block các trình duyệt khác
-        latestSettings.lastTgSummaryDate = todayIso;
-        app.state.settings = latestSettings;
-        await DB.saveSettings(latestSettings);
+        if (!shouldSend) {
+            app.state.settings.lastTgSummaryDate = todayIso;
+            return;
+        }
+
+        // Đánh dấu cờ nội bộ
+        app.state.settings.lastTgSummaryDate = todayIso;
 
         // 1. Lấy danh sách tasks
         let allTasks = await DB.getWorkData();

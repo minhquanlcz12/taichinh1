@@ -238,11 +238,40 @@ const app = {
         Utils.showToast("Đã lưu cấu hình Telegram Bot thành công!", "success");
     },
 
+    sendAdminBroadcast: async () => {
+        const input = document.getElementById('admin-broadcast-text');
+        if (!input) return;
+        const text = input.value.trim();
+        if (!text) {
+            Utils.showToast("Vui lòng nhập nội dung!", "warning");
+            return;
+        }
+
+        const btn = input.nextElementSibling;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang gửi...';
+        btn.disabled = true;
+
+        const msg = `📢 <b>THÔNG BÁO TỪ ADMIN</b>\n\n${text}`;
+        await Utils.notifyTelegram(msg);
+
+        Utils.showToast("Đã phát bài thành công!", "success");
+        input.value = '';
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    },
+
     renderDashboard: async (filteredTransactions) => {
         // Gather data from modules
         const financeData = FinanceModule.getSummary(filteredTransactions);
         const recentTxs = FinanceModule.getRecentTransactions(5, filteredTransactions);
         const todaysTasks = WorkModule.getTodaysTasks();
+
+        // Admin Broadcast section toggle
+        const broadcastSection = document.getElementById('admin-broadcast-section');
+        if (broadcastSection && Auth.currentUser) {
+            broadcastSection.style.display = Auth.currentUser.role === 'admin' ? 'block' : 'none';
+        }
 
         // Update top cards with animation
         Utils.animateValue(document.getElementById('dash-balance'), 0, financeData.balance, 1000, Utils.formatCurrency);

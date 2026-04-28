@@ -384,6 +384,20 @@
                             </div>
                         </div>
                     </div>
+
+                    <div id="admin-broadcast-section" style="display: none; margin-top: 24px;">
+                        <div class="glass-card panel-glow" style="width: 100%; padding: 16px; border: 1px solid rgba(231,76,60,0.3); background: linear-gradient(145deg, rgba(231,76,60,0.05), rgba(0,0,0,0.5));">
+                            <h3 style="margin-bottom: 12px; font-size: 16px; color: #ff6b6b; display: flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-bullhorn"></i> Loa Thông Báo Toàn Công Ty (Admin)
+                            </h3>
+                            <div style="display: flex; gap: 12px; align-items: center;">
+                                <input type="text" id="admin-broadcast-text" class="form-control" placeholder="Nhập nội dung thông báo gửi lên nhóm Telegram..." style="flex: 1;" onkeypress="if(event.key === 'Enter') app.sendAdminBroadcast()">
+                                <button class="btn btn-primary" onclick="app.sendAdminBroadcast()" style="background: var(--primary); border: none; white-space: nowrap;">
+                                    <i class="fa-solid fa-paper-plane" style="margin-right: 6px;"></i> Phát thanh
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Finance View Placeholder -->
@@ -785,7 +799,7 @@
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.js"></script>
-    <script src="js/utils.js?v=31.0"></script>
+    <script src="js/utils.js?v=31.1"></script>
     <script src="js/db.js?v=28.0"></script>
     <script src="js/finance.js?v=32.0"></script>
     <script src="js/work.js?v=25.4"></script>
@@ -798,7 +812,7 @@
     <script src="js/attendance_music.js?v=1.0.1"></script>
     <script src="js/reports.js?v=3.0"></script>
     <script src="js/auth.js?v=27.0"></script>
-    <script src="js/app.js?v=25.1"></script>
+    <script src="js/app.js?v=25.2"></script>
 
     <!-- Toast Notification Container -->
     <div id="toast-container" class="toast-container"></div>
