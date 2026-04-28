@@ -247,29 +247,29 @@ const WorkModule = {
                     const row = rawJson[i];
                     if (!row || row.length === 0) continue;
 
-                    const rowStr = row.map(c => String(c).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/đ/g, 'd')).join(' ');
-                    if (rowStr.includes('stt') || rowStr.includes('#') || rowStr.includes('ngay dang') || rowStr.includes('tieu de') || rowStr.includes('muc tieu') || rowStr.includes('ngay')) {
+                    const rowStr = row.map(c => String(c).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/đ/g, 'd').replace(/[^a-z0-9]/g, '')).join('');
+                    if (rowStr.includes('stt') || rowStr.includes('ngaydang') || rowStr.includes('tieude') || rowStr.includes('muctieu') || rowStr.includes('deadline')) {
                         headerRowIndex = i;
                         // Build mapping dictionary
                         row.forEach((colName, idx) => {
                             if (!colName) return;
                             const name = String(colName).toLowerCase().trim();
-                            // Chuẩn hóa loại bỏ dấu tiếng Việt để so khớp an toàn hơn
-                            const normName = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, 'd');
+                            // Chuẩn hóa: bỏ dấu tiếng Việt, chữ đ, và BỎ MỌI KHOẢNG TRẮNG, KÝ TỰ ĐẶC BIỆT để so khớp
+                            const normName = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, 'd').replace(/[^a-z0-9]/g, '');
 
-                            if (name === 'stt' || name === '#' || normName.includes('so tt') || normName.includes('thu tu')) colMap.stt = idx;
-                            else if (normName.includes('deadline') || normName.includes('han chot') || normName.match(/^han$/)) colMap.deadline = idx;
-                            else if (normName.match(/ngay|thoi gian|date|len bai/)) colMap.ngayDang = idx;
+                            if (normName === 'stt' || normName.includes('sott') || normName.includes('thutu')) colMap.stt = idx;
+                            else if (normName.includes('deadline') || normName.includes('hanchot') || normName.match(/^han$/)) colMap.deadline = idx;
+                            else if (normName.match(/ngay|thoigian|date|lenbai/)) colMap.ngayDang = idx;
                             else if (normName.match(/thu/)) colMap.thu = idx;
-                            else if (normName.match(/muc tieu|muc dich|objective|angle|concept/)) colMap.mucTieu = idx;
-                            else if (normName.match(/tru cot|pillar|tuyen/)) colMap.truCot = idx;
-                            else if (normName.match(/tieu de|title|chu de|hook/)) colMap.tieuDe = idx;
-                            else if (normName.match(/format|dinh dang|the loai/)) colMap.dinhDang = idx;
-                            else if (normName.match(/thiet ke|brief|order|yeu cau|hinh anh|media|visual|cta|hashtag/)) colMap.orderBrief = idx;
-                            else if (normName.match(/noi dung|caption|bai viet|text|copy/)) colMap.noiDung = idx;
-                            else if (normName.match(/trang thai|status|tien do/)) colMap.trangThai = idx;
-                            else if (normName.match(/ghi chu|note|luu y|km/)) colMap.ghiChu = idx;
-                            else if (normName.match(/anh goi y|tham khao|link/)) colMap.anhGoiY = idx;
+                            else if (normName.match(/muctieu|mucdich|objective|angle|concept/)) colMap.mucTieu = idx;
+                            else if (normName.match(/trucot|pillar|tuyen/)) colMap.truCot = idx;
+                            else if (normName.match(/tieude|title|chude|hook/)) colMap.tieuDe = idx;
+                            else if (normName.match(/format|dinhdang|theloai/)) colMap.dinhDang = idx;
+                            else if (normName.match(/thietke|brief|order|yeucau|hinhanh|media|visual|cta|hashtag/)) colMap.orderBrief = idx;
+                            else if (normName.match(/noidung|caption|baiviet|text|copy/)) colMap.noiDung = idx;
+                            else if (normName.match(/trangthai|status|tiendo/)) colMap.trangThai = idx;
+                            else if (normName.match(/ghichu|note|luuy|km/)) colMap.ghiChu = idx;
+                            else if (normName.match(/anhgoiy|thamkhao|link/)) colMap.anhGoiY = idx;
                         });
                         break;
                     }
