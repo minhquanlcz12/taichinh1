@@ -147,13 +147,22 @@ const WorkModule = {
 
         if (isAdmin) {
             let opts = `<option value="all">Tất cả nhân viên</option>`;
+            let assignOpts = `<option value="">-- Chọn nhân viên --</option>`;
             accounts.forEach(a => {
                 opts += `<option value="${a.username}">${a.username} (${a.role})</option>`;
+                assignOpts += `<option value="${a.username}">${a.username}</option>`;
             });
             filterHtml += `
                 <select class="form-control" id="work-user-filter" style="width: auto; display: inline-block; margin-right: 12px; height: 38px;" onchange="WorkModule.filterByRole()">
                     ${opts}
                 </select>
+                
+                <div style="display: inline-flex; align-items: center; background: rgba(0,240,255,0.05); padding: 2px 4px; border-radius: 6px; border: 1px solid var(--primary);">
+                    <select class="form-control" id="work-batch-assign-user" style="width: auto; height: 32px; font-size: 13px; border: none; background: transparent; padding: 0 8px;">
+                        ${assignOpts}
+                    </select>
+                    <button class="btn btn-sm" style="background: var(--primary); color: #000; height: 32px; font-weight: bold; padding: 0 12px; border-radius: 4px;" onclick="WorkModule.batchAssign()">Giao việc</button>
+                </div>
             `;
         }
 
@@ -161,7 +170,7 @@ const WorkModule = {
         container.innerHTML = `
             <div class="work-header" style="display:flex; justify-content:space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
                 <h3 style="font-size: 20px;">Kế hoạch Tiếp thị & Công việc</h3>
-                <div style="display: flex; gap: 12px; align-items: center;">
+                <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
                     ${filterHtml}
                     <div class="upload-btn-wrapper">
                         <button class="btn btn-success" style="background: var(--success); color: white;">
@@ -510,6 +519,7 @@ const WorkModule = {
                             <table class="data-table">
                                 <thead>
                                     <tr>
+                                        ${Auth.currentUser && Auth.currentUser.role === 'admin' ? `<th style="width: 30px; text-align: center;"><input type="checkbox" onchange="WorkModule.toggleAllProjectTasks(this, '${projName}')"></th>` : ''}
                                         <th class="col-stt" style="width: 40px; min-width: 40px; text-align: center;">STT</th>
                                         <th class="col-ngay" style="width: 105px; min-width: 105px;">Ngày đăng /<br>Deadline</th>
                                         <th class="col-muctieu th-green">Mục tiêu</th>
@@ -614,6 +624,7 @@ const WorkModule = {
 
                 html += `
                     <tr class="${rowClass}">
+                        ${taskCurrentUser && taskCurrentUser.role === 'admin' ? `<td style="text-align: center; vertical-align: middle;"><input type="checkbox" class="task-checkbox proj-check-${projName.replace(/\s+/g, '-')}" data-id="${task.id}"></td>` : ''}
                         <td class="col-stt" style="text-align: center; vertical-align: middle;">${task.stt || ''}</td>
                         <td class="col-ngay">
                             <div style="font-weight:bold; color:var(--text-secondary); font-size: 13px; margin-bottom: 4px; text-align: center;">Đăng: ${task.ngayDang || '---'}</div>
@@ -739,6 +750,43 @@ const WorkModule = {
             task.trangThai = newStatus;
             await WorkModule.save();
             Utils.showToast('Cập nhật trạng thái thành công!', 'success');
+        }
+    },
+
+    toggleAllProjectTasks: (checkbox, projName) => {
+        const safeClass = projName.replace(/\s+/g, '-');
+        const checkboxes = document.querySelectorAll(`.proj-check-${safeClass}`);
+        checkboxes.forEach(cb => cb.checked = checkbox.checked);
+    },
+
+    batchAssign: async () => {
+        const userSelect = document.getElementById('work-batch-assign-user');
+        if (!userSelect) return;
+        const targetUser = userSelect.value;
+        if (!targetUser) {
+            Utils.showToast('Vui lòng chọn nhân viên để giao việc!', 'warning');
+            return;
+        }
+
+        const checkboxes = document.querySelectorAll('.task-checkbox:checked');
+        if (checkboxes.length === 0) {
+            Utils.showToast('Vui lòng chọn ít nhất một công việc để phân công!', 'warning');
+            return;
+        }
+
+        const taskIds = Array.from(checkboxes).map(cb => cb.getAttribute('data-id'));
+        let count = 0;
+        taskIds.forEach(id => {
+            const task = WorkModule.data.tasks.find(t => t.id === id);
+            if (task) {
+                task.owner = targetUser;
+                count++;
+            }
+        });
+
+        if (count > 0) {
+            await WorkModule.save();
+            Utils.showToast(`Đã phân công ${count} công việc cho ${targetUser}!`, 'success');
         }
     },
 
