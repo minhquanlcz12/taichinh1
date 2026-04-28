@@ -149,8 +149,9 @@ const WorkModule = {
             let opts = `<option value="all">Tất cả nhân viên</option>`;
             let assignOpts = `<option value="">-- Chọn nhân viên --</option>`;
             accounts.forEach(a => {
-                opts += `<option value="${a.username}">${a.username} (${a.role})</option>`;
-                assignOpts += `<option value="${a.username}">${a.username}</option>`;
+                const displayName = Utils.getUserDisplayName(a.username) || a.username;
+                opts += `<option value="${a.username}">${displayName} (${a.role})</option>`;
+                assignOpts += `<option value="${a.username}">${displayName}</option>`;
             });
             filterHtml += `
                 <select class="form-control" id="work-user-filter" style="width: auto; display: inline-block; margin-right: 12px; height: 38px;" onchange="WorkModule.filterByRole()">
@@ -703,7 +704,7 @@ const WorkModule = {
         const buildSelect = (selected) => {
             let opts = `<option value="">-- Bỏ giao --</option>`;
             WorkModule.allAccounts.forEach(a => {
-                opts += `<option value="${a.username}"${a.username === selected ? ' selected' : ''}>${a.username}</option>`;
+                opts += `<option value="${a.username}"${a.username === selected ? ' selected' : ''}>${Utils.getUserDisplayName(a.username) || a.username}</option>`;
             });
             return `<select style="font-size:11px;padding:2px 4px;border-radius:4px;width:100%;max-width:120px;background:#1e1e2e;color:#e0e0e0;border:1px solid #444;" onchange="WorkModule.assignTask('${taskId}', this.value)">${opts}</select>`;
         };
@@ -711,7 +712,7 @@ const WorkModule = {
         // Chưa giao
         if (!ownerUsername) {
             if (!isAdmin) return `<span style="color:#555;font-size:11px;font-style:italic;">Chưa giao</span>`;
-            const giveOpts = WorkModule.allAccounts.map(a => `<option value="${a.username}">${a.username}</option>`).join('');
+            const giveOpts = WorkModule.allAccounts.map(a => `<option value="${a.username}">${Utils.getUserDisplayName(a.username) || a.username}</option>`).join('');
             return `<div style="text-align:center;">
                 <div style="width:38px;height:38px;border-radius:50%;background:#2a2a2a;border:2px dashed #555;margin:0 auto 4px;line-height:36px;text-align:center;">
                     <i class="fa-solid fa-user-plus" style="color:#777;font-size:13px;"></i>
@@ -726,7 +727,7 @@ const WorkModule = {
         if (isAdmin) {
             return `<div style="text-align:center;">
                 ${buildAvatar(ownerUsername)}
-                <div style="font-size:11px;font-weight:700;color:#e0e0e0;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ownerUsername}</div>
+                <div style="font-size:11px;font-weight:700;color:#e0e0e0;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${ownerUsername}">${Utils.getUserDisplayName(ownerUsername) || ownerUsername}</div>
                 ${buildSelect(ownerUsername)}
             </div>`;
         }
@@ -734,7 +735,7 @@ const WorkModule = {
         // Đã giao - user thường (chỉ đọc)
         return `<div style="text-align:center;">
             ${buildAvatar(ownerUsername)}
-            <div style="font-size:11px;font-weight:700;color:#e0e0e0;">${ownerUsername}</div>
+            <div style="font-size:11px;font-weight:700;color:#e0e0e0;" title="${ownerUsername}">${Utils.getUserDisplayName(ownerUsername) || ownerUsername}</div>
         </div>`;
     },
 

@@ -271,7 +271,7 @@ const PayrollModule = {
                 return `
                     <tr>
                         <td>
-                            <strong style="color: var(--primary); font-size: 15px;">${username}</strong><br>
+                            <strong style="color: var(--primary); font-size: 15px;" title="${username}">${Utils.getUserDisplayName(username) || username}</strong><br>
                             <span class="badge ${acc.role === 'admin' ? 'badge-orange' : 'badge-blue'}" style="font-size: 10px; margin-top: 4px;">${acc.role}</span>
                         </td>
                         <td style="text-align: right; color: var(--text-secondary);">

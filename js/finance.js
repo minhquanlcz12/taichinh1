@@ -119,7 +119,7 @@ const FinanceModule = {
             const accounts = (typeof Auth !== 'undefined' && await Auth.getAccounts()) || [];
             let opts = '<option value="all">Tất cả nhân viên</option>';
             accounts.forEach(a => {
-                opts += `<option value="${a.username}">${a.username} (${a.role})</option>`;
+                opts += `<option value="${a.username}">${Utils.getUserDisplayName(a.username) || a.username} (${a.role})</option>`;
             });
             filterHtml = `
                 <select class="form-control" id="finance-user-filter" style="width: auto; display: inline-block; margin-right: 12px; height: 38px;" onchange="FinanceModule.filterByRole()">
@@ -218,7 +218,7 @@ const FinanceModule = {
                     <div class="tx-details">
                         <h4>
                             ${tx.category} 
-                            ${isAdmin ? `<span class="badge badge-orange" style="font-size:10px; margin-left: 8px;"><i class="fa-solid fa-user"></i> ${tx.owner || 'admin'}</span>` : ''}
+                            ${isAdmin ? `<span class="badge badge-orange" style="font-size:10px; margin-left: 8px;"><i class="fa-solid fa-user"></i> ${tx.owner ? (Utils.getUserDisplayName(tx.owner) || tx.owner) : 'Admin'}</span>` : ''}
                         </h4>
                         <p>${tx.note ? tx.note + ' • ' : ''}${Utils.formatDate(tx.date)}</p>
                         ${tx.editRequested && isAdmin ? `<div style="margin-top: 6px; font-size: 12px; color: var(--warning);"><i class="fa-solid fa-triangle-exclamation"></i> <b>Yêu cầu:</b> ${tx.editReason}</div>` : ''}
@@ -348,7 +348,7 @@ const FinanceModule = {
             // Notify via Telegram
             if (typeof Utils.notifyTelegram === 'function') {
                 const msg = `⚠️ <b>[YÊU CẦU CẬP NHẬT TÀI CHÍNH]</b>
-👤 Nhân viên: <b>${tx.owner}</b>
+👤 Nhân viên: <b>${Utils.getUserDisplayName(tx.owner) || tx.owner}</b>
 💰 Giao dịch: ${tx.type === 'income' ? '+' : '-'}${Utils.formatCurrency(tx.amount)} (${tx.category})
 📝 Lý do: <i>${reason}</i>
 
@@ -615,7 +615,7 @@ Admin đã CẤP QUYỀN sửa/xóa giao dịch cho bạn:
                             <td style="padding: 10px; border: 1px solid #d1d5db; color: ${tx.type === 'income' ? '#10b981' : '#ef4444'}; font-weight: bold;">${tx.type === 'income' ? 'Thu' : 'Chi'}</td>
                             <td style="padding: 10px; border: 1px solid #d1d5db;">${tx.category}</td>
                             <td style="padding: 10px; border: 1px solid #d1d5db;">${tx.note || ''}</td>
-                            <td style="padding: 10px; border: 1px solid #d1d5db; text-align: right; color: ${tx.type === 'income' ? '#10b981' : '#ef4444'};">${tx.type === 'income' ? '+' : '-'}${Utils.formatCurrency(tx.amount)} ${isAdmin ? `<br><small style="color:#666">(${tx.owner || 'admin'})</small>` : ''}</td>
+                            <td style="padding: 10px; border: 1px solid #d1d5db; text-align: right; color: ${tx.type === 'income' ? '#10b981' : '#ef4444'};">${tx.type === 'income' ? '+' : '-'}${Utils.formatCurrency(tx.amount)} ${isAdmin ? `<br><small style="color:#666">(${tx.owner ? Utils.getUserDisplayName(tx.owner) || tx.owner : 'Admin'})</small>` : ''}</td>
                         </tr>
                     `).join('')}
                 </tbody>

@@ -27,6 +27,16 @@ const Utils = {
         }
     },
 
+    getUserDisplayName: (username) => {
+        if (!username) return '';
+        const accounts = Utils.storage.get('backup_accounts', []);
+        const acc = accounts.find(a => a.username === username);
+        if (acc && acc.profile && acc.profile.fullname) {
+            return acc.profile.fullname;
+        }
+        return username;
+    },
+
     // Formatters
     formatCurrency: (amount) => {
         return new Intl.NumberFormat('vi-VN').format(amount || 0) + 'đ';

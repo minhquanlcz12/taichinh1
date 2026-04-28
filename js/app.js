@@ -379,7 +379,7 @@ const app = {
                     <div class="task-content" style="cursor: pointer;" onclick="WorkModule.goToProject(this.dataset.project)" data-project="${task.project}">
                         <h4>
                             ${task.mucTieu || task.tieuDe || 'Công việc không tên'}
-                            <span class="badge badge-orange" style="font-size:10px; margin-left: 8px;"><i class="fa-solid fa-user"></i> ${task.owner || 'admin'}</span>
+                            <span class="badge badge-orange" style="font-size:10px; margin-left: 8px;"><i class="fa-solid fa-user"></i> ${task.owner ? Utils.getUserDisplayName(task.owner) : 'Admin'}</span>
                             ${isCompleted ? '<span style="color: var(--success); font-weight: 600; font-size: 11px; margin-left: 8px;"><i class="fa-solid fa-check-circle"></i> Đã hoàn thành</span>' : ''}
                         </h4>
                         <p><i class="fa-regular fa-folder"></i> ${task.project} &nbsp;&bull;&nbsp; <i class="fa-regular fa-clock"></i> ${task.deadline}</p>
@@ -533,7 +533,7 @@ const app = {
             const statsContainer = document.getElementById('task-chart-stats');
             if (statsContainer) {
                 const total = planned + doing + done + expired;
-                const ownersHtml = Object.keys(owners).map(o => `<span class="badge ${o==='admin'?'badge-orange':'badge-blue'}" style="font-size: 11px; padding: 4px 8px;">${o}: ${owners[o]}</span>`).join('');
+                const ownersHtml = Object.keys(owners).map(o => `<span class="badge ${o==='admin'?'badge-orange':'badge-blue'}" style="font-size: 11px; padding: 4px 8px;">${Utils.getUserDisplayName(o) || o}: ${owners[o]}</span>`).join('');
                 
                 statsContainer.innerHTML = `
                     <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;">
@@ -651,7 +651,7 @@ const app = {
             }
 
             return {
-                name: u,
+                name: Utils.getUserDisplayName(u) || u,
                 done: users[u].done,
                 total: users[u].total,
                 expired: users[u].expired,
