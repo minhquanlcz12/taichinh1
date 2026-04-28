@@ -245,19 +245,19 @@ const WorkModule = {
                         row.forEach((colName, idx) => {
                             if (!colName) return;
                             const name = String(colName).toLowerCase().trim();
-                            if (name === 'stt') colMap.stt = idx;
-                            else if (name.includes('ngày đăng')) colMap.ngayDang = idx;
-                            else if (name.includes('thứ')) colMap.thu = idx;
-                            else if (name.includes('mục tiêu') || name.includes('mục đích')) colMap.mucTieu = idx;
-                            else if (name.includes('trụ cột')) colMap.truCot = idx;
-                            else if (name.includes('tiêu đề')) colMap.tieuDe = idx;
-                            else if (name.includes('nội dung chi tiết') || name === 'nội dung' || name.includes('caption')) colMap.noiDung = idx;
-                            else if (name.includes('định dạng')) colMap.dinhDang = idx;
-                            else if (name.includes('đặt hàng') || name.includes('order brief') || name.includes('nội dung order') || name.includes('order thiết kế')) colMap.orderBrief = idx;
-                            else if (name.includes('deadline')) colMap.deadline = idx;
-                            else if (name.includes('trạng thái')) colMap.trangThai = idx;
-                            else if (name.includes('ghi chú')) colMap.ghiChu = idx;
-                            else if (name.includes('ảnh gợi ý')) colMap.anhGoiY = idx;
+                            if (name === 'stt' || name.includes('số tt') || name.includes('thứ tự')) colMap.stt = idx;
+                            else if (name.includes('deadline') || name.includes('hạn chót') || name.match(/^hạn$/)) colMap.deadline = idx;
+                            else if (name.match(/ngày|thời gian|date|lên bài/)) colMap.ngayDang = idx;
+                            else if (name.match(/thứ/)) colMap.thu = idx;
+                            else if (name.match(/mục tiêu|mục đích|objective/)) colMap.mucTieu = idx;
+                            else if (name.match(/trụ cột|pillar|tuyến/)) colMap.truCot = idx;
+                            else if (name.match(/tiêu đề|title|chủ đề/)) colMap.tieuDe = idx;
+                            else if (name.match(/format|định dạng/)) colMap.dinhDang = idx;
+                            else if (name.match(/thiết kế|brief|order|yêu cầu|hình ảnh|media|visual/)) colMap.orderBrief = idx;
+                            else if (name.match(/nội dung|caption|bài viết|text|copy/)) colMap.noiDung = idx;
+                            else if (name.match(/trạng thái|status|tiến độ/)) colMap.trangThai = idx;
+                            else if (name.match(/ghi chú|note|lưu ý/)) colMap.ghiChu = idx;
+                            else if (name.match(/ảnh gợi ý|tham khảo|link/)) colMap.anhGoiY = idx;
                         });
                         break;
                     }
