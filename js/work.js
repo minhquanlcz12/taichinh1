@@ -238,26 +238,29 @@ const WorkModule = {
                     const row = rawJson[i];
                     if (!row || row.length === 0) continue;
 
-                    const rowStr = row.map(c => String(c).toLowerCase()).join(' ');
-                    if (rowStr.includes('stt') || rowStr.includes('ngày đăng') || rowStr.includes('tiêu đề') || rowStr.includes('mục tiêu')) {
+                    const rowStr = row.map(c => String(c).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()).join(' ');
+                    if (rowStr.includes('stt') || rowStr.includes('#') || rowStr.includes('ngay dang') || rowStr.includes('tieu de') || rowStr.includes('muc tieu') || rowStr.includes('ngay')) {
                         headerRowIndex = i;
                         // Build mapping dictionary
                         row.forEach((colName, idx) => {
                             if (!colName) return;
                             const name = String(colName).toLowerCase().trim();
-                            if (name === 'stt' || name.includes('số tt') || name.includes('thứ tự')) colMap.stt = idx;
-                            else if (name.includes('deadline') || name.includes('hạn chót') || name.match(/^hạn$/)) colMap.deadline = idx;
-                            else if (name.match(/ngày|thời gian|date|lên bài/)) colMap.ngayDang = idx;
-                            else if (name.match(/thứ/)) colMap.thu = idx;
-                            else if (name.match(/mục tiêu|mục đích|objective/)) colMap.mucTieu = idx;
-                            else if (name.match(/trụ cột|pillar|tuyến/)) colMap.truCot = idx;
-                            else if (name.match(/tiêu đề|title|chủ đề/)) colMap.tieuDe = idx;
-                            else if (name.match(/format|định dạng/)) colMap.dinhDang = idx;
-                            else if (name.match(/thiết kế|brief|order|yêu cầu|hình ảnh|media|visual/)) colMap.orderBrief = idx;
-                            else if (name.match(/nội dung|caption|bài viết|text|copy/)) colMap.noiDung = idx;
-                            else if (name.match(/trạng thái|status|tiến độ/)) colMap.trangThai = idx;
-                            else if (name.match(/ghi chú|note|lưu ý/)) colMap.ghiChu = idx;
-                            else if (name.match(/ảnh gợi ý|tham khảo|link/)) colMap.anhGoiY = idx;
+                            // Chuẩn hóa loại bỏ dấu tiếng Việt để so khớp an toàn hơn
+                            const normName = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+                            if (name === 'stt' || name === '#' || normName.includes('so tt') || normName.includes('thu tu')) colMap.stt = idx;
+                            else if (normName.includes('deadline') || normName.includes('han chot') || normName.match(/^han$/)) colMap.deadline = idx;
+                            else if (normName.match(/ngay|thoi gian|date|len bai/)) colMap.ngayDang = idx;
+                            else if (normName.match(/thu/)) colMap.thu = idx;
+                            else if (normName.match(/muc tieu|muc dich|objective|angle|concept/)) colMap.mucTieu = idx;
+                            else if (normName.match(/tru cot|pillar|tuyen/)) colMap.truCot = idx;
+                            else if (normName.match(/tieu de|title|chu de|hook/)) colMap.tieuDe = idx;
+                            else if (normName.match(/format|dinh dang|the loai/)) colMap.dinhDang = idx;
+                            else if (normName.match(/thiet ke|brief|order|yeu cau|hinh anh|media|visual|cta|hashtag/)) colMap.orderBrief = idx;
+                            else if (normName.match(/noi dung|caption|bai viet|text|copy/)) colMap.noiDung = idx;
+                            else if (normName.match(/trang thai|status|tien do/)) colMap.trangThai = idx;
+                            else if (normName.match(/ghi chu|note|luu y|km/)) colMap.ghiChu = idx;
+                            else if (normName.match(/anh goi y|tham khao|link/)) colMap.anhGoiY = idx;
                         });
                         break;
                     }
