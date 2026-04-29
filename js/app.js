@@ -274,8 +274,8 @@ const app = {
             const isAdmin = Auth.currentUser.role === 'admin';
             if (broadcastSection) broadcastSection.style.display = isAdmin ? 'block' : 'none';
             if (adminTaskOverview) {
-                adminTaskOverview.style.display = isAdmin ? 'block' : 'none';
-                if (isAdmin) app.renderAdminTaskOverview();
+                adminTaskOverview.style.display = 'block';
+                app.renderAdminTaskOverview();
             }
         }
 
