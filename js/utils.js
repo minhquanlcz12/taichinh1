@@ -37,6 +37,20 @@ const Utils = {
         return username;
     },
 
+    getUserAvatarColor: (username) => {
+        if (!username) return '#00b4d8';
+        const accounts = Utils.storage.get('backup_accounts', []);
+        const acc = accounts.find(a => a.username === username);
+        if (acc && acc.profile && acc.profile.color) {
+            return acc.profile.color;
+        }
+        // Fallback hash
+        const COLORS = ['#00b4d8','#f77f00','#06d6a0','#e63946','#7b2d8b','#457b9d','#e9c46a'];
+        let h = 0;
+        for (let i = 0; i < username.length; i++) h = (h << 5) - h + username.charCodeAt(i);
+        return COLORS[Math.abs(h) % COLORS.length];
+    },
+
     // Formatters
     formatCurrency: (amount) => {
         return new Intl.NumberFormat('vi-VN').format(amount || 0) + 'đ';

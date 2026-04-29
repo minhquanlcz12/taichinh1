@@ -269,8 +269,14 @@ const app = {
 
         // Admin Broadcast section toggle
         const broadcastSection = document.getElementById('admin-broadcast-section');
-        if (broadcastSection && Auth.currentUser) {
-            broadcastSection.style.display = Auth.currentUser.role === 'admin' ? 'block' : 'none';
+        const adminTaskOverview = document.getElementById('admin-task-overview-section');
+        if (Auth.currentUser) {
+            const isAdmin = Auth.currentUser.role === 'admin';
+            if (broadcastSection) broadcastSection.style.display = isAdmin ? 'block' : 'none';
+            if (adminTaskOverview) {
+                adminTaskOverview.style.display = isAdmin ? 'block' : 'none';
+                if (isAdmin) app.renderAdminTaskOverview();
+            }
         }
 
         // Update top cards with animation
@@ -645,7 +651,8 @@ const app = {
 
         const rankedUsers = Object.keys(users).map(u => {
             const account = accounts.find(a => a.username === u);
-            let avatarHtml = `<span style="display:flex; align-items:center; justify-content:center; width:36px; height:36px; background:var(--gradient-primary); border-radius:50%; color:#fff; font-weight:bold; font-size:14px;">${u[0].toUpperCase()}</span>`;
+            const userColor = Utils.getUserAvatarColor(u);
+            let avatarHtml = `<span style="display:flex; align-items:center; justify-content:center; width:36px; height:36px; background:${userColor}; border-radius:50%; color:#fff; font-weight:bold; font-size:14px; border: 2px solid ${userColor}; box-shadow:0 0 8px ${userColor}88;">${u[0].toUpperCase()}</span>`;
             if (account && account.profile && account.profile.avatar) {
                 avatarHtml = `<img src="${account.profile.avatar}" style="width:36px; height:36px; border-radius:50%; object-fit:cover; border: 2px solid rgba(255,255,255,0.1);">`;
             }
@@ -684,6 +691,124 @@ const app = {
                         <strong style="color: #fff; font-size: 14px;">${u.name} ${isFlawless ? '<i class="fa-solid fa-fire" style="color: #ff4500; font-size: 12px;" title="Tỷ lệ hoàn thành 100%"></i>' : ''}</strong>
                         <span style="color: var(--text-secondary); font-size: 11px;">Hoàn thành: <span style="color: #10b981; font-weight:bold;">${u.done}</span> nhiệm vụ</span>
                     </div>
+                </div>
+            `;
+        }).join('');
+    },
+
+    viewUserTasks: (username) => {
+        const userFilterEl = document.getElementById('work-user-filter');
+        if (userFilterEl) {
+            userFilterEl.value = username;
+            WorkModule.filterByRole();
+        }
+        app.navigateTo('work-view');
+    },
+
+    renderAdminTaskOverview: async () => {
+        const grid = document.getElementById('admin-task-overview-grid');
+        if (!grid) return;
+        grid.innerHTML = '<div style="color:var(--text-secondary); text-align:center; width:100%;">Đang tính toán hiệu suất...</div>';
+
+        const accounts = await Auth.getAccounts();
+        const allSystemTasks = WorkModule.data.tasks || [];
+        
+        // Filter for this month
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+
+        const userStats = {};
+        accounts.forEach(acc => {
+            userStats[acc.username] = { total: 0, done: 0, doing: 0, new: 0, expired: 0, profile: acc.profile, role: acc.role };
+        });
+
+        allSystemTasks.forEach(t => {
+            let dStr = t.deadline || t.ngayDang;
+            let d;
+            if (dStr) {
+                if (dStr.includes('-')) d = new Date(dStr);
+                else if (dStr.includes('/')) {
+                    const p = dStr.split('/');
+                    if (p.length === 3) d = new Date(`${p[2]}-${p[1]}-${p[0]}T00:00:00`);
+                }
+            }
+            if (d && d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
+                const owner = t.owner || 'admin';
+                if (!userStats[owner]) return; // if user deleted
+
+                userStats[owner].total++;
+                const st = (t.trangThai || '').toLowerCase();
+                if (st.includes('done') || st.includes('hoàn thành')) {
+                    userStats[owner].done++;
+                } else if (st.includes('doing') || st.includes('đang làm')) {
+                    userStats[owner].doing++;
+                } else if (st.includes('hết hạn') || st.includes('quá hạn')) {
+                    userStats[owner].expired++;
+                } else {
+                    userStats[owner].new++;
+                }
+            }
+        });
+
+        grid.innerHTML = accounts.map(acc => {
+            const u = acc.username;
+            const stats = userStats[u];
+            if (u === 'admin' && stats.total === 0) return ''; // hide admin if no tasks
+
+            const userColor = Utils.getUserAvatarColor(u);
+            const initial = u[0].toUpperCase();
+            const avatarHtml = acc.profile && acc.profile.avatar 
+                ? `<img src="${acc.profile.avatar}" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border: 2px solid ${userColor}; box-shadow: 0 0 10px ${userColor}88;">`
+                : `<div style="width:40px; height:40px; border-radius:50%; background:${userColor}; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:16px; box-shadow: 0 0 10px ${userColor}88;">${initial}</div>`;
+            const dName = Utils.getUserDisplayName(u) || u;
+
+            return `
+                <div class="glass-card" style="min-width: 280px; flex: 0 0 auto; background: linear-gradient(180deg, rgba(20,20,30,0.8) 0%, rgba(10,10,15,0.95) 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 24px; position: relative; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.3); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 8px 25px ${userColor}33';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(0,0,0,0.3)';">
+                    <!-- Badge role -->
+                    <div style="position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: bold; text-transform: uppercase; color: var(--text-secondary); backdrop-filter: blur(4px);">
+                        ${acc.role === 'admin' ? '<i class="fa-solid fa-crown" style="color: gold; margin-right: 4px;"></i>' : ''}${acc.role}
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 24px;">
+                        ${avatarHtml}
+                        <div>
+                            <h4 style="margin: 0; font-size: 16px; color: #fff; font-weight: 600;">${dName}</h4>
+                            <p style="margin: 0; font-size: 12px; color: var(--text-secondary);">@${u}</p>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+                        <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">Nhiệm vụ trong tháng</div>
+                        <div style="font-size: 36px; font-weight: 800; color: #fff; line-height: 1;">${stats.total} <span style="font-size: 14px; font-weight: normal; color: var(--text-secondary);">/ tháng</span></div>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 28px; font-size: 14px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <i class="fa-solid fa-circle-check" style="color: #10b981; width: 16px; font-size: 16px;"></i>
+                            <span style="color: var(--text-secondary);">Đã hoàn thành</span>
+                            <strong style="margin-left: auto; color: #fff; font-size: 15px;">${stats.done}</strong>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <i class="fa-solid fa-clock" style="color: #f59e0b; width: 16px; font-size: 16px;"></i>
+                            <span style="color: var(--text-secondary);">Đang xử lý</span>
+                            <strong style="margin-left: auto; color: #fff; font-size: 15px;">${stats.doing}</strong>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <i class="fa-solid fa-circle-dot" style="color: #3b82f6; width: 16px; font-size: 16px;"></i>
+                            <span style="color: var(--text-secondary);">Chưa làm / Mới</span>
+                            <strong style="margin-left: auto; color: #fff; font-size: 15px;">${stats.new}</strong>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <i class="fa-solid fa-circle-exclamation" style="color: #ef4444; width: 16px; font-size: 16px;"></i>
+                            <span style="color: var(--text-secondary);">Trễ hạn</span>
+                            <strong style="margin-left: auto; color: ${stats.expired > 0 ? '#ef4444' : '#fff'}; font-size: 15px;">${stats.expired}</strong>
+                        </div>
+                    </div>
+
+                    <button class="btn" style="width: 100%; background: #a855f7; color: #fff; border: none; font-weight: 600; font-size: 15px; border-radius: 8px; padding: 12px; transition: background 0.2s;" onmouseover="this.style.background='#9333ea'" onmouseout="this.style.background='#a855f7'" onclick="app.viewUserTasks('${u}')">
+                        Xem chi tiết
+                    </button>
                 </div>
             `;
         }).join('');

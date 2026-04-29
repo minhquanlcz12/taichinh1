@@ -128,8 +128,11 @@ const Auth = {
         const profileEl = document.querySelector('.user-profile .avatar');
         if (Auth.currentUser.profile && Auth.currentUser.profile.avatar) {
             profileEl.innerHTML = `<img src="${Auth.currentUser.profile.avatar}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+            profileEl.style.background = 'transparent';
         } else {
-            profileEl.innerHTML = `<span>${Auth.currentUser.username[0].toUpperCase()}</span>`;
+            const userColor = Utils.getUserAvatarColor(Auth.currentUser.username);
+            profileEl.innerHTML = `<span style="color: #fff;">${Auth.currentUser.username[0].toUpperCase()}</span>`;
+            profileEl.style.background = userColor;
         }
         profileEl.setAttribute('title', `Role: ${Auth.currentUser.role}`);
 
@@ -359,10 +362,11 @@ const Auth = {
             </button>
         `, isOpen('acc-password', false));
 
+        const userColor = Utils.getUserAvatarColor(Auth.currentUser.username);
         html += `
             <div class="glass-card" style="margin-bottom: 24px; padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%); border: 1px solid rgba(255,255,255,0.1);">
                 <div style="display:flex; align-items:center; gap:16px;">
-                    <div class="avatar" style="width: 50px; height: 50px; font-size: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.5);">${Auth.currentUser.username[0].toUpperCase()}</div>
+                    <div class="avatar" style="width: 50px; height: 50px; font-size: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.5); background: ${userColor}; color: #fff;">${Auth.currentUser.username[0].toUpperCase()}</div>
                     <div>
                         <h4 style="font-size:16px; margin: 0 0 4px 0; color: var(--primary);">${Auth.currentUser.username} <span class="badge ${Auth.currentUser.role === 'admin' ? 'badge-orange' : 'badge-blue'}" style="vertical-align: middle; margin-left: 4px; font-size: 10px;">${Auth.currentUser.role.toUpperCase()}</span></h4>
                         <p style="color:var(--text-secondary); margin: 0; font-size: 12px;">Phiên đăng nhập hiện tại</p>
@@ -590,6 +594,7 @@ const Auth = {
         document.getElementById('profile-dob').value = profile.dob || '';
         document.getElementById('profile-phone').value = profile.phone || '';
         document.getElementById('profile-address').value = profile.address || '';
+        document.getElementById('profile-color').value = profile.color || '#00b4d8';
 
         const previewImg = document.getElementById('profile-preview-img');
         const b64Input = document.getElementById('profile-img-base64');
@@ -657,6 +662,7 @@ const Auth = {
             dob: document.getElementById('profile-dob').value,
             phone: document.getElementById('profile-phone').value,
             address: document.getElementById('profile-address').value,
+            color: document.getElementById('profile-color').value,
             avatar: document.getElementById('profile-img-base64').value
         };
 
@@ -688,8 +694,8 @@ const Auth = {
 
         const contentHtml = `
             <div style="text-align: center; margin-bottom: 24px;">
-                <div style="width: 100px; height: 100px; border-radius: 50%; margin: 0 auto; overflow: hidden; border: 3px solid var(--primary); background: var(--bg-card); display: flex; align-items: center; justify-content: center;">
-                    ${hasAvatar ? `<img src="${avatarSrc}" style="width: 100%; height: 100%; object-fit: cover;">` : `<i class="fa-solid fa-user" style="font-size: 40px; color: var(--text-secondary);"></i>`}
+                <div style="width: 100px; height: 100px; border-radius: 50%; margin: 0 auto; overflow: hidden; border: 3px solid var(--primary); background: ${hasAvatar ? 'transparent' : Utils.getUserAvatarColor(username)}; display: flex; align-items: center; justify-content: center;">
+                    ${hasAvatar ? `<img src="${avatarSrc}" style="width: 100%; height: 100%; object-fit: cover;">` : `<b style="font-size: 40px; color: #fff;">${username[0].toUpperCase()}</b>`}
                 </div>
                 <h4 style="margin-top: 12px; font-size: 18px;">${profile.fullname || acc.username}</h4>
                 <div style="color: var(--text-secondary); font-size: 13px;">Vai trò: <span style="text-transform: capitalize;">${acc.role}</span></div>

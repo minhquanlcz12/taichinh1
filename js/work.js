@@ -682,16 +682,8 @@ const WorkModule = {
 
     // Tạo HTML hiển thị avatar + tên cho cột Phân công
     getAssigneeHtml: (taskId, ownerUsername, isAdmin) => {
-        const COLORS = ['#00b4d8','#f77f00','#06d6a0','#e63946','#7b2d8b','#457b9d','#e9c46a'];
-        const getColor = (name) => {
-            if (!name) return COLORS[0];
-            let h = 0;
-            for (let i = 0; i < name.length; i++) h = (h << 5) - h + name.charCodeAt(i);
-            return COLORS[Math.abs(h) % COLORS.length];
-        };
-
         const buildAvatar = (username) => {
-            const color = getColor(username);
+            const color = Utils.getUserAvatarColor(username);
             const acc = WorkModule.allAccounts.find(a => a.username === username);
             const hasAvatar = acc && acc.profile && acc.profile.avatar;
             const initial = username ? username[0].toUpperCase() : '?';
