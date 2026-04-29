@@ -311,13 +311,17 @@
                         </div>
                     </div>
 
-                    <div class="dashboard-chart-grid" style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 24px;">
-                        <div class="glass-card" style="padding: 16px;">
-                            <h3 style="margin-bottom: 8px; font-size: 15px; color: var(--text-secondary);"><i class="fa-solid fa-chart-line" style="color:var(--primary); margin-right:8px;"></i>Tương quan Thu - Chi</h3>
-                            <div style="position: relative; height: 160px; width: 100%;">
-                                <canvas id="financeChart"></canvas>
-                            </div>
+                    <!-- Admin Task Overview (replaces finance chart) -->
+                    <div id="admin-task-overview-section" style="display: none; margin-bottom: 24px;">
+                        <h3 style="font-size: 20px; color: #a855f7; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                            <i class="fa-solid fa-users-viewfinder"></i> Hiệu suất nhân sự (Tháng này)
+                        </h3>
+                        <div id="admin-task-overview-grid" style="display: flex; gap: 20px; overflow-x: auto; padding: 10px 4px 20px 4px;">
+                            <!-- Injected by JS -->
                         </div>
+                    </div>
+
+                    <div class="dashboard-chart-grid" style="display: grid; grid-template-columns: 1fr; gap: 24px; margin-bottom: 24px;">
                         <div class="glass-card" style="padding: 16px;">
                             <h3 style="margin-bottom: 8px; font-size: 15px; color: var(--text-secondary);"><i class="fa-solid fa-chart-pie" style="color:var(--primary); margin-right:8px;"></i>Tỷ lệ Hoàn thành</h3>
                             <div style="display: flex; gap: 16px; align-items: center; justify-content: center;">
@@ -385,14 +389,7 @@
                         </div>
                     </div>
 
-                    <div id="admin-task-overview-section" style="display: none; margin-top: 24px; margin-bottom: 24px;">
-                        <h3 style="font-size: 20px; color: #a855f7; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
-                            <i class="fa-solid fa-users-viewfinder"></i> Hiệu suất nhân sự (Tháng này)
-                        </h3>
-                        <div id="admin-task-overview-grid" style="display: flex; gap: 20px; overflow-x: auto; padding: 10px 4px 20px 4px;">
-                            <!-- Injected by JS -->
-                        </div>
-                    </div>
+
 
                     <div id="admin-broadcast-section" style="display: none; margin-top: 24px;">
                         <div class="glass-card panel-glow" style="width: 100%; padding: 16px; border: 1px solid rgba(231,76,60,0.3); background: linear-gradient(145deg, rgba(231,76,60,0.05), rgba(0,0,0,0.5));">
@@ -829,7 +826,7 @@
     <script src="js/attendance_music.js?v=1.0.1"></script>
     <script src="js/reports.js?v=3.0"></script>
     <script src="js/auth.js?v=27.1"></script>
-    <script src="js/app.js?v=25.4"></script>
+    <script src="js/app.js?v=25.5"></script>
 
     <!-- Toast Notification Container -->
     <div id="toast-container" class="toast-container"></div>
