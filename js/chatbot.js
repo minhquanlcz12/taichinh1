@@ -176,9 +176,18 @@ const ChatbotModule = {
         const topups = await DB.getTopupRequests() || [];
         const userTopups = topups.filter(r => r.username === user.username && r.status !== 'approved');
 
-        // 2. Get Finance Transactions (REPLACED with Dedicated History)
+        // 2. Get Dedicated History
         const transactions = await DB.getChatbotHistory() || [];
         const userTransactions = transactions.filter(t => t.username === user.username);
+
+        // 3. Get Legacy Finance Transactions (for Backwards Compatibility)
+        let legacyTransactions = [];
+        if (typeof FinanceModule !== 'undefined' && FinanceModule.data && FinanceModule.data.transactions) {
+            legacyTransactions = FinanceModule.data.transactions.filter(t => 
+                t.owner === user.username && 
+                (t.category === 'Nạp tiền' || t.category === 'Mua Chatbot')
+            );
+        }
 
         // Combine and Sort by Date
         const allHistory = [
@@ -197,14 +206,33 @@ const ChatbotModule = {
                 amount: t.amount,
                 status: 'approved',
                 note: t.note
+            })),
+            ...legacyTransactions.map(t => ({
+                id: t.id,
+                date: t.date,
+                type: t.type === 'income' ? 'deposit' : 'purchase',
+                amount: t.amount,
+                status: 'approved',
+                note: t.note || (t.type === 'income' ? 'Nạp tiền thành công' : 'Mua chatbot')
             }))
-        ].sort((a,b) => new Date(b.date) - new Date(a.date));
+        ];
+
+        // Filter duplicates by combining id or date+amount
+        const uniqueHistoryMap = new Map();
+        allHistory.forEach(h => {
+            const key = h.id || `${h.date}-${h.amount}`;
+            if (!uniqueHistoryMap.has(key)) {
+                uniqueHistoryMap.set(key, h);
+            }
+        });
+
+        const sortedHistory = Array.from(uniqueHistoryMap.values()).sort((a,b) => new Date(b.date) - new Date(a.date));
 
         let rowsHtml = '';
-        if (allHistory.length === 0) {
+        if (sortedHistory.length === 0) {
             rowsHtml = `<tr><td colspan="4" style="text-align:center; padding:30px; color:var(--text-secondary); font-style:italic;">Chưa có lịch sử giao dịch nào.</td></tr>`;
         } else {
-            allHistory.forEach(h => {
+            sortedHistory.forEach(h => {
                 const dateStr = new Date(h.date).toLocaleString('vi-VN');
                 const isDeposit = h.type === 'deposit';
                 const amountColor = isDeposit ? '#10b981' : '#f87171';
