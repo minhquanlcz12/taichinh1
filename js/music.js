@@ -5,6 +5,9 @@
 const MusicPlayer = {
     _rendered: false,
     _catalog: {
+        '❤️ Yêu Thích': [
+            { id: 'gIcrlDzgMIw', title: 'Ocean Drop (Official Lyric Video)', channel: '大飆飆' },
+        ],
         '🇻🇳 Nam Em': [
             { id: 'QDR-9wgkeu0', title: 'Áng Mây Sẽ Nở Hoa', channel: 'Nam Em Official' },
             { id: 'QAxWxbZO_n4', title: 'Giá Như Cha Còn Ở Trên Đời', channel: 'Nam Em Official' },
