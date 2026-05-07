@@ -77,6 +77,7 @@ const MusicPlayer = {
     _currentCat: null,
     _results: [],
     _currentIdx: -1,
+    _repeatOne: false,
 
     render: () => {
         if (MusicPlayer._rendered) return;
@@ -117,6 +118,9 @@ const MusicPlayer = {
                                     </button>
                                     <button onclick="MusicPlayer.next()" title="Bài tiếp" style="width:34px;height:34px;border-radius:50%;border:1px solid rgba(231,76,60,0.4);background:rgba(231,76,60,0.15);color:#e74c3c;cursor:pointer;font-size:13px;">
                                         <i class="fa-solid fa-forward-step"></i>
+                                    </button>
+                                    <button id="yt-repeat-btn" onclick="MusicPlayer.toggleRepeat()" title="Lặp lại bài này" style="width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,0.15);background:transparent;color:rgba(255,255,255,0.4);cursor:pointer;font-size:13px;">
+                                        <i class="fa-solid fa-repeat"></i>
                                     </button>
                                     <a id="yt-open-link" href="https://www.youtube.com/watch?v=jfKfPfyJRdk" target="_blank" title="Mở YouTube" style="width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,0.15);background:transparent;color:rgba(255,255,255,0.6);display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:13px;">
                                         <i class="fa-solid fa-up-right-from-square"></i>
@@ -197,6 +201,36 @@ const MusicPlayer = {
         if (arrow) arrow.style.transform = isOpen ? '' : 'rotate(180deg)';
     },
 
+    toggleRepeat: () => {
+        MusicPlayer._repeatOne = !MusicPlayer._repeatOne;
+        const btn = document.getElementById('yt-repeat-btn');
+        if (!btn) return;
+        if (MusicPlayer._repeatOne) {
+            btn.style.color = '#e74c3c';
+            btn.style.borderColor = 'rgba(231,76,60,0.5)';
+            btn.style.background = 'rgba(231,76,60,0.15)';
+            btn.title = 'Lặp lại: BẬT (nhấn để tắt)';
+        } else {
+            btn.style.color = 'rgba(255,255,255,0.4)';
+            btn.style.borderColor = 'rgba(255,255,255,0.15)';
+            btn.style.background = 'transparent';
+            btn.title = 'Lặp lại bài này';
+        }
+        // Reload iframe hiện tại với loop mode mới nếu đang phát
+        const player = document.getElementById('yt-player');
+        if (!player || !player.src || player.src.includes('autoplay=0')) return;
+        if (MusicPlayer._currentCat !== null && MusicPlayer._currentIdx >= 0) {
+            MusicPlayer.playCat(MusicPlayer._currentCat, MusicPlayer._currentIdx);
+        }
+    },
+
+    _embedUrl: (videoId) => {
+        if (MusicPlayer._repeatOne) {
+            return `https://www.youtube.com/embed/${videoId}?autoplay=1&loop=1&playlist=${videoId}`;
+        }
+        return `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+    },
+
     playCat: (cat, idx) => {
         const videos = MusicPlayer._catalog[cat];
         if (!videos || !videos[idx]) return;
@@ -205,7 +239,7 @@ const MusicPlayer = {
         MusicPlayer._currentCat = cat;
 
         const v = videos[idx];
-        document.getElementById('yt-player').src = `https://www.youtube.com/embed/${v.id}?autoplay=1`;
+        document.getElementById('yt-player').src = MusicPlayer._embedUrl(v.id);
         document.getElementById('yt-now-title').textContent = v.title;
         document.getElementById('yt-now-channel').textContent = `${v.channel} • ${cat}`;
         document.getElementById('yt-open-link').href = `https://www.youtube.com/watch?v=${v.id}`;
@@ -309,7 +343,9 @@ const MusicPlayer = {
     _playSearch: (idx) => {
         const v = MusicPlayer._searchResults[idx];
         if (!v) return;
-        document.getElementById('yt-player').src = `https://www.youtube.com/embed/${v.id}?autoplay=1`;
+        MusicPlayer._currentCat = null;
+        MusicPlayer._currentIdx = -1;
+        document.getElementById('yt-player').src = MusicPlayer._embedUrl(v.id);
         document.getElementById('yt-now-title').textContent = v.title;
         document.getElementById('yt-now-channel').textContent = v.channel;
         document.getElementById('yt-open-link').href = `https://www.youtube.com/watch?v=${v.id}`;
