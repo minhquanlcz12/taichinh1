@@ -72,10 +72,10 @@ const PayrollModule = {
                 </table>
             </div>
 
-            <div style="margin-top: 16px; font-size: 11px; color: var(--text-secondary); display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
-                <span><i class="fa-solid fa-circle-info text-primary"></i> Lịch làm việc: <b>Thứ 2 - Thứ 7</b> (nghỉ Chủ nhật)</span>
-                <span><i class="fa-solid fa-circle-info text-warning"></i> Phạt đi muộn = ${Utils.formatCurrency(PayrollModule.LATE_PENALTY)} / lần</span>
-                <span><i class="fa-solid fa-circle-info text-success"></i> Thưởng/Phạt Tuỳ chỉnh: Do Admin tự đánh giá</span>
+            <div style="margin-top: 16px; font-size: 13px; color: var(--text-secondary); display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+                <span><i class="fa-solid fa-circle-info text-primary"></i> Lịch làm việc: <b>Thứ 2 - Thứ 7</b></span>
+                <span><i class="fa-solid fa-sack-dollar text-success"></i> Ngày trả lương: <b>Mùng 10 hàng tháng</b></span>
+                <span><i class="fa-solid fa-circle-info text-warning"></i> Phạt đi muộn = ${Utils.formatCurrency(PayrollModule.LATE_PENALTY)}/lần</span>
             </div>
         `;
 

@@ -443,6 +443,11 @@ const Utils = {
         if (hours === 18 && minutes >= 0 && minutes <= 30) {
             await Utils.checkDailyTelegramSummary();
         }
+
+        // 3. Chúc mừng phát lương mùng 10 hàng tháng lúc 9:00 AM (chạy từ 09:00 - 09:30)
+        if (now.getDate() === 10 && hours === 9 && minutes >= 0 && minutes <= 30) {
+            await Utils.remindPayday();
+        }
     },
 
     remindAttendance: async () => {
@@ -626,7 +631,7 @@ const Utils = {
 
     compressImageBase64: async (base64) => {
         if (!base64 || !base64.startsWith('data:image/')) return base64;
-        if (base64.length < 15000) return base64; // ~10KB bypass only
+        if (base64.length < 15000) return base64; 
         
         return new Promise((resolve) => {
             const img = new Image();
@@ -641,11 +646,51 @@ const Utils = {
                 canvas.height = height;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
-                // Nén qua WEBP
                 resolve(canvas.toDataURL('image/webp', 0.6));
             };
             img.onerror = () => resolve(base64);
             img.src = base64;
         });
+    },
+
+    remindPayday: async () => {
+        if (!app.state.settings || !app.state.settings.tgToken || !app.state.settings.tgChatId) return;
+        const todayIso = new Date().toISOString().split('T')[0];
+        if (app.state.settings.lastPaydayRemindDate === todayIso) return;
+
+        let shouldSend = false;
+        try {
+            const settingsRef = db.collection("system").doc("settings");
+            await db.runTransaction(async (transaction) => {
+                const doc = await transaction.get(settingsRef);
+                if (!doc.exists) {
+                    transaction.set(settingsRef, { lastPaydayRemindDate: todayIso }, { merge: true });
+                    shouldSend = true;
+                } else {
+                    const data = doc.data();
+                    if (data.lastPaydayRemindDate !== todayIso) {
+                        transaction.set(settingsRef, { lastPaydayRemindDate: todayIso }, { merge: true });
+                        shouldSend = true;
+                    }
+                }
+            });
+        } catch (e) {
+            console.error("Trans fail remindPayday:", e);
+            return;
+        }
+
+        if (!shouldSend) {
+            app.state.settings.lastPaydayRemindDate = todayIso;
+            return;
+        }
+
+        app.state.settings.lastPaydayRemindDate = todayIso;
+
+        let msg = `🎉 <b>CHÚC MỪNG MÙNG 10 HÀNG THÁNG - NGÀY PHÁT LƯƠNG</b> 🎉\n\n`;
+        msg += `Hôm nay là mùng 10, một ngày anh em hệ thống đón nhận thành quả phấn đấu của tháng vừa rồi! 💸\n`;
+        msg += `👉 Mọi người vui lòng kiểm tra Bảng Lương xem có thắc mắc gì không nhé, lương sẽ được chuyển khoản nhanh nhất trong ngày hôm nay.\n\n`;
+        msg += `<i>Chúc team ${new Date().getFullYear()} luôn tràn năng lượng!</i> ⚡`;
+
+        await Utils.notifyTelegram(msg);
     }
 };
