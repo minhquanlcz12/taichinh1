@@ -15,6 +15,7 @@ const MusicPlayer = {
             { id: 'NHnynJKDS6w', title: 'Live Session M\' 1975 [Full Show]', channel: 'Nam Em Official' },
             { id: 'J8oO3ygSvuM', title: 'Live Bùng Nổ Cảm Xúc (Hắc Nguyệt Quang)', channel: 'Nam Em Official' },
             { id: 'KZxT_Kv2l00', title: 'Đơn Phương (Cover)', channel: 'Nam Em Official' },
+            { id: 'LjZPOxABFkA', title: 'Chưa Bao Giờ (Cover)', channel: 'Nam Em Official' },
         ],
         '🇻🇳 Chu Thúy Quỳnh': [
             { id: '5QmxIW-YWa0', title: 'Ít Nhưng Dài Lâu (ft. Yan Nguyễn)', channel: 'Chu Thúy Quỳnh' },
