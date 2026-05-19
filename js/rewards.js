@@ -123,38 +123,242 @@ const RewardsModule = {
             `;
         }
 
-        const cardsHtml = RewardsModule._catalog.map(card => `
-            <div class="reward-card glass-card" style="padding: 20px; display: flex; flex-direction: column; align-items: center; border: 1px solid rgba(255,255,255,0.1); background: linear-gradient(145deg, rgba(20,20,30,0.8), rgba(5,5,10,0.9)); transition: 0.3s; position: relative; overflow: hidden; ${meritInfo.current >= card.cost ? '' : 'opacity: 0.6; filter: grayscale(0.8);'}" onmouseover="this.style.transform='translateY(-5px)';this.style.borderColor='${card.color}'" onmouseout="this.style.transform='none';this.style.borderColor='rgba(255,255,255,0.1)'">
-                <div style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.5); padding: 4px 10px; border-radius: 12px; font-weight: bold; color: #ffd700; font-size: 13px; border: 1px solid rgba(255,215,0,0.3);">
-                    <i class="fa-solid fa-star"></i> ${card.cost}
+        const cardsHtml = RewardsModule._catalog.map(card => {
+            const isAffordable = meritInfo.current >= card.cost;
+            return `
+            <div class="tcg-digital-card ${!isAffordable ? 'locked' : ''}" style="--card-color: ${card.color};" onclick="${isAffordable ? `RewardsModule.redeem('${card.id}')` : ''}">
+                <div class="tcg-card-inner">
+                    <div class="tcg-card-cost">
+                        <i class="fa-solid fa-star"></i> ${card.cost}
+                    </div>
+                    
+                    <div class="tcg-card-art">
+                        <i class="fa-solid ${card.icon}"></i>
+                        <div class="tcg-art-overlay"></div>
+                    </div>
+                    
+                    <div class="tcg-card-body">
+                        <div class="tcg-card-type"><i class="fa-solid fa-microchip"></i> ĐẶC QUYỀN SỐ</div>
+                        <div class="tcg-card-title">${card.title}</div>
+                        <p class="tcg-card-desc">${card.desc}</p>
+                    </div>
+
+                    <div class="tcg-card-footer">
+                        ${isAffordable ? '<span class="status-ready"><i class="fa-solid fa-bolt"></i> NHẤP ĐỂ ĐỔI</span>' : '<span class="status-locked"><i class="fa-solid fa-lock"></i> THIẾU ĐIỂM</span>'}
+                    </div>
                 </div>
-                <div style="width: 64px; height: 64px; border-radius: 50%; background: ${card.color}22; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; border: 2px solid ${card.color}88; box-shadow: 0 0 15px ${card.color}44;">
-                    <i class="fa-solid ${card.icon}" style="font-size: 28px; color: ${card.color};"></i>
-                </div>
-                <h4 style="color: #fff; font-size: 16px; margin-bottom: 8px; text-align: center;">${card.title}</h4>
-                <p style="color: var(--text-secondary); font-size: 12px; text-align: center; margin-bottom: 20px; flex: 1;">${card.desc}</p>
-                <button class="btn" style="width: 100%; background: ${meritInfo.current >= card.cost ? card.color : 'rgba(255,255,255,0.1)'}; color: ${meritInfo.current >= card.cost ? '#fff' : 'rgba(255,255,255,0.3)'}; border: none; font-weight: 600; padding: 10px;" ${meritInfo.current >= card.cost ? `onclick="RewardsModule.redeem('${card.id}')"` : 'disabled'}>
-                    ${meritInfo.current >= card.cost ? 'ĐỔI NGAY' : 'CHƯA ĐỦ ĐIỂM'}
-                </button>
             </div>
-        `).join('');
+            `;
+        }).join('');
 
         container.innerHTML = `
-            <div class="rewards-container" style="max-width: 1200px; margin: 0 auto; padding-bottom: 40px;">
-                <div class="glass-header" style="display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; margin-bottom: 24px; border-radius: 12px; border: 1px solid rgba(255,215,0,0.2); background: linear-gradient(90deg, rgba(218,165,32,0.1) 0%, rgba(20,20,30,0.8) 100%);">
+            <style>
+            .tcg-digital-card {
+                position: relative;
+                width: 100%;
+                aspect-ratio: 2.2 / 3.3; /* Tỉ lệ thẻ bài truyền thống */
+                max-width: 280px;
+                margin: 0 auto;
+                border-radius: 12px;
+                background: linear-gradient(135deg, rgba(20,20,30,0.95), rgba(5,5,10,0.98));
+                border: 2px solid var(--card-color);
+                box-shadow: 0 0 15px rgba(0,0,0,0.8), inset 0 0 20px rgba(0,0,0,0.5);
+                padding: 6px;
+                cursor: pointer;
+                transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                overflow: hidden;
+            }
+
+            .tcg-digital-card:hover {
+                transform: translateY(-10px) scale(1.05);
+                box-shadow: 0 20px 40px rgba(0,0,0,0.9), 0 0 30px var(--card-color);
+                z-index: 10;
+            }
+
+            .tcg-digital-card::before {
+                content: '';
+                position: absolute;
+                top: -50%; left: -50%;
+                width: 200%; height: 200%;
+                background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+                transform: rotate(45deg);
+                animation: cardShine 3s infinite linear;
+                pointer-events: none;
+                z-index: 3;
+                opacity: 0;
+                transition: opacity 0.3s;
+            }
+            .tcg-digital-card:hover::before { opacity: 1; }
+
+            @keyframes cardShine {
+                0% { transform: translateY(-100%) rotate(45deg); }
+                100% { transform: translateY(100%) rotate(45deg); }
+            }
+
+            .tcg-digital-card.locked {
+                filter: grayscale(1) opacity(0.6);
+                cursor: not-allowed;
+                border-color: rgba(255,255,255,0.1) !important;
+                box-shadow: inset 0 0 20px rgba(0,0,0,0.8) !important;
+            }
+            .tcg-digital-card.locked:hover {
+                transform: none;
+                box-shadow: inset 0 0 20px rgba(0,0,0,0.8) !important;
+            }
+            .tcg-digital-card.locked::before { display: none; }
+
+            .tcg-card-inner {
+                border: 1px solid rgba(255,255,255,0.1);
+                height: 100%;
+                border-radius: 8px;
+                display: flex;
+                flex-direction: column;
+                background: url('data:image/svg+xml;utf8,<svg width="20" height="20" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h20v20H0z" fill="none"/><path d="M10 0v20M0 10h20" stroke="rgba(255,255,255,0.02)" stroke-width="1"/></svg>') repeat;
+                position: relative;
+            }
+
+            .tcg-card-cost {
+                position: absolute;
+                top: 0;
+                right: 12px;
+                background: linear-gradient(to bottom, var(--card-color), #333);
+                color: #fff;
+                padding: 6px 14px;
+                font-weight: 900;
+                font-size: 18px;
+                border-bottom-left-radius: 12px;
+                border-bottom-right-radius: 12px;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.6);
+                text-shadow: 1px 1px 2px rgba(0,0,0,1);
+                z-index: 2;
+                border: 1px solid rgba(255,255,255,0.3);
+                border-top: none;
+            }
+
+            .tcg-card-art {
+                height: 42%;
+                margin: 10px;
+                background: radial-gradient(circle at center, var(--card-color) 0%, rgba(0,0,0,1) 100%);
+                border-radius: 6px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                position: relative;
+                border: 2px solid rgba(255,255,255,0.1);
+                overflow: hidden;
+                box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+            }
+
+            .tcg-card-art i {
+                font-size: 65px;
+                color: #fff;
+                text-shadow: 0 0 25px var(--card-color), 0 0 10px rgba(255,255,255,0.5);
+                z-index: 2;
+                transition: transform 0.5s;
+            }
+            .tcg-digital-card:hover .tcg-card-art i {
+                transform: scale(1.1);
+            }
+
+            .tcg-art-overlay {
+                position: absolute;
+                top: 0; left: 0; right: 0; bottom: 0;
+                background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.2) 2px, rgba(0,0,0,0.2) 4px);
+                z-index: 1;
+            }
+
+            .tcg-card-body {
+                flex: 1;
+                padding: 0 12px 10px 12px;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .tcg-card-type {
+                font-size: 10px;
+                text-transform: uppercase;
+                letter-spacing: 2px;
+                color: var(--card-color);
+                margin-bottom: 8px;
+                text-align: center;
+                font-weight: bold;
+                border-bottom: 1px solid rgba(255,255,255,0.05);
+                padding-bottom: 6px;
+            }
+
+            .tcg-card-title {
+                font-size: 17px;
+                color: #fff;
+                text-align: center;
+                font-weight: 800;
+                margin-bottom: 12px;
+                text-transform: uppercase;
+                text-shadow: 0 0 10px rgba(0,0,0,0.5);
+                min-height: 40px; /* Cân đối tiêu đề 2 dòng */
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .tcg-card-desc {
+                font-size: 12.5px;
+                color: #cbd5e1;
+                text-align: justify;
+                line-height: 1.5;
+                background: rgba(0,0,0,0.5);
+                padding: 10px;
+                border-radius: 6px;
+                border-left: 2px solid var(--card-color);
+                flex: 1;
+            }
+
+            .tcg-card-footer {
+                padding: 12px;
+                text-align: center;
+                border-top: 1px solid rgba(255,255,255,0.1);
+                background: rgba(0,0,0,0.4);
+                border-bottom-left-radius: 8px;
+                border-bottom-right-radius: 8px;
+            }
+
+            .status-ready {
+                color: #fff;
+                font-weight: bold;
+                font-size: 14px;
+                letter-spacing: 1px;
+                text-shadow: 0 0 5px var(--card-color), 0 0 15px var(--card-color);
+            }
+
+            .status-locked {
+                color: #ef4444;
+                font-weight: bold;
+                font-size: 14px;
+                letter-spacing: 1px;
+            }
+            
+            .rewards-container {
+                max-width: 1200px;
+                margin: 0 auto;
+                padding-bottom: 40px;
+                perspective: 1000px; /* Thêm 3D perspective cho mượt */
+            }
+            </style>
+
+            <div class="rewards-container">
+                <div class="glass-header" style="display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; margin-bottom: 30px; border-radius: 12px; border: 1px solid rgba(255,215,0,0.2); background: linear-gradient(90deg, rgba(218,165,32,0.1) 0%, rgba(20,20,30,0.8) 100%);">
                     <div>
-                        <h2 style="color: #ffd700; margin: 0; font-size: 20px; display: flex; align-items: center; gap: 8px;">
-                            <i class="fa-solid fa-gift"></i> TỦ KÍNH ĐẶC QUYỀN
+                        <h2 style="color: #ffd700; margin: 0; font-size: 22px; display: flex; align-items: center; gap: 8px; text-transform: uppercase;">
+                            <i class="fa-solid fa-gamepad"></i> KHO THẺ BÀI SỐ HÓA
                         </h2>
-                        <p style="color: var(--text-secondary); font-size: 13px; margin: 4px 0 0;">Dùng điểm Công Đức để đổi lấy thẻ bài đặc quyền bên dưới</p>
+                        <p style="color: var(--text-secondary); font-size: 14px; margin: 4px 0 0;">Cửa hàng Đặc quyền - Dùng Tiền Công Đức để mua Thẻ</p>
                     </div>
-                    <div style="text-align: right; background: rgba(0,0,0,0.3); padding: 10px 20px; border-radius: 8px; border: 1px solid #ffd700; box-shadow: 0 0 15px rgba(255,215,0,0.2);">
-                        <div style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px;">Công Đức Khả Dụng</div>
-                        <div style="font-size: 28px; font-weight: 900; color: #ffd700; line-height: 1;">${meritInfo.current} <i class="fa-solid fa-star" style="font-size: 20px;"></i></div>
+                    <div style="text-align: right; background: rgba(0,0,0,0.5); padding: 12px 24px; border-radius: 8px; border: 1px solid #ffd700; box-shadow: 0 0 20px rgba(255,215,0,0.2);">
+                        <div style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px; letter-spacing: 1px;">Số dư Công Đức</div>
+                        <div style="font-size: 32px; font-weight: 900; color: #ffd700; line-height: 1;">${meritInfo.current} <i class="fa-solid fa-star" style="font-size: 24px; text-shadow: 0 0 15px #ffd700;"></i></div>
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 24px; padding: 10px;">
                     ${cardsHtml}
                 </div>
 
