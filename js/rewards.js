@@ -45,7 +45,7 @@ const RewardsModule = {
         // Tổng công đức = Tổng điểm earned (từ chấm công) - Tổng điểm used (từ đổi thẻ)
         const allAttendance = await Attendance.loadData();
         const userHistory = allAttendance.filter(r => r.username === username);
-        const earned = userHistory.reduce((acc, r) => acc + (r.status === 'on_time' ? 2 : -1), 0);
+        const earned = userHistory.reduce((acc, r) => acc + (r.status === 'on_time' ? 1 : -1), 0);
 
         const allRewards = await RewardsModule.loadData();
         const userRewards = allRewards.filter(r => r.username === username);

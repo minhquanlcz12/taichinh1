@@ -117,7 +117,7 @@ const Attendance = {
         let checkInHtml = '';
 
         if (todayRecord) {
-            const meritPts = todayRecord.status === 'on_time' ? 2 : -1;
+            const meritPts = todayRecord.status === 'on_time' ? 1 : -1;
             checkInHtml = `
                 <div class="wf-success">
                     <div class="monk-video-container" style="margin: 0 auto 20px; width: fit-content; border-radius: 12px; overflow: hidden; border: 1px solid rgba(218,165,0,0.2); box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
@@ -225,7 +225,7 @@ const Attendance = {
         // Lấy lịch sử xin nghỉ
         const allLeaves = await Attendance.loadLeaveData();
         const userLeaves = allLeaves.filter(l => l.username === user.username).sort((a,b) => b.timestamp - a.timestamp);
-        const totalMerit = userHistory.reduce((acc, r) => acc + (r.status === 'on_time' ? 2 : -1), 0);
+        const totalMerit = userHistory.reduce((acc, r) => acc + (r.status === 'on_time' ? 1 : -1), 0);
         let historyHtml = `
             <div class="wf-history-panel">
                 <h3><i class="fa-solid fa-scroll" style="margin-right:8px;"></i> Sổ Công Đức <span class="wf-stat">Tích lũy: ${totalMerit} công đức</span></h3>
@@ -241,7 +241,7 @@ const Attendance = {
                         <tbody>
                             ${userHistory.length === 0 ? '<tr><td colspan="3" style="text-align:center;color:rgba(218,165,32,0.3);">Chưa có công đức nào</td></tr>' : ''}
                             ${userHistory.map(r => {
-                                const pts = r.status === 'on_time' ? 2 : -1;
+                                const pts = r.status === 'on_time' ? 1 : -1;
                                 return `
                                 <tr>
                                     <td>${r.dateStr}</td>
