@@ -28,6 +28,7 @@ const app = {
         if (typeof PayrollModule !== 'undefined') PayrollModule.init();
         if (typeof PromptModule !== 'undefined') PromptModule.init();
         if (typeof ChatbotModule !== 'undefined') ChatbotModule.init();
+        if (typeof RewardsModule !== 'undefined') RewardsModule.init();
 
         // Bật vòng lặp kiểm tra các sự kiện theo thời gian (nhắc telegram, v.v)
         setTimeout(() => {
@@ -161,6 +162,7 @@ const app = {
             'prompt-view': { title: 'Kho Prompt', sub: 'Thư viện câu lệnh AI mẫu' },
             'chatbot-view': { title: 'Thư viện Chatbot', sub: 'Trạm lưu trữ các Cỗ máy AI đa nhiệm' },
             'settings-view': { title: 'Cài đặt', sub: 'Tùy chỉnh hệ thống' },
+            'rewards-view': { title: 'Đổi Thưởng', sub: 'Dùng Công Đức đổi Đặc Quyền' },
             'music-view': { title: '🎵 YouTube Music', sub: 'Nghe nhạc & xem MV ngay trong ứng dụng' }
         };
 
@@ -226,6 +228,11 @@ const app = {
             document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
             const musicNav = document.querySelector('.nav-item[data-target="music-view"]');
             if (musicNav) musicNav.classList.add('active');
+        } else if (viewId === 'rewards-view') {
+            if (typeof RewardsModule !== 'undefined') RewardsModule.render();
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            const rewardsNav = document.querySelector('.nav-item[data-target="rewards-view"]');
+            if (rewardsNav) rewardsNav.classList.add('active');
         }
     },
 
