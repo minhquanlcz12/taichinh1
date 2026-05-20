@@ -42,10 +42,14 @@ const RewardsModule = {
     },
 
     calcUserMerit: async (username) => {
-        // Tổng công đức = Tổng điểm earned (từ chấm công) - Tổng điểm used (từ đổi thẻ)
+        // RESET DATE 20/05/2026: Tặng 1 điểm mốc khởi đầu, không tính các lỗi đi muộn trước đó.
+        const RESET_DATE = '2026-05-20';
         const allAttendance = await Attendance.loadData();
-        const userHistory = allAttendance.filter(r => r.username === username);
-        const earned = userHistory.reduce((acc, r) => acc + (r.status === 'on_time' ? 1 : -1), 0);
+        // Lọc những bản ghi từ sau ngày Reset
+        const userHistory = allAttendance.filter(r => r.username === username && r.dateStr >= RESET_DATE);
+        
+        // Công thức mới: Tặng sẵn 1 điểm + công đức kiếm được
+        const earned = 1 + userHistory.reduce((acc, r) => acc + (r.status === 'on_time' ? 1 : -1), 0);
 
         const allRewards = await RewardsModule.loadData();
         const userRewards = allRewards.filter(r => r.username === username);

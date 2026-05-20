@@ -212,7 +212,7 @@ const Attendance = {
                         </div>
                         <div style="text-align: right; font-size: 12px; color: var(--text-secondary);">
                             <div><i class="fa-solid fa-calendar-days" style="color: var(--primary); margin-right: 4px;"></i>${passedWorkDays} / ${workingDaysInMonth} ngày công</div>
-                            <div style="margin-top: 4px; font-size: 10px; color: rgba(255,255,255,0.3);">Cập nhật theo chấm công</div>
+                        <div style="margin-top: 4px; font-size: 10px; color: rgba(255,255,255,0.3);">Cập nhật theo chấm công</div>
                         </div>
                     </div>
                 </div>
@@ -225,32 +225,43 @@ const Attendance = {
         // Lấy lịch sử xin nghỉ
         const allLeaves = await Attendance.loadLeaveData();
         const userLeaves = allLeaves.filter(l => l.username === user.username).sort((a,b) => b.timestamp - a.timestamp);
-        const totalMerit = userHistory.reduce((acc, r) => acc + (r.status === 'on_time' ? 1 : -1), 0);
+        
+        const RESET_DATE = '2026-05-20';
+        let currentMeritDisplay = '?';
+        if (typeof RewardsModule !== 'undefined') {
+            const mInfo = await RewardsModule.calcUserMerit(user.username);
+            currentMeritDisplay = mInfo.current;
+        } else {
+            const meritHistory = userHistory.filter(r => r.dateStr >= RESET_DATE);
+            currentMeritDisplay = 1 + meritHistory.reduce((acc, r) => acc + (r.status === 'on_time' ? 1 : -1), 0);
+        }
+
         let historyHtml = `
             <div class="wf-history-panel">
-                <h3><i class="fa-solid fa-scroll" style="margin-right:8px;"></i> Sổ Công Đức <span class="wf-stat">Tích lũy: ${totalMerit} công đức</span></h3>
+                <h3><i class="fa-solid fa-scroll" style="margin-right:8px;"></i> Sổ Công Đức <span class="wf-stat">Khả dụng: ${currentMeritDisplay} <i class="fa-solid fa-star"></i></span></h3>
+                <p style="font-size:11.5px; color:var(--success); margin-top:-5px; margin-bottom:10px;"><i class="fa-solid fa-gift"></i> Đã được tự động Reset tặng khởi đầu +1 điểm (Bỏ qua lịch sử vi phạm quá hạn trước ngày 20/05/2026).</p>
                 <div class="table-responsive">
                     <table class="tl-table">
                         <thead>
                             <tr>
                                 <th>Ngày</th>
-                                <th>Thời gian</th>
-                                <th>Trạng thái</th>
+                                <th>Kết quả điểm danh</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${userHistory.length === 0 ? '<tr><td colspan="3" style="text-align:center;color:rgba(218,165,32,0.3);">Chưa có công đức nào</td></tr>' : ''}
+                            ${userHistory.length === 0 ? '<tr><td colspan="2" style="text-align:center;color:rgba(218,165,32,0.3);">Chưa có công đức nào</td></tr>' : ''}
                             ${userHistory.map(r => {
+                                const isOld = r.dateStr < RESET_DATE;
                                 const pts = r.status === 'on_time' ? 1 : -1;
                                 return `
-                                <tr>
+                                <tr style="${isOld ? 'opacity: 0.5;' : ''}">
                                     <td>${r.dateStr}</td>
-                                    <td>${new Date(r.timestamp).toLocaleTimeString('vi-VN')} ${r.checkoutTimestamp ? `<br><small style="color:#2ecc71">Ra: ${new Date(r.checkoutTimestamp).toLocaleTimeString('vi-VN')}</small>` : ''}</td>
                                     <td>
                                         <span class="badge ${r.status === 'on_time' ? 'bg-success' : 'bg-danger'}">
                                             ${r.status === 'on_time' ? 'Đúng giờ' : `Muộn ${r.lateMinutes}p`}
                                         </span>
-                                        <span class="wf-merit-badge" style="${pts > 0 ? '' : 'background:rgba(239,68,68,0.2);color:#ef4444;border-color:rgba(239,68,68,0.3);'}">${pts > 0 ? '+' : ''}${pts}</span>
+                                        ${isOld ? `<span class="wf-merit-badge" style="background:rgba(255,255,255,0.05);color:#888;border:1px solid rgba(255,255,255,0.1);">Không tính</span>` 
+                                                : `<span class="wf-merit-badge" style="${pts > 0 ? '' : 'background:rgba(239,68,68,0.2);color:#ef4444;border-color:rgba(239,68,68,0.3);'}">${pts > 0 ? '+' : ''}${pts}</span>`}
                                     </td>
                                 </tr>
                             `}).join('')}
