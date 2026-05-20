@@ -358,7 +358,10 @@ const RewardsModule = {
                     </div>
                     <div style="text-align: right; background: rgba(0,0,0,0.5); padding: 12px 24px; border-radius: 8px; border: 1px solid #ffd700; box-shadow: 0 0 20px rgba(255,215,0,0.2);">
                         <div style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px; letter-spacing: 1px;">Số dư Công Đức</div>
-                        <div style="font-size: 32px; font-weight: 900; color: #ffd700; line-height: 1;">${meritInfo.current} <i class="fa-solid fa-star" style="font-size: 24px; text-shadow: 0 0 15px #ffd700;"></i></div>
+                        <div style="font-size: 32px; font-weight: 900; color: #ffd700; line-height: 1;">
+                            ${meritInfo.current} <i class="fa-solid fa-star" style="font-size: 24px; text-shadow: 0 0 15px #ffd700;"></i>
+                            ${currentUser.role === 'admin' ? `<i class="fa-solid fa-circle-plus" style="font-size: 14px; margin-left: 8px; cursor: pointer; color: #10b981; opacity: 0.8;" onclick="RewardsModule.adminCheatPoints('${currentUser.username}')" title="Admin: Bơm 50 điểm test"></i>` : ''}
+                        </div>
                     </div>
                 </div>
 
@@ -369,6 +372,28 @@ const RewardsModule = {
                 ${customHistoryHtml}
             </div>
         `;
+    },
+
+    adminCheatPoints: async (username) => {
+        if (!Auth.currentUser || Auth.currentUser.role !== 'admin') return;
+        
+        const newRecord = {
+            id: 'reward_cheat_' + Date.now(),
+            username: username,
+            timestamp: Date.now(),
+            cardId: 'admin_cheat',
+            title: '🎁 Quỹ Hỗ Trợ Khẩn Cấp (Test)',
+            icon: 'fa-wand-magic-sparkles',
+            color: '#10b981',
+            cost: -50 // Âm = Cộng điểm
+        };
+
+        const allRewards = await RewardsModule.loadData();
+        allRewards.push(newRecord);
+        await RewardsModule.saveData(allRewards);
+        
+        Utils.showToast("Bơm thành công +50 điểm!", "success");
+        RewardsModule.render();
     },
 
     redeem: async (cardId) => {
