@@ -360,8 +360,14 @@ const RewardsModule = {
                         <div style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px; letter-spacing: 1px;">Số dư Công Đức</div>
                         <div style="font-size: 32px; font-weight: 900; color: #ffd700; line-height: 1;">
                             ${meritInfo.current} <i class="fa-solid fa-star" style="font-size: 24px; text-shadow: 0 0 15px #ffd700;"></i>
-                            ${currentUser.role === 'admin' ? `<i class="fa-solid fa-circle-plus" style="font-size: 14px; margin-left: 8px; cursor: pointer; color: #10b981; opacity: 0.8;" onclick="RewardsModule.adminCheatPoints('${currentUser.username}')" title="Admin: Bơm 50 điểm test"></i>` : ''}
                         </div>
+                        ${currentUser.role === 'admin' ? `
+                        <div style="margin-top: 10px;">
+                            <button onclick="RewardsModule.adminCheatPoints('${currentUser.username}')" style="background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #10b981; padding: 6px 12px; border-radius: 6px; font-size: 11px; cursor: pointer; font-weight: bold; width: 100%; text-transform: uppercase;">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> Hack 50 Điểm Test
+                            </button>
+                        </div>
+                        ` : ''}
                     </div>
                 </div>
 
