@@ -4,7 +4,7 @@ const RewardsModule = {
         { id: 'card_late', title: 'Đi Muộn Miễn Phạt', icon: 'fa-clock', cost: 10, color: '#f59e0b', desc: 'Cứu cánh khi ngủ nướng, miễn phạt 1 lần đi muộn.' },
         { id: 'card_early', title: 'Về Sớm 1 Tiếng', icon: 'fa-person-running', cost: 8, color: '#3b82f6', desc: 'Xin sếp về sớm 1 chút để xử lý việc cá nhân.' },
         { id: 'card_leave', title: 'Nghỉ Phép Thêm 1 Ngày', icon: 'fa-umbrella-beach', cost: 25, color: '#a855f7', desc: 'Có ngay 1 ngày phép hưởng nguyên lương.' },
-        { id: 'card_tea', title: 'Trà Chiều Miễn Phí', icon: 'fa-mug-hot', cost: 5, color: '#f43f5e', desc: 'Sếp bao trà sữa / cafe ban chiều.' },
+        { id: 'card_tea', title: '1 Lon Nước Ngọt 10k', icon: 'fa-glass-water', cost: 5, color: '#f43f5e', desc: 'Sếp bao 1 lon nước ngọt mát lạnh trị giá 10k.' },
         { id: 'card_rescue', title: 'Thánh Nhân Cứu Bồ', icon: 'fa-handshake-angle', cost: 12, color: '#ec4899', desc: 'Dùng để bảo lãnh/xoá án phạt đi muộn cho 1 NGƯỜI KHÁC (Tăng tình kết nghĩa anh em).' },
         { id: 'card_mystery', title: 'Quà Bất Ngờ', icon: 'fa-gift', cost: 30, color: '#ffd700', desc: 'Một món quà bí mật và giá trị do sếp chuẩn bị.' },
         { id: 'card_king', title: 'Chiếc Ghế Quyền Lực', icon: 'fa-crown', cost: 50, color: '#fbbf24', desc: 'Được quyền nhờ Sếp đi pha 1 ly cafe/trà, hoặc Sếp bao ăn trưa 1-1 đàm đạo riêng.' }
@@ -421,7 +421,7 @@ const RewardsModule = {
                     #1e1b4b 0deg 45deg,   /* 0: Miss */
                     #059669 45deg 90deg,  /* 1: +1 */
                     #064e3b 90deg 135deg, /* 2: +2 */
-                    #1e1b4b 135deg 180deg, /* 3: Miss */
+                    #d97706 135deg 180deg, /* 3: 10,000 VNĐ Cash */
                     #059669 180deg 225deg, /* 4: +1 */
                     #92400e 225deg 270deg, /* 5: +5 */
                     #991b1b 270deg 315deg, /* 6: -1đ (Loss) */
@@ -573,11 +573,11 @@ const RewardsModule = {
                                     <div class="wheel-item" style="--i:0;"><span>Hụt rồi!</span></div>
                                     <div class="wheel-item" style="--i:1;"><span>+1đ</span></div>
                                     <div class="wheel-item" style="--i:2;"><span>+2đ</span></div>
-                                    <div class="wheel-item" style="--i:3;"><span>Hụt rồi!</span></div>
+                                    <div class="wheel-item" style="--i:3;"><span style="color:#ffd700;">10,000 VNĐ</span></div>
                                     <div class="wheel-item" style="--i:4;"><span>+1đ</span></div>
                                     <div class="wheel-item" style="--i:5;"><span>+5đ</span></div>
                                     <div class="wheel-item" style="--i:6;"><span style="color:#ff9999;">-1đ</span></div>
-                                    <div class="wheel-item" style="--i:7;"><span>THẺ TRÀ</span></div>
+                                    <div class="wheel-item" style="--i:7;"><span>NƯỚC NGỌT 10K</span></div>
                                 </div>
                             </div>
                             <div class="wheel-center-cap">
@@ -693,25 +693,27 @@ const RewardsModule = {
             await RewardsModule.saveData(allRewards);
 
             // Tính toán kết quả
+            // Danh sách các phần thưởng trên vòng quay (được cố định theo tỷ lệ % tĩnh ban đầu)
             const prizes = [
                 { label: 'Hụt rồi!', pts: 0, msg: 'Hụt rồi! May mắn lần sau nhé 😅' },
                 { label: '+1 Điểm', pts: 1, msg: 'Hòa vốn! Bạn nhận lại 1 công đức 🧧' },
                 { label: '+2 Điểm', pts: 2, msg: 'Lãi rồi! Chúc mừng bạn được +2 công đức 🎆' },
-                { label: 'Hụt rồi!', pts: 0, msg: 'Suýt trúng! Cố lên bạn ơi 🍀' },
+                { label: '10.000 VNĐ', pts: 0, isCash: true, amount: 10000, msg: 'TRÚNG LỚN! Bạn trúng ngay 10,000 VNĐ tiền mặt từ Sếp 💸' },
                 { label: '+1 Điểm', pts: 1, msg: 'Hòa vốn! Nhận lại 1 công đức nè 🧧' },
                 { label: '+5 Điểm', pts: 5, msg: 'XUẤT SẮC! Bạn trúng hũ +5 công đức 💎' },
                 { label: '-1 Điểm', pts: -1, msg: 'ỐI GIỒI ÔI! Mất sạch vốn lẫn lãi (-1đ) 💀' },
-                { label: 'THẺ TRÀ', pts: 0, isCard: true, cardId: 'card_tea', msg: 'SIÊU CẤP MAY MẮN! Trúng ngay 1 THẺ TRÀ CHIỀU 🥤' }
+                { label: 'LON NƯỚC 10K', pts: 0, isCard: true, cardId: 'card_tea', msg: 'SIÊU CẤP MAY MẮN! Trúng ngay 1 LON NƯỚC NGỌT 10K 🥤' }
             ];
 
+            // Tỷ lệ quay là hoàn toàn tĩnh và độc lập (không tích lũy, không tăng tỷ lệ thắng)
             const rand = Math.random();
             let prizeIdx = 0;
-            if (rand < 0.40) prizeIdx = [0, 3][Math.floor(Math.random() * 2)]; // 40% hụt
-            else if (rand < 0.70) prizeIdx = [1, 4][Math.floor(Math.random() * 2)]; // 30% hòa
-            else if (rand < 0.85) prizeIdx = 2; // 15% lãi +2
-            else if (rand < 0.93) prizeIdx = 5; // 8% trúng hũ +5
-            else if (rand < 0.97) prizeIdx = 6; // 4% MẤT ĐIỂM (nhọ)
-            else prizeIdx = 7; // 3% trúng thẻ
+            if (rand < 0.40) prizeIdx = [0, 3][Math.floor(Math.random() * 2)]; // 40% hụt hoặc trúng tiền mặt 10k (chia đôi mỗi ô 20%)
+            else if (rand < 0.70) prizeIdx = [1, 4][Math.floor(Math.random() * 2)]; // 30% hòa vốn +1đ (mỗi ô 15%)
+            else if (rand < 0.85) prizeIdx = 2; // 15% lãi +2đ
+            else if (rand < 0.93) prizeIdx = 5; // 8% trúng hũ +5đ
+            else if (rand < 0.97) prizeIdx = 6; // 4% nhọ mất 1đ
+            else prizeIdx = 7; // 3% trúng Lon Nước Ngọt 10k
 
             const prize = prizes[prizeIdx];
             
@@ -780,6 +782,21 @@ const RewardsModule = {
                     data.push(winCardRecord);
                     await RewardsModule.saveData(data);
                     Utils.notifyTelegram(`🎰 <b>[SIÊU CẤP MAY MẮN]</b>\n👤 <b>${user.username}</b> vừa quay hũ trúng ngay <b>${card.title}</b> miễn phí!`);
+                } else if (prize.isCash) {
+                    const winCashRecord = {
+                        id: 'spin_cash_' + Date.now(),
+                        username: user.username,
+                        timestamp: Date.now(),
+                        cardId: 'wheel_cash_10k',
+                        title: `🎡 Trúng Tiền Mặt: ${prize.label}`,
+                        icon: 'fa-money-bill-1-wave',
+                        color: '#fbbf24',
+                        cost: 0
+                    };
+                    const data = await RewardsModule.loadData();
+                    data.push(winCashRecord);
+                    await RewardsModule.saveData(data);
+                    Utils.notifyTelegram(`💵 <b>[TRÚNG TIỀN MẶT]</b>\n👤 <b>${user.username}</b> vừa quay hũ trúng ngay <b>${prize.label}</b> tiền mặt trao tay cực nóng!`);
                 }
 
                 RewardsModule._isSpinning = false;
@@ -799,8 +816,8 @@ const RewardsModule = {
             animation: fadeIn 0.5s ease; backdrop-filter: blur(10px);
         `;
 
-        const isWin = prize.pts > 0 || prize.isCard;
-        const color = prize.pts < 0 ? '#ef4444' : (isWin ? '#10b981' : '#64748b');
+        const isWin = prize.pts > 0 || prize.isCard || prize.isCash;
+        const color = prize.pts < 0 ? '#ef4444' : (prize.isCash ? '#fbbf24' : (isWin ? '#10b981' : '#64748b'));
         
         let humorMsg = "";
         if (prize.pts < 0) {
@@ -811,11 +828,13 @@ const RewardsModule = {
                 "HÔM NAY ĂN GÌ? 🍜 Chắc là ăn hành rồi, -1đ nhé sếp!"
             ];
             humorMsg = painMsgs[Math.floor(Math.random() * painMsgs.length)];
+        } else if (prize.isCash) {
+            humorMsg = "HỐT BẠC! 💸 Sếp chuẩn bị sẵn 10.000 VNĐ tiền mặt trao tay nhé! Đỉnh của chóp!";
         } else if (prize.pts === 0 && !prize.isCard) {
             const fails = [
                 "NHÂN PHẨM BAY MÀU! 🕯️ Chắc tại nãy đi làm sếp quên thắp nhang rồi.",
                 "TRƯỢT VỎ CHUỐI! 🍌 Gần lắm rồi, chỉ thiếu 0.0001mm là trúng hũ.",
-                "MAY MẮN LẦN SAU! 🍀 Đừng buồn, coi như đóng góp quỹ trà đá cho anh em.",
+                "MAY MẮN LẦN SAU! 🍀 Đừng buồn, coi như đóng góp quỹ nước ngọt cho anh em.",
                 "SUÝT THÌ ĐƯỢC! 😂 Thôi nịnh đồng nghiệp kiếm thêm điểm rồi quay tiếp nhen."
             ];
             humorMsg = fails[Math.floor(Math.random() * fails.length)];
@@ -826,7 +845,7 @@ const RewardsModule = {
         } else if (prize.pts === 5) {
             humorMsg = "ĂN ĐẬM +5đ! 💎 TRỜI ƠI TIN ĐƯỢC KHÔNG? Sếp vừa 'hack' hệ thống à?";
         } else if (prize.isCard) {
-            humorMsg = "TRÚNG THẺ TRÀ! 🥤 Ôi đỉnh vãi, chuẩn bị có trà sữa sướng nhé!";
+            humorMsg = "TRÚNG NƯỚC NGỌT! 🥤 Đã quá sếp ơi, chuẩn bị nhận 1 lon nước ngọt mát lạnh 10k rồi nhé!";
         }
 
         overlay.innerHTML = `
