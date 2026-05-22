@@ -1306,6 +1306,10 @@ const Attendance = {
             Utils.showToast("Vui lòng chọn ngày đi trễ!", "error");
             return;
         }
+        if (isNaN(minutes) || minutes < 1 || minutes > 60) {
+            Utils.showToast("Số phút xin đi muộn tối thiểu là 1 và tối đa là 60 phút!", "error");
+            return;
+        }
         if (!reason) {
             Utils.showToast("Vui lòng nhập lý do đi trễ!", "error");
             return;

@@ -677,17 +677,19 @@
                     </div>
 
                     <div class="form-group with-icon">
-                        <label>Số phút xin đi muộn</label>
+                        <label>Số phút xin đi muộn (Tối đa 60 phút)</label>
                         <div class="input-icon-wrap">
                             <i class="fa-solid fa-hourglass-half input-icon"></i>
-                            <select id="late-request-minutes" class="form-control" onchange="Attendance.updateLateTimePreview()" required>
-                                <option value="15">15 phút (Đến trước 08:45)</option>
-                                <option value="30" selected>30 phút (Đến trước 09:00)</option>
-                                <option value="45">45 phút (Đến trước 09:15)</option>
-                                <option value="60">60 phút (Đến trước 09:30)</option>
-                                <option value="90">90 phút (Đến trước 10:00)</option>
-                                <option value="120">120 phút (Đến trước 10:30)</option>
-                            </select>
+                            <input type="number" id="late-request-minutes" class="form-control" min="1" max="60" value="30" oninput="Attendance.updateLateTimePreview()" placeholder="Nhập số phút (1 - 60)" required style="padding-left: 36px;">
+                        </div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px;">
+                            <button type="button" class="btn btn-sm btn-outline" style="padding: 6px 12px; font-size: 11px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; cursor: pointer; transition: all 0.2s;" onclick="document.getElementById('late-request-minutes').value=5; Attendance.updateLateTimePreview()">5p</button>
+                            <button type="button" class="btn btn-sm btn-outline" style="padding: 6px 12px; font-size: 11px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; cursor: pointer; transition: all 0.2s;" onclick="document.getElementById('late-request-minutes').value=10; Attendance.updateLateTimePreview()">10p</button>
+                            <button type="button" class="btn btn-sm btn-outline" style="padding: 6px 12px; font-size: 11px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; cursor: pointer; transition: all 0.2s;" onclick="document.getElementById('late-request-minutes').value=15; Attendance.updateLateTimePreview()">15p</button>
+                            <button type="button" class="btn btn-sm btn-outline" style="padding: 6px 12px; font-size: 11px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; cursor: pointer; transition: all 0.2s;" onclick="document.getElementById('late-request-minutes').value=30; Attendance.updateLateTimePreview()">30p</button>
+                            <button type="button" class="btn btn-sm btn-outline" style="padding: 6px 12px; font-size: 11px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; cursor: pointer; transition: all 0.2s;" onclick="document.getElementById('late-request-minutes').value=40; Attendance.updateLateTimePreview()">40p</button>
+                            <button type="button" class="btn btn-sm btn-outline" style="padding: 6px 12px; font-size: 11px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; cursor: pointer; transition: all 0.2s;" onclick="document.getElementById('late-request-minutes').value=50; Attendance.updateLateTimePreview()">50p</button>
+                            <button type="button" class="btn btn-sm btn-outline" style="padding: 6px 12px; font-size: 11px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; cursor: pointer; transition: all 0.2s;" onclick="document.getElementById('late-request-minutes').value=60; Attendance.updateLateTimePreview()">60p</button>
                         </div>
                     </div>
 
