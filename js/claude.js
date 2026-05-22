@@ -33,36 +33,73 @@ const ClaudeModule = {
 
         ClaudeModule.state.isTalking = true;
         
-        // Cấu trúc Messages API của Anthropic
-        const messages = [...ClaudeModule.state.chatHistory, { role: "user", content: userText }];
+        // --- XỬ LÝ ĐA NỀN TẢNG (OpenAI vs Anthropic) ---
+        const isOpenAI = settings.baseUrl.includes('openai.com') || 
+                         settings.baseUrl.includes('freemodel.dev') || 
+                         settings.baseUrl.includes('openrouter.ai') ||
+                         settings.baseUrl.includes('hook') || // Special for some proxies
+                         settings.baseUrl.includes('v1/chat'); // Direct path detection
+
+        let fetchUrl = `${settings.baseUrl}/v1/messages`;
+        let headers = {
+            "Content-Type": "application/json",
+            "x-api-key": settings.key,
+            "anthropic-version": "2023-06-01",
+            "anthropic-dangerous-direct-browser-access": "true" 
+        };
+        let body = {
+            model: settings.model,
+            max_tokens: maxTokens,
+            system: systemPrompt,
+            messages: [...ClaudeModule.state.chatHistory, { role: "user", content: userText }]
+        };
+
+        if (isOpenAI) {
+            console.log("ClaudeModule: Detected OpenAI-compatible provider. Switching payload...");
+            fetchUrl = settings.baseUrl.endsWith('/v1') ? `${settings.baseUrl}/chat/completions` : `${settings.baseUrl}/v1/chat/completions`;
+            if (settings.baseUrl.includes('v1/chat')) fetchUrl = settings.baseUrl; // Already complete
+
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${settings.key}`
+            };
+
+            // Convert Anthropic structure to OpenAI
+            const openAiMessages = [
+                { role: "system", content: systemPrompt },
+                ...ClaudeModule.state.chatHistory,
+                { role: "user", content: userText }
+            ];
+
+            body = {
+                model: settings.model,
+                max_tokens: maxTokens,
+                messages: openAiMessages
+            };
+        }
 
         try {
-            // LƯU Ý: Browser thường chặn CORS khi gọi thẳng Anthropic API.
-            // Sếp cần cài Extension "Allow CORS: Access-Control-Allow-Origin" trên Chrome/Edge để chạy mượt mà.
-            const response = await fetch(`${settings.baseUrl}/v1/messages`, {
+            console.log(`ClaudeModule: Calling API at ${fetchUrl} [Model: ${settings.model}]`);
+            const response = await fetch(fetchUrl, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "x-api-key": settings.key,
-                    "anthropic-version": "2023-06-01",
-                    "anthropic-dangerous-direct-browser-access": "true" 
-                },
-                body: JSON.stringify({
-                    model: settings.model,
-                    max_tokens: maxTokens,
-                    system: systemPrompt,
-                    messages: messages
-                })
+                headers: headers,
+                body: JSON.stringify(body)
             });
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
-                const errMsg = errorData.error ? errorData.error.message : (response.statusText || 'Lỗi không xác định');
-                throw new Error(`Anthropic API Error (${response.status}): ${errMsg}`);
+                const errMsg = errorData.error ? (typeof errorData.error === 'string' ? errorData.error : errorData.error.message) : (response.statusText || 'Lỗi không xác định');
+                throw new Error(`AI API Error (${response.status}): ${errMsg}`);
             }
 
             const data = await response.json();
-            const aiResponse = data.content[0].text;
+            let aiResponse = "";
+            
+            if (isOpenAI) {
+                aiResponse = data.choices[0].message.content;
+            } else {
+                aiResponse = data.content[0].text;
+            }
 
             // Lưu vào lịch sử (tạm thời)
             ClaudeModule.state.chatHistory.push({ role: "user", content: userText });
@@ -71,9 +108,9 @@ const ClaudeModule = {
             return aiResponse;
 
         } catch (e) {
-            console.error("Claude API Error:", e);
+            console.error("AI Bridge Error:", e);
             if (e.message.includes('Failed to fetch')) {
-                Utils.showToast("⚠️ Lỗi kết nối (CORS/Network)! Vui lòng kiểm tra API Base URL hoặc bật Extension 'Allow CORS'.", "warning");
+                Utils.showToast("⚠️ Lỗi mạng (CORS/Timeout)! Vui lòng kiểm tra API Base URL hoặc bật Extension 'Allow CORS'.", "warning");
             } else {
                 Utils.showToast(e.message, "error");
             }
