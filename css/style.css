@@ -1,4 +1,4 @@
-﻿:root {
+:root {
     /* Color Palette - Light Theme */
     --bg-color: #f0f2f5;
     --text-primary: #1c1e21;
@@ -2681,4 +2681,110 @@ body.dark-theme .avatar-preview-box {
 .nav-item { font-size: 15px !important; }
 .form-group label { font-size: 13px !important; }
 .form-control { font-size: 15px !important; }
+
+/* --- MOBILE RESPONSIVENESS (Antigravity implementation) --- */
+@media (max-width: 992px) {
+    .app-container {
+        flex-direction: column !important;
+        height: 100vh !important;
+        width: 100vw !important;
+        overflow: hidden !important;
+    }
+    
+    .sidebar {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 280px !important;
+        min-width: 280px !important;
+        height: 100vh !important;
+        transform: translateX(-100%) !important;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        z-index: 999 !important;
+        background: rgba(4, 9, 20, 0.95) !important;
+        backdrop-filter: blur(15px) !important;
+        -webkit-backdrop-filter: blur(15px) !important;
+        border-right: 1px solid rgba(0, 240, 255, 0.2) !important;
+    }
+    
+    .sidebar.open {
+        transform: translateX(0) !important;
+    }
+    
+    #mobile-menu-toggle {
+        display: block !important;
+    }
+    
+    #mobile-sidebar-close {
+        display: block !important;
+    }
+    
+    .sidebar-header svg {
+        display: none !important; /* Hide Vietnamese flag to make room for close button */
+    }
+    
+    .sidebar-overlay {
+        position: fixed !important;
+        inset: 0 !important;
+        background: rgba(0, 0, 0, 0.5) !important;
+        backdrop-filter: blur(4px) !important;
+        -webkit-backdrop-filter: blur(4px) !important;
+        z-index: 998 !important;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease !important;
+    }
+    
+    .sidebar-overlay.active {
+        opacity: 1 !important;
+        pointer-events: auto !important;
+    }
+    
+    .topbar {
+        padding: 16px 20px !important;
+        justify-content: flex-start !important;
+        gap: 15px !important;
+    }
+    
+    .topbar .user-profile {
+        margin-left: auto !important;
+    }
+    
+    .topbar #view-subtitle {
+        display: none !important; /* Hide long greeting on mobile topbar */
+    }
+    
+    .view-container {
+        padding: 15px !important;
+        overflow-y: auto !important;
+        flex: 1 !important;
+    }
+    
+    /* Optimize Grid Layouts on Mobile */
+    .dashboard-grid, .grid-3 {
+        grid-template-columns: 1fr !important;
+        gap: 15px !important;
+    }
+    
+    /* Make tables scrollable horizontally without breaking UI */
+    .table-responsive {
+        width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    
+    .tl-table th, .tl-table td {
+        padding: 10px 8px !important;
+        font-size: 12px !important;
+    }
+    
+    /* Modals tuning on mobile */
+    .modal {
+        width: 95% !important;
+        max-width: 95% !important;
+        margin: 10px !important;
+        max-height: 90vh !important;
+        overflow-y: auto !important;
+    }
+}
 

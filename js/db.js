@@ -281,6 +281,28 @@ const DB = {
         return Utils.storage.get('tl_leave_requests', []);
     },
 
+    // --- LƯU TRỮ XIN ĐẾN TRỄ ---
+    saveLateRequests: async (lateArray) => {
+        try {
+            Utils.storage.set('tl_late_requests', lateArray);
+            await db.collection("system").doc("late_requests").set({ data: lateArray });
+        } catch (e) {
+            console.error("Error saving late requests:", e);
+        }
+    },
+
+    getLateRequests: async () => {
+        try {
+            const doc = await db.collection("system").doc("late_requests").get();
+            if (doc.exists && doc.data() && doc.data().data) {
+                return doc.data().data;
+            }
+        } catch (e) {
+            console.error("Error getting late requests fallback:", e);
+        }
+        return Utils.storage.get('tl_late_requests', []);
+    },
+
     // --- LƯU TRỮ YÊU CẦU NẠP TIỀN ---
     saveTopupRequests: async (requestsArray) => {
         try {
@@ -337,6 +359,7 @@ const DB = {
             Utils.storage.remove('backup_work');
             Utils.storage.remove('tl_attendance');
             Utils.storage.remove('tl_leave_requests');
+            Utils.storage.remove('tl_late_requests');
             Utils.storage.remove('backup_prompts');
             Utils.storage.remove('backup_chatbots');
             Utils.storage.remove('backup_topup_reqs');
@@ -346,6 +369,7 @@ const DB = {
             await db.collection("work").doc("main").delete();
             await db.collection("system").doc("attendance").delete();
             await db.collection("system").doc("leave_requests").delete();
+            await db.collection("system").doc("late_requests").delete();
             await db.collection("system").doc("prompts").delete();
             await db.collection("system").doc("chatbots").delete();
             await db.collection("system").doc("topup_requests").delete();

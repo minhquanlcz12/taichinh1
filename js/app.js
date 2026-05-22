@@ -107,6 +107,12 @@ const app = {
                 e.currentTarget.classList.add('active');
 
                 app.navigateTo(target);
+
+                // Auto close mobile sidebar
+                const sidebar = document.getElementById('app-sidebar');
+                const overlay = document.getElementById('sidebar-overlay');
+                if (sidebar) sidebar.classList.remove('open');
+                if (overlay) overlay.classList.remove('active');
             });
         });
     },

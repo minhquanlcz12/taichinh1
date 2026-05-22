@@ -108,7 +108,7 @@ const PayrollModule = {
             const allLeaves = await Attendance.loadLeaveData();
             const allCustomBonuses = await DB.getCustomBonuses();
             
-            let onTimeDays = 0, lateDays = 0, approvedLeaveDays = 0;
+            let onTimeDays = 0, lateDays = 0, lateExcusedDays = 0, approvedLeaveDays = 0;
             const targetMonth = parseInt(monthStr.split('-')[1]) - 1;
             const targetYear = parseInt(monthStr.split('-')[0]);
             const workingDays = PayrollModule.getWorkingDaysInMonth(targetYear, targetMonth);
@@ -122,6 +122,7 @@ const PayrollModule = {
                     const d = new Date(a.dateStr);
                     if (d.getMonth() === targetMonth && d.getFullYear() === targetYear) {
                         if (a.status === 'on_time') onTimeDays++;
+                        else if (a.status === 'late_excused') lateExcusedDays++;
                         else if (a.status === 'late') lateDays++;
                     }
                 }
@@ -138,7 +139,7 @@ const PayrollModule = {
             });
 
             const dailyRate = baseSalary / workingDays;
-            const paidDays = onTimeDays + lateDays + approvedLeaveDays;
+            const paidDays = onTimeDays + lateExcusedDays + lateDays + approvedLeaveDays;
             
             const attendancePay = paidDays * dailyRate;
             const latePenaltyTotal = lateDays * PayrollModule.LATE_PENALTY;
@@ -201,6 +202,7 @@ const PayrollModule = {
                 // 1. Attendance points
                 let onTimeDays = 0;
                 let lateDays = 0;
+                let lateExcusedDays = 0;
                 let approvedLeaveDays = 0;
 
                 // Scan attendance
@@ -209,6 +211,7 @@ const PayrollModule = {
                         const d = new Date(a.dateStr);
                         if (d.getMonth() === targetMonth && d.getFullYear() === targetYear) {
                             if (a.status === 'on_time') onTimeDays++;
+                            else if (a.status === 'late_excused') lateExcusedDays++;
                             else if (a.status === 'late') lateDays++;
                         }
                     }
@@ -258,7 +261,7 @@ const PayrollModule = {
 
                 // 3. Calculation
                 const dailyRate = baseSalary / workingDays;
-                const paidDays = onTimeDays + lateDays + approvedLeaveDays;
+                const paidDays = onTimeDays + lateExcusedDays + lateDays + approvedLeaveDays;
                 
                 const attendancePay = paidDays * dailyRate;
                 const latePenaltyTotal = lateDays * PayrollModule.LATE_PENALTY;
@@ -279,7 +282,8 @@ const PayrollModule = {
                         </td>
                         <td style="text-align: center; font-size: 13px;">
                             <span style="color: var(--success);" title="Đúng giờ"><i class="fa-solid fa-check-circle"></i> ${onTimeDays}</span> &nbsp;|&nbsp; 
-                            <span style="color: var(--warning);" title="Đi muộn"><i class="fa-solid fa-clock"></i> ${lateDays}</span> &nbsp;|&nbsp; 
+                            ${lateExcusedDays > 0 ? `<span style="color: #64ffda; font-weight: bold;" title="Muộn có phép"><i class="fa-regular fa-clock"></i> ${lateExcusedDays}</span> &nbsp;|&nbsp; ` : ''}
+                            <span style="color: var(--warning);" title="Đi muộn không phép"><i class="fa-solid fa-clock"></i> ${lateDays}</span> &nbsp;|&nbsp; 
                             <span style="color: var(--primary);" title="Nghỉ phép (Có lương)"><i class="fa-solid fa-bed"></i> ${approvedLeaveDays}</span>
                         </td>
                         <td style="text-align: center; font-size: 13px;">
@@ -449,13 +453,14 @@ const PayrollModule = {
         const data = accounts.map(acc => {
             const username = acc.username;
             const baseSalary = acc.baseSalary || 0;
-            let onTimeDays = 0, lateDays = 0, approvedLeaveDays = 0;
+            let onTimeDays = 0, lateDays = 0, lateExcusedDays = 0, approvedLeaveDays = 0;
 
             allAttendance.forEach(a => {
                 if (a.username === username && a.dateStr < todayStr) {
                     const d = new Date(a.dateStr);
                     if (d.getMonth() === targetMonth && d.getFullYear() === targetYear) {
                         if (a.status === 'on_time') onTimeDays++;
+                        else if (a.status === 'late_excused') lateExcusedDays++;
                         else if (a.status === 'late') lateDays++;
                     }
                 }
@@ -473,7 +478,7 @@ const PayrollModule = {
 
             const workingDays = PayrollModule.getWorkingDaysInMonth(targetYear, targetMonth);
             const dailyRate = baseSalary / workingDays;
-            const paidDays = onTimeDays + lateDays + approvedLeaveDays;
+            const paidDays = onTimeDays + lateExcusedDays + lateDays + approvedLeaveDays;
             const attendancePay = paidDays * dailyRate;
             const latePenaltyTotal = lateDays * PayrollModule.LATE_PENALTY;
             const customBonus = parseFloat(monthlyBonuses[username]) || 0;
@@ -484,7 +489,8 @@ const PayrollModule = {
                 'Vai trò': acc.role,
                 'Lương cứng': baseSalary,
                 'Đúng giờ': onTimeDays,
-                'Đi muộn': lateDays,
+                'Muộn có phép': lateExcusedDays,
+                'Đi muộn không phép': lateDays,
                 'Nghỉ phép': approvedLeaveDays,
                 'Phạt muộn': -latePenaltyTotal,
                 'Thưởng/Phạt khác': customBonus,

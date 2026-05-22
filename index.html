@@ -163,8 +163,8 @@
 
     <div class="app-container" style="display: none;">
         <!-- Sidebar Navigation -->
-        <nav class="sidebar glass-panel">
-            <div class="sidebar-header">
+        <nav class="sidebar glass-panel" id="app-sidebar">
+            <div class="sidebar-header" style="position: relative; display: flex; align-items: center; justify-content: space-between; width: 100%;">
                 <div class="logo" style="display: flex; align-items: center; gap: 10px; width: 100%;">
                     <img src="img/dragon_red.png" alt="Dragon" class="sidebar-dragon-img" onerror="this.style.display='none'">
                     <div style="display: flex; flex-direction: column; line-height: 1.1;">
@@ -176,6 +176,9 @@
                         <polygon points="450,120 353,419 607,235 293,235 547,419" fill="#ffcd00" />
                     </svg>
                 </div>
+                <button class="mobile-sidebar-close" id="mobile-sidebar-close" style="display: none; background: transparent; border: none; color: var(--text-primary); font-size: 22px; cursor: pointer; padding: 5px; margin-left: 10px;" onclick="document.getElementById('app-sidebar').classList.remove('open'); document.getElementById('sidebar-overlay').classList.remove('active');">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
             </div>
 
             <ul class="nav-links">
@@ -229,12 +232,16 @@
                 Hotline: <strong style="color: var(--primary);">0886 46 2345</strong>
             </div>
         </nav>
+        <div class="sidebar-overlay" id="sidebar-overlay" onclick="document.getElementById('app-sidebar').classList.remove('open'); document.getElementById('sidebar-overlay').classList.remove('active');"></div>
 
         <!-- Main Content Area -->
         <main class="main-content">
             <!-- Topbar -->
-            <header class="topbar glass-panel">
-                <div class="welcome-message">
+            <header class="topbar glass-panel" style="display: flex; align-items: center;">
+                <button class="mobile-menu-toggle" id="mobile-menu-toggle" style="display: none; background: transparent; border: none; color: var(--text-primary); font-size: 20px; cursor: pointer; margin-right: 15px;" onclick="document.getElementById('app-sidebar').classList.add('open'); document.getElementById('sidebar-overlay').classList.add('active');">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <div class="welcome-message" style="flex: 1;">
                     <h2 id="view-title">Tổng quan</h2>
                     <p id="view-subtitle">Chào mừng trở lại, hôm nay là một ngày tuyệt vời!</p>
                 </div>
@@ -628,6 +635,115 @@
             <div class="modal-footer" style="border-top: 1px solid var(--border-color); padding-top: 16px;">
                 <button class="btn btn-text" onclick="Attendance.closeLeaveModal()">Hủy</button>
                 <button class="btn " onclick="Attendance.submitLeaveRequest()" style="background: var(--warning); color: #000; font-weight: bold;"><i class="fa-solid fa-paper-plane" style="margin-right: 6px;"></i>Gửi Yêu Cầu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Late Request Modal Overlay -->
+    <div class="modal-overlay" id="late-request-modal-overlay" onclick="if(event.target===this) Attendance.closeLateRequestModal()">
+        <div class="modal profile-modal-content" id="late-request-modal">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-clock" style="color:var(--primary); margin-right: 8px;"></i>Đăng ký Xin Đến Trễ</h3>
+                <button class="btn-close" onclick="Attendance.closeLateRequestModal()"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="modal-body" style="padding-top: 10px;">
+                <form id="late-request-form">
+                    <div class="form-group with-icon">
+                        <label>Ngày xin đi trễ</label>
+                        <div class="input-icon-wrap">
+                            <i class="fa-solid fa-calendar-day input-icon"></i>
+                            <input type="date" id="late-request-date" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group with-icon">
+                        <label>Số phút xin đi muộn</label>
+                        <div class="input-icon-wrap">
+                            <i class="fa-solid fa-hourglass-half input-icon"></i>
+                            <select id="late-request-minutes" class="form-control" onchange="Attendance.updateLateTimePreview()" required>
+                                <option value="15">15 phút (Đến trước 08:45)</option>
+                                <option value="30" selected>30 phút (Đến trước 09:00)</option>
+                                <option value="45">45 phút (Đến trước 09:15)</option>
+                                <option value="60">60 phút (Đến trước 09:30)</option>
+                                <option value="90">90 phút (Đến trước 10:00)</option>
+                                <option value="120">120 phút (Đến trước 10:30)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="margin: -10px 0 20px 0; background: rgba(0, 240, 255, 0.05); border: 1px dashed rgba(0, 240, 255, 0.2); padding: 12px; border-radius: 8px; font-size: 13px;">
+                        <span style="color: var(--primary); font-weight: bold;"><i class="fa-solid fa-circle-info"></i> Quy định nghiêm ngặt:</span>
+                        <p style="margin: 4px 0 0 0; color: var(--text-secondary); line-height: 1.4;">
+                            Bạn phải Check-in <strong style="color: #fff;" id="late-time-preview">trước 09:00 AM</strong>. Nếu thực tế chấm công trễ hơn số phút đã xin, đơn sẽ <strong style="color: var(--danger);">TỰ ĐỘNG BỊ HỦY</strong>, ghi nhận đi muộn không phép và sếp vẫn phạt 20.000đ.
+                        </p>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Lý do xin đi trễ</label>
+                        <textarea id="late-request-reason" class="form-control" rows="3" placeholder="Ví dụ: Đưa con đi học, sửa xe hỏng, khám bệnh định kỳ..." style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-primary); padding: 12px; resize: vertical;" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid var(--border-color); padding-top: 16px;">
+                <button class="btn btn-text" onclick="Attendance.closeLateRequestModal()">Hủy</button>
+                <button class="btn" onclick="Attendance.submitLateRequest()" style="background: var(--primary); color: #000; font-weight: bold;"><i class="fa-solid fa-paper-plane" style="margin-right: 6px;"></i>Gửi Yêu Cầu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Late Config Modal Overlay -->
+    <div class="modal-overlay" id="late-config-modal-overlay" onclick="if(event.target===this) Attendance.closeLateConfigModal()">
+        <div class="modal profile-modal-content" id="late-config-modal">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-gears" style="color:var(--primary); margin-right: 8px;"></i>Cấu hình Tự Động Duyệt Đi Trễ</h3>
+                <button class="btn-close" onclick="Attendance.closeLateConfigModal()"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="modal-body" style="padding-top: 10px;">
+                <form id="late-config-form">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; padding: 12px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px;">
+                        <div>
+                            <strong style="color: #fff; font-size: 15px;">Bật Tự Động Duyệt Đi Trễ</strong>
+                            <p style="margin: 4px 0 0 0; color: var(--text-secondary); font-size: 12px;">Hệ thống tự động duyệt nếu thỏa mãn luật.</p>
+                        </div>
+                        <label class="switch-toggle" style="position: relative; display: inline-block; width: 50px; height: 26px;">
+                            <input type="checkbox" id="late-auto-approve-toggle" style="opacity: 0; width: 0; height: 0;" onchange="this.nextElementSibling.style.backgroundColor = this.checked ? 'var(--primary)' : 'rgba(255,255,255,0.1)'; this.nextElementSibling.querySelector('span').style.transform = this.checked ? 'translateX(24px)' : 'translateX(0)';">
+                            <span class="slider-toggle-round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.1); transition: .3s; border-radius: 34px; display: flex; align-items: center; padding: 0 4px;">
+                                <span style="display: block; width: 18px; height: 18px; border-radius: 50%; background-color: #fff; transition: .3s; transform: translateX(0);"></span>
+                            </span>
+                        </label>
+                    </div>
+
+                    <div class="form-group with-icon">
+                        <label>Số lần tự động duyệt tối đa / nhân viên / tháng</label>
+                        <div class="input-icon-wrap">
+                            <i class="fa-solid fa-hashtag input-icon"></i>
+                            <input type="number" id="late-auto-approve-max-per-month" class="form-control" min="1" max="10" placeholder="Mặc định: 2 lần">
+                        </div>
+                        <small style="color: var(--text-secondary); display: block; margin-top: 4px;">Vượt quá số lần này, đơn sẽ chuyển về chờ duyệt thủ công.</small>
+                    </div>
+
+                    <div class="form-group with-icon" style="margin-top: 16px;">
+                        <label>Số phút xin đi trễ tối đa cho phép tự duyệt</label>
+                        <div class="input-icon-wrap">
+                            <i class="fa-solid fa-hourglass-half input-icon"></i>
+                            <input type="number" id="late-auto-approve-max-minutes" class="form-control" min="5" max="240" placeholder="Ví dụ: 60 phút">
+                        </div>
+                        <small style="color: var(--text-secondary); display: block; margin-top: 4px;">Nếu nhân viên xin đi trễ vượt quá số phút này sẽ bắt buộc chờ sếp duyệt.</small>
+                    </div>
+
+                    <div class="form-group with-icon" style="margin-top: 16px;">
+                        <label>Hạn chốt gửi đơn cùng ngày để được tự duyệt</label>
+                        <div class="input-icon-wrap">
+                            <i class="fa-solid fa-clock-rotate-left input-icon"></i>
+                            <input type="time" id="late-auto-approve-before-time" class="form-control" value="08:30">
+                        </div>
+                        <small style="color: var(--text-secondary); display: block; margin-top: 4px;">Đơn xin trễ cho ngày hôm nay gửi sau giờ này sẽ không được tự động duyệt.</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid var(--border-color); padding-top: 16px;">
+                <button class="btn btn-text" onclick="Attendance.closeLateConfigModal()">Hủy</button>
+                <button class="btn" onclick="Attendance.saveAutoApproveSettings()" style="background: var(--primary); color: #000; font-weight: bold;"><i class="fa-solid fa-floppy-disk" style="margin-right: 6px;"></i>Lưu Cấu Hình</button>
             </div>
         </div>
     </div>

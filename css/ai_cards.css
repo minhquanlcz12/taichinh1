@@ -512,6 +512,10 @@ body, h1, h2, h3, h4, h5, h6, p, span, div, input, button, textarea, select { fo
     color: #daa520;
     margin-left: 6px;
 }
+.wf-merit-badge.negative {
+    background: rgba(231, 76, 60, 0.15);
+    color: #e74c3c;
+}
 
 /* --- Glass Panel (legacy compat) --- */
 .attendance-user-container .glass-panel {

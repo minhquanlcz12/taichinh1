@@ -107,6 +107,49 @@ const Attendance = {
         }
     },
 
+    loadLateRequests: async () => {
+        let lateData = [];
+        try {
+            if (typeof DB !== 'undefined' && typeof DB.getLateRequests === 'function') {
+                lateData = await DB.getLateRequests() || [];
+                // Đồng bộ rác từ LocalStorage
+                let localData = JSON.parse(localStorage.getItem('tl_late_requests') || '[]');
+                if (localData.length > 0) {
+                    let changed = false;
+                    localData.forEach(lr => {
+                        if (!lateData.find(r => r.id === lr.id)) {
+                            lateData.push(lr);
+                            changed = true;
+                        }
+                    });
+                    if (changed) {
+                        await DB.saveLateRequests(lateData);
+                    }
+                    localStorage.removeItem('tl_late_requests');
+                }
+            } else {
+                lateData = JSON.parse(localStorage.getItem('tl_late_requests') || '[]');
+            }
+        } catch (e) {
+            console.error("Lỗi tải dữ liệu xin đi trễ:", e);
+            lateData = JSON.parse(localStorage.getItem('tl_late_requests') || '[]');
+        }
+        return lateData;
+    },
+
+    saveLateRequests: async (data) => {
+        try {
+            if (typeof DB !== 'undefined' && typeof DB.saveLateRequests === 'function') {
+                await DB.saveLateRequests(data);
+            } else {
+                localStorage.setItem('tl_late_requests', JSON.stringify(data));
+            }
+        } catch (e) {
+            console.error("Lỗi lưu dữ liệu xin đi trễ:", e);
+            localStorage.setItem('tl_late_requests', JSON.stringify(data));
+        }
+    },
+
     renderUserView: async (container, user) => {
         const today = new Date();
         const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
@@ -117,7 +160,22 @@ const Attendance = {
         let checkInHtml = '';
 
         if (todayRecord) {
-            const meritPts = todayRecord.status === 'on_time' ? 2 : 1;
+            let meritPts = 1;
+            let statusText = '';
+            let badgeClass = '';
+            if (todayRecord.status === 'on_time') {
+                meritPts = 1;
+                statusText = `🏆 Đúng giờ — Công đức +1`;
+                badgeClass = 'on-time';
+            } else if (todayRecord.status === 'late_excused') {
+                meritPts = 1;
+                statusText = `🏆 Muộn có phép — Công đức +1`;
+                badgeClass = 'late-excused';
+            } else {
+                meritPts = -1;
+                statusText = `⏰ Muộn ${todayRecord.lateMinutes}p — Công đức -1`;
+                badgeClass = 'late';
+            }
             checkInHtml = `
                 <div class="wf-success">
                     <div class="monk-video-container" style="margin: 0 auto 20px; width: fit-content; border-radius: 12px; overflow: hidden; border: 1px solid rgba(218,165,0,0.2); box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
@@ -135,8 +193,8 @@ const Attendance = {
                     <h3><i class="fa-solid fa-circle-check" style="color:#2ecc71;margin-right:8px;"></i> Công đức hôm nay đã ghi nhận</h3>
                     <p>Gõ mõ lúc: <strong style="color:#daa520;">${new Date(todayRecord.timestamp).toLocaleTimeString('vi-VN')}</strong></p>
                     ${todayRecord.location ? `<p style="font-size:12px;"><i class="fa-solid fa-location-dot" style="color:#daa520;"></i> GPS xác minh vị trí tại công ty</p>` : ''}
-                    <span class="wf-badge ${todayRecord.status === 'on_time' ? 'on-time' : 'late'}">
-                        ${todayRecord.status === 'on_time' ? `🏆 Đúng giờ — Công đức +${meritPts}` : `⏰ Muộn ${todayRecord.lateMinutes}p — Công đức +${meritPts}`}
+                    <span class="wf-badge ${badgeClass}">
+                        ${statusText}
                     </span>
                 </div>
             `;
@@ -187,11 +245,14 @@ const Attendance = {
             `;
         }
 
-        // Luôn hiển thị nút xin nghỉ phép
+        // Luôn hiển thị nút xin nghỉ phép & xin đi trễ
         checkInHtml += `
-            <div style="text-align: center; margin-top: 24px; padding-top: 24px; border-top: 1px dashed rgba(255,255,255,0.1);">
+            <div style="text-align: center; margin-top: 24px; padding-top: 24px; border-top: 1px dashed rgba(255,255,255,0.1); display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;">
                 <button class="btn btn-outline" style="border-color: var(--warning); color: var(--warning);" onclick="Attendance.showLeaveModal()">
                     <i class="fa-solid fa-calendar-minus" style="margin-right: 6px;"></i>Đăng ký Xin Nghỉ Phép
+                </button>
+                <button class="btn btn-outline" style="border-color: var(--primary); color: var(--primary);" onclick="Attendance.showLateRequestModal()">
+                    <i class="fa-solid fa-clock" style="margin-right: 6px;"></i>Đăng ký Xin Đến Trễ
                 </button>
             </div>
         `;
@@ -225,7 +286,7 @@ const Attendance = {
         // Lấy lịch sử xin nghỉ
         const allLeaves = await Attendance.loadLeaveData();
         const userLeaves = allLeaves.filter(l => l.username === user.username).sort((a,b) => b.timestamp - a.timestamp);
-        const totalMerit = userHistory.reduce((acc, r) => acc + (r.status === 'on_time' ? 2 : 1), 0);
+        const totalMerit = userHistory.reduce((acc, r) => acc + ((r.status === 'on_time' || r.status === 'late_excused') ? 1 : -1), 0);
         let historyHtml = `
             <div class="wf-history-panel">
                 <h3><i class="fa-solid fa-scroll" style="margin-right:8px;"></i> Sổ Công Đức <span class="wf-stat">Tích lũy: ${totalMerit} công đức</span></h3>
@@ -241,19 +302,26 @@ const Attendance = {
                         <tbody>
                             ${userHistory.length === 0 ? '<tr><td colspan="3" style="text-align:center;color:rgba(218,165,32,0.3);">Chưa có công đức nào</td></tr>' : ''}
                             ${userHistory.map(r => {
-                                const pts = r.status === 'on_time' ? 2 : 1;
+                                const pts = (r.status === 'on_time' || r.status === 'late_excused') ? 1 : -1;
+                                let badgeHtml = '';
+                                if (r.status === 'on_time') {
+                                    badgeHtml = '<span class="badge bg-success">Đúng giờ</span>';
+                                } else if (r.status === 'late_excused') {
+                                    badgeHtml = '<span class="badge" style="background:#00adb5; color:#fff; font-weight:bold;">Muộn phép</span>';
+                                } else {
+                                    badgeHtml = `<span class="badge bg-danger">Muộn ${r.lateMinutes}p</span>`;
+                                }
                                 return `
                                 <tr>
                                     <td>${r.dateStr}</td>
                                     <td>${new Date(r.timestamp).toLocaleTimeString('vi-VN')} ${r.checkoutTimestamp ? `<br><small style="color:#2ecc71">Ra: ${new Date(r.checkoutTimestamp).toLocaleTimeString('vi-VN')}</small>` : ''}</td>
                                     <td>
-                                        <span class="badge ${r.status === 'on_time' ? 'bg-success' : 'bg-danger'}">
-                                            ${r.status === 'on_time' ? 'Đúng giờ' : `Muộn ${r.lateMinutes}p`}
-                                        </span>
-                                        <span class="wf-merit-badge">+${pts}</span>
+                                        ${badgeHtml}
+                                        <span class="wf-merit-badge ${pts < 0 ? 'negative' : ''}">${pts > 0 ? '+' : ''}${pts}</span>
                                     </td>
                                 </tr>
-                            `}).join('')}
+                                `;
+                            }).join('')}
                         </tbody>
                     </table>
                 </div>
@@ -294,6 +362,46 @@ const Attendance = {
             </div>
         `;
 
+        // Tải lịch sử xin đi trễ của nhân viên
+        const allLates = await Attendance.loadLateRequests();
+        const userLates = allLates.filter(l => l.username === user.username).sort((a,b) => b.timestamp - a.timestamp);
+
+        historyHtml += `
+            <div class="glass-panel" style="margin-top: 24px; padding: 20px;">
+                <h3 style="margin-bottom: 16px; color: var(--primary);">Lịch sử Xin Đến Trễ</h3>
+                <div class="table-responsive">
+                    <table class="tl-table">
+                        <thead>
+                            <tr>
+                                <th>Ngày xin trễ</th>
+                                <th>Số phút</th>
+                                <th>Lý do</th>
+                                <th>Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${userLates.length === 0 ? '<tr><td colspan="4" style="text-align:center;">Chưa có yêu cầu xin đi trễ</td></tr>' : ''}
+                            ${userLates.map(l => {
+                                let statusHtml = '';
+                                if (l.status === 'pending') statusHtml = '<span class="badge bg-warning" style="color: #000;">Chờ Duyệt</span>';
+                                else if (l.status === 'approved') statusHtml = `<span class="badge bg-success">${l.resolvedBy === 'system' ? 'Tự Động Duyệt' : 'Đã Duyệt'}</span>`;
+                                else if (l.status === 'rejected') statusHtml = '<span class="badge bg-danger">Từ Chối</span>';
+                                
+                                return `
+                                <tr>
+                                    <td>${l.date}</td>
+                                    <td style="font-weight:bold; color:var(--primary);">${l.minutes} phút</td>
+                                    <td style="max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${l.reason}">${l.reason}</td>
+                                    <td>${statusHtml}</td>
+                                </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+
         container.innerHTML = `
             <div class="attendance-user-container">
                 <div class="glass-header" style="text-align: center; margin-bottom: 24px; padding: 15px 20px; background: rgba(218,165,32,0.05); border-radius: 12px; border: 1px solid rgba(218,165,32,0.1);">
@@ -303,13 +411,19 @@ const Attendance = {
                             <p style="font-size:12px; color:var(--text-secondary); margin:4px 0 0;">Hạn chốt: <span style="color:var(--warning);font-weight:bold;">08:30 SÁNG & 14:00 CHIỀU</span></p>
                         </div>
                         <button class="btn btn-outline" style="border-color: #f1c40f; color: #f1c40f; font-size: 12px; padding: 6px 12px;" onclick="Attendance.exportUserAttendancePDF('${user.username}')">
-                            <i class="fa-solid fa-file-pdf"></i> Xuất PDF
+                            <i class="fa-solid fa-file-pdf" style="margin-right: 6px;"></i>Xuất PDF Bản In
                         </button>
                     </div>
                 </div>
                 ${salaryPreviewHtml}
-                ${checkInHtml}
-                ${historyHtml}
+                <div class="user-grid-layout" style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 24px; align-items: start;">
+                    <div class="glass-panel" style="padding: 20px;">
+                        ${checkInHtml}
+                    </div>
+                    <div class="user-col">
+                        ${historyHtml}
+                    </div>
+                </div>
             </div>
         `;
     },
@@ -317,6 +431,7 @@ const Attendance = {
     renderAdminView: async (container) => {
         const allData = await Attendance.loadData();
         const allLeaves = await Attendance.loadLeaveData();
+        const allLates = await Attendance.loadLateRequests();
         
         // Phân nhóm theo User và Tháng hiện tại
         const now = new Date();
@@ -335,11 +450,13 @@ const Attendance = {
         allData.forEach(r => {
             if (r.dateStr.startsWith(currentMonthPrefix)) {
                 if (!summary[r.username]) {
-                    summary[r.username] = { totalDays: 0, onTime: 0, late: 0, totalLateMinutes: 0 };
+                    summary[r.username] = { totalDays: 0, onTime: 0, late: 0, lateExcused: 0, totalLateMinutes: 0 };
                 }
                 summary[r.username].totalDays++;
                 if (r.status === 'on_time') {
                     summary[r.username].onTime++;
+                } else if (r.status === 'late_excused') {
+                    summary[r.username].lateExcused++;
                 } else {
                     summary[r.username].late++;
                     summary[r.username].totalLateMinutes += r.lateMinutes || 0;
@@ -367,19 +484,20 @@ const Attendance = {
         
         let adminHtml = `
             <div class="glass-panel admin-cyber-box" style="padding: 24px; border: 1px solid rgba(100, 255, 218, 0.5); box-shadow: 0 0 10px rgba(100, 255, 218, 0.1);">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
                     <h2 style="color: var(--primary); font-size: 18px; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; margin: 0;">
                         <i class="fa-solid fa-list-check"></i> Tổng hợp Chấm Công (Tháng ${now.getMonth() + 1}/${now.getFullYear()})
                     </h2>
                     <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-outline" style="border-color: var(--primary); color: var(--primary); display: inline-flex; align-items: center; gap: 6px;" onclick="Attendance.showLateConfigModal()"><i class="fa-solid fa-gears"></i> Luật Đi Trễ</button>
                         <button class="btn btn-success" onclick="Attendance.exportAttendanceCSV()"><i class="fa-solid fa-file-excel" style="margin-right: 6px;"></i> Excel</button>
                         <button class="btn btn-outline" style="border-color: #f1c40f; color: #f1c40f;" onclick="Attendance.exportAttendancePDF()"><i class="fa-solid fa-file-pdf" style="margin-right: 6px;"></i> PDF</button>
                     </div>
                 </div>
                 
-                <div style="display: flex; gap: 24px; align-items: stretch;">
+                <div style="display: flex; gap: 24px; align-items: stretch; flex-wrap: wrap;">
                     <!-- Cục Nhân sự bên trái -->
-                    <div style="width: 200px; flex-shrink: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 12px; background: rgba(10, 25, 40, 0.8); border: 2px solid #5ab9ea; box-shadow: 0 0 15px rgba(90, 185, 234, 0.3), inset 0 0 20px rgba(90, 185, 234, 0.1); position: relative; overflow: hidden;">
+                    <div style="width: 200px; flex-shrink: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 12px; background: rgba(10, 25, 40, 0.8); border: 2px solid #5ab9ea; box-shadow: 0 0 15px rgba(90, 185, 234, 0.3), inset 0 0 20px rgba(90, 185, 234, 0.1); position: relative; overflow: hidden; margin: 0 auto;">
                         <!-- Thêm thanh sáng bên dưới giống thiết kế -->
                         <div style="position: absolute; bottom: 0; width: 60px; height: 4px; background: #5ab9ea; border-top-left-radius: 4px; border-top-right-radius: 4px; box-shadow: 0 0 8px #5ab9ea;"></div>
                         <div class="card-inner" style="text-align: center; padding: 20px;">
@@ -389,22 +507,23 @@ const Attendance = {
                     </div>
                 
                     <!-- Bảng thống kê bên phải -->
-                    <div class="table-responsive" style="flex: 1;">
+                    <div class="table-responsive" style="flex: 1; min-width: 300px;">
                         <table class="tl-table cyber-hover-table" style="margin: 0; border-collapse: separate; border-spacing: 0 8px;">
                             <thead>
                                 <tr>
                                     <th style="color: #64ffda; border: none; padding-bottom: 8px; font-weight: 500;">Nhân Viên</th>
                                     <th style="color: #64ffda; border: none; padding-bottom: 8px; font-weight: 500;">Tổng ngày công</th>
-                                    <th style="color: var(--success); border: none; padding-bottom: 8px; font-weight: 500;"><i class="fa-regular fa-calendar-check" style="margin-right: 4px;"></i> 1 Công</th>
+                                    <th style="color: var(--success); border: none; padding-bottom: 8px; font-weight: 500;"><i class="fa-regular fa-calendar-check" style="margin-right: 4px;"></i> Đúng giờ</th>
                                     <th style="color: var(--danger); border: none; padding-bottom: 8px; font-weight: 500;"><i class="fa-regular fa-clock" style="margin-right: 4px;"></i> Vắng</th>
-                                    <th style="color: var(--danger); border: none; padding-bottom: 8px; font-weight: 500;"><i class="fa-regular fa-clock" style="margin-right: 4px;"></i> Muộn</th>
-                                    <th style="color: #64ffda; border: none; padding-bottom: 8px; font-weight: 500;">Tổng phút</th>
+                                    <th style="color: #64ffda; border: none; padding-bottom: 8px; font-weight: 500;"><i class="fa-regular fa-clock" style="margin-right: 4px;"></i> Trễ phép</th>
+                                    <th style="color: var(--danger); border: none; padding-bottom: 8px; font-weight: 500;"><i class="fa-regular fa-clock" style="margin-right: 4px;"></i> Trễ phạt</th>
+                                    <th style="color: #64ffda; border: none; padding-bottom: 8px; font-weight: 500;">Tổng phút trễ</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                ${usersList.length === 0 ? '<tr><td colspan="6" style="text-align:center; padding: 16px;">Chưa có dữ liệu tháng này</td></tr>' : ''}
+                                ${usersList.length === 0 ? '<tr><td colspan="7" style="text-align:center; padding: 16px;">Chưa có dữ liệu tháng này</td></tr>' : ''}
                                 ${usersList.map(u => {
-                                    const s = summary[u] || { totalDays: 0, onTime: 0, late: 0, totalLateMinutes: 0 };
+                                    const s = summary[u] || { totalDays: 0, onTime: 0, late: 0, lateExcused: 0, totalLateMinutes: 0 };
                                     const leaves = approvedLeaves[u] || 0;
                                     let absent = passedWorkingDays - s.totalDays - leaves;
                                     if (absent < 0) absent = 0;
@@ -418,6 +537,7 @@ const Attendance = {
                                             ${absent}
                                             ${leaves > 0 ? `<br><small style="color:var(--warning);font-size:10px;font-style:italic;">(Nghỉ phép: ${leaves})</small>` : ''}
                                         </td>
+                                        <td style="color: #64ffda; font-weight: bold; padding: 12px 16px; border-top: 1px solid rgba(100, 255, 218, 0.4); border-bottom: 1px solid rgba(100, 255, 218, 0.4);">${s.lateExcused || 0}</td>
                                         <td style="color: var(--danger); font-weight: bold; padding: 12px 16px; border-top: 1px solid rgba(100, 255, 218, 0.4); border-bottom: 1px solid rgba(100, 255, 218, 0.4);">${s.late}</td>
                                         <td style="padding: 12px 16px; border-top-right-radius: 8px; border-bottom-right-radius: 8px; border-top: 1px solid rgba(100, 255, 218, 0.4); border-bottom: 1px solid rgba(100, 255, 218, 0.4); border-right: 1px solid rgba(100, 255, 218, 0.4);"><span style="color: #64ffda; font-weight: 500; display: inline-flex; align-items: center; gap: 6px;"><i class="fa-regular fa-clock"></i> ${s.totalLateMinutes} p</span></td>
                                     </tr>
@@ -430,7 +550,7 @@ const Attendance = {
             </div>
         `;
         
-        // Hiển thị danh sách xin nghỉ (Admin) — reuse allLeaves from line 260
+        // Hiển thị danh sách xin nghỉ (Admin) — reuse allLeaves from line 319
         const pendingLeaves = allLeaves.filter(l => l.status === 'pending').sort((a,b) => a.timestamp - b.timestamp);
         const resolvedLeaves = allLeaves.filter(l => l.status !== 'pending').sort((a,b) => b.timestamp - a.timestamp).slice(0, 20);
 
@@ -470,8 +590,8 @@ const Attendance = {
                                 </tr>
                             `).join('')}
                         </tbody>
-                    </table>
-                </div>
+                        </table>
+                    </div>
                 </div> <!-- End Pending Block -->
                 
                 <div style="background: rgba(4, 9, 20, 0.5); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px; padding: 16px;">
@@ -502,8 +622,86 @@ const Attendance = {
                                 `;
                             }).join('')}
                         </tbody>
-                    </table>
-                </div>
+                        </table>
+                    </div>
+                </div> <!-- End Resolved Block -->
+            </div>
+        `;
+
+        // Hiển thị danh sách xin đi trễ (Admin)
+        const pendingLates = allLates.filter(l => l.status === 'pending').sort((a,b) => a.timestamp - b.timestamp);
+        const resolvedLates = allLates.filter(l => l.status !== 'pending').sort((a,b) => b.timestamp - a.timestamp).slice(0, 20);
+
+        let latesHtml = `
+            <div class="glass-panel admin-cyber-box" style="padding: 24px; height: 100%; border: 1px solid rgba(255, 255, 255, 0.2);">
+                <h2 style="color: var(--primary); margin-bottom: 24px; font-size: 18px; letter-spacing: 1px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-clock"></i> Danh sách Xin Đến Trễ
+                </h2>
+                
+                <div style="background: rgba(4, 9, 20, 0.5); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+                    <h3 style="color: var(--primary); margin-bottom: 16px; font-size: 14px; display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-clock-rotate-left"></i> Yêu cầu chờ duyệt (${pendingLates.length})
+                    </h3>
+                    <div class="table-responsive">
+                        <table class="tl-table cyber-hover-table" style="border-collapse: separate; border-spacing: 0 6px;">
+                            <thead>
+                                <tr>
+                                    <th style="color: var(--text-secondary); font-weight: 500; border: none; padding-bottom: 8px;">Nhân Viên</th>
+                                    <th style="color: var(--text-secondary); font-weight: 500; border: none; padding-bottom: 8px;">Ngày xin</th>
+                                    <th style="color: var(--text-secondary); font-weight: 500; border: none; padding-bottom: 8px;">Số phút</th>
+                                    <th style="color: var(--text-secondary); font-weight: 500; border: none; padding-bottom: 8px;">Lý do</th>
+                                    <th style="color: var(--text-secondary); font-weight: 500; text-align: right; border: none; padding-bottom: 8px;">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            ${pendingLates.length === 0 ? '<tr><td colspan="5" style="text-align:center; padding: 16px;">Không có yêu cầu chờ duyệt</td></tr>' : ''}
+                            ${pendingLates.map(l => `
+                                <tr style="background: rgba(4, 9, 20, 0.8); border-radius: 6px;">
+                                    <td style="font-weight: bold; color: #fff; padding: 12px 16px; border-top-left-radius: 6px; border-bottom-left-radius: 6px; border-top: 1px solid rgba(255, 255, 255, 0.2); border-bottom: 1px solid rgba(255, 255, 255, 0.2); border-left: 1px solid rgba(255, 255, 255, 0.2);" title="${l.username}">${Utils.getUserDisplayName(l.username) || l.username}</td>
+                                    <td style="padding: 12px 16px; border-top: 1px solid rgba(255, 255, 255, 0.2); border-bottom: 1px solid rgba(255, 255, 255, 0.2);"><i class="fa-regular fa-calendar" style="margin-right: 6px; color: var(--text-secondary);"></i> ${l.date}</td>
+                                    <td style="padding: 12px 16px; border-top: 1px solid rgba(255, 255, 255, 0.2); border-bottom: 1px solid rgba(255, 255, 255, 0.2); font-weight:bold; color:var(--primary);">${l.minutes} phút</td>
+                                    <td style="padding: 12px 16px; color: var(--text-secondary); border-top: 1px solid rgba(255, 255, 255, 0.2); border-bottom: 1px solid rgba(255, 255, 255, 0.2);">${l.reason}</td>
+                                    <td style="padding: 12px 16px; text-align: right; border-top-right-radius: 6px; border-bottom-right-radius: 6px; border-top: 1px solid rgba(255, 255, 255, 0.2); border-bottom: 1px solid rgba(255, 255, 255, 0.2); border-right: 1px solid rgba(255, 255, 255, 0.2);">
+                                        <button class="btn btn-sm" onclick="Attendance.updateLateRequestStatus('${l.id}', 'approved')" style="background: transparent; border: 1px solid var(--success); color: var(--success); margin-right: 8px; padding: 6px 16px; border-radius: 4px; font-weight: bold; transition: all 0.2s;"><i class="fa-solid fa-check" style="margin-right: 6px;"></i> Duyệt [v]</button>
+                                        <button class="btn btn-sm" onclick="Attendance.updateLateRequestStatus('${l.id}', 'rejected')" style="background: transparent; border: 1px solid var(--danger); color: var(--danger); padding: 6px 16px; border-radius: 4px; font-weight: bold; transition: all 0.2s;">Từ Chối [x]</button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                        </table>
+                    </div>
+                </div> <!-- End Pending Block -->
+                
+                <div style="background: rgba(4, 9, 20, 0.5); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px; padding: 16px;">
+                    <h3 style="color: var(--text-secondary); margin-bottom: 16px; font-size: 14px; display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-clock-rotate-left"></i> Lịch sử duyệt/từ chối trễ gần đây
+                    </h3>
+                    <div class="table-responsive">
+                        <table class="tl-table cyber-hover-table" style="text-align: center; border-collapse: separate; border-spacing: 0 6px;">
+                            <thead>
+                                <tr>
+                                    <th style="color: var(--text-secondary); font-weight: 500; border: none; padding-bottom: 8px;">Nhân Viên</th>
+                                    <th style="color: var(--text-secondary); font-weight: 500; border: none; padding-bottom: 8px;">Ngày trễ</th>
+                                    <th style="color: var(--text-secondary); font-weight: 500; border: none; padding-bottom: 8px;">Số phút</th>
+                                    <th style="color: var(--text-secondary); font-weight: 500; border: none; padding-bottom: 8px;">Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            ${resolvedLates.length === 0 ? '<tr><td colspan="4" style="text-align:center; padding: 32px;"><i class="fa-regular fa-clipboard" style="font-size: 24px; color: var(--text-secondary); margin-bottom: 8px; display: block;"></i> Trống</td></tr>' : ''}
+                            ${resolvedLates.map(l => {
+                                let statusHtml = l.status === 'approved' ? `<span style="color: var(--success); font-weight: bold;"><i class="fa-solid fa-check"></i> ${l.resolvedBy === 'system' ? 'Tự Động Duyệt' : 'Đã Duyệt'}</span>` : '<span style="color: var(--danger); font-weight: bold;"><i class="fa-solid fa-times"></i> Từ Chối</span>';
+                                return `
+                                <tr style="background: rgba(4, 9, 20, 0.8); border-radius: 6px;">
+                                    <td style="padding: 12px 16px; color: #fff; font-weight: bold; border-top-left-radius: 6px; border-bottom-left-radius: 6px; border-top: 1px solid rgba(255, 255, 255, 0.2); border-bottom: 1px solid rgba(255, 255, 255, 0.2); border-left: 1px solid rgba(255, 255, 255, 0.2);" title="${l.username}">${Utils.getUserDisplayName(l.username) || l.username}</td>
+                                    <td style="padding: 12px 16px; border-top: 1px solid rgba(255, 255, 255, 0.2); border-bottom: 1px solid rgba(255, 255, 255, 0.2);"><i class="fa-regular fa-calendar" style="margin-right: 6px; color: var(--text-secondary);"></i> ${l.date}</td>
+                                    <td style="padding: 12px 16px; border-top: 1px solid rgba(255, 255, 255, 0.2); border-bottom: 1px solid rgba(255, 255, 255, 0.2);">${l.minutes} phút</td>
+                                    <td style="padding: 12px 16px; border-top-right-radius: 6px; border-bottom-right-radius: 6px; border-top: 1px solid rgba(255, 255, 255, 0.2); border-bottom: 1px solid rgba(255, 255, 255, 0.2); border-right: 1px solid rgba(255, 255, 255, 0.2);">${statusHtml}</td>
+                                </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                        </table>
+                    </div>
                 </div> <!-- End Resolved Block -->
             </div>
         `;
@@ -512,8 +710,13 @@ const Attendance = {
             <div class="admin-col">
                 ${adminHtml}
             </div>
-            <div class="admin-col">
-                ${leavesHtml}
+            <div class="admin-grid-layout" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start;">
+                <div class="admin-col">
+                    ${leavesHtml}
+                </div>
+                <div class="admin-col">
+                    ${latesHtml}
+                </div>
             </div>
         </div>
         <style>
@@ -527,6 +730,11 @@ const Attendance = {
             }
             .cyber-hover-table th, .cyber-hover-table td {
                 vertical-align: middle;
+            }
+            @media (max-width: 1024px) {
+                .admin-grid-layout {
+                    grid-template-columns: 1fr !important;
+                }
             }
         </style>`;
     },
@@ -605,17 +813,47 @@ const Attendance = {
         deadline.setHours(Attendance.DEADLINE_HOURS, Attendance.DEADLINE_MINUTES, 0, 0);
 
         let status = 'on_time', lateMinutes = 0;
+        let lateExcuseDetails = null;
         if (now > deadline) {
-            status = 'late';
             lateMinutes = Math.floor((now - deadline) / 60000);
-            const locStr = lat ? `\n📍 https://google.com/maps?q=${lat},${lng}` : '';
-            Utils.notifyTelegram(`⚠️ <b>[ĐI MUỘN]</b>\n👤 ${user.username}\n⏰ ${now.toLocaleTimeString('vi-VN')}\n⏳ Muộn ${lateMinutes}p${locStr}`);
+            
+            // Check if there is an approved late request for today
+            const lates = await Attendance.loadLateRequests();
+            const todayApprovedRequest = lates.find(r => r.username === user.username && r.date === dateStr && r.status === 'approved');
+            
+            if (todayApprovedRequest) {
+                const requestedMinutes = parseInt(todayApprovedRequest.minutes) || 0;
+                if (lateMinutes <= requestedMinutes) {
+                    status = 'late_excused';
+                    lateExcuseDetails = {
+                        requestedMinutes: requestedMinutes,
+                        actualLateMinutes: lateMinutes,
+                        reason: todayApprovedRequest.reason
+                    };
+                    const locStr = lat ? `\n📍 https://google.com/maps?q=${lat},${lng}` : '';
+                    Utils.notifyTelegram(`ℹ️ <b>[ĐI MUỘN CÓ PHÉP]</b>\n👤 ${user.username}\n⏰ ${now.toLocaleTimeString('vi-VN')}\n⏳ Muộn thực tế ${lateMinutes}p (Đã xin ${requestedMinutes}p)\n📝 Lý do: ${todayApprovedRequest.reason}${locStr}`);
+                } else {
+                    status = 'late';
+                    lateExcuseDetails = {
+                        requestedMinutes: requestedMinutes,
+                        actualLateMinutes: lateMinutes,
+                        reason: todayApprovedRequest.reason
+                    };
+                    const locStr = lat ? `\n📍 https://google.com/maps?q=${lat},${lng}` : '';
+                    Utils.notifyTelegram(`⚠️ <b>[ĐI MUỘN QUÁ HẠN XIN PHÉP]</b>\n👤 ${user.username}\n⏰ ${now.toLocaleTimeString('vi-VN')}\n⏳ Xin muộn ${requestedMinutes}p nhưng thực tế muộn ${lateMinutes}p (Quá hạn ${lateMinutes - requestedMinutes}p)${locStr}`);
+                }
+            } else {
+                status = 'late';
+                const locStr = lat ? `\n📍 https://google.com/maps?q=${lat},${lng}` : '';
+                Utils.notifyTelegram(`⚠️ <b>[ĐI MUỘN]</b>\n👤 ${user.username}\n⏰ ${now.toLocaleTimeString('vi-VN')}\n⏳ Muộn ${lateMinutes}p${locStr}`);
+            }
         }
 
         const newRecord = {
             id: 'att_' + Date.now(), username: user.username,
             timestamp: now.getTime(), dateStr, status, lateMinutes,
-            location: lat ? { lat, lng } : null, note: ''
+            location: lat ? { lat, lng } : null, note: '',
+            lateExcuse: lateExcuseDetails
         };
 
         try {
@@ -872,6 +1110,7 @@ const Attendance = {
             .filter(l => l.username === username && l.startDate.startsWith(currentMonthPrefix));
         
         const totalOnTime = userRecords.filter(r => r.status === 'on_time').length;
+        const totalExcusedLate = userRecords.filter(r => r.status === 'late_excused').length;
         const totalLate = userRecords.filter(r => r.status === 'late').length;
         const totalLeave = userLeaves.filter(l => l.status === 'approved').reduce((s, l) => s + (parseFloat(l.days) || 1), 0);
         
@@ -887,9 +1126,10 @@ const Attendance = {
                 <p><strong>${username}</strong> &bull; Tháng ${now.getMonth() + 1}/${now.getFullYear()} &bull; Ngày xuất: ${now.toLocaleDateString('vi-VN')}</p>
             </div>
             
-            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-bottom:25px;text-align:center;border:1px solid #eee;padding:15px;border-radius:8px;">
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:25px;text-align:center;border:1px solid #eee;padding:15px;border-radius:8px;">
                 <div><div style="font-size:11px;color:#666;text-transform:uppercase;">Đúng giờ</div><div style="font-size:24px;font-weight:bold;color:#10b981;">${totalOnTime}</div></div>
-                <div><div style="font-size:11px;color:#666;text-transform:uppercase;">Đi muộn</div><div style="font-size:24px;font-weight:bold;color:#f59e0b;">${totalLate}</div></div>
+                <div><div style="font-size:11px;color:#666;text-transform:uppercase;">Trễ phép</div><div style="font-size:24px;font-weight:bold;color:#00adb5;">${totalExcusedLate}</div></div>
+                <div><div style="font-size:11px;color:#666;text-transform:uppercase;">Trễ không phép</div><div style="font-size:24px;font-weight:bold;color:#f59e0b;">${totalLate}</div></div>
                 <div><div style="font-size:11px;color:#666;text-transform:uppercase;">Nghỉ phép</div><div style="font-size:24px;font-weight:bold;color:#3b82f6;">${totalLeave}</div></div>
             </div>
             
@@ -904,7 +1144,15 @@ const Attendance = {
                 </tr></thead>
                 <tbody>
                     ${userRecords.map(r => {
-                        const st = r.status === 'on_time' ? '<span style="color:#10b981;font-weight:bold;">Đúng giờ</span>' : `<span style="color:#f59e0b;font-weight:bold;">Muộn ${r.lateMinutes || 0}p</span>`;
+                        let st = '';
+                        if (r.status === 'on_time') {
+                            st = '<span style="color:#10b981;font-weight:bold;">Đúng giờ</span>';
+                        } else if (r.status === 'late_excused') {
+                            const reasonText = (r.lateExcuse && r.lateExcuse.reason) ? ` - Lý do: ${r.lateExcuse.reason}` : '';
+                            st = `<span style="color:#00adb5;font-weight:bold;">Trễ có phép</span><br><small style="color:#555;font-size:10px;">Xin ${r.lateExcuse?.requestedMinutes || 30}p - Thực tế ${r.lateExcuse?.actualLateMinutes || r.lateMinutes}p${reasonText}</small>`;
+                        } else {
+                            st = `<span style="color:#f59e0b;font-weight:bold;">Trễ không phép</span><br><small style="color:#e74c3c;font-size:10px;">Muộn ${r.lateMinutes || 0}p</small>`;
+                        }
                         const checkIn = new Date(r.timestamp).toLocaleTimeString('vi-VN');
                         const checkOut = r.checkoutTimestamp ? new Date(r.checkoutTimestamp).toLocaleTimeString('vi-VN') : '—';
                         return `<tr>
@@ -961,6 +1209,376 @@ const Attendance = {
         }).catch(e => {
             console.error(e);
             Utils.showToast("Lỗi xuất PDF", "error");
+        });
+    },
+
+    showLateRequestModal: () => {
+        const modal = document.getElementById('late-request-modal-overlay');
+        if (!modal) return;
+
+        // Reset form
+        const form = document.getElementById('late-request-form');
+        if (form) form.reset();
+
+        // Default date to today
+        const dateInput = document.getElementById('late-request-date');
+        if (dateInput) {
+            const today = new Date();
+            const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+            dateInput.value = dateStr;
+            dateInput.min = dateStr; // Chỉ cho phép xin từ hôm nay trở đi
+        }
+
+        Attendance.updateLateTimePreview();
+        modal.classList.add('active');
+    },
+
+    closeLateRequestModal: () => {
+        const modal = document.getElementById('late-request-modal-overlay');
+        if (modal) modal.classList.remove('active');
+    },
+
+    updateLateTimePreview: () => {
+        const select = document.getElementById('late-request-minutes');
+        const preview = document.getElementById('late-time-preview');
+        if (!select || !preview) return;
+
+        const minutes = parseInt(select.value) || 30;
+        
+        // Calculate expected time based on deadline
+        const deadline = new Date();
+        deadline.setHours(Attendance.DEADLINE_HOURS, Attendance.DEADLINE_MINUTES, 0, 0);
+        
+        // Add minutes
+        const target = new Date(deadline.getTime() + minutes * 60000);
+        const hoursStr = String(target.getHours()).padStart(2, '0');
+        const minsStr = String(target.getMinutes()).padStart(2, '0');
+        
+        preview.textContent = `trước ${hoursStr}:${minsStr} ${target.getHours() >= 12 ? 'PM' : 'AM'}`;
+    },
+
+    submitLateRequest: async () => {
+        const user = Auth.currentUser;
+        if (!user) return;
+
+        const dateInput = document.getElementById('late-request-date');
+        const minutesSelect = document.getElementById('late-request-minutes');
+        const reasonTextarea = document.getElementById('late-request-reason');
+
+        if (!dateInput || !minutesSelect || !reasonTextarea) return;
+
+        const requestDate = dateInput.value;
+        const minutes = parseInt(minutesSelect.value) || 30;
+        const reason = reasonTextarea.value.trim();
+
+        if (!requestDate) {
+            Utils.showToast("Vui lòng chọn ngày đi trễ!", "error");
+            return;
+        }
+        if (!reason) {
+            Utils.showToast("Vui lòng nhập lý do đi trễ!", "error");
+            return;
+        }
+
+        Utils.showToast("Đang gửi yêu cầu...", "info");
+
+        // Load settings & existing requests
+        const settings = await DB.getSettings() || {};
+        const allLateRequests = await Attendance.loadLateRequests();
+
+        // 1. Calculate target arrival time for Telegram
+        const deadline = new Date();
+        deadline.setHours(Attendance.DEADLINE_HOURS, Attendance.DEADLINE_MINUTES, 0, 0);
+        const target = new Date(deadline.getTime() + minutes * 60000);
+        const arrivalTimeStr = `${String(target.getHours()).padStart(2, '0')}:${String(target.getMinutes()).padStart(2, '0')} ${target.getHours() >= 12 ? 'PM' : 'AM'}`;
+
+        // 2. Rules Engine check for Auto-Approval
+        let isAutoApproved = false;
+        
+        const autoApproveEnabled = settings.lateAutoApprove || false;
+        const maxMinutesAllowed = settings.lateAutoApproveMaxMinutes !== undefined ? settings.lateAutoApproveMaxMinutes : 60;
+        const maxCountPerMonth = settings.lateAutoApproveMaxPerMonth !== undefined ? settings.lateAutoApproveMaxPerMonth : 2;
+        const beforeTimeLimit = settings.lateAutoApproveBeforeTime || '08:30';
+
+        if (autoApproveEnabled) {
+            // Count already approved late requests in the same month
+            const targetMonthStr = requestDate.substring(0, 7); // YYYY-MM
+            const userMonthApprovedCount = allLateRequests.filter(r => 
+                r.username === user.username && 
+                r.status === 'approved' && 
+                r.date.startsWith(targetMonthStr)
+            ).length;
+
+            let satisfiesTimeLimit = true;
+            const today = new Date();
+            const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+            if (requestDate === todayStr) {
+                // If it is today, check if submitted before the time limit (e.g. 08:30)
+                const nowTimeStr = `${String(today.getHours()).padStart(2, '0')}:${String(today.getMinutes()).padStart(2, '0')}`;
+                if (nowTimeStr > beforeTimeLimit) {
+                    satisfiesTimeLimit = false;
+                }
+            }
+
+            if (minutes <= maxMinutesAllowed && userMonthApprovedCount < maxCountPerMonth && satisfiesTimeLimit) {
+                isAutoApproved = true;
+            }
+        }
+
+        const status = isAutoApproved ? 'approved' : 'pending';
+
+        const newRequest = {
+            id: 'late_' + Date.now(),
+            username: user.username,
+            date: requestDate,
+            minutes: minutes,
+            reason: reason,
+            status: status,
+            timestamp: Date.now(),
+            resolvedBy: isAutoApproved ? 'system' : null,
+            resolvedAt: isAutoApproved ? Date.now() : null
+        };
+
+        allLateRequests.push(newRequest);
+        await Attendance.saveLateRequests(allLateRequests);
+
+        if (isAutoApproved) {
+            Utils.notifyTelegram(`🤖 <b>[TỰ ĐỘNG DUYỆT ĐI TRỄ]</b>\n👤 ${user.username}\n📅 Ngày: ${requestDate}\n⏱️ Xin muộn ${minutes}p (Đến trước ${arrivalTimeStr})\n📝 Lý do: ${reason}`);
+            Utils.showToast("Yêu cầu đi trễ đã được TỰ ĐỘNG DUYỆT!", "success");
+        } else {
+            Utils.notifyTelegram(`📢 <b>[TỜ TRÌNH XIN ĐẾN TRỄ]</b>\n👤 ${user.username}\n📅 Ngày: ${requestDate}\n⏱️ Xin muộn ${minutes}p (Chờ sếp duyệt)\n📝 Lý do: ${reason}`);
+            Utils.showToast("Đã gửi yêu cầu! Vui lòng chờ sếp phê duyệt.", "success");
+        }
+
+        Attendance.closeLateRequestModal();
+        Attendance.render();
+    },
+
+    showLateConfigModal: async () => {
+        const modal = document.getElementById('late-config-modal-overlay');
+        if (!modal) return;
+
+        // Tải settings mới nhất từ DB
+        const settings = await DB.getSettings() || {};
+        
+        const toggle = document.getElementById('late-auto-approve-toggle');
+        const maxPerMonth = document.getElementById('late-auto-approve-max-per-month');
+        const maxMinutes = document.getElementById('late-auto-approve-max-minutes');
+        const beforeTime = document.getElementById('late-auto-approve-before-time');
+
+        if (toggle) {
+            toggle.checked = settings.lateAutoApprove || false;
+            // Trigger visual slider change in index.html inline script:
+            toggle.nextElementSibling.style.backgroundColor = toggle.checked ? 'var(--primary)' : 'rgba(255,255,255,0.1)';
+            toggle.nextElementSibling.querySelector('span').style.transform = toggle.checked ? 'translateX(24px)' : 'translateX(0)';
+        }
+        if (maxPerMonth) maxPerMonth.value = settings.lateAutoApproveMaxPerMonth !== undefined ? settings.lateAutoApproveMaxPerMonth : 2;
+        if (maxMinutes) maxMinutes.value = settings.lateAutoApproveMaxMinutes !== undefined ? settings.lateAutoApproveMaxMinutes : 60;
+        if (beforeTime) beforeTime.value = settings.lateAutoApproveBeforeTime || '08:30';
+
+        modal.classList.add('active');
+    },
+
+    closeLateConfigModal: () => {
+        const modal = document.getElementById('late-config-modal-overlay');
+        if (modal) modal.classList.remove('active');
+    },
+
+    saveAutoApproveSettings: async () => {
+        const toggle = document.getElementById('late-auto-approve-toggle');
+        const maxPerMonth = document.getElementById('late-auto-approve-max-per-month');
+        const maxMinutes = document.getElementById('late-auto-approve-max-minutes');
+        const beforeTime = document.getElementById('late-auto-approve-before-time');
+
+        if (!toggle) return;
+
+        const settings = {
+            lateAutoApprove: toggle.checked,
+            lateAutoApproveMaxPerMonth: parseInt(maxPerMonth.value) || 2,
+            lateAutoApproveMaxMinutes: parseInt(maxMinutes.value) || 60,
+            lateAutoApproveBeforeTime: beforeTime.value || '08:30'
+        };
+
+        try {
+            await DB.saveSettings(settings);
+            // Cập nhật state runtime nếu tồn tại
+            if (typeof app !== 'undefined' && app.state) {
+                app.state.settings = { ...app.state.settings, ...settings };
+            }
+            Utils.showToast("Đã lưu cấu hình tự động duyệt đi trễ!", "success");
+            Attendance.closeLateConfigModal();
+            Attendance.render();
+        } catch (e) {
+            console.error("Lỗi khi lưu cấu hình đi trễ:", e);
+            Utils.showToast("Lỗi khi lưu cấu hình!", "error");
+        }
+    },
+
+    updateLateRequestStatus: async (requestId, newStatus) => {
+        const actionText = newStatus === 'approved' ? 'phê duyệt' : 'từ chối';
+        const isConfirmed = await Utils.showConfirm(`Xác nhận ${actionText} yêu cầu đi trễ này?`);
+        if (!isConfirmed) return;
+
+        try {
+            Utils.showToast("Đang cập nhật...", "info");
+            const allLates = await Attendance.loadLateRequests();
+            const request = allLates.find(l => l.id === requestId);
+            
+            if (request) {
+                request.status = newStatus;
+                request.resolvedBy = Auth.currentUser.username;
+                request.resolvedAt = Date.now();
+                
+                await Attendance.saveLateRequests(allLates);
+                
+                // Calculate target arrival time for Telegram
+                const deadline = new Date();
+                deadline.setHours(Attendance.DEADLINE_HOURS, Attendance.DEADLINE_MINUTES, 0, 0);
+                const target = new Date(deadline.getTime() + (parseInt(request.minutes) || 30) * 60000);
+                const arrivalTimeStr = `${String(target.getHours()).padStart(2, '0')}:${String(target.getMinutes()).padStart(2, '0')} ${target.getHours() >= 12 ? 'PM' : 'AM'}`;
+
+                if (newStatus === 'approved') {
+                    Utils.notifyTelegram(`✅ <b>[SẾP DUYỆT ĐI TRỄ]</b>\n👤 ${request.username}\n📅 Ngày: ${request.date}\n⏱️ Cho phép muộn ${request.minutes}p (Đến trước ${arrivalTimeStr})\n📝 Lý do: ${request.reason}`);
+                } else {
+                    Utils.notifyTelegram(`❌ <b>[SẾP TỪ CHỐI ĐI TRỄ]</b>\n👤 ${request.username}\n📅 Ngày: ${request.date}\n⏱️ Xin muộn ${request.minutes}p bị từ chối\n📝 Lý do: ${request.reason}`);
+                }
+
+                Utils.showToast(`Đã ${actionText} yêu cầu đi trễ!`, "success");
+                Attendance.render();
+            } else {
+                Utils.showToast("Không tìm thấy yêu cầu đi trễ!", "error");
+            }
+        } catch (e) {
+            console.error("Lỗi cập nhật trạng thái đơn đi trễ:", e);
+            Utils.showToast("Cập nhật thất bại!", "error");
+        }
+    },
+
+    exportAttendancePDF: async () => {
+        Utils.showToast("Đang tạo PDF chấm công tổng hợp...", "info");
+        const allData = await Attendance.loadData();
+        const allLeaves = await Attendance.loadLeaveData();
+        
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth();
+        const currentMonthPrefix = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
+        
+        let passedWorkingDays = 0;
+        for (let day = 1; day <= now.getDate(); day++) {
+             let d = new Date(currentYear, currentMonth, day);
+             if (d.getDay() !== 0) passedWorkingDays++;
+        }
+
+        const summary = {};
+        allData.forEach(r => {
+            if (r.dateStr.startsWith(currentMonthPrefix)) {
+                if (!summary[r.username]) {
+                    summary[r.username] = { totalDays: 0, onTime: 0, late: 0, lateExcused: 0, totalLateMinutes: 0 };
+                }
+                summary[r.username].totalDays++;
+                if (r.status === 'on_time') {
+                    summary[r.username].onTime++;
+                } else if (r.status === 'late_excused') {
+                    summary[r.username].lateExcused++;
+                } else {
+                    summary[r.username].late++;
+                    summary[r.username].totalLateMinutes += r.lateMinutes || 0;
+                }
+            }
+        });
+
+        const approvedLeaves = {};
+        allLeaves.forEach(l => {
+            const lStart = l.startDate || l.date || '';
+            if (l.status === 'approved' && lStart.startsWith(currentMonthPrefix)) {
+                if (!approvedLeaves[l.username]) approvedLeaves[l.username] = 0;
+                approvedLeaves[l.username] += parseFloat(l.days) || 0;
+            }
+        });
+
+        const accounts = (typeof Auth !== 'undefined' && await Auth.getAccounts()) || [];
+        const usersList = accounts.filter(a => a.role !== 'admin').map(a => a.username);
+        Object.keys(summary).forEach(u => {
+            if (!usersList.includes(u) && u !== 'admin') usersList.push(u);
+        });
+
+        const clone = document.createElement('div');
+        clone.style.cssText = 'padding:30px;background:#fff;color:#000;font-family:Arial,sans-serif;';
+
+        const stamp = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="120" height="120"><circle cx="100" cy="100" r="92" fill="none" stroke="#da251d" stroke-width="4" opacity="0.85"/><circle cx="100" cy="100" r="82" fill="none" stroke="#da251d" stroke-width="1.5" opacity="0.6"/><path d="M 100 35 Q 115 50 110 65 Q 125 55 130 70 Q 120 75 125 90 Q 135 85 140 95 Q 130 100 125 110 Q 115 105 110 115 Q 105 105 100 110 Q 95 105 90 115 Q 85 105 75 110 Q 70 100 60 95 Q 65 85 75 90 Q 80 75 70 70 Q 75 55 90 65 Q 85 50 100 35" fill="#da251d" opacity="0.7"/><text x="100" y="148" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#da251d">THANH LONG WORK</text><text x="100" y="165" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#da251d">GIÁM ĐỐC</text></svg>`;
+
+        let rowsHtml = usersList.map(u => {
+            const s = summary[u] || { totalDays: 0, onTime: 0, late: 0, lateExcused: 0, totalLateMinutes: 0 };
+            const leaves = approvedLeaves[u] || 0;
+            let absent = passedWorkingDays - s.totalDays - leaves;
+            if (absent < 0) absent = 0;
+            
+            return `
+            <tr>
+                <td style="padding:10px;border:1px solid #d1d5db;font-weight:bold;">${Utils.getUserDisplayName(u) || u}</td>
+                <td style="padding:10px;border:1px solid #d1d5db;text-align:center;">${s.totalDays} / ${passedWorkingDays}</td>
+                <td style="padding:10px;border:1px solid #d1d5db;text-align:center;color:#10b981;font-weight:bold;">${s.onTime}</td>
+                <td style="padding:10px;border:1px solid #d1d5db;text-align:center;color:#3b82f6;">${leaves}</td>
+                <td style="padding:10px;border:1px solid #d1d5db;text-align:center;color:#e74c3c;">${absent}</td>
+                <td style="padding:10px;border:1px solid #d1d5db;text-align:center;color:#00adb5;font-weight:bold;">${s.lateExcused || 0}</td>
+                <td style="padding:10px;border:1px solid #d1d5db;text-align:center;color:#f59e0b;font-weight:bold;">${s.late}</td>
+                <td style="padding:10px;border:1px solid #d1d5db;text-align:center;font-weight:bold;">${s.totalLateMinutes} phút</td>
+            </tr>
+            `;
+        }).join('');
+
+        clone.innerHTML = `
+            <div style="text-align:center;margin-bottom:30px;border-bottom:2px solid #da251d;padding-bottom:20px;">
+                <h1 style="color:#da251d;margin-bottom:5px;">THANH LONG WORK</h1>
+                <h3>BẢNG TỔNG HỢP CHẤM CÔNG NHÂN SỰ</h3>
+                <p>Tháng ${now.getMonth() + 1}/${now.getFullYear()} &bull; Ngày xuất: ${now.toLocaleDateString('vi-VN')}</p>
+            </div>
+            
+            <table style="width:100%;border-collapse:collapse;margin-bottom:40px;font-size:12px;">
+                <thead>
+                    <tr style="background:#f3f4f6;text-align:center;">
+                        <th style="padding:10px;border:1px solid #d1d5db;text-align:left;">Nhân viên</th>
+                        <th style="padding:10px;border:1px solid #d1d5db;">Ngày đã đi làm</th>
+                        <th style="padding:10px;border:1px solid #d1d5db;color:#10b981;">Đúng giờ</th>
+                        <th style="padding:10px;border:1px solid #d1d5db;color:#3b82f6;">Nghỉ phép</th>
+                        <th style="padding:10px;border:1px solid #d1d5db;color:#e74c3c;">Vắng</th>
+                        <th style="padding:10px;border:1px solid #d1d5db;color:#00adb5;">Trễ phép</th>
+                        <th style="padding:10px;border:1px solid #d1d5db;color:#f59e0b;">Trễ không phép</th>
+                        <th style="padding:10px;border:1px solid #d1d5db;">Phút đi muộn</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rowsHtml}
+                    ${usersList.length === 0 ? '<tr><td colspan="8" style="text-align:center;padding:20px;">Chưa có dữ liệu tháng này</td></tr>' : ''}
+                </tbody>
+            </table>
+            
+            <div style="display:flex;justify-content:space-between;margin-top:50px;text-align:center;padding:0 50px;">
+                <div style="width:200px;">
+                    <p style="font-weight:bold;margin-bottom:80px;">Người Lập Bảng</p>
+                    <p>Bộ Phận Hành Chính</p>
+                </div>
+                <div style="width:200px;">
+                    <p style="font-weight:bold;margin-bottom:10px;">Giám Đốc</p>
+                    ${stamp}
+                    <p style="margin-top:8px;font-weight:bold;">ĐÀO THANH LONG</p>
+                </div>
+            </div>
+        `;
+
+        html2pdf().set({
+            margin: 0.5,
+            filename: `TongHop_ChamCong_T${now.getMonth() + 1}_${now.getFullYear()}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
+        }).from(clone).save().then(() => {
+            Utils.showToast("Đã xuất PDF chấm công tổng hợp!", "success");
+        }).catch(e => {
+            console.error(e);
+            Utils.showToast("Lỗi xuất PDF tổng hợp", "error");
         });
     }
 };
