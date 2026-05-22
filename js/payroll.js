@@ -175,6 +175,8 @@ const PayrollModule = {
             // Load data
             const allAttendance = await Attendance.loadData();
             const allLeaves = await Attendance.loadLeaveData();
+            const allBonusApprovals = await DB.getBonusApprovals();
+            const monthlyApprovals = allBonusApprovals[PayrollModule.currentMonth] || {};
             
             // Load tasks ensuring we wait for them if not loaded
             if (WorkModule.data.tasks.length === 0 && document.getElementById('work-view')) {
@@ -263,16 +265,20 @@ const PayrollModule = {
                 const attendancePay = paidDays * dailyRate;
                 const latePenaltyTotal = lateDays * PayrollModule.LATE_PENALTY;
                 
-                // Thưởng chuyên cần: 200k nếu đi muộn 0 lần và có đi làm ít nhất 15 ngày (hoặc tỷ lệ đi làm > 50%)
-                let punctualityBonus = 0;
+                // Thưởng chuyên cần: 200k nếu đi muộn 0 lần và có đi làm ít nhất 15 ngày
+                let eligibleForBonus = false;
                 if (lateDays === 0 && (onTimeDays + approvedLeaveDays) >= 15) {
-                    punctualityBonus = 200000;
+                    eligibleForBonus = true;
                 }
+
+                // Kiểm tra xem sếp đã duyệt chưa
+                const isApproved = monthlyApprovals[username] === true;
+                const punctualityBonusVal = (eligibleForBonus && isApproved) ? 200000 : 0;
 
                 // Manual custom Bonus/Penalty
                 const customBonus = parseFloat(monthlyBonuses[username]) || 0;
 
-                const netSalary = attendancePay + customBonus + punctualityBonus - latePenaltyTotal;
+                const netSalary = attendancePay + customBonus + punctualityBonusVal - latePenaltyTotal;
 
                 return `
                     <tr>
@@ -297,7 +303,17 @@ const PayrollModule = {
                             `<div style="margin-bottom: 4px;"><input type="number" class="form-control" style="width: 100px; padding: 4px 8px; font-size: 13px; text-align: right; display: inline-block; color: ${customBonus >= 0 ? 'var(--success)' : 'var(--danger)'}; border-color: rgba(255,255,255,0.1);" value="${customBonus}" placeholder="0" onchange="PayrollModule.saveCustomBonus('${username}', this.value)"></div>` 
                             : `<strong style="color: ${customBonus >= 0 ? 'var(--success)' : 'var(--danger)'};">${customBonus > 0 ? '+' : ''}${Utils.formatCurrency(customBonus)}</strong>`}
                             
-                            ${punctualityBonus > 0 ? `<div style="color: #64ffda; font-size: 11px; font-weight: bold; margin-bottom: 4px;">Thưởng chuyên cần: +${Utils.formatCurrency(punctualityBonus)}</div>` : ''}
+                            ${eligibleForBonus ? `
+                                <div style="margin-top: 4px;">
+                                    ${isApproved ? 
+                                        `<span style="color: #64ffda; font-weight: bold;"><i class="fa-solid fa-circle-check"></i> Chuyên cần: +${Utils.formatCurrency(200000)}</span>` : 
+                                        (currentUser.role === 'admin' ? 
+                                            `<button class="btn btn-primary" style="padding: 2px 8px; font-size: 11px; border-radius: 4px;" onclick="PayrollModule.approvePunctualityBonus('${username}')">Duyệt thưởng (+200k)</button>` : 
+                                            `<span style="color: var(--warning); font-style: italic;"><i class="fa-solid fa-hourglass-half"></i> Chờ sếp duyệt thưởng</span>`)
+                                    }
+                                </div>
+                            ` : ''}
+                            
                             ${latePenaltyTotal > 0 ? `<div style="color: var(--danger); font-size: 11px; margin-top: 4px;">Phạt muộn: -${Utils.formatCurrency(latePenaltyTotal)}</div>` : ''}
                         </td>
                         <td style="text-align: right;">
@@ -319,6 +335,21 @@ const PayrollModule = {
             console.error("Lỗi khi tính lương:", e);
             tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--danger);">Đã xảy ra lỗi trong quá trình tính toán.</td></tr>';
         }
+    },
+
+    approvePunctualityBonus: async (username) => {
+        const confirmApprove = confirm(`Phê duyệt thưởng chuyên cần 200k cho ${username}?`);
+        if (!confirmApprove) return;
+
+        const allApprovals = await DB.getBonusApprovals();
+        const monthStr = PayrollModule.currentMonth;
+
+        if (!allApprovals[monthStr]) allApprovals[monthStr] = {};
+        allApprovals[monthStr][username] = true;
+
+        await DB.saveBonusApprovals(allApprovals);
+        Utils.showToast(`Đã duyệt thưởng cho ${username}`, 'success');
+        PayrollModule.calculateAndRenderBody();
     },
 
     exportToPDF: () => {

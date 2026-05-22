@@ -353,6 +353,30 @@ const DB = {
         return Utils.storage.get('backup_rewards', []);
     },
 
+    // --- LƯU TRỮ PHÊ DUYỆT THƯỞNG CHUYÊN CẦN / THÁNG ---
+    saveBonusApprovals: async (approvalsObj) => {
+        try {
+            Utils.storage.set('backup_bonus_approvals', approvalsObj);
+            await db.collection("system").doc("bonus_approvals").set(approvalsObj);
+            return true;
+        } catch (e) {
+            console.error("Error saving bonus approvals:", e);
+            return false;
+        }
+    },
+
+    getBonusApprovals: async () => {
+        try {
+            const doc = await db.collection("system").doc("bonus_approvals").get();
+            if (doc.exists && doc.data()) {
+                return doc.data();
+            }
+        } catch (e) {
+            console.error("Error getting bonus approvals:", e);
+        }
+        return Utils.storage.get('backup_bonus_approvals', {});
+    },
+
     // Xóa trắng dữ liệu thiết lập lại từ đầu
     clearAll: async () => {
         try {
