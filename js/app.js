@@ -495,12 +495,9 @@ const app = {
         }
 
         // --- BỔ SUNG: TIẾN ĐỘ DỰ ÁN & BẢNG VÀNG TUYÊN DƯƠNG ---
-        let allTasks = WorkModule.data.tasks || [];
-        if (Auth.currentUser && Auth.currentUser.role !== 'admin') {
-            allTasks = allTasks.filter(t => t.owner === Auth.currentUser.username);
-        }
-        app.renderProjectProgress(allTasks);
-        app.renderHallOfFame(allTasks);
+        const allTasksForLeaderboard = WorkModule.data.tasks || [];
+        app.renderProjectProgress(allTasksForLeaderboard);
+        app.renderHallOfFame(allTasksForLeaderboard);
     },
 
     renderProjectProgress: (tasks) => {
