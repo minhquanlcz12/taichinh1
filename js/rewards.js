@@ -189,12 +189,120 @@ const RewardsModule = {
             `;
         }).join('');
 
+        // === Build Inventory Bag Content ===
+        const userItems = allRewardsHistory.filter(r => 
+            r.username === currentUser.username && 
+            (r.cardId?.startsWith('card_') || r.cardId?.startsWith('mystery_pack')) && 
+            r.cost >= 0 && 
+            !r.isUsed
+        );
+        const unopenedPacks = userItems.filter(r => r.isUnopened);
+        const ownedCards = userItems.filter(r => !r.isUnopened);
+
+        let bagContentHtml = '';
+        if (userItems.length === 0) {
+            bagContentHtml = `
+                <div style="text-align: center; padding: 40px 20px; color: #64748b;">
+                    <div style="font-size: 48px; margin-bottom: 12px; opacity: 0.5;">🎒</div>
+                    <div style="font-size: 14px; line-height: 1.6;">Túi đồ trống rỗng!<br>Hãy quay hũ hoặc đổi thẻ nào! 🎒</div>
+                </div>
+            `;
+        } else {
+            let packsHtml = unopenedPacks.map(p => `
+                <div style="background: linear-gradient(135deg, rgba(236,72,153,0.15), rgba(139,92,246,0.1)); border: 1px solid rgba(236,72,153,0.4); border-radius: 12px; padding: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; animation: packPulse 2s infinite alternate;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, #ec4899, #8b5cf6); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;">📦</div>
+                        <div>
+                            <div style="color: #ec4899; font-weight: 700; font-size: 13px;">${p.title}</div>
+                            <div style="color: #94a3b8; font-size: 10px;">${new Date(p.timestamp).toLocaleString('vi-VN')}</div>
+                        </div>
+                    </div>
+                    <button onclick="RewardsModule.openMysteryPack('${p.id}')" class="boc-bao-btn" style="font-size: 10px; padding: 5px 12px; white-space: nowrap;">
+                        <i class="fa-solid fa-envelope-open-text"></i> BÓC
+                    </button>
+                </div>
+            `).join('');
+
+            let cardsGridHtml = ownedCards.length > 0 ? `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
+                    ${ownedCards.map(c => {
+                        const catCard = RewardsModule._catalog.find(cat => cat.id === c.cardId);
+                        const icon = catCard ? catCard.icon : (c.icon || 'fa-ticket');
+                        const color = catCard ? catCard.color : (c.color || '#10b981');
+                        const title = catCard ? catCard.title : (c.title || 'Thẻ');
+                        return `
+                        <div style="background: rgba(15,23,42,0.9); border: 1px solid ${color}40; border-radius: 10px; padding: 12px 10px; text-align: center; transition: all 0.3s; cursor: default;">
+                            <div style="width: 36px; height: 36px; border-radius: 50%; background: ${color}20; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fa-solid ${icon}" style="color: ${color}; font-size: 16px;"></i>
+                            </div>
+                            <div style="color: #e2e8f0; font-size: 11px; font-weight: 700; margin-bottom: 8px; line-height: 1.3; min-height: 28px; display: flex; align-items: center; justify-content: center;">${title}</div>
+                            <button onclick="RewardsModule.useCard('${c.id}')" style="background: linear-gradient(135deg, ${color}, ${color}99); color: #fff; border: none; padding: 5px 12px; border-radius: 6px; font-size: 10px; font-weight: 700; cursor: pointer; width: 100%; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.3s;">
+                                <i class="fa-solid fa-hand-pointer"></i> SỬ DỤNG
+                            </button>
+                        </div>`;
+                    }).join('')}
+                </div>
+            ` : '';
+            bagContentHtml = packsHtml + cardsGridHtml;
+        }
+
+        // === Build Spin History Content ===
+        const userSpinHistory = allRewardsHistory
+            .filter(r => r.username === currentUser.username)
+            .sort((a, b) => b.timestamp - a.timestamp)
+            .slice(0, 20);
+
+        const timeAgo = (ts) => {
+            const diff = Date.now() - ts;
+            const mins = Math.floor(diff / 60000);
+            if (mins < 1) return 'Vừa xong';
+            if (mins < 60) return mins + ' phút trước';
+            const hrs = Math.floor(mins / 60);
+            if (hrs < 24) return hrs + ' giờ trước';
+            const days = Math.floor(hrs / 24);
+            return days + ' ngày trước';
+        };
+
+        let historyContentHtml = '';
+        if (userSpinHistory.length === 0) {
+            historyContentHtml = `
+                <div style="text-align: center; padding: 40px 20px; color: #64748b;">
+                    <div style="font-size: 40px; margin-bottom: 10px; opacity: 0.5;">📜</div>
+                    <div style="font-size: 13px;">Chưa có lịch sử nào!</div>
+                </div>
+            `;
+        } else {
+            historyContentHtml = userSpinHistory.map(h => {
+                let badge = '';
+                let dotColor = '#6366f1';
+                if (h.cardId === 'wheel_entry' || h.cost > 0) {
+                    badge = '<span style="background: rgba(107,114,128,0.2); color: #9ca3af; padding: 2px 8px; border-radius: 4px; font-size: 9px; font-weight: 700;">⚫ PHÍ</span>';
+                    dotColor = '#6b7280';
+                } else if (h.cardId === 'wheel_miss' || h.cardId === 'wheel_dark') {
+                    badge = '<span style="background: rgba(239,68,68,0.15); color: #ef4444; padding: 2px 8px; border-radius: 4px; font-size: 9px; font-weight: 700;">🔴 TRƯỢT</span>';
+                    dotColor = '#ef4444';
+                } else {
+                    badge = '<span style="background: rgba(16,185,129,0.15); color: #10b981; padding: 2px 8px; border-radius: 4px; font-size: 9px; font-weight: 700;">🟢 TRÚNG</span>';
+                    dotColor = '#10b981';
+                }
+                return `
+                <div style="display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04);">
+                    <div style="width: 8px; height: 8px; border-radius: 50%; background: ${dotColor}; flex-shrink: 0; box-shadow: 0 0 6px ${dotColor};"></div>
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="color: #e2e8f0; font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${h.title || 'Giao dịch'}</div>
+                        <div style="color: #64748b; font-size: 10px;">${timeAgo(h.timestamp)}</div>
+                    </div>
+                    ${badge}
+                </div>`;
+            }).join('');
+        }
+
         container.innerHTML = `
             <style>
             .tcg-digital-card {
                 position: relative;
                 width: 100%;
-                aspect-ratio: 2.2 / 3.3; /* Tỉ lệ thẻ bài truyền thống */
+                aspect-ratio: 2.2 / 3.3;
                 max-width: 280px;
                 margin: 0 auto;
                 border-radius: 12px;
@@ -335,7 +443,7 @@ const RewardsModule = {
                 margin-bottom: 12px;
                 text-transform: uppercase;
                 text-shadow: 0 0 10px rgba(0,0,0,0.5);
-                min-height: 40px; /* Cân đối tiêu đề 2 dòng */
+                min-height: 40px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -378,7 +486,6 @@ const RewardsModule = {
                 border: 3px solid #10b981;
                 display: flex; align-items: center; justify-content: center;
             }
-            /* Đèn LED viền */
             .wheel-rim-lights {
                 position: absolute;
                 width: 100%; height: 100%;
@@ -425,7 +532,6 @@ const RewardsModule = {
                 border: 6px solid #111;
                 background: #111;
             }
-            /* Animation xoay nhẹ lúc đứng yên */
             .wheel-container-p.idle {
                 animation: wheelIdle 20s infinite linear;
             }
@@ -439,14 +545,14 @@ const RewardsModule = {
                 width: 100%;
                 height: 100%;
                 background: conic-gradient(
-                    #1e1b4b 0deg 45deg,   /* 0: Hụt rồi */
-                    #059669 45deg 90deg,  /* 1: +1đ */
-                    #064e3b 90deg 135deg, /* 2: +2đ */
-                    #d97706 135deg 180deg, /* 3: 10,000 VNĐ */
-                    #ec4899 180deg 225deg, /* 4: ĐỘC ĐẮC */
-                    #92400e 225deg 270deg, /* 5: +5đ */
-                    #991b1b 270deg 315deg, /* 6: -1đ */
-                    #f43f5e 315deg 360deg  /* 7: NƯỚC NGỌT */
+                    #1e1b4b 0deg 45deg,
+                    #059669 45deg 90deg,
+                    #064e3b 90deg 135deg,
+                    #d97706 135deg 180deg,
+                    #ec4899 180deg 225deg,
+                    #92400e 225deg 270deg,
+                    #991b1b 270deg 315deg,
+                    #f43f5e 315deg 360deg
                 );
             }
             .wheel-content-layer {
@@ -458,7 +564,6 @@ const RewardsModule = {
                 position: absolute;
                 width: 100%;
                 height: 100%;
-                /* Cân chỉnh chữ nằm CHÍNH GIỮA ô (45deg/2 = 22.5deg) */
                 transform: rotate(calc(45deg * var(--i) + 22.5deg));
                 display: flex;
                 justify-content: center;
@@ -577,6 +682,175 @@ const RewardsModule = {
                 padding-bottom: 40px;
                 perspective: 1200px;
             }
+
+            /* === 3-COLUMN ARENA LAYOUT === */
+            .wheel-arena {
+                display: flex;
+                gap: 20px;
+                margin-bottom: 40px;
+                align-items: stretch;
+            }
+            .arena-left, .arena-right {
+                flex: 0 0 280px;
+                min-width: 0;
+            }
+            .arena-center {
+                flex: 1;
+                min-width: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+            @media (max-width: 900px) {
+                .wheel-arena {
+                    flex-direction: column;
+                }
+                .arena-center { order: 1; }
+                .arena-right { order: 2; }
+                .arena-left { order: 3; }
+                .arena-left, .arena-right {
+                    flex: none;
+                    width: 100%;
+                }
+            }
+
+            /* === INVENTORY PANEL === */
+            .inv-panel {
+                background: rgba(15,23,42,0.85);
+                border: 1px solid rgba(16,185,129,0.2);
+                border-radius: 16px;
+                backdrop-filter: blur(12px);
+                overflow: hidden;
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+            }
+            .inv-tabs {
+                display: flex;
+                border-bottom: 1px solid rgba(255,255,255,0.08);
+            }
+            .inv-tab {
+                flex: 1;
+                padding: 14px 8px;
+                background: transparent;
+                border: none;
+                color: #64748b;
+                font-weight: 700;
+                font-size: 12px;
+                cursor: pointer;
+                transition: all 0.3s;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                position: relative;
+            }
+            .inv-tab.active {
+                color: #10b981;
+                background: rgba(16,185,129,0.08);
+            }
+            .inv-tab.active::after {
+                content: '';
+                position: absolute;
+                bottom: 0;
+                left: 10%;
+                width: 80%;
+                height: 2px;
+                background: #10b981;
+                box-shadow: 0 0 10px #10b981;
+                border-radius: 2px;
+            }
+            .inv-tab:hover:not(.active) {
+                color: #94a3b8;
+                background: rgba(255,255,255,0.03);
+            }
+            .inv-content-area {
+                flex: 1;
+                overflow-y: auto;
+                padding: 14px;
+                max-height: 520px;
+            }
+            .inv-content-area::-webkit-scrollbar {
+                width: 4px;
+            }
+            .inv-content-area::-webkit-scrollbar-track {
+                background: transparent;
+            }
+            .inv-content-area::-webkit-scrollbar-thumb {
+                background: rgba(16,185,129,0.3);
+                border-radius: 4px;
+            }
+
+            /* === PROBABILITY PANEL === */
+            .prob-panel {
+                background: rgba(15,23,42,0.85);
+                border: 1px solid rgba(16,185,129,0.2);
+                border-radius: 16px;
+                padding: 20px;
+                backdrop-filter: blur(12px);
+                height: 100%;
+            }
+            .prob-panel-title {
+                font-size: 13px;
+                font-weight: 800;
+                color: #10b981;
+                text-transform: uppercase;
+                letter-spacing: 1.5px;
+                margin-bottom: 20px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding-bottom: 12px;
+                border-bottom: 1px solid rgba(16,185,129,0.15);
+            }
+            .prob-row {
+                margin-bottom: 14px;
+            }
+            .prob-label {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin-bottom: 5px;
+            }
+            .prob-dot {
+                width: 10px;
+                height: 10px;
+                border-radius: 50%;
+                flex-shrink: 0;
+            }
+            .prob-name {
+                font-size: 12px;
+                color: #cbd5e1;
+                font-weight: 600;
+            }
+            .prob-bar-track {
+                width: 100%;
+                height: 8px;
+                background: rgba(255,255,255,0.05);
+                border-radius: 4px;
+                overflow: hidden;
+                margin-bottom: 2px;
+            }
+            .prob-bar-fill {
+                height: 100%;
+                border-radius: 4px;
+                transition: width 1s ease;
+            }
+            .prob-meta {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .prob-value {
+                font-size: 13px;
+                font-weight: 900;
+                color: #fff;
+                font-family: 'Courier New', monospace;
+            }
+            .prob-sub {
+                font-size: 9px;
+                color: #64748b;
+                font-style: italic;
+            }
+
             </style>
 
             <div class="rewards-container">
@@ -602,107 +876,366 @@ const RewardsModule = {
                     </div>
                 </div>
 
-                <!-- Lucky Wheel Section - Premium Cyberpunk Version -->
-                <div class="glass-panel wheel-section" style="margin-bottom: 50px; padding: 40px 20px; text-align: center; background: radial-gradient(circle at center, rgba(16,185,129,0.1), rgba(0,0,0,0.9)); border: 1px solid rgba(16,185,129,0.2); position: relative; overflow: hidden; border-radius: 20px;">
-                    <!-- Trang trí nền -->
-                    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(16,185,129,0.05), transparent); opacity: 0.5; pointer-events: none;"></div>
-                    
-                    <div style="max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 30px; position: relative; z-index: 2;">
-                        <div class="wheel-title-container">
-                            <h3 class="cyber-glitch-title">
-                                <i class="fa-solid fa-dharmachakra fa-spin" style="--fa-animation-duration: 10s; margin-right: 10px; color: #10b981;"></i>
-                                VÒNG QUAY NHÂN PHẨM
-                            </h3>
-                            <div class="cyber-subtitle">THỬ VẬN MAY - NHẬN NGAY ĐẶC QUYỀN</div>
-                        </div>
+                <!-- ====== 3-COLUMN WHEEL ARENA ====== -->
+                <div class="wheel-arena">
 
-                        <div class="wheel-wrapper">
-                            <div class="wheel-pointer-premium"></div>
-                            <div class="wheel-rim-lights">
-                                ${Array.from({length: 12}).map((_, i) => `<div class="light-dot" style="transform: rotate(${i * 30}deg);"></div>`).join('')}
+                    <!-- LEFT: Inventory Bag + History Tabs -->
+                    <div class="arena-left">
+                        <div class="inv-panel">
+                            <div class="inv-tabs">
+                                <button class="inv-tab active" onclick="RewardsModule.switchInvTab('bag')">🎒 TÚI ĐỒ</button>
+                                <button class="inv-tab" onclick="RewardsModule.switchInvTab('history')">📜 LỊCH SỬ</button>
                             </div>
-                            <div id="lucky-wheel-main" class="wheel-container-p idle">
-                                <div class="wheel-bg-gradient"></div>
-                                <div class="wheel-content-layer">
-                                    <div class="wheel-item" style="--i:0;"><span>HỤT<br>RỒI!</span></div>
-                                    <div class="wheel-item" style="--i:1;"><span>+1đ</span></div>
-                                    <div class="wheel-item" style="--i:2;"><span>+2đ</span></div>
-                                    <div class="wheel-item" style="--i:3;"><span style="color:#ffd700;">10,000<br>VNĐ</span></div>
-                                    <div class="wheel-item" style="--i:4;"><span style="color:#ec4899;">ĐỘC<br>ĐẮC</span></div>
-                                    <div class="wheel-item" style="--i:5;"><span>+5đ</span></div>
-                                    <div class="wheel-item" style="--i:6;"><span style="color:#ff9999;">-1đ</span></div>
-                                    <div class="wheel-item" style="--i:7;"><span style="color:#f43f5e;">NƯỚC<br>NGỌT</span></div>
-                                </div>
+                            <div id="inv-bag-content" class="inv-content-area">
+                                ${bagContentHtml}
                             </div>
-                            <div class="wheel-center-cap">
-                                <div class="cap-inner"></div>
+                            <div id="inv-history-content" class="inv-content-area" style="display:none">
+                                ${historyContentHtml}
                             </div>
                         </div>
+                    </div>
 
-                        <div class="spin-controls" style="display: flex; flex-direction: column; align-items: center; width: 100%;">
-                            <button id="spin-btn-v2" onclick="RewardsModule.spinWheel()" class="spin-btn-premium" 
-                                ${meritInfo.current < 1 || RewardsModule._isSpinning || hasSpunToday ? 'disabled' : ''}>
-                                ${RewardsModule._isSpinning ? '<i class="fa-solid fa-sync fa-spin"></i> COMPUTER... ' : 
-                                  (hasSpunToday ? '<i class="fa-solid fa-calendar-check"></i> MAI QUAY TIẾP NHÉ' : '<i class="fa-solid fa-bolt"></i> LIỀU THÌ ĂN NHIỀU (-1đ)')}
-                            </button>
-                            <div style="margin-top: 15px; font-size: 11px; color: #10b981; font-family: monospace; letter-spacing: 1px; text-shadow: 0 0 5px #10b981;">
-                                ${hasSpunToday ? 'LIMIT: DAILY_QUOTA_EXHAUSTED' : 'SYSLOAD: STATUS_REDHOT_READY'}
-                            </div>
-
-                            <!-- Bảng công khai HUD tỉ lệ % -->
-                            <div class="probability-hud" style="margin-top: 25px; width: 100%; max-width: 480px; background: rgba(15,23,42,0.7); border: 1px solid rgba(16,185,129,0.3); border-radius: 12px; padding: 16px; backdrop-filter: blur(8px); box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
-                                <div style="font-size: 13px; font-weight: bold; color: #10b981; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                                    <i class="fa-solid fa-circle-info"></i> BẢNG CÔNG BỐ TỶ LỆ NHÂN PHẨM
+                    <!-- CENTER: Wheel -->
+                    <div class="arena-center">
+                        <div class="glass-panel wheel-section" style="padding: 30px 20px; text-align: center; background: radial-gradient(circle at center, rgba(16,185,129,0.1), rgba(0,0,0,0.9)); border: 1px solid rgba(16,185,129,0.2); position: relative; overflow: hidden; border-radius: 20px; width: 100%;">
+                            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(16,185,129,0.05), transparent); opacity: 0.5; pointer-events: none;"></div>
+                            
+                            <div style="margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 24px; position: relative; z-index: 2;">
+                                <div class="wheel-title-container">
+                                    <h3 class="cyber-glitch-title" style="font-size: 22px; letter-spacing: 3px;">
+                                        <i class="fa-solid fa-dharmachakra fa-spin" style="--fa-animation-duration: 10s; margin-right: 8px; color: #10b981;"></i>
+                                        VÒNG QUAY NHÂN PHẨM
+                                    </h3>
+                                    <div class="cyber-subtitle" style="font-size: 11px; color: #64748b; letter-spacing: 2px; text-transform: uppercase;">THỬ VẬN MAY - NHẬN NGAY ĐẶC QUYỀN</div>
                                 </div>
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11.5px; text-align: left; font-family: monospace;">
-                                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 4px;">
-                                        <span style="color: #94a3b8;"><i class="fa-solid fa-circle" style="color:#1e1b4b; font-size:8px; margin-right:4px;"></i> Hụt rồi:</span>
-                                        <span style="color: #fff; font-weight: bold;">50.0%</span>
+
+                                <div class="wheel-wrapper">
+                                    <div class="wheel-pointer-premium"></div>
+                                    <div class="wheel-rim-lights">
+                                        ${Array.from({length: 12}).map((_, i) => `<div class="light-dot" style="transform: rotate(${i * 30}deg);"></div>`).join('')}
                                     </div>
-                                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 4px;">
-                                        <span style="color: #94a3b8;"><i class="fa-solid fa-circle" style="color:#059669; font-size:8px; margin-right:4px;"></i> Hòa vốn (+1đ):</span>
-                                        <span style="color: #fff; font-weight: bold;">12.0%</span>
+                                    <div id="lucky-wheel-main" class="wheel-container-p idle">
+                                        <div class="wheel-bg-gradient"></div>
+                                        <div class="wheel-content-layer">
+                                            <div class="wheel-item" style="--i:0;"><span>HỤT<br>RỒI!</span></div>
+                                            <div class="wheel-item" style="--i:1;"><span>+1đ</span></div>
+                                            <div class="wheel-item" style="--i:2;"><span>+2đ</span></div>
+                                            <div class="wheel-item" style="--i:3;"><span style="color:#ffd700;">10,000<br>VNĐ</span></div>
+                                            <div class="wheel-item" style="--i:4;"><span style="color:#ec4899;">ĐỘC<br>ĐẮC</span></div>
+                                            <div class="wheel-item" style="--i:5;"><span>+5đ</span></div>
+                                            <div class="wheel-item" style="--i:6;"><span style="color:#ff9999;">-1đ</span></div>
+                                            <div class="wheel-item" style="--i:7;"><span style="color:#f43f5e;">NƯỚC<br>NGỌT</span></div>
+                                        </div>
                                     </div>
-                                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 4px;">
-                                        <span style="color: #94a3b8;"><i class="fa-solid fa-circle" style="color:#064e3b; font-size:8px; margin-right:4px;"></i> Lãi nhẹ (+2đ):</span>
-                                        <span style="color: #fff; font-weight: bold;">10.0%</span>
-                                    </div>
-                                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 4px;">
-                                        <span style="color: #94a3b8;"><i class="fa-solid fa-circle" style="color:#d97706; font-size:8px; margin-right:4px;"></i> Tiền mặt 10k:</span>
-                                        <span style="color: #fbbf24; font-weight: bold;">5.0%</span>
-                                    </div>
-                                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 4px; grid-column: span 2;">
-                                        <span style="color: #94a3b8;"><i class="fa-solid fa-circle" style="color:#ec4899; font-size:8px; margin-right:4px;"></i> GIẢI ĐỘC ĐẮC (Mystery Pack/VVIP):</span>
-                                        <span style="color: #ec4899; font-weight: bold;">10.1% <span style="font-size:10px; color:#cbd5e1;">(Bao Thẻ: 10.0% | Ăn Buffet Sếp Bao: 0.1%)</span></span>
-                                    </div>
-                                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 4px;">
-                                        <span style="color: #94a3b8;"><i class="fa-solid fa-circle" style="color:#92400e; font-size:8px; margin-right:4px;"></i> Hũ lớn (+5đ):</span>
-                                        <span style="color: #fff; font-weight: bold;">3.0%</span>
-                                    </div>
-                                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 4px;">
-                                        <span style="color: #94a3b8;"><i class="fa-solid fa-circle" style="color:#991b1b; font-size:8px; margin-right:4px;"></i> Hắc ám (-1đ):</span>
-                                        <span style="color: #ef4444; font-weight: bold;">4.9%</span>
-                                    </div>
-                                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 4px; grid-column: span 2;">
-                                        <span style="color: #94a3b8;"><i class="fa-solid fa-circle" style="color:#f43f5e; font-size:8px; margin-right:4px;"></i> Nước ngọt 10k:</span>
-                                        <span style="color: #fff; font-weight: bold;">5.0%</span>
+                                    <div class="wheel-center-cap">
+                                        <div class="cap-inner"></div>
                                     </div>
                                 </div>
-                                <div style="font-size: 10px; color: #64748b; margin-top: 10px; font-style: italic; line-height: 1.4;">
-                                    * Tất cả tỷ lệ là hoàn toàn tĩnh và độc lập cho từng lượt quay riêng lẻ.
+
+                                <div class="spin-controls" style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+                                    <button id="spin-btn-v2" onclick="RewardsModule.spinWheel()" class="spin-btn-premium" 
+                                        ${meritInfo.current < 1 || RewardsModule._isSpinning || hasSpunToday ? 'disabled' : ''}>
+                                        ${RewardsModule._isSpinning ? '<i class="fa-solid fa-sync fa-spin"></i> COMPUTER... ' : 
+                                          (hasSpunToday ? '<i class="fa-solid fa-calendar-check"></i> MAI QUAY TIẾP NHÉ' : '<i class="fa-solid fa-bolt"></i> LIỀU THÌ ĂN NHIỀU (-1đ)')}
+                                    </button>
+                                    <div style="margin-top: 12px; font-size: 11px; color: #10b981; font-family: monospace; letter-spacing: 1px; text-shadow: 0 0 5px #10b981;">
+                                        ${hasSpunToday ? 'LIMIT: DAILY_QUOTA_EXHAUSTED' : 'SYSLOAD: STATUS_REDHOT_READY'}
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
+                    <!-- RIGHT: Probability Panel -->
+                    <div class="arena-right">
+                        <div class="prob-panel">
+                            <div class="prob-panel-title">
+                                <i class="fa-solid fa-chart-bar"></i> TỶ LỆ NHÂN PHẨM
+                            </div>
+
+                            <div class="prob-row">
+                                <div class="prob-label">
+                                    <span class="prob-dot" style="background: #6366f1; box-shadow: 0 0 8px #6366f1;"></span>
+                                    <span class="prob-name">HỤT RỒI!</span>
+                                </div>
+                                <div class="prob-bar-track">
+                                    <div class="prob-bar-fill" style="width: 50%; background: linear-gradient(90deg, #6366f1, #818cf8);"></div>
+                                </div>
+                                <div class="prob-meta">
+                                    <span class="prob-value">50.0%</span>
+                                </div>
+                            </div>
+
+                            <div class="prob-row">
+                                <div class="prob-label">
+                                    <span class="prob-dot" style="background: #10b981; box-shadow: 0 0 8px #10b981;"></span>
+                                    <span class="prob-name">Hòa vốn (+1đ)</span>
+                                </div>
+                                <div class="prob-bar-track">
+                                    <div class="prob-bar-fill" style="width: 12%; background: linear-gradient(90deg, #10b981, #34d399);"></div>
+                                </div>
+                                <div class="prob-meta">
+                                    <span class="prob-value">12.0%</span>
+                                </div>
+                            </div>
+
+                            <div class="prob-row">
+                                <div class="prob-label">
+                                    <span class="prob-dot" style="background: #14b8a6; box-shadow: 0 0 8px #14b8a6;"></span>
+                                    <span class="prob-name">Lãi nhẹ (+2đ)</span>
+                                </div>
+                                <div class="prob-bar-track">
+                                    <div class="prob-bar-fill" style="width: 10%; background: linear-gradient(90deg, #14b8a6, #2dd4bf);"></div>
+                                </div>
+                                <div class="prob-meta">
+                                    <span class="prob-value">10.0%</span>
+                                </div>
+                            </div>
+
+                            <div class="prob-row">
+                                <div class="prob-label">
+                                    <span class="prob-dot" style="background: #f59e0b; box-shadow: 0 0 8px #f59e0b;"></span>
+                                    <span class="prob-name">10K VNĐ 💰</span>
+                                </div>
+                                <div class="prob-bar-track">
+                                    <div class="prob-bar-fill" style="width: 5%; background: linear-gradient(90deg, #f59e0b, #fbbf24);"></div>
+                                </div>
+                                <div class="prob-meta">
+                                    <span class="prob-value">5.0%</span>
+                                </div>
+                            </div>
+
+                            <div class="prob-row">
+                                <div class="prob-label">
+                                    <span class="prob-dot" style="background: #ec4899; box-shadow: 0 0 8px #ec4899;"></span>
+                                    <span class="prob-name">ĐỘC ĐẮC 🎁</span>
+                                </div>
+                                <div class="prob-bar-track">
+                                    <div class="prob-bar-fill" style="width: 10.1%; background: linear-gradient(90deg, #ec4899, #f472b6);"></div>
+                                </div>
+                                <div class="prob-meta">
+                                    <span class="prob-value">10.1%</span>
+                                    <span class="prob-sub">Bao Thẻ 10% | Buffet VVIP 0.1%</span>
+                                </div>
+                            </div>
+
+                            <div class="prob-row">
+                                <div class="prob-label">
+                                    <span class="prob-dot" style="background: #06b6d4; box-shadow: 0 0 8px #06b6d4;"></span>
+                                    <span class="prob-name">Hũ lớn (+5đ)</span>
+                                </div>
+                                <div class="prob-bar-track">
+                                    <div class="prob-bar-fill" style="width: 3%; background: linear-gradient(90deg, #06b6d4, #22d3ee);"></div>
+                                </div>
+                                <div class="prob-meta">
+                                    <span class="prob-value">3.0%</span>
+                                </div>
+                            </div>
+
+                            <div class="prob-row">
+                                <div class="prob-label">
+                                    <span class="prob-dot" style="background: #ef4444; box-shadow: 0 0 8px #ef4444;"></span>
+                                    <span class="prob-name">Hắc ám (-1đ)</span>
+                                </div>
+                                <div class="prob-bar-track">
+                                    <div class="prob-bar-fill" style="width: 4.9%; background: linear-gradient(90deg, #ef4444, #f87171);"></div>
+                                </div>
+                                <div class="prob-meta">
+                                    <span class="prob-value">4.9%</span>
+                                </div>
+                            </div>
+
+                            <div class="prob-row" style="margin-bottom: 16px;">
+                                <div class="prob-label">
+                                    <span class="prob-dot" style="background: #f43f5e; box-shadow: 0 0 8px #f43f5e;"></span>
+                                    <span class="prob-name">Nước ngọt 🥤</span>
+                                </div>
+                                <div class="prob-bar-track">
+                                    <div class="prob-bar-fill" style="width: 5%; background: linear-gradient(90deg, #f43f5e, #fb7185);"></div>
+                                </div>
+                                <div class="prob-meta">
+                                    <span class="prob-value">5.0%</span>
+                                </div>
+                            </div>
+
+                            <div style="font-size: 10px; color: #475569; font-style: italic; line-height: 1.5; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 12px;">
+                                * Tỷ lệ hoàn toàn tĩnh và độc lập cho từng lượt quay riêng lẻ.
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <!-- ====== END WHEEL ARENA ====== -->
+
+                <!-- Card Shop Grid -->
                 <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 24px; padding: 10px;">
                     ${cardsHtml}
                 </div>
 
-                ${customHistoryHtml}
+                <!-- Admin History Table -->
+                ${currentUser.role === 'admin' ? customHistoryHtml : ''}
             </div>
         `;
+    },
+
+    switchInvTab: (tab) => {
+        const bagEl = document.getElementById('inv-bag-content');
+        const histEl = document.getElementById('inv-history-content');
+        if (!bagEl || !histEl) return;
+
+        document.querySelectorAll('.inv-tab').forEach(t => t.classList.remove('active'));
+        event.target.classList.add('active');
+
+        if (tab === 'bag') {
+            bagEl.style.display = 'block';
+            histEl.style.display = 'none';
+        } else {
+            bagEl.style.display = 'none';
+            histEl.style.display = 'block';
+        }
+    },
+
+    useCard: async (recordId) => {
+        const user = Auth.currentUser;
+        if (!user) return;
+
+        const allRewards = await RewardsModule.loadData();
+        const record = allRewards.find(r => r.id === recordId && r.username === user.username);
+        if (!record) { Utils.showToast('Không tìm thấy thẻ!', 'error'); return; }
+
+        // Check if it's a rescue card
+        if (record.cardId === 'card_rescue') {
+            RewardsModule.useRescueCard(recordId);
+            return;
+        }
+
+        const card = RewardsModule._catalog.find(c => c.id === record.cardId);
+        const cardTitle = card ? card.title : record.title;
+
+        if (!confirm(`Bạn có chắc muốn SỬ DỤNG thẻ "${cardTitle}"?\n\nThẻ sẽ biến mất sau khi sử dụng!`)) return;
+
+        record.isUsed = true;
+        record.usedAt = Date.now();
+        await RewardsModule.saveData(allRewards);
+
+        Utils.showToast(`Đã sử dụng thẻ "${cardTitle}" thành công! ✨`, 'success');
+        Utils.notifyTelegram(`🃏 <b>[SỬ DỤNG THẺ]</b>\n👤 <b>${user.username}</b> vừa kích hoạt thẻ <b>${cardTitle}</b>!`);
+        RewardsModule.render();
+    },
+
+    useRescueCard: async (recordId) => {
+        const user = Auth.currentUser;
+        if (!user) return;
+
+        // Get all accounts to show employee list
+        let accounts = [];
+        try {
+            if (typeof DB !== 'undefined' && typeof DB.getAccounts === 'function') {
+                accounts = await DB.getAccounts() || [];
+            }
+        } catch(e) { console.error(e); }
+
+        // Filter out current user and admins
+        const employees = accounts.filter(a => a.username !== user.username && a.role !== 'admin');
+
+        if (employees.length === 0) {
+            Utils.showToast('Không có nhân viên nào để cứu!', 'warning');
+            return;
+        }
+
+        // Create employee picker overlay
+        const overlay = document.createElement('div');
+        overlay.id = 'rescue-picker-overlay';
+        overlay.style = `
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.9); z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            backdrop-filter: blur(10px); animation: fadeIn 0.3s ease;
+        `;
+
+        overlay.innerHTML = `
+            <div style="max-width: 400px; width: 90%; background: rgba(15,23,42,0.95); border: 2px solid #ec4899; border-radius: 16px; padding: 30px; box-shadow: 0 0 50px rgba(236,72,153,0.3);">
+                <h3 style="color: #ec4899; text-align: center; font-size: 20px; margin-bottom: 5px;">
+                    <i class="fa-solid fa-handshake-angle"></i> THÁNH NHÂN CỨU BỒ
+                </h3>
+                <p style="color: #cbd5e1; text-align: center; font-size: 13px; margin-bottom: 20px;">
+                    Chọn đồng nghiệp bạn muốn xóa án phạt đi muộn
+                </p>
+                <div style="max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+                    ${employees.map(emp => `
+                        <button onclick="RewardsModule.confirmRescue('${recordId}', '${emp.username}')" 
+                            style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: rgba(236,72,153,0.1); border: 1px solid rgba(236,72,153,0.3); border-radius: 10px; cursor: pointer; color: #fff; font-size: 14px; transition: all 0.3s; width: 100%;">
+                            <div style="width: 40px; height: 40px; border-radius: 50%; background: ${emp.profile?.color || '#6366f1'}; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px; flex-shrink: 0;">
+                                ${(emp.profile?.fullname || emp.username).charAt(0).toUpperCase()}
+                            </div>
+                            <div style="text-align: left;">
+                                <div style="font-weight: bold;">${emp.profile?.fullname || emp.username}</div>
+                                <div style="font-size: 11px; color: #94a3b8;">@${emp.username}</div>
+                            </div>
+                        </button>
+                    `).join('')}
+                </div>
+                <button onclick="document.getElementById('rescue-picker-overlay').remove()" 
+                    style="margin-top: 16px; width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: #94a3b8; cursor: pointer; font-size: 13px;">
+                    ❌ HỦY BỎ
+                </button>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+    },
+
+    confirmRescue: async (recordId, targetUsername) => {
+        const user = Auth.currentUser;
+        if (!user) return;
+
+        // Remove the picker overlay
+        const picker = document.getElementById('rescue-picker-overlay');
+        if (picker) picker.remove();
+
+        // Load attendance data and find the most recent late record
+        const allAttendance = await Attendance.loadData();
+        const targetLateRecords = allAttendance.filter(r => 
+            r.username === targetUsername && r.status === 'late'
+        ).sort((a, b) => b.timestamp - a.timestamp);
+
+        if (targetLateRecords.length === 0) {
+            Utils.showToast(`${targetUsername} không có án phạt đi muộn nào để xóa!`, 'warning');
+            return;
+        }
+
+        const latestLate = targetLateRecords[0];
+
+        // Get target display name
+        let targetDisplayName = targetUsername;
+        try {
+            if (typeof DB !== 'undefined' && typeof DB.getAccounts === 'function') {
+                const accounts = await DB.getAccounts() || [];
+                const targetAcc = accounts.find(a => a.username === targetUsername);
+                if (targetAcc?.profile?.fullname) targetDisplayName = targetAcc.profile.fullname;
+            }
+        } catch(e) {}
+
+        // Change the late record status to 'rescued'
+        latestLate.status = 'late_excused';
+        latestLate.rescuedBy = user.username;
+        latestLate.rescuedAt = Date.now();
+        latestLate.rescueNote = `Được ${user.username} sử dụng thẻ Thánh Nhân Cứu Bồ xóa án phạt`;
+        await Attendance.saveData(allAttendance);
+
+        // Mark the rescue card as used
+        const allRewards = await RewardsModule.loadData();
+        const record = allRewards.find(r => r.id === recordId && r.username === user.username);
+        if (record) {
+            record.isUsed = true;
+            record.usedAt = Date.now();
+            record.rescueTarget = targetUsername;
+            await RewardsModule.saveData(allRewards);
+        }
+
+        Utils.showToast(`Đã xóa án phạt đi muộn ngày ${latestLate.dateStr} cho ${targetDisplayName}! 🦸`, 'success');
+        Utils.notifyTelegram(`🦸 <b>[THÁNH NHÂN CỨU BỒ]</b>\n👤 <b>${user.username}</b> đã sử dụng thẻ để xóa án phạt đi muộn cho <b>${targetDisplayName}</b>!\n📅 Ngày: ${latestLate.dateStr}`);
+        RewardsModule.render();
     },
 
     adminCheatPoints: async (username) => {
