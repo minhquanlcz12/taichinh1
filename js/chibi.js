@@ -50,12 +50,76 @@ const ChibiModule = {
         top: 10,  // Style 0 is naked, 1-9 are top styles
         bottom: 8, // Style 0 is underwear, 1-7 are bottoms
         shoe: 8,   // Style 0 is barefoot, 1-7 are shoe styles
-        accessory: 17 // Style 0 is none, 1-16 are accessory styles
+        accessory: 19 // Style 0 is none, 1-18 are accessory styles
     },
 
     // State
     currentConfig: null,
     activeTab: 'skin',
+
+    gearRequirements: {
+        11: { label: "Đại Đao Lửa", count: 10 },
+        12: { label: "Súng Vô Cực", count: 12 },
+        13: { label: "Kiếm Cyber Laser", count: 15 },
+        14: { label: "Cưỡi Ô Tô Siêu Cấp", count: 20 },
+        15: { label: "Cưỡi Xe Máy Cực Ngầu", count: 18 },
+        16: { label: "Đeo Phao Hồng Hạc", count: 8 },
+        17: { label: "Cánh Thiên Thần VVIP", count: 22 },
+        18: { label: "Cánh Ác Quỷ VVIP", count: 25 }
+    },
+
+    getCompletedTasksCount: function() {
+        if (typeof Auth === 'undefined' || !Auth.currentUser) return 0;
+        if (typeof WorkModule === 'undefined' || !WorkModule.data || !WorkModule.data.tasks) return 0;
+
+        const username = Auth.currentUser.username;
+        const now = new Date();
+        const currentMonth = now.getMonth() + 1;
+        const currentYear = now.getFullYear();
+
+        let count = 0;
+        WorkModule.data.tasks.forEach(t => {
+            if (t.owner !== username) return;
+
+            const status = (t.trangThai || '').toLowerCase();
+            const isCompleted = status.includes('done') || status.includes('hoàn thành');
+            if (!isCompleted) return;
+
+            let taskMonth = -1;
+            let taskYear = -1;
+            const dateStr = t.ngayDang || t.deadline || '';
+            if (dateStr.includes('-')) {
+                const parts = dateStr.split('-');
+                if (parts.length >= 2) {
+                    taskYear = parseInt(parts[0], 10);
+                    taskMonth = parseInt(parts[1], 10);
+                }
+            } else if (dateStr.includes('/')) {
+                const parts = dateStr.split('/');
+                if (parts.length === 3) {
+                    taskYear = parseInt(parts[2], 10);
+                    taskMonth = parseInt(parts[1], 10);
+                }
+            }
+
+            if (taskMonth === currentMonth && taskYear === currentYear) {
+                count++;
+            }
+        });
+        return count;
+    },
+
+    isGearLocked: function(index) {
+        if (index <= 10) return false;
+        if (typeof Auth === 'undefined' || !Auth.currentUser) return true;
+        if (Auth.currentUser.role === 'admin') return false;
+
+        const req = ChibiModule.gearRequirements[index];
+        if (!req) return false;
+
+        const completed = ChibiModule.getCompletedTasksCount();
+        return completed < req.count;
+    },
 
     /**
      * Render complete composite Chibi SVG
@@ -88,6 +152,23 @@ const ChibiModule = {
         const shoeStyle = c.shoeStyle !== undefined ? c.shoeStyle : 1;
         const shoeColor = c.shoeColor || '#1f2937';
 
+        // Dynamic camera zoom-out / viewBox
+        let viewBox = "0 0 200 200";
+        if (c.accessory >= 11 && c.accessory <= 18) {
+            viewBox = "-45 -45 290 290";
+        }
+
+        // Rider transformation body wrappers
+        let bodyWrapperStart = "";
+        let bodyWrapperEnd = "";
+        if (c.accessory === 14) {
+            bodyWrapperStart = '<g class="rider-car-transform" transform="translate(0, 16)">';
+            bodyWrapperEnd = '</g>';
+        } else if (c.accessory === 15) {
+            bodyWrapperStart = '<g class="rider-moto-transform" transform="translate(-12, 10) rotate(8, 100, 180)">';
+            bodyWrapperEnd = '</g>';
+        }
+
         // 1. Back Hair Layer
         let backHairHtml = '';
         if (c.hairStyle === 2) { // Bob cut back hair
@@ -100,6 +181,38 @@ const ChibiModule = {
             backHairHtml = `
                 <path class="${isD ? 'chibi-tail-dance' : ''}" d="M 62 72 C 30 70 25 105 40 115 C 50 120 55 100 58 85 Z" fill="${hairColor}" stroke="#1e1b4b" stroke-width="2.5" />
                 <path class="${isD ? 'chibi-tail-dance' : ''}" d="M 138 72 C 170 70 175 105 160 115 C 150 120 145 100 142 85 Z" fill="${hairColor}" stroke="#1e1b4b" stroke-width="2.5" />
+            `;
+        }
+
+        // Custom Arms configuration for vehicles or normal dance pose
+        let armsHtml = '';
+        if (c.accessory === 14) {
+            // Sports Car driver arms & hands in shifted space (gripping wheel)
+            armsHtml = `
+                <!-- Left Arm & Hand on Steering Wheel -->
+                <path d="M 85 116 Q 74 125 91 116" fill="${skinColor}" stroke="#1e1b4b" stroke-width="2.5" />
+                <circle cx="91" cy="116" r="4.8" fill="${skinColor}" stroke="#1e1b4b" stroke-width="1.2" />
+                
+                <!-- Right Arm & Hand on Steering Wheel -->
+                <path d="M 115 116 Q 126 125 109 116" fill="${skinColor}" stroke="#1e1b4b" stroke-width="2.5" />
+                <circle cx="109" cy="116" r="4.8" fill="${skinColor}" stroke="#1e1b4b" stroke-width="1.2" />
+            `;
+        } else if (c.accessory === 15) {
+            // Cyber Motorcycle rider arms & hands in shifted space (gripping handlebars)
+            armsHtml = `
+                <!-- Left Arm & Hand on handlebar grip -->
+                <path d="M 85 116 Q 100 108 115 112" fill="${skinColor}" stroke="#1e1b4b" stroke-width="2.5" />
+                <circle cx="115" cy="112" r="4.8" fill="${skinColor}" stroke="#1e1b4b" stroke-width="1.2" />
+                
+                <!-- Right Arm & Hand on handlebar grip -->
+                <path d="M 115 116 Q 128 112 135 110" fill="${skinColor}" stroke="#1e1b4b" stroke-width="2.5" />
+                <circle cx="135" cy="110" r="4.8" fill="${skinColor}" stroke="#1e1b4b" stroke-width="1.2" />
+            `;
+        } else {
+            // Default dancing arms
+            armsHtml = `
+                <path class="${isD ? 'chibi-arm-left-dance' : ''}" d="M 85 116 Q 66 128 64 140 C 63 145 69 146 72 142 L 85 125 Z" fill="${skinColor}" stroke="#1e1b4b" stroke-width="2.5" />
+                <path class="${isD ? 'chibi-arm-right-dance' : ''}" d="M 115 116 Q 134 128 136 140 C 137 145 131 146 128 142 L 115 125 Z" fill="${skinColor}" stroke="#1e1b4b" stroke-width="2.5" />
             `;
         }
 
@@ -116,8 +229,7 @@ const ChibiModule = {
             <path d="M 88 114 Q 100 112 112 114 L 115 145 Q 100 148 85 145 Z" fill="${skinColor}" stroke="#1e1b4b" stroke-width="2.5" />
             
             <!-- Arms -->
-            <path class="${isD ? 'chibi-arm-left-dance' : ''}" d="M 85 116 Q 66 128 64 140 C 63 145 69 146 72 142 L 85 125 Z" fill="${skinColor}" stroke="#1e1b4b" stroke-width="2.5" />
-            <path class="${isD ? 'chibi-arm-right-dance' : ''}" d="M 115 116 Q 134 128 136 140 C 137 145 131 146 128 142 L 115 125 Z" fill="${skinColor}" stroke="#1e1b4b" stroke-width="2.5" />
+            ${armsHtml}
             
             <!-- Head / Face base -->
             <circle cx="62" cy="80" r="7" fill="${skinColor}" stroke="#1e1b4b" stroke-width="2.5" />
@@ -444,6 +556,64 @@ const ChibiModule = {
                     <circle cx="30" cy="-15" r="2.8" fill="#ffffff" style="animation: floatSparkle 1.7s infinite 0.5s;" />
                 </g>
             `;
+        } else if (c.accessory === 17) { // Cánh Thiên Thần (Angel Wings)
+            backAccessoryHtml = `
+                <!-- VVIP Angel Wings behind back -->
+                <g class="${isD ? 'chibi-tail-dance' : ''}" style="filter: drop-shadow(0 0 12px #fbbf24) drop-shadow(0 0 25px #f59e0b);">
+                    <!-- Left Wing -->
+                    <g>
+                        <path d="M 100 110 C 60 70 30 50 15 75 C 5 95 20 120 45 125 C 25 125 15 135 25 150 C 35 160 55 155 75 145 C 55 150 45 162 55 172 C 65 180 85 165 100 145 Z" fill="url(#angelGold)" stroke="#d97706" stroke-width="2" />
+                        <path d="M 100 110 C 70 85 50 70 35 90 C 25 105 35 125 55 130" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.8" />
+                        <path d="M 100 110 C 80 100 65 95 55 110" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" opacity="0.8" />
+                    </g>
+                    <!-- Right Wing (Flipped Horizontally across x=100) -->
+                    <g transform="translate(100, 110) scale(-1, 1) translate(-100, -110)">
+                        <path d="M 100 110 C 60 70 30 50 15 75 C 5 95 20 120 45 125 C 25 125 15 135 25 150 C 35 160 55 155 75 145 C 55 150 45 162 55 172 C 65 180 85 165 100 145 Z" fill="url(#angelGold)" stroke="#d97706" stroke-width="2" />
+                        <path d="M 100 110 C 70 85 50 70 35 90 C 25 105 35 125 55 130" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.8" />
+                        <path d="M 100 110 C 80 100 65 95 55 110" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" opacity="0.8" />
+                    </g>
+                </g>
+                <defs>
+                    <linearGradient id="angelGold" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#ffffff" />
+                        <stop offset="50%" stop-color="#fef08a" />
+                        <stop offset="100%" stop-color="#fbbf24" />
+                    </linearGradient>
+                </defs>
+            `;
+        } else if (c.accessory === 18) { // Cánh Ác Quỷ (Devil Wings)
+            backAccessoryHtml = `
+                <!-- VVIP Devil Wings behind back -->
+                <g class="${isD ? 'chibi-tail-dance' : ''}" style="filter: drop-shadow(0 0 12px #ef4444) drop-shadow(0 0 25px #7f1d1d);">
+                    <!-- Left Wing (Bat style) -->
+                    <g>
+                        <!-- Main bone structure -->
+                        <path d="M 100 110 C 80 80 50 60 20 70 C 15 72 10 78 12 84 L 18 100 L 22 120" fill="none" stroke="#1e1b4b" stroke-width="4.5" stroke-linecap="round" />
+                        <!-- Wing web / skin panels -->
+                        <path d="M 100 110 C 80 80 50 60 20 70 C 25 90 35 110 20 120 C 35 125 45 135 35 155 C 50 145 65 140 75 150 C 85 140 95 125 100 110 Z" fill="url(#devilDark)" stroke="#111827" stroke-width="2" />
+                        <!-- Skeleton wing fingers -->
+                        <path d="M 20 70 Q 35 100 35 155" fill="none" stroke="#1e1b4b" stroke-width="2.5" stroke-linecap="round" />
+                        <path d="M 20 70 Q 55 105 75 150" fill="none" stroke="#1e1b4b" stroke-width="2.5" stroke-linecap="round" />
+                    </g>
+                    <!-- Right Wing (Flipped Horizontally across x=100) -->
+                    <g transform="translate(100, 110) scale(-1, 1) translate(-100, -110)">
+                        <!-- Main bone structure -->
+                        <path d="M 100 110 C 80 80 50 60 20 70 C 15 72 10 78 12 84 L 18 100 L 22 120" fill="none" stroke="#1e1b4b" stroke-width="4.5" stroke-linecap="round" />
+                        <!-- Wing web / skin panels -->
+                        <path d="M 100 110 C 80 80 50 60 20 70 C 25 90 35 110 20 120 C 35 125 45 135 35 155 C 50 145 65 140 75 150 C 85 140 95 125 100 110 Z" fill="url(#devilDark)" stroke="#111827" stroke-width="2" />
+                        <!-- Skeleton wing fingers -->
+                        <path d="M 20 70 Q 35 100 35 155" fill="none" stroke="#1e1b4b" stroke-width="2.5" stroke-linecap="round" />
+                        <path d="M 20 70 Q 55 105 75 150" fill="none" stroke="#1e1b4b" stroke-width="2.5" stroke-linecap="round" />
+                    </g>
+                </g>
+                <defs>
+                    <linearGradient id="devilDark" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#4c1d95" />
+                        <stop offset="50%" stop-color="#ef4444" />
+                        <stop offset="100%" stop-color="#000000" />
+                    </linearGradient>
+                </defs>
+            `;
         }
 
         // 10. Tattoo Layer (Over Body skin, under clothes)
@@ -720,9 +890,6 @@ const ChibiModule = {
                     
                     <!-- Steering Wheel -->
                     <ellipse cx="100" cy="132" rx="14" ry="5" fill="none" stroke="#1f2937" stroke-width="3" />
-                    <!-- Hands driving -->
-                    <circle cx="91" cy="132" r="4.8" fill="${skinColor}" stroke="#1e1b4b" stroke-width="1.2" />
-                    <circle cx="109" cy="132" r="4.8" fill="${skinColor}" stroke="#1e1b4b" stroke-width="1.2" />
                 </g>
                 <defs>
                     <linearGradient id="carRedBody" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -769,8 +936,6 @@ const ChibiModule = {
                     <!-- Handlebars -->
                     <line x1="104" y1="134" x2="132" y2="114" stroke="#1e2937" stroke-width="6" stroke-linecap="round" />
                     <circle cx="132" cy="114" r="4.5" fill="#00f3ff" style="filter: drop-shadow(0 0 3px #00f3ff);" />
-                    <!-- Hand holding handlebars -->
-                    <circle cx="123" cy="120" r="5" fill="${skinColor}" stroke="#111" stroke-width="1.5" />
                     
                     <!-- Front visor & LED Headlight -->
                     <path d="M 126 122 L 148 132 L 142 144 L 122 134 Z" fill="#8b5cf6" stroke="#111" stroke-width="1.8" />
@@ -850,7 +1015,7 @@ const ChibiModule = {
 
         // Assemble Final Composite SVG
         return `
-            <svg viewBox="0 0 200 200" width="100%" height="100%" class="${isD ? 'chibi-dance' : ''}" style="display: block;">
+            <svg viewBox="${viewBox}" width="100%" height="100%" class="${isD ? 'chibi-dance' : ''}" style="display: block;">
                 <style>
                     .chibi-dance {
                         animation: chibiBounce 1.5s infinite ease-in-out;
@@ -886,6 +1051,7 @@ const ChibiModule = {
                     }
                 </style>
                 ${sparklesHtml}
+                ${bodyWrapperStart}
                 ${backAccessoryHtml}
                 ${backHairHtml}
                 ${bodyBaseHtml}
@@ -897,6 +1063,7 @@ const ChibiModule = {
                 ${eyelashesHtml}
                 ${mouthHtml}
                 ${frontHairHtml}
+                ${bodyWrapperEnd}
                 ${accHtml}
             </svg>
         `;
@@ -965,12 +1132,15 @@ const ChibiModule = {
             } else if (index === 12) {
                 // Súng vô cực: lấy vùng ngực tay cầm
                 viewBox = '45 100 120 70';
+            } else if (index === 17 || index === 18) {
+                // Cánh thiên thần, ác quỷ: lấy vùng cánh rộng
+                viewBox = '10 10 180 120';
             } else {
                 viewBox = '50 25 100 70';
             }
         }
 
-        return svgStr.replace(/<svg viewBox="0 0 200 200"/g, `<svg viewBox="${viewBox}"`);
+        return svgStr.replace(/<svg viewBox="[^"]*"/g, `<svg viewBox="${viewBox}"`);
     },
 
     /**
@@ -1243,7 +1413,8 @@ const ChibiModule = {
             { id: 'hair', label: '💇 Tóc' },
             { id: 'face', label: '😊 Khuôn Mặt' },
             { id: 'clothing', label: '👕 Quần Áo' },
-            { id: 'accessory', label: '👑 Phụ Kiện' }
+            { id: 'accessory', label: '👑 Phụ Kiện' },
+            { id: 'gear', label: '🚀 Trang Bị VIP' }
         ];
 
         const nav = document.getElementById('chibi-tabs-nav');
@@ -1495,8 +1666,8 @@ const ChibiModule = {
             `;
         } 
         else if (tabId === 'accessory') {
-            // ACCESSORIES SELECTION (Style 0 is None)
-            const options = Array.from({ length: ChibiModule.counts.accessory }, (_, i) => i);
+            // ACCESSORIES SELECTION (Style 0 is None, 1-10 are standard accessories)
+            const options = Array.from({ length: 11 }, (_, i) => i); // 0 to 10
             const accNames = [
                 'Trống',
                 'Kính râm',
@@ -1508,18 +1679,12 @@ const ChibiModule = {
                 'Mũ đầu bếp',
                 'Bịt mắt cướp biển',
                 'Nơ đỏ',
-                'Xăm Kín Người',
-                'Đại Đao Lửa',
-                'Súng Vô Cực',
-                'Kiếm Cyber Laser',
-                'Cưỡi Ô Tô Siêu Cấp',
-                'Cưỡi Xe Máy Cực Ngầu',
-                'Đeo Phao Hồng Hạc'
+                'Xăm Kín Người'
             ];
 
             contentHtml = `
                 <div>
-                    <h4 style="margin: 0 0 10px 0; font-size: 13px; color: #94a3b8; text-transform: uppercase;">Phụ Kiện Đi Kèm</h4>
+                    <h4 style="margin: 0 0 10px 0; font-size: 13px; color: #94a3b8; text-transform: uppercase;">Phụ Kiện Thường</h4>
                     <div class="chibi-item-grid">
                         ${options.map(i => {
                             const activeClass = ChibiModule.currentConfig.accessory === i ? 'active' : '';
@@ -1537,6 +1702,68 @@ const ChibiModule = {
                 </div>
             `;
         }
+        else if (tabId === 'gear') {
+            // VIP GEAR SELECTION (Style 0 is None, 11-18 are VIP gear)
+            const options = [0, 11, 12, 13, 14, 15, 16, 17, 18];
+            const accNames = {
+                0: 'Trống',
+                11: 'Đại Đao Lửa',
+                12: 'Súng Vô Cực',
+                13: 'Kiếm Cyber Laser',
+                14: 'Cưỡi Ô Tô Siêu Cấp',
+                15: 'Cưỡi Xe Máy Cực Ngầu',
+                16: 'Đeo Phao Hồng Hạc',
+                17: 'Cánh Thiên Thần VVIP',
+                18: 'Cánh Ác Quỷ VVIP'
+            };
+
+            const completed = ChibiModule.getCompletedTasksCount();
+
+            contentHtml = `
+                <div>
+                    <h4 style="margin: 0 0 6px 0; font-size: 13px; color: #fbbf24; text-transform: uppercase; display: flex; align-items: center; gap: 6px;">
+                        <span>🚀 TRANG BỊ VIP HÀNG THÁNG</span>
+                        <span style="font-size: 11px; color: #a78bfa; font-weight: normal; margin-left: auto;">Đã làm: ${completed} Task</span>
+                    </h4>
+                    <p style="margin: 0 0 16px 0; font-size: 11px; color: #64748b; line-height: 1.4;">
+                        Hoàn thành số lượng công việc trong tháng hiện tại để mở khóa trang bị VIP cực phẩm. Tự động mở khóa cho Admin.
+                    </p>
+                    <div class="chibi-item-grid">
+                        ${options.map(i => {
+                            const activeClass = ChibiModule.currentConfig.accessory === i ? 'active' : '';
+                            const miniSvg = ChibiModule.renderMiniOption('accessory', i);
+                            
+                            const isLocked = ChibiModule.isGearLocked(i);
+                            const req = ChibiModule.gearRequirements[i];
+                            const label = accNames[i];
+
+                            return `
+                                <div class="chibi-item-card ${activeClass} ${isLocked ? 'locked' : ''}" 
+                                     style="position: relative; overflow: hidden; cursor: pointer;"
+                                     onclick="ChibiModule.selectItem('accessory', ${i})">
+                                    <div class="chibi-item-preview-wrap" style="transform: scale(1.15); ${isLocked ? 'filter: blur(1.5px) grayscale(0.5); opacity: 0.6;' : ''}">
+                                        ${miniSvg}
+                                    </div>
+                                    <span class="chibi-item-label" style="${isLocked ? 'opacity: 0.7;' : ''}">${label}</span>
+                                    ${isLocked ? `
+                                        <!-- Lock overlay card -->
+                                        <div class="chibi-item-lock-overlay" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15,23,42,0.65); backdrop-filter: blur(4px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 4px;">
+                                            <div style="font-size: 16px; text-shadow: 0 0 10px rgba(239,68,68,0.8);">🔒</div>
+                                            <div style="font-size: 9px; font-weight: 800; color: #f87171; text-transform: uppercase; letter-spacing: 0.3px; text-align: center; line-height: 1.1;">
+                                                Đạt ${req.count} Task
+                                            </div>
+                                            <div style="font-size: 8px; color: #94a3b8; font-weight: 600; text-align: center;">
+                                                (${completed}/${req.count})
+                                            </div>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        }
 
         panel.innerHTML = contentHtml;
     },
@@ -1545,6 +1772,12 @@ const ChibiModule = {
      * Choose an item style
      */
     selectItem: function(property, index) {
+        if (property === 'accessory' && ChibiModule.isGearLocked(index)) {
+            const req = ChibiModule.gearRequirements[index];
+            const completed = ChibiModule.getCompletedTasksCount();
+            Utils.showToast(`🔒 Bạn cần hoàn thành ít nhất ${req.count} công việc trong tháng này để mở khóa "${req.label}"! (Hiện tại: ${completed}/${req.count})`, "error");
+            return;
+        }
         ChibiModule.currentConfig[property] = index;
         ChibiModule.updatePreview();
         ChibiModule.switchTab(ChibiModule.activeTab); // Rerender items in panel to show selected
@@ -1629,6 +1862,11 @@ const ChibiModule = {
         const randomClothing2 = randItem(ChibiModule.colors.clothing);
         const randomClothing3 = randItem(ChibiModule.colors.clothing);
 
+        // Filter unlocked accessories for randomization
+        const unlockedAccessories = Array.from({ length: ChibiModule.counts.accessory }, (_, i) => i)
+            .filter(i => !ChibiModule.isGearLocked(i));
+        const randomAccessory = unlockedAccessories.length > 0 ? randItem(unlockedAccessories) : 0;
+
         ChibiModule.currentConfig = {
             gender: Math.random() > 0.5 ? 'nam' : 'nữ',
             skinColor: randomSkin,
@@ -1642,7 +1880,7 @@ const ChibiModule = {
             bottomColor: randomClothing2,
             shoeStyle: randStyle(ChibiModule.counts.shoe - 1) + 1, // Avoid barefoot in random
             shoeColor: randomClothing3,
-            accessory: randStyle(ChibiModule.counts.accessory) // Can be none (style 0)
+            accessory: randomAccessory
         };
 
         ChibiModule.updatePreview();
@@ -1670,6 +1908,13 @@ const ChibiModule = {
     saveBuilder: async function() {
         const user = Auth.currentUser;
         if (!user) return;
+
+        if (ChibiModule.isGearLocked(ChibiModule.currentConfig.accessory)) {
+            const req = ChibiModule.gearRequirements[ChibiModule.currentConfig.accessory];
+            const completed = ChibiModule.getCompletedTasksCount();
+            Utils.showToast(`🔒 Bạn không thể lưu vì trang bị "${req ? req.label : ''}" đang khóa! (Hiện tại: ${completed}/${req ? req.count : 0})`, "error");
+            return;
+        }
 
         const profile = user.profile || {};
         profile.chibiConfig = { ...ChibiModule.currentConfig };
