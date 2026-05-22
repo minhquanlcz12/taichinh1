@@ -22,7 +22,7 @@ const ClaudeModule = {
     },
 
     // --- API CORE: Gửi yêu cầu đến Anthropic ---
-    sendMessage: async (userText, systemPrompt = "You are a helpful assistant for a business management system.") => {
+    sendMessage: async (userText, systemPrompt = "You are a helpful assistant for a business management system.", maxTokens = 1024) => {
         const settings = ClaudeModule.getSettings();
 
         if (!settings.key) {
@@ -45,11 +45,11 @@ const ClaudeModule = {
                     "Content-Type": "application/json",
                     "x-api-key": settings.key,
                     "anthropic-version": "2023-06-01",
-                    "dangerously-allow-browser": "true" 
+                    "anthropic-dangerous-direct-browser-access": "true" 
                 },
                 body: JSON.stringify({
                     model: settings.model,
-                    max_tokens: 1024,
+                    max_tokens: maxTokens,
                     system: systemPrompt,
                     messages: messages
                 })
