@@ -263,10 +263,16 @@ const PayrollModule = {
                 const attendancePay = paidDays * dailyRate;
                 const latePenaltyTotal = lateDays * PayrollModule.LATE_PENALTY;
                 
+                // Thưởng chuyên cần: 200k nếu đi muộn 0 lần và có đi làm ít nhất 15 ngày (hoặc tỷ lệ đi làm > 50%)
+                let punctualityBonus = 0;
+                if (lateDays === 0 && (onTimeDays + approvedLeaveDays) >= 15) {
+                    punctualityBonus = 200000;
+                }
+
                 // Manual custom Bonus/Penalty
                 const customBonus = parseFloat(monthlyBonuses[username]) || 0;
 
-                const netSalary = attendancePay + customBonus - latePenaltyTotal;
+                const netSalary = attendancePay + customBonus + punctualityBonus - latePenaltyTotal;
 
                 return `
                     <tr>
@@ -288,9 +294,11 @@ const PayrollModule = {
                         </td>
                         <td style="text-align: right; font-size: 13px;">
                             ${currentUser.role === 'admin' ? 
-                            `<input type="number" class="form-control" style="width: 100px; padding: 4px 8px; font-size: 13px; text-align: right; display: inline-block; color: ${customBonus >= 0 ? 'var(--success)' : 'var(--danger)'}; border-color: rgba(255,255,255,0.1);" value="${customBonus}" placeholder="0" onchange="PayrollModule.saveCustomBonus('${username}', this.value)">` 
+                            `<div style="margin-bottom: 4px;"><input type="number" class="form-control" style="width: 100px; padding: 4px 8px; font-size: 13px; text-align: right; display: inline-block; color: ${customBonus >= 0 ? 'var(--success)' : 'var(--danger)'}; border-color: rgba(255,255,255,0.1);" value="${customBonus}" placeholder="0" onchange="PayrollModule.saveCustomBonus('${username}', this.value)"></div>` 
                             : `<strong style="color: ${customBonus >= 0 ? 'var(--success)' : 'var(--danger)'};">${customBonus > 0 ? '+' : ''}${Utils.formatCurrency(customBonus)}</strong>`}
-                            ${latePenaltyTotal > 0 ? `<div style="color: var(--warning); font-size: 11px; margin-top: 4px;">Phạt muộn: -${Utils.formatCurrency(latePenaltyTotal)}</div>` : ''}
+                            
+                            ${punctualityBonus > 0 ? `<div style="color: #64ffda; font-size: 11px; font-weight: bold; margin-bottom: 4px;">Thưởng chuyên cần: +${Utils.formatCurrency(punctualityBonus)}</div>` : ''}
+                            ${latePenaltyTotal > 0 ? `<div style="color: var(--danger); font-size: 11px; margin-top: 4px;">Phạt muộn: -${Utils.formatCurrency(latePenaltyTotal)}</div>` : ''}
                         </td>
                         <td style="text-align: right;">
                             <strong style="font-size: 16px; color: ${netSalary >= 0 ? 'var(--success)' : 'var(--danger)'};">

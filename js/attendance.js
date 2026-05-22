@@ -619,8 +619,19 @@ const Attendance = {
         if (now > deadline) {
             status = 'late';
             lateMinutes = Math.floor((now - deadline) / 60000);
-            const locStr = lat ? `\n📍 https://google.com/maps?q=${lat},${lng}` : '';
-            Utils.notifyTelegram(`⚠️ <b>[ĐI MUỘN]</b>\n👤 ${user.username}\n⏰ ${now.toLocaleTimeString('vi-VN')}\n⏳ Muộn ${lateMinutes}p${locStr}`);
+            const locStr = lat ? `\n📍 <b>Vị trí:</b> <a href="https://google.com/maps?q=${lat},${lng}">Xem bản đồ</a>` : '';
+            const shiftName = now.getHours() < 12 ? 'CA SÁNG' : 'CA CHIỀU';
+            
+            let telegramMsg = `🚨 <b>CẢNH BÁO VI PHẠM KỶ LUẬT</b> 🚨\n\n`;
+            telegramMsg += `👤 <b>Nhân sự:</b> ${user.username}\n`;
+            telegramMsg += `⏰ <b>Thời gian:</b> ${now.toLocaleTimeString('vi-VN')} (${shiftName})\n`;
+            telegramMsg += `❗ <b>Tình trạng:</b> ĐI MUỘN <b>${lateMinutes}</b> PHÚT\n`;
+            telegramMsg += `💸 <b>Phạt vi phạm:</b> 20,000đ (Đã tự động trừ lương)\n`;
+            telegramMsg += `📉 <b>Trừ công đức:</b> -1đ\n`;
+            telegramMsg += `${locStr}\n\n`;
+            telegramMsg += `<i>"Kỷ luật là sức mạnh! Đề nghị sếp ${user.username} rút kinh nghiệm sâu sắc."</i>`;
+
+            Utils.notifyTelegram(telegramMsg);
         }
 
         const newRecord = {

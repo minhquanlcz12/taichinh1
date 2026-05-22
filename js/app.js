@@ -498,6 +498,7 @@ const app = {
         const allTasksForLeaderboard = WorkModule.data.tasks || [];
         app.renderProjectProgress(allTasksForLeaderboard);
         app.renderHallOfFame(allTasksForLeaderboard);
+        app.renderHallOfShame();
     },
 
     renderProjectProgress: (tasks) => {
@@ -636,6 +637,72 @@ const app = {
                     <div style="text-align: right;">
                         <div style="font-size: 14px; font-weight: 900; color: var(--primary);">${Math.round(u.rate)}%</div>
                         <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary);">Hiệu suất</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    },
+
+    renderHallOfShame: async () => {
+        const container = document.getElementById('dash-hall-of-shame');
+        if (!container) return;
+
+        // Tải dữ liệu chấm công từ AttendanceModule
+        if (typeof Attendance === 'undefined' || !Attendance.loadData) return;
+        
+        const logs = await Attendance.loadData();
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+
+        // Lọc dữ liệu đi muộn trong tháng này
+        const lateStats = {};
+        logs.forEach(log => {
+            if (log.status === 'late') {
+                const logDate = new Date(log.timestamp);
+                if (logDate.getMonth() === currentMonth && logDate.getFullYear() === currentYear) {
+                    const u = log.username;
+                    if (!lateStats[u]) lateStats[u] = { count: 0, totalMinutes: 0 };
+                    lateStats[u].count++;
+                    lateStats[u].totalMinutes += (log.lateMinutes || 0);
+                }
+            }
+        });
+
+        const rankedShame = Object.keys(lateStats).map(u => {
+            return {
+                username: u,
+                displayName: Utils.getUserDisplayName(u) || u,
+                count: lateStats[u].count,
+                totalMinutes: lateStats[u].totalMinutes,
+                avatarHtml: "" // Sẽ lấy sau
+            };
+        }).sort((a, b) => b.count - a.count || b.totalMinutes - a.totalMinutes);
+
+        if (rankedShame.length === 0) {
+            container.innerHTML = '<div style="color: var(--text-secondary); font-size: 13px; text-align: center; padding: 20px 0;">Tháng này thật tuyệt vời, không ai đi muộn! 🌟</div>';
+            return;
+        }
+
+        const accounts = await Auth.getAccounts();
+        
+        container.innerHTML = rankedShame.slice(0, 5).map((u, i) => {
+            const acc = accounts.find(a => a.username === u.username);
+            const userColor = Utils.getUserAvatarColor(u.username);
+            let avatarHtml = `<span style="display:flex; align-items:center; justify-content:center; width:36px; height:36px; background:${userColor}; border-radius:50%; color:#fff; font-weight:bold; font-size:14px; border: 2px solid ${userColor}; box-shadow:0 0 8px ${userColor}88;">${u.username[0].toUpperCase()}</span>`;
+            if (acc && acc.profile && acc.profile.avatar) {
+                avatarHtml = `<img src="${acc.profile.avatar}" style="width:36px; height:36px; border-radius:50%; object-fit:cover; border: 2px solid rgba(255,255,255,0.1);">`;
+            }
+
+            return `
+                <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(231,76,60,0.05); padding: 8px 12px; border-radius: 8px; border-left: 3px solid #e74c3c;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="font-size: 14px; font-weight: bold; color: #ff6b6b; width: 15px;">#${i + 1}</span>
+                        ${avatarHtml}
+                        <div>
+                            <div style="font-weight: 600; font-size: 13px; color: #ff6b6b;">${u.displayName}</div>
+                            <div style="font-size: 11px; color: var(--text-secondary);">Vi phạm: <b>${u.count} lần</b> (${u.totalMinutes}p)</div>
+                        </div>
                     </div>
                 </div>
             `;
