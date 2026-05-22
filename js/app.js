@@ -556,59 +556,59 @@ const app = {
         const container = document.getElementById('dash-hall-of-fame');
         if (!container) return;
 
+        // Lấy danh sách account trước để khởi tạo users
+        const accounts = await Auth.getAccounts();
+        const users = {};
+        accounts.forEach(acc => {
+            users[acc.username] = { total: 0, done: 0, expired: 0, displayName: Utils.getUserDisplayName(acc.username) || acc.username, profile: acc.profile };
+        });
+
         // Bảng vàng chỉ nên hiện các task đã hoàn thành TRONG THÁNG NÀY
         const allSystemTasks = WorkModule.data.tasks || [];
         const now = new Date();
         const currentMonth = now.getMonth();
         const currentYear = now.getFullYear();
 
-        const monthlyTasks = allSystemTasks.filter(t => {
+        allSystemTasks.forEach(t => {
             const dateStr = t.ngayDang || t.deadline;
-            if (!dateStr) return false;
+            if (!dateStr) return;
             let d;
             if (dateStr.includes('-')) d = new Date(dateStr);
             else if (dateStr.includes('/')) {
                 const p = dateStr.split('/');
-                d = new Date(`${p[2]}-${p[1]}-${p[0]}`);
+                if (p.length === 3) d = new Date(`${p[2]}-${p[1]}-${p[0]}T00:00:00`);
             }
-            return d && d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-        });
-        
-        const users = {};
-        monthlyTasks.forEach(t => {
-            const owner = t.owner || 'admin';
-            if (!users[owner]) users[owner] = { total: 0, done: 0, expired: 0 };
-            users[owner].total++;
             
-            const st = (t.trangThai || '').toLowerCase();
-            if (st.includes('done') || st.includes('hoàn thành')) users[owner].done++;
-            else if (st.includes('hết hạn') || st.includes('quá hạn')) users[owner].expired++;
+            if (d && d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
+                const owner = t.owner || 'admin';
+                if (!users[owner]) return;
+                
+                users[owner].total++;
+                const st = (t.trangThai || '').toLowerCase();
+                if (st.includes('done') || st.includes('hoàn thành')) users[owner].done++;
+                else if (st.includes('hết hạn') || st.includes('quá hạn')) users[owner].expired++;
+            }
         });
-
-        // Lấy thông tin account để hiển thị avatar
-        const accounts = await Auth.getAccounts();
 
         const rankedUsers = Object.keys(users).map(u => {
-            const account = accounts.find(a => a.username === u);
             const userColor = Utils.getUserAvatarColor(u);
-            const displayName = Utils.getUserDisplayName(u) || u;
+            const userData = users[u];
             
             let avatarHtml = `<span style="display:flex; align-items:center; justify-content:center; width:36px; height:36px; background:${userColor}; border-radius:50%; color:#fff; font-weight:bold; font-size:14px; border: 2px solid ${userColor}; box-shadow:0 0 8px ${userColor}88;">${u[0].toUpperCase()}</span>`;
-            if (account && account.profile && account.profile.avatar) {
-                avatarHtml = `<img src="${account.profile.avatar}" style="width:36px; height:36px; border-radius:50%; object-fit:cover; border: 2px solid rgba(255,255,255,0.1);">`;
+            if (userData.profile && userData.profile.avatar) {
+                avatarHtml = `<img src="${userData.profile.avatar}" style="width:36px; height:36px; border-radius:50%; object-fit:cover; border: 2px solid rgba(255,255,255,0.1);">`;
             }
 
             return {
                 username: u,
-                displayName: displayName,
-                done: users[u].done,
-                total: users[u].total,
-                expired: users[u].expired,
+                displayName: userData.displayName,
+                done: userData.done,
+                total: userData.total,
+                expired: userData.expired,
                 avatarHtml: avatarHtml,
-                rate: users[u].total > 0 ? (users[u].done / users[u].total * 100) : 0
+                rate: userData.total > 0 ? (userData.done / userData.total * 100) : 0
             }
         })
-        .filter(u => accounts.some(a => a.username === u.username)) // Fix: so sánh username thay vì displayName
         .filter(u => u.done > 0)
         .sort((a, b) => b.done - a.done);
 
