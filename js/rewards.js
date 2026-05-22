@@ -333,40 +333,51 @@ const RewardsModule = {
             .status-ready {
                 color: #fff;
                 font-weight: bold;
-                font-size: 14px;
-                letter-spacing: 1px;
-                text-shadow: 0 0 5px var(--card-color), 0 0 15px var(--card-color);
-            }
-
-            .status-locked {
-                color: #ef4444;
-                font-weight: bold;
-                font-size: 14px;
-                letter-spacing: 1px;
-            }
-
-            /* Lucky Wheel Styles Premium */
-            .wheel-wrapper {
+                           .wheel-wrapper {
                 position: relative;
-                width: 320px;
-                height: 320px;
-                padding: 10px;
+                width: 360px;
+                height: 360px;
+                padding: 20px;
                 background: #000;
                 border-radius: 50%;
-                box-shadow: 0 0 40px rgba(16, 185, 129, 0.4), inset 0 0 20px rgba(16, 185, 129, 0.2);
-                border: 2px solid #10b981;
+                box-shadow: 0 0 50px rgba(16, 185, 129, 0.4), inset 0 0 30px rgba(16, 185, 129, 0.2);
+                border: 3px solid #10b981;
+                display: flex; align-items: center; justify-content: center;
             }
+            /* Đèn LED viền */
+            .wheel-rim-lights {
+                position: absolute;
+                width: 100%; height: 100%;
+                border-radius: 50%;
+                z-index: 5;
+                pointer-events: none;
+            }
+            .light-dot {
+                position: absolute;
+                width: 8px; height: 8px;
+                background: #fff;
+                border-radius: 50%;
+                left: 50%; top: 5px;
+                transform-origin: 50% 175px;
+                box-shadow: 0 0 10px #fff, 0 0 20px #10b981;
+                animation: ledBlink 1s infinite alternate;
+            }
+            @keyframes ledBlink {
+                0% { opacity: 0.3; filter: brightness(0.5); }
+                100% { opacity: 1; filter: brightness(1.5); box-shadow: 0 0 15px #10b981, 0 0 30px #10b981; }
+            }
+
             .wheel-pointer-premium {
                 position: absolute;
-                top: -20px;
+                top: -15px;
                 left: 50%;
                 transform: translateX(-50%);
-                width: 40px;
-                height: 50px;
+                width: 45px;
+                height: 55px;
                 background: #fff;
                 clip-path: polygon(0 0, 100% 0, 50% 100%);
-                z-index: 20;
-                box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+                z-index: 25;
+                filter: drop-shadow(0 5px 15px rgba(0,0,0,0.8));
                 border-bottom-left-radius: 5px;
                 border-bottom-right-radius: 5px;
             }
@@ -377,21 +388,31 @@ const RewardsModule = {
                 position: relative;
                 overflow: hidden;
                 transition: transform 5s cubic-bezier(0.1, 0, 0, 1);
-                border: 4px solid #111;
+                border: 6px solid #111;
+                background: #111;
             }
+            /* Animation xoay nhẹ lúc đứng yên */
+            .wheel-container-p.idle {
+                animation: wheelIdle 20s infinite linear;
+            }
+            @keyframes wheelIdle {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+            }
+
             .wheel-bg-gradient {
                 position: absolute;
                 width: 100%;
                 height: 100%;
                 background: conic-gradient(
-                    #1e293b 0deg 45deg,
+                    #1e1b4b 0deg 45deg,
                     #059669 45deg 90deg,
-                    #047857 90deg 135deg,
-                    #1e293b 135deg 180deg,
+                    #064e3b 90deg 135deg,
+                    #1e1b4b 135deg 180deg,
                     #059669 180deg 225deg,
-                    #d97706 225deg 270deg,
-                    #1e293b 270deg 315deg,
-                    #db2777 315deg 360deg
+                    #92400e 225deg 270deg,
+                    #1e1b4b 270deg 315deg,
+                    #9d174d 315deg 360deg
                 );
             }
             .wheel-content-layer {
@@ -406,71 +427,81 @@ const RewardsModule = {
                 transform: rotate(calc(45deg * var(--i)));
                 display: flex;
                 justify-content: center;
-                padding-top: 30px;
+                padding-top: 35px;
                 color: #fff;
                 font-weight: 900;
-                font-size: 16px;
+                font-size: 15px;
                 text-transform: uppercase;
                 letter-spacing: 1px;
-                text-shadow: 0 2px 5px rgba(0,0,0,0.8);
-            }
-            .wheel-item span {
-                transform: rotate(0deg);
-                display: block;
+                text-shadow: 0 2px 8px rgba(0,0,0,1);
             }
             .wheel-center-cap {
                 position: absolute;
                 top: 50%; left: 50%;
                 transform: translate(-50%, -50%);
-                width: 60px; height: 60px;
+                width: 70px; height: 70px;
                 background: #000;
                 border-radius: 50%;
                 z-index: 15;
                 border: 4px solid #10b981;
                 display: flex; align-items: center; justify-content: center;
-                box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+                box-shadow: 0 0 30px rgba(16, 185, 129, 0.6);
             }
             .cap-inner {
-                width: 20px; height: 20px;
+                width: 25px; height: 25px;
                 background: #10b981;
                 border-radius: 50%;
-                box-shadow: 0 0 10px #10b981;
+                box-shadow: 0 0 15px #10b981;
+                animation: pulseGlow 2s infinite;
+            }
+            @keyframes pulseGlow {
+                0% { transform: scale(1); opacity: 0.8; }
+                50% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 25px #10b981; }
+                100% { transform: scale(1); opacity: 0.8; }
             }
 
             .cyber-glitch-title {
-                font-size: 24px;
+                font-size: 28px;
                 font-weight: 900;
                 color: #fff;
-                letter-spacing: 4px;
+                letter-spacing: 5px;
                 margin-bottom: 5px;
-                text-shadow: 2px 2px #ff00ff, -2px -2px #00ffff;
+                text-shadow: 3px 3px #ff00ff, -3px -3px #00ffff;
+                animation: titleGlitch 5s infinite;
             }
-            .cyber-subtitle {
-                font-size: 11px;
-                color: #10b981;
-                letter-spacing: 3px;
-                margin-bottom: 10px;
-                font-weight: bold;
-                opacity: 0.8;
+            @keyframes titleGlitch {
+                0%, 90%, 100% { transform: none; opacity: 1; }
+                91% { transform: skewX(20deg); opacity: 0.8; }
+                93% { transform: skewX(-20deg); opacity: 0.9; }
+                95% { transform: translate(5px, -5px); }
             }
 
             .spin-btn-premium {
                 background: linear-gradient(135deg, #10b981, #059669);
                 color: #000;
                 border: none;
-                padding: 15px 50px;
+                padding: 18px 60px;
                 border-radius: 4px;
                 font-weight: 900;
-                font-size: 18px;
+                font-size: 20px;
                 cursor: pointer;
-                box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+                box-shadow: 0 0 30px rgba(16, 185, 129, 0.5);
                 transition: all 0.3s;
                 text-transform: uppercase;
                 letter-spacing: 2px;
                 clip-path: polygon(10% 0, 100% 0, 90% 100%, 0% 100%);
             }
             .spin-btn-premium:hover:not(:disabled) {
-                transform: scale(1.05) skewX(-2deg);
+                transform: scale(1.1) skewX(-2deg);
+                box-shadow: 0 0 50px rgba(16, 185, 129, 0.9);
+                color: #fff;
+            }
+            .spin-btn-premium:disabled {
+                background: #1e293b;
+                cursor: not-allowed;
+                opacity: 0.5;
+                color: #475569;
+            }              transform: scale(1.05) skewX(-2deg);
                 box-shadow: 0 0 40px rgba(16, 185, 129, 0.8);
                 color: #fff;
             }
@@ -529,16 +560,19 @@ const RewardsModule = {
 
                         <div class="wheel-wrapper">
                             <div class="wheel-pointer-premium"></div>
-                            <div id="lucky-wheel-main" class="wheel-container-p">
+                            <div class="wheel-rim-lights">
+                                ${Array.from({length: 12}).map((_, i) => `<div class="light-dot" style="transform: rotate(${i * 30}deg);"></div>`).join('')}
+                            </div>
+                            <div id="lucky-wheel-main" class="wheel-container-p idle">
                                 <div class="wheel-bg-gradient"></div>
                                 <div class="wheel-content-layer">
-                                    <div class="wheel-item" style="--i:0;"><span>Hụt rôì!</span></div>
+                                    <div class="wheel-item" style="--i:0;"><span>Hụt rồi!</span></div>
                                     <div class="wheel-item" style="--i:1;"><span>+1đ</span></div>
                                     <div class="wheel-item" style="--i:2;"><span>+2đ</span></div>
-                                    <div class="wheel-item" style="--i:3;"><span>Hụt rôì!</span></div>
+                                    <div class="wheel-item" style="--i:3;"><span>Hụt rồi!</span></div>
                                     <div class="wheel-item" style="--i:4;"><span>+1đ</span></div>
                                     <div class="wheel-item" style="--i:5;"><span>+5đ</span></div>
-                                    <div class="wheel-item" style="--i:6;"><span>Hụt rôì!</span></div>
+                                    <div class="wheel-item" style="--i:6;"><span>Hụt rồi!</span></div>
                                     <div class="wheel-item" style="--i:7;"><span>THẺ TRÀ</span></div>
                                 </div>
                             </div>
@@ -548,10 +582,10 @@ const RewardsModule = {
                         </div>
 
                         <div class="spin-controls">
-                            <button onclick="RewardsModule.spinWheel()" class="spin-btn-premium" ${meritInfo.current < 1 || RewardsModule._isSpinning ? 'disabled' : ''}>
-                                ${RewardsModule._isSpinning ? '<i class="fa-solid fa-sync fa-spin"></i> COMPUTER... ' : '<i class="fa-solid fa-bolt"></i> QUAY NGAY (-1đ)'}
+                            <button id="spin-btn-v2" onclick="RewardsModule.spinWheel()" class="spin-btn-premium" ${meritInfo.current < 1 || RewardsModule._isSpinning ? 'disabled' : ''}>
+                                ${RewardsModule._isSpinning ? '<i class="fa-solid fa-sync fa-spin"></i> COMPUTER... ' : '<i class="fa-solid fa-bolt"></i> LIỀU THÌ ĂN NHIỀU (-1đ)'}
                             </button>
-                            <div style="margin-top: 15px; font-size: 11px; color: #64748b; font-family: monospace; letter-spacing: 1px;">SYSTEM STATUS: READY_TO_SPIN</div>
+                            <div style="margin-top: 15px; font-size: 11px; color: #10b981; font-family: monospace; letter-spacing: 1px; text-shadow: 0 0 5px #10b981;">SYSLOAD: STATUS_REDHOT_READY</div>
                         </div>
                     </div>
                 </div>
@@ -604,103 +638,116 @@ const RewardsModule = {
         const wheelEl = document.getElementById('lucky-wheel-main');
         if (!wheelEl) return;
 
-        // Trừ 1 điểm phí tham gia ngay lập tức
-        const participationRecord = {
-            id: 'spin_fee_' + Date.now(),
-            username: user.username,
-            timestamp: Date.now(),
-            cardId: 'wheel_entry',
-            title: '🎡 Lượt Quay May Mắn',
-            icon: 'fa-spinner',
-            color: '#34d399',
-            cost: 1
-        };
-        const allRewards = await RewardsModule.loadData();
-        allRewards.push(participationRecord);
-        await RewardsModule.saveData(allRewards);
-
-        // Tính toán kết quả
-        // 8 phân đoạn: 0-45: Miss, 45-90: +1, 90-135: +2, 135-180: Miss, 180-225: +1, 225-270: +5, 270-315: Miss, 315-360: THẺ TRÀ
-        const prizes = [
-            { label: 'Hụt rồi!', pts: 0, msg: 'Hụt rồi! May mắn lần sau nhé 😅' },
-            { label: '+1 Điểm', pts: 1, msg: 'Hòa vốn! Bạn nhận lại 1 công đức 🧧' },
-            { label: '+2 Điểm', pts: 2, msg: 'Lãi rồi! Chúc mừng bạn được +2 công đức 🎆' },
-            { label: 'Hụt rồi!', pts: 0, msg: 'Suýt trúng! Cố lên bạn ơi 🍀' },
-            { label: '+1 Điểm', pts: 1, msg: 'Hòa vốn! Nhận lại 1 công đức nè 🧧' },
-            { label: '+5 Điểm', pts: 5, msg: 'XUẤT SẮC! Bạn trúng hũ +5 công đức 💎' },
-            { label: 'Hụt rồi!', pts: 0, msg: 'Hụt mất rồi! Quay lại phát nữa xem sao? ✨' },
-            { label: 'THẺ TRÀ', pts: 0, isCard: true, cardId: 'card_tea', msg: 'SIÊU CẤP MAY MẮN! Trúng ngay 1 THẺ TRÀ CHIỀU (trị giá 5đ) 🥤' }
-        ];
-
-        const rand = Math.random();
-        let prizeIdx = 0;
-        // Xác suất tùy chỉnh: 
-        if (rand < 0.40) prizeIdx = [0, 3, 6][Math.floor(Math.random() * 3)]; // 40% hụt
-        else if (rand < 0.75) prizeIdx = [1, 4][Math.floor(Math.random() * 2)]; // 35% hòa vốn
-        else if (rand < 0.88) prizeIdx = 2; // 13% lãi +2
-        else if (rand < 0.96) prizeIdx = 5; // 8% trúng +5 (Sửa lại chút tỉ lệ cho tròn segment)
-        else prizeIdx = 7; // 4% trúng thẻ
-
-        const prize = prizes[prizeIdx];
+        // Xử lý việc chuyển từ IDLE sang SPIN: 
+        // 1. Lấy góc hiện tại
+        const style = window.getComputedStyle(wheelEl);
+        const matrix = style.getPropertyValue("transform");
+        let currentAngle = 0;
+        if (matrix !== "none") {
+            const values = matrix.split('(')[1].split(')')[0].split(',');
+            const a = values[0]; const b = values[1];
+            currentAngle = Math.round(Math.atan2(b, a) * (180/Math.PI));
+            if (currentAngle < 0) currentAngle += 360;
+        }
         
-        // Tính góc quay (quay ít nhất 5 vòng + góc tới prize)
-        // Segment 0: 0-45, S1: 45-90... 
-        // Vòng quay quay ngược chiều kim đồng hồ tương đối với kim chỉ? 
-        // Không, vòng quay xoay, kim đứng yên ở trên cùng (270deg của wheel coordinate nếu wheel xoay)
-        // Một cách dễ hơn: Quay wheel sao cho segment prize nằm ở đỉnh (góc 0 hoặc 360)
-        const segmentAngle = 360 / 8;
-        // Góc để segment prizeIdx nằm ở vị trí 12h:
-        // Segment 0 là từ 0 -> 45deg. Tâm nó là 22.5deg.
-        // Để 22.5deg nằm ở đỉnh (0deg), ta cần xoay wheel ngược lại -22.5deg.
-        const targetAngle = 360 - (prizeIdx * segmentAngle) - (segmentAngle / 2); 
-        const extraSpins = 7 + Math.floor(Math.random() * 5); // Tăng số vòng quay cho kịch tính
-        const finalRotation = (extraSpins * 360) + targetAngle;
+        // 2. Dừng animation idle và set transform cứng
+        wheelEl.classList.remove('idle');
+        wheelEl.style.transform = `rotate(${currentAngle}deg)`;
         
-        RewardsModule._currentRotation += finalRotation;
-        wheelEl.style.transform = `rotate(${RewardsModule._currentRotation}deg)`;
-
-        // Đợi quay xong (5s trong CSS transition mới)
+        // Timeout nhỏ để trình duyệt nhận diện việc remove class rồi mới apply transition mới
         setTimeout(async () => {
-            if (prize.pts > 0) {
-                // Cộng điểm
-                const winRecord = {
-                    id: 'spin_win_' + Date.now(),
-                    username: user.username,
-                    timestamp: Date.now(),
-                    cardId: 'wheel_win',
-                    title: `🎡 Thưởng: ${prize.label}`,
-                    icon: 'fa-gift',
-                    color: '#ffd700',
-                    cost: -prize.pts // Âm = Cộng điểm
-                };
-                const data = await RewardsModule.loadData();
-                data.push(winRecord);
-                await RewardsModule.saveData(data);
-            } else if (prize.isCard) {
-                // Tặng thẻ
-                const card = RewardsModule._catalog.find(c => c.id === prize.cardId);
-                const winCardRecord = {
-                    id: 'spin_card_' + Date.now(),
-                    username: user.username,
-                    timestamp: Date.now(),
-                    cardId: card.id,
-                    title: `🎡 Trúng Thẻ: ${card.title}`,
-                    icon: card.icon,
-                    color: card.color,
-                    cost: 0 // Free
-                };
-                const data = await RewardsModule.loadData();
-                data.push(winCardRecord);
-                await RewardsModule.saveData(data);
-                
-                // Báo Telegram
-                Utils.notifyTelegram(`🎰 <b>[SIÊU CẤP MAY MẮN]</b>\n👤 <b>${user.username}</b> vừa quay hũ trúng ngay <b>${card.title}</b> miễn phí!`);
-            }
+            // Trừ 1 điểm phí tham gia ngay lập tức
+            const participationRecord = {
+                id: 'spin_fee_' + Date.now(),
+                username: user.username,
+                timestamp: Date.now(),
+                cardId: 'wheel_entry',
+                title: '🎡 Lượt Quay May Mắn',
+                icon: 'fa-spinner',
+                color: '#34d399',
+                cost: 1
+            };
+            const allRewards = await RewardsModule.loadData();
+            allRewards.push(participationRecord);
+            await RewardsModule.saveData(allRewards);
 
-            RewardsModule._isSpinning = false;
-            RewardsModule.showWheelResult(prize);
-            RewardsModule.render();
-        }, 5100);
+            // Tính toán kết quả
+            const prizes = [
+                { label: 'Hụt rồi!', pts: 0, msg: 'Hụt rồi! May mắn lần sau nhé 😅' },
+                { label: '+1 Điểm', pts: 1, msg: 'Hòa vốn! Bạn nhận lại 1 công đức 🧧' },
+                { label: '+2 Điểm', pts: 2, msg: 'Lãi rồi! Chúc mừng bạn được +2 công đức 🎆' },
+                { label: 'Hụt rồi!', pts: 0, msg: 'Suýt trúng! Cố lên bạn ơi 🍀' },
+                { label: '+1 Điểm', pts: 1, msg: 'Hòa vốn! Nhận lại 1 công đức nè 🧧' },
+                { label: '+5 Điểm', pts: 5, msg: 'XUẤT SẮC! Bạn trúng hũ +5 công đức 💎' },
+                { label: 'Hụt rồi!', pts: 0, msg: 'Hụt mất rồi! Quay lại phát nữa xem sao? ✨' },
+                { label: 'THẺ TRÀ', pts: 0, isCard: true, cardId: 'card_tea', msg: 'SIÊU CẤP MAY MẮN! Trúng ngay 1 THẺ TRÀ CHIỀU 🥤' }
+            ];
+
+            const rand = Math.random();
+            let prizeIdx = 0;
+            if (rand < 0.40) prizeIdx = [0, 3, 6][Math.floor(Math.random() * 3)];
+            else if (rand < 0.75) prizeIdx = [1, 4][Math.floor(Math.random() * 2)];
+            else if (rand < 0.88) prizeIdx = 2;
+            else if (rand < 0.96) prizeIdx = 5;
+            else prizeIdx = 7;
+
+            const prize = prizes[prizeIdx];
+            
+            const segmentAngle = 360 / 8;
+            const stopAngle = 360 - (prizeIdx * segmentAngle) - (segmentAngle / 2); 
+            
+            // Tính toán rotation tiếp theo cộng dồn vào currentAngle
+            // Ta muốn rotation mới = currentAngle + (vòng quay thêm) + (góc tới đích từ currentAngle)
+            const extraSpins = 8 + Math.floor(Math.random() * 5); 
+            const finalRotation = (extraSpins * 360) + stopAngle;
+            
+            // Tổng rotation từ lúc load trang đến giờ (để CSS transition chạy mượt)
+            // Vì currentAngle là góc hiện tại mod 360, ta cần cẩn thận
+            // Để đơn giản ta dùng biến lưu trữ tổng rotation tích lũy
+            if (!RewardsModule._totalRot) RewardsModule._totalRot = currentAngle;
+            RewardsModule._totalRot += finalRotation;
+            
+            wheelEl.style.transform = `rotate(${RewardsModule._totalRot}deg)`;
+
+            // Đợi quay xong (5s)
+            setTimeout(async () => {
+                if (prize.pts > 0) {
+                    const winRecord = {
+                        id: 'spin_win_' + Date.now(),
+                        username: user.username,
+                        timestamp: Date.now(),
+                        cardId: 'wheel_win',
+                        title: `🎡 Thưởng: ${prize.label}`,
+                        icon: 'fa-gift',
+                        color: '#ffd700',
+                        cost: -prize.pts
+                    };
+                    const data = await RewardsModule.loadData();
+                    data.push(winRecord);
+                    await RewardsModule.saveData(data);
+                } else if (prize.isCard) {
+                    const card = RewardsModule._catalog.find(c => c.id === prize.cardId);
+                    const winCardRecord = {
+                        id: 'spin_card_' + Date.now(),
+                        username: user.username,
+                        timestamp: Date.now(),
+                        cardId: card.id,
+                        title: `🎡 Trúng Thẻ: ${card.title}`,
+                        icon: card.icon,
+                        color: card.color,
+                        cost: 0
+                    };
+                    const data = await RewardsModule.loadData();
+                    data.push(winCardRecord);
+                    await RewardsModule.saveData(data);
+                    Utils.notifyTelegram(`🎰 <b>[SIÊU CẤP MAY MẮN]</b>\n👤 <b>${user.username}</b> vừa quay hũ trúng ngay <b>${card.title}</b> miễn phí!`);
+                }
+
+                RewardsModule._isSpinning = false;
+                RewardsModule.showWheelResult(prize);
+                RewardsModule.render();
+            }, 5100);
+        }, 50);
     },
 
     showWheelResult: (prize) => {
