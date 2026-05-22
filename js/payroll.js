@@ -443,6 +443,63 @@ const PayrollModule = {
                     font-weight: 900;
                     letter-spacing: 0.5px;
                 }
+
+                /* Personal View 2 Columns Layout */
+                .personal-payroll-container {
+                    display: flex;
+                    gap: 30px;
+                    align-items: stretch;
+                    flex-wrap: wrap;
+                    margin-top: 10px;
+                    width: 100%;
+                }
+                
+                .personal-left-column {
+                    flex: 1;
+                    min-width: 310px;
+                    max-width: 350px;
+                    position: relative;
+                }
+                
+                .personal-right-column {
+                    flex: 1.8;
+                    min-width: 320px;
+                }
+                
+                /* Aura glowing effect behind the single TCG card */
+                .card-aura-glow {
+                    position: absolute;
+                    top: 10%;
+                    left: 10%;
+                    right: 10%;
+                    bottom: 10%;
+                    background: radial-gradient(circle, rgba(var(--card-glow-color, 0, 229, 255), 0.28) 0%, transparent 70%);
+                    filter: blur(35px);
+                    z-index: 1;
+                    pointer-events: none;
+                    animation: auraPulse 4s infinite alternate ease-in-out;
+                }
+                
+                @keyframes auraPulse {
+                    0% { transform: scale(0.9); opacity: 0.5; }
+                    100% { transform: scale(1.15); opacity: 0.95; }
+                }
+                
+                /* Fine tune logs list scrollbar */
+                .personal-logs-list::-webkit-scrollbar {
+                    width: 5px;
+                }
+                .personal-logs-list::-webkit-scrollbar-track {
+                    background: rgba(0,0,0,0.1);
+                    border-radius: 4px;
+                }
+                .personal-logs-list::-webkit-scrollbar-thumb {
+                    background: rgba(255,255,255,0.1);
+                    border-radius: 4px;
+                }
+                .personal-logs-list::-webkit-scrollbar-thumb:hover {
+                    background: rgba(255,255,255,0.2);
+                }
             </style>
             
             <!-- Main Content Area -->
@@ -596,6 +653,8 @@ const PayrollModule = {
 
             let cardsHtml = '';
             let rowsHtml = '';
+            let personalRightHtml = '';
+            let personalGlowColor = '0, 229, 255';
 
             accounts.forEach(acc => {
                 const username = acc.username;
@@ -779,6 +838,149 @@ const PayrollModule = {
                     </div>
                 `;
 
+                if (currentUser.role !== 'admin') {
+                    personalGlowColor = glowColor;
+                    
+                    // Generate chronological logs for target month
+                    const logs = [];
+                    
+                    // Scan attendance logs
+                    allAttendance.forEach(a => {
+                        if (a.username === username && a.dateStr < todayStr) {
+                            const d = new Date(a.dateStr);
+                            if (d.getMonth() === targetMonth && d.getFullYear() === targetYear) {
+                                if (a.status === 'late') {
+                                    logs.push({
+                                        date: a.dateStr,
+                                        type: 'late',
+                                        title: `Đi muộn không phép (-${Utils.formatCurrency(PayrollModule.LATE_PENALTY)})`,
+                                        desc: `Check-in lúc: ${new Date(a.timestamp).toLocaleTimeString('vi-VN')} (Muộn ${a.lateMinutes || 0} phút)`,
+                                        color: 'var(--danger)',
+                                        icon: 'fa-triangle-exclamation'
+                                    });
+                                } else if (a.status === 'late_excused') {
+                                    const reqMin = a.lateExcuse?.requestedMinutes || 30;
+                                    const actMin = a.lateExcuse?.actualLateMinutes || a.lateMinutes || 0;
+                                    const reason = a.lateExcuse?.reason || 'Lý do cá nhân';
+                                    logs.push({
+                                        date: a.dateStr,
+                                        type: 'late_excused',
+                                        title: 'Đi muộn có phép (Được duyệt)',
+                                        desc: `Xin đi trễ ${reqMin} phút (Thực tế muộn ${actMin} phút). Lý do: "${reason}"`,
+                                        color: '#64ffda',
+                                        icon: 'fa-regular fa-clock'
+                                    });
+                                } else if (a.status === 'on_time') {
+                                    logs.push({
+                                        date: a.dateStr,
+                                        type: 'on_time',
+                                        title: 'Đi làm đúng giờ (+1 công đức)',
+                                        desc: `Check-in lúc: ${new Date(a.timestamp).toLocaleTimeString('vi-VN')}`,
+                                        color: 'var(--success)',
+                                        icon: 'fa-circle-check'
+                                    });
+                                }
+                            }
+                        }
+                    });
+                    
+                    // Scan leaves
+                    allLeaves.forEach(l => {
+                        const lDate = l.startDate || l.date || '';
+                        if (l.username === username && l.status === 'approved' && lDate < todayStr) {
+                            const d = new Date(lDate);
+                            if (d.getMonth() === targetMonth && d.getFullYear() === targetYear) {
+                                logs.push({
+                                    date: lDate,
+                                    type: 'leave',
+                                    title: `Nghỉ phép có lương (${l.days || 1} ngày)`,
+                                    desc: `Lý do: "${l.reason || 'Nghỉ phép năm'}"`,
+                                    color: 'var(--primary)',
+                                    icon: 'fa-bed'
+                                });
+                            }
+                        }
+                    });
+                    
+                    // Sort logs descending by date
+                    logs.sort((a, b) => b.date.localeCompare(a.date));
+                    
+                    let logItemsHtml = '';
+                    if (logs.length === 0) {
+                        logItemsHtml = `<div style="text-align: center; color: var(--text-secondary); font-size: 13px; padding: 24px;">Không có ghi nhận vi phạm hay nghỉ phép nào trong tháng này.</div>`;
+                    } else {
+                        logItemsHtml = logs.map(log => `
+                            <div style="display: flex; gap: 12px; background: rgba(255,255,255,0.02); padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.03); align-items: start; transition: all 0.2s;">
+                                <div style="background: rgba(255,255,255,0.05); color: ${log.color}; width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.05);">
+                                    <i class="fa-solid ${log.icon}"></i>
+                                </div>
+                                <div style="flex-grow: 1; font-size: 12px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                                        <strong style="color: #ffffff;">${log.title}</strong>
+                                        <span style="color: var(--text-secondary); font-size: 10px;">${log.date}</span>
+                                    </div>
+                                    <div style="color: var(--text-secondary); line-height: 1.4;">${log.desc}</div>
+                                </div>
+                            </div>
+                        `).join('');
+                    }
+
+                    personalRightHtml = `
+                        <div class="personal-right-column">
+                            <div class="glass-card" style="padding: 24px; border-radius: 18px; border: 1px solid rgba(255,255,255,0.06); background: rgba(10,10,18,0.85); box-shadow: 0 12px 35px rgba(0,0,0,0.6); height: 100%; display: flex; flex-direction: column; gap: 20px;">
+                                <!-- Section 1: Salary Formula & Breakdown -->
+                                <div>
+                                    <h4 style="font-size: 15px; color: #64ffda; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">
+                                        <i class="fa-solid fa-calculator"></i> Chi Tiết Tính Toán Lương
+                                    </h4>
+                                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; font-size: 12px; margin-bottom: 14px;">
+                                        <div style="background: rgba(255,255,255,0.02); padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.04);">
+                                            <span style="color: var(--text-secondary); font-size: 10px; text-transform: uppercase;">Lương cơ bản</span>
+                                            <div style="font-size: 14px; font-weight: 800; color: #ffd700; margin-top: 4px;">${Utils.formatCurrency(baseSalary)}</div>
+                                        </div>
+                                        <div style="background: rgba(255,255,255,0.02); padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.04);">
+                                            <span style="color: var(--text-secondary); font-size: 10px; text-transform: uppercase;">Ngày công chuẩn</span>
+                                            <div style="font-size: 14px; font-weight: 800; color: #ffffff; margin-top: 4px;">${workingDays} ngày</div>
+                                        </div>
+                                        <div style="background: rgba(255,255,255,0.02); padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.04);">
+                                            <span style="color: var(--text-secondary); font-size: 10px; text-transform: uppercase;">Đơn giá/ngày công</span>
+                                            <div style="font-size: 14px; font-weight: 800; color: #ffffff; margin-top: 4px;">${Utils.formatCurrency(Math.round(dailyRate))}</div>
+                                        </div>
+                                        <div style="background: rgba(255,255,255,0.02); padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.04);">
+                                            <span style="color: var(--text-secondary); font-size: 10px; text-transform: uppercase;">Ngày công tính lương</span>
+                                            <div style="font-size: 14px; font-weight: 800; color: #10b981; margin-top: 4px;">${paidDays} ngày</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Formula Block -->
+                                    <div style="background: rgba(0,0,0,0.35); padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06); font-size: 12px; color: var(--text-secondary); line-height: 1.5;">
+                                        <div style="color: #64ffda; font-weight: bold; margin-bottom: 4px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;">Công thức tính Thực Lĩnh:</div>
+                                        Thực lĩnh = (Lương/ngày &times; Số ngày tính lương) + Thưởng/Phạt khác + Thưởng chuyên cần - Phạt đi muộn
+                                        <div style="margin-top: 8px; font-size: 13px; color: #ffffff; font-weight: 600; border-top: 1px dashed rgba(255,255,255,0.08); padding-top: 8px;">
+                                            = (${Utils.formatCurrency(Math.round(dailyRate))} &times; ${paidDays}) 
+                                            ${customBonus !== 0 ? ` ${customBonus > 0 ? '+' : ''}${Utils.formatCurrency(customBonus)}` : ''}
+                                            ${punctualityBonusVal > 0 ? ` + ${Utils.formatCurrency(punctualityBonusVal)}` : ''}
+                                            ${latePenaltyTotal > 0 ? ` - ${Utils.formatCurrency(latePenaltyTotal)}` : ''}
+                                            = <span style="color: ${roundedNetSalary >= 0 ? '#10b981' : '#ef4444'}; font-weight: bold;">${Utils.formatCurrency(roundedNetSalary)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Section 2: Chronological Log -->
+                                <div style="flex-grow: 1; display: flex; flex-direction: column; min-height: 180px;">
+                                    <h4 style="font-size: 15px; color: #64ffda; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">
+                                        <span style="display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-clock-rotate-left"></i> Nhật Ký Chi Tiết Chấm Công</span>
+                                        <span style="font-size: 10px; background: rgba(100,255,218,0.1); color: #64ffda; padding: 2px 8px; border-radius: 20px; font-weight: bold;">Tháng ${PayrollModule.currentMonth.split('-')[1]}</span>
+                                    </h4>
+                                    <div class="personal-logs-list" style="overflow-y: auto; flex-grow: 1; max-height: 240px; display: flex; flex-direction: column; gap: 10px; padding-right: 4px;">
+                                        ${logItemsHtml}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
                 // B. Generating standard table rows (for printing/exports)
                 rowsHtml += `
                     <tr>
@@ -838,7 +1040,22 @@ const PayrollModule = {
                 contentArea.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-secondary);"><i class="fa-solid fa-circle-exclamation"></i> Không có dữ liệu tài khoản</div>';
             } else {
                 if (PayrollModule.viewMode === 'cards') {
-                    contentArea.innerHTML = `<div class="cyber-payroll-grid">${cardsHtml}</div>`;
+                    if (currentUser.role !== 'admin') {
+                        contentArea.innerHTML = `
+                            <div class="personal-payroll-container">
+                                <!-- Left Column: TCG Card with aura glow -->
+                                <div class="personal-left-column">
+                                    <div class="card-aura-glow" style="--card-glow-color: ${personalGlowColor};"></div>
+                                    ${cardsHtml}
+                                </div>
+                                
+                                <!-- Right Column: Highly analytical glassmorphism dashboard -->
+                                ${personalRightHtml}
+                            </div>
+                        `;
+                    } else {
+                        contentArea.innerHTML = `<div class="cyber-payroll-grid">${cardsHtml}</div>`;
+                    }
                 } else {
                     contentArea.innerHTML = `
                         <div class="glass-card" style="overflow-x: auto; padding: 0; border-radius: 12px; border: 1px solid rgba(255,255,255,0.06); background: rgba(10,10,15,0.7);">
