@@ -345,89 +345,148 @@ const RewardsModule = {
                 letter-spacing: 1px;
             }
 
-            /* Lucky Wheel Styles */
-            .wheel-outer {
+            /* Lucky Wheel Styles Premium */
+            .wheel-wrapper {
                 position: relative;
-                width: 280px;
-                height: 280px;
+                width: 320px;
+                height: 320px;
+                padding: 10px;
+                background: #000;
                 border-radius: 50%;
-                border: 8px solid #111;
-                box-shadow: 0 0 0 4px #34d399, 0 0 20px #34d399;
-                background: #111;
-                overflow: hidden;
+                box-shadow: 0 0 40px rgba(16, 185, 129, 0.4), inset 0 0 20px rgba(16, 185, 129, 0.2);
+                border: 2px solid #10b981;
             }
-            .wheel-pointer {
+            .wheel-pointer-premium {
                 position: absolute;
-                top: -5px;
+                top: -20px;
                 left: 50%;
                 transform: translateX(-50%);
-                width: 30px;
-                height: 30px;
+                width: 40px;
+                height: 50px;
                 background: #fff;
                 clip-path: polygon(0 0, 100% 0, 50% 100%);
-                z-index: 10;
-                filter: drop-shadow(0 0 5px #000);
+                z-index: 20;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+                border-bottom-left-radius: 5px;
+                border-bottom-right-radius: 5px;
             }
-            .wheel-main {
-                position: relative;
+            .wheel-container-p {
                 width: 100%;
                 height: 100%;
                 border-radius: 50%;
-                transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1);
+                position: relative;
                 overflow: hidden;
+                transition: transform 5s cubic-bezier(0.1, 0, 0, 1);
+                border: 4px solid #111;
             }
-            .wheel-segment {
+            .wheel-bg-gradient {
                 position: absolute;
-                width: 50%;
-                height: 50%;
-                background: var(--c);
-                transform-origin: bottom right;
-                transform: rotate(calc(45deg * var(--i))) skewY(-45deg);
+                width: 100%;
+                height: 100%;
+                background: conic-gradient(
+                    #1e293b 0deg 45deg,
+                    #059669 45deg 90deg,
+                    #047857 90deg 135deg,
+                    #1e293b 135deg 180deg,
+                    #059669 180deg 225deg,
+                    #d97706 225deg 270deg,
+                    #1e293b 270deg 315deg,
+                    #db2777 315deg 360deg
+                );
+            }
+            .wheel-content-layer {
+                position: absolute;
+                width: 100%;
+                height: 100%;
+            }
+            .wheel-item {
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                transform: rotate(calc(45deg * var(--i)));
                 display: flex;
                 justify-content: center;
-                align-items: center;
-                border: 0.5px solid rgba(255,255,255,0.05);
-            }
-            .wheel-segment span {
-                position: absolute;
-                transform: skewY(45deg) rotate(22.5deg);
-                left: 35px;
-                top: 35px;
-                font-weight: 900;
+                padding-top: 30px;
                 color: #fff;
-                font-size: 18px;
-                text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-            }
-            .spin-btn {
-                background: linear-gradient(135deg, #10b981, #059669);
-                color: #fff;
-                border: none;
-                padding: 12px 40px;
-                border-radius: 30px;
                 font-weight: 900;
                 font-size: 16px;
-                cursor: pointer;
-                box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
-                transition: all 0.2s;
                 text-transform: uppercase;
                 letter-spacing: 1px;
+                text-shadow: 0 2px 5px rgba(0,0,0,0.8);
             }
-            .spin-btn:hover:not(:disabled) {
-                transform: scale(1.05);
-                box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
+            .wheel-item span {
+                transform: rotate(0deg);
+                display: block;
             }
-            .spin-btn:disabled {
+            .wheel-center-cap {
+                position: absolute;
+                top: 50%; left: 50%;
+                transform: translate(-50%, -50%);
+                width: 60px; height: 60px;
+                background: #000;
+                border-radius: 50%;
+                z-index: 15;
+                border: 4px solid #10b981;
+                display: flex; align-items: center; justify-content: center;
+                box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+            }
+            .cap-inner {
+                width: 20px; height: 20px;
+                background: #10b981;
+                border-radius: 50%;
+                box-shadow: 0 0 10px #10b981;
+            }
+
+            .cyber-glitch-title {
+                font-size: 24px;
+                font-weight: 900;
+                color: #fff;
+                letter-spacing: 4px;
+                margin-bottom: 5px;
+                text-shadow: 2px 2px #ff00ff, -2px -2px #00ffff;
+            }
+            .cyber-subtitle {
+                font-size: 11px;
+                color: #10b981;
+                letter-spacing: 3px;
+                margin-bottom: 10px;
+                font-weight: bold;
+                opacity: 0.8;
+            }
+
+            .spin-btn-premium {
+                background: linear-gradient(135deg, #10b981, #059669);
+                color: #000;
+                border: none;
+                padding: 15px 50px;
+                border-radius: 4px;
+                font-weight: 900;
+                font-size: 18px;
+                cursor: pointer;
+                box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+                transition: all 0.3s;
+                text-transform: uppercase;
+                letter-spacing: 2px;
+                clip-path: polygon(10% 0, 100% 0, 90% 100%, 0% 100%);
+            }
+            .spin-btn-premium:hover:not(:disabled) {
+                transform: scale(1.05) skewX(-2deg);
+                box-shadow: 0 0 40px rgba(16, 185, 129, 0.8);
+                color: #fff;
+            }
+            .spin-btn-premium:disabled {
                 background: #334155;
                 cursor: not-allowed;
                 box-shadow: none;
                 opacity: 0.5;
+                color: #64748b;
             }
-            
+
             .rewards-container {
                 max-width: 1200px;
                 margin: 0 auto;
                 padding-bottom: 40px;
-                perspective: 1000px; /* Thêm 3D perspective cho mượt */
+                perspective: 1200px;
             }
             </style>
 
@@ -454,31 +513,46 @@ const RewardsModule = {
                     </div>
                 </div>
 
-                <!-- Lucky Wheel Section -->
-                <div class="glass-panel wheel-section" style="margin-bottom: 40px; padding: 30px; text-align: center; background: linear-gradient(135deg, rgba(16,185,129,0.05), rgba(0,0,0,0.8)); border: 1px dashed rgba(16,185,129,0.3);">
-                    <div style="max-width: 500px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 20px;">
-                        <h3 style="color: #34d399; margin: 0; text-transform: uppercase; letter-spacing: 2px;">
-                            <i class="fa-solid fa-dharmachakra fa-spin" style="--fa-animation-duration: 5s;"></i> Vòng Quay Nhân Phẩm
-                        </h3>
-                        <p style="font-size: 13px; color: var(--text-secondary);">Chỉ với <b>1 Công Đức</b>, thử vận may nhận lại lên đến 5 điểm hoặc Thẻ Bài Đặc Quyền!</p>
-                        
-                        <div class="wheel-outer">
-                            <div class="wheel-pointer"></div>
-                            <div id="lucky-wheel-main" class="wheel-main">
-                                <div class="wheel-segment" style="--i:0; --c:#1e293b;"><span>😅</span></div>
-                                <div class="wheel-segment" style="--i:1; --c:#065f46;"><span>1đ</span></div>
-                                <div class="wheel-segment" style="--i:2; --c:#064e3b;"><span>2đ</span></div>
-                                <div class="wheel-segment" style="--i:3; --c:#1e293b;"><span>🍀</span></div>
-                                <div class="wheel-segment" style="--i:4; --c:#065f46;"><span>1đ</span></div>
-                                <div class="wheel-segment" style="--i:5; --c:#b45309;"><span>5đ</span></div>
-                                <div class="wheel-segment" style="--i:6; --c:#1e293b;"><span>😅</span></div>
-                                <div class="wheel-segment" style="--i:7; --c:#be185d;"><span>🥤</span></div>
+                <!-- Lucky Wheel Section - Premium Cyberpunk Version -->
+                <div class="glass-panel wheel-section" style="margin-bottom: 50px; padding: 40px 20px; text-align: center; background: radial-gradient(circle at center, rgba(16,185,129,0.1), rgba(0,0,0,0.9)); border: 1px solid rgba(16,185,129,0.2); position: relative; overflow: hidden; border-radius: 20px;">
+                    <!-- Trang trí nền -->
+                    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('data:image/svg+xml;utf8,<svg width=&quot;40&quot; height=&quot;40&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;><path d=&quot;M0 0h40v40H0z&quot; fill=&quot;none&quot;/><path d=&quot;M0 20h40M20 0v40&quot; stroke=&quot;rgba(16,185,129,0.03)&quot; stroke-width=&quot;1&quot;/></svg>'); opacity: 0.5; pointer-events: none;"></div>
+                    
+                    <div style="max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 30px; position: relative; z-index: 2;">
+                        <div class="wheel-title-container">
+                            <h3 class="cyber-glitch-title">
+                                <i class="fa-solid fa-dharmachakra fa-spin" style="--fa-animation-duration: 10s; margin-right: 10px; color: #10b981;"></i>
+                                VÒNG QUAY NHÂN PHẨM
+                            </h3>
+                            <div class="cyber-subtitle">THỬ VẬN MAY - NHẬN NGAY ĐẶC QUYỀN</div>
+                        </div>
+
+                        <div class="wheel-wrapper">
+                            <div class="wheel-pointer-premium"></div>
+                            <div id="lucky-wheel-main" class="wheel-container-p">
+                                <div class="wheel-bg-gradient"></div>
+                                <div class="wheel-content-layer">
+                                    <div class="wheel-item" style="--i:0;"><span>Hụt rôì!</span></div>
+                                    <div class="wheel-item" style="--i:1;"><span>+1đ</span></div>
+                                    <div class="wheel-item" style="--i:2;"><span>+2đ</span></div>
+                                    <div class="wheel-item" style="--i:3;"><span>Hụt rôì!</span></div>
+                                    <div class="wheel-item" style="--i:4;"><span>+1đ</span></div>
+                                    <div class="wheel-item" style="--i:5;"><span>+5đ</span></div>
+                                    <div class="wheel-item" style="--i:6;"><span>Hụt rôì!</span></div>
+                                    <div class="wheel-item" style="--i:7;"><span>THẺ TRÀ</span></div>
+                                </div>
+                            </div>
+                            <div class="wheel-center-cap">
+                                <div class="cap-inner"></div>
                             </div>
                         </div>
 
-                        <button onclick="RewardsModule.spinWheel()" class="spin-btn" ${meritInfo.current < 1 || RewardsModule._isSpinning ? 'disabled' : ''}>
-                            ${RewardsModule._isSpinning ? '<i class="fa-solid fa-spinner fa-spin"></i> ĐANG QUAY...' : '<i class="fa-solid fa-play"></i> QUAY NGAY (-1đ)'}
-                        </button>
+                        <div class="spin-controls">
+                            <button onclick="RewardsModule.spinWheel()" class="spin-btn-premium" ${meritInfo.current < 1 || RewardsModule._isSpinning ? 'disabled' : ''}>
+                                ${RewardsModule._isSpinning ? '<i class="fa-solid fa-sync fa-spin"></i> COMPUTER... ' : '<i class="fa-solid fa-bolt"></i> QUAY NGAY (-1đ)'}
+                            </button>
+                            <div style="margin-top: 15px; font-size: 11px; color: #64748b; font-family: monospace; letter-spacing: 1px;">SYSTEM STATUS: READY_TO_SPIN</div>
+                        </div>
                     </div>
                 </div>
 
@@ -563,22 +637,29 @@ const RewardsModule = {
         // Xác suất tùy chỉnh: 
         if (rand < 0.40) prizeIdx = [0, 3, 6][Math.floor(Math.random() * 3)]; // 40% hụt
         else if (rand < 0.75) prizeIdx = [1, 4][Math.floor(Math.random() * 2)]; // 35% hòa vốn
-        else if (rand < 0.90) prizeIdx = 2; // 15% lãi +2
-        else if (rand < 0.97) prizeIdx = 5; // 7% trúng +5
-        else prizeIdx = 7; // 3% trúng thẻ
+        else if (rand < 0.88) prizeIdx = 2; // 13% lãi +2
+        else if (rand < 0.96) prizeIdx = 5; // 8% trúng +5 (Sửa lại chút tỉ lệ cho tròn segment)
+        else prizeIdx = 7; // 4% trúng thẻ
 
         const prize = prizes[prizeIdx];
         
         // Tính góc quay (quay ít nhất 5 vòng + góc tới prize)
+        // Segment 0: 0-45, S1: 45-90... 
+        // Vòng quay quay ngược chiều kim đồng hồ tương đối với kim chỉ? 
+        // Không, vòng quay xoay, kim đứng yên ở trên cùng (270deg của wheel coordinate nếu wheel xoay)
+        // Một cách dễ hơn: Quay wheel sao cho segment prize nằm ở đỉnh (góc 0 hoặc 360)
         const segmentAngle = 360 / 8;
-        const targetAngle = 360 - (prizeIdx * segmentAngle) - (segmentAngle / 2); // Căn giữa segment
-        const extraSpins = 5 + Math.floor(Math.random() * 3);
+        // Góc để segment prizeIdx nằm ở vị trí 12h:
+        // Segment 0 là từ 0 -> 45deg. Tâm nó là 22.5deg.
+        // Để 22.5deg nằm ở đỉnh (0deg), ta cần xoay wheel ngược lại -22.5deg.
+        const targetAngle = 360 - (prizeIdx * segmentAngle) - (segmentAngle / 2); 
+        const extraSpins = 7 + Math.floor(Math.random() * 5); // Tăng số vòng quay cho kịch tính
         const finalRotation = (extraSpins * 360) + targetAngle;
         
         RewardsModule._currentRotation += finalRotation;
         wheelEl.style.transform = `rotate(${RewardsModule._currentRotation}deg)`;
 
-        // Đợi quay xong (4s trong CSS transition)
+        // Đợi quay xong (5s trong CSS transition mới)
         setTimeout(async () => {
             if (prize.pts > 0) {
                 // Cộng điểm
@@ -616,10 +697,91 @@ const RewardsModule = {
                 Utils.notifyTelegram(`🎰 <b>[SIÊU CẤP MAY MẮN]</b>\n👤 <b>${user.username}</b> vừa quay hũ trúng ngay <b>${card.title}</b> miễn phí!`);
             }
 
-            Utils.showToast(prize.msg, prize.pts > 0 || prize.isCard ? "success" : "info");
             RewardsModule._isSpinning = false;
+            RewardsModule.showWheelResult(prize);
             RewardsModule.render();
-        }, 4100);
+        }, 5100);
+    },
+
+    showWheelResult: (prize) => {
+        const overlay = document.createElement('div');
+        overlay.id = 'wheel-result-overlay';
+        overlay.style = `
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.9); z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            animation: fadeIn 0.5s ease; backdrop-filter: blur(10px);
+        `;
+
+        const isWin = prize.pts > 0 || prize.isCard;
+        const color = isWin ? '#10b981' : '#ef4444';
+        
+        let humorMsg = "";
+        if (prize.pts === 0 && !prize.isCard) {
+            const fails = [
+                "NHÂN PHẨM BAY MÀU! 🕯️ Chắc tại nãy đi làm sếp quên thắp nhang rồi.",
+                "TRƯỢT VỎ CHUỐI! 🍌 Gần lắm rồi, chỉ thiếu 0.0001mm là trúng hũ.",
+                "MAY MẮN LẦN SAU! 🍀 Đừng buồn, coi như đóng góp quỹ trà đá cho anh em.",
+                "SUÝT THÌ ĐƯỢC! 😂 Thôi nịnh đồng nghiệp kiếm thêm điểm rồi quay tiếp nhen."
+            ];
+            humorMsg = fails[Math.floor(Math.random() * fails.length)];
+        } else if (prize.pts === 1) {
+            humorMsg = "HÒA VỐN! 🧧 May quá, coi như quay miễn phí, làm nháy nữa không sếp?";
+        } else if (prize.pts === 2) {
+            humorMsg = "LÃI NHẸ +2đ! 📈 Sướng nhất sếp, nhặt được hạt dẻ rồi nhé!";
+        } else if (prize.pts === 5) {
+            humorMsg = "ĂN ĐẬM +5đ! 💎 TRỜI ƠI TIN ĐƯỢC KHÔNG? Sếp vừa 'hack' hệ thống à?";
+        } else if (prize.isCard) {
+            humorMsg = "TRÚNG THẺ TRÀ! 🥤 Ôi đỉnh vãi, chuẩn bị có trà sữa sướng nhé!";
+        }
+
+        overlay.innerHTML = `
+            <style>
+                @keyframes bounceIn {
+                    0% { transform: scale(0.3); opacity: 0; }
+                    50% { transform: scale(1.1); }
+                    70% { transform: scale(0.9); }
+                    100% { transform: scale(1); opacity: 1; }
+                }
+                .result-card {
+                    background: rgba(20,20,30,0.9);
+                    padding: 50px; border-radius: 20px;
+                    border: 3px solid ${color};
+                    box-shadow: 0 0 50px ${color};
+                    text-align: center; max-width: 90%;
+                    animation: bounceIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                    position: relative;
+                }
+                .result-title {
+                    font-size: 80px; font-weight: 900; color: #fff;
+                    margin-bottom: 20px; text-transform: uppercase;
+                    text-shadow: 0 0 20px ${color}, 0 0 40px ${color};
+                }
+                .result-humor {
+                    font-size: 28px; color: #cbd5e1;
+                    font-weight: 500; line-height: 1.6;
+                    margin-bottom: 30px;
+                }
+                .close-overlay-btn {
+                    padding: 20px 60px;
+                    background: ${color}; color: #000;
+                    border: none; border-radius: 12px;
+                    font-weight: 900; cursor: pointer;
+                    text-transform: uppercase; letter-spacing: 2px;
+                    font-size: 20px; transition: all 0.2s;
+                }
+                .close-overlay-btn:hover {
+                    transform: scale(1.1);
+                    box-shadow: 0 0 30px ${color};
+                }
+            </style>
+            <div class="result-card">
+                <div class="result-title">${prize.label}</div>
+                <div class="result-humor">${humorMsg}</div>
+                <button class="close-overlay-btn" onclick="document.getElementById('wheel-result-overlay').remove()">ĐÓNG VÀ QUAY TIẾP</button>
+            </div>
+        `;
+        document.body.appendChild(overlay);
     },
 
     redeem: async (cardId) => {
