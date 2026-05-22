@@ -49,7 +49,8 @@ const ChibiModule = {
         mouth: 6,
         top: 10,  // Style 0 is naked, 1-9 are top styles
         bottom: 8, // Style 0 is underwear, 1-7 are bottoms
-        accessory: 10 // Style 0 is none, 1-9 are accessory styles
+        shoe: 8,   // Style 0 is barefoot, 1-7 are shoe styles
+        accessory: 15 // Style 0 is none, 1-14 are accessory styles
     },
 
     // State
@@ -61,6 +62,7 @@ const ChibiModule = {
      */
     renderChibiSVG: function(config, isDancing, meritPoints) {
         const c = config || {
+            gender: 'nam',
             skinColor: '#ffd1a9',
             hairStyle: 1,
             hairColor: '#343a40',
@@ -70,16 +72,21 @@ const ChibiModule = {
             topColor: '#e83e8c',
             bottomStyle: 1,
             bottomColor: '#007bff',
+            shoeStyle: 1,
+            shoeColor: '#1f2937',
             accessory: 0
         };
 
         const isD = isDancing !== undefined ? isDancing : true;
         const pts = meritPoints !== undefined ? meritPoints : 0;
 
+        const gender = c.gender || 'nam';
         const skinColor = c.skinColor || '#ffd1a9';
         const hairColor = c.hairColor || '#343a40';
         const topColor = c.topColor || '#e83e8c';
         const bottomColor = c.bottomColor || '#007bff';
+        const shoeStyle = c.shoeStyle !== undefined ? c.shoeStyle : 1;
+        const shoeColor = c.shoeColor || '#1f2937';
 
         // 1. Back Hair Layer
         let backHairHtml = '';
@@ -354,7 +361,194 @@ const ChibiModule = {
             `;
         }
 
-        // 8. Accessories Layer
+        // 8. Eyelashes Layer (For Female)
+        let eyelashesHtml = '';
+        if (gender === 'nữ') {
+            eyelashesHtml = `
+                <!-- Adorable Eyelashes -->
+                <path d="M 74 77 Q 80 72 86 76" stroke="#1e1b4b" stroke-width="2.2" fill="none" stroke-linecap="round" />
+                <path d="M 72 78 L 68 75" stroke="#1e1b4b" stroke-width="1.8" stroke-linecap="round" />
+                <path d="M 126 77 Q 120 72 114 76" stroke="#1e1b4b" stroke-width="2.2" fill="none" stroke-linecap="round" />
+                <path d="M 128 78 L 132 75" stroke="#1e1b4b" stroke-width="1.8" stroke-linecap="round" />
+            `;
+        }
+
+        // 9. Back Accessories Layer
+        let backAccessoryHtml = '';
+        if (c.accessory === 11) { // Floating Fire Katana
+            backAccessoryHtml = `
+                <!-- Katana Sheath & Handle behind back -->
+                <g class="${isD ? 'chibi-tail-dance' : ''}">
+                    <!-- Blade/Sheath -->
+                    <rect x="70" y="80" width="8" height="90" rx="3" fill="#1e1b4b" stroke="#111" stroke-width="1.5" transform="rotate(-35 70 80)" />
+                    <!-- Guard -->
+                    <ellipse cx="67" cy="85" rx="10" ry="4" fill="#fbbf24" stroke="#111" stroke-width="1.5" transform="rotate(-35 67 85)" />
+                    <!-- Handle -->
+                    <rect x="63" y="55" width="8" height="30" rx="2" fill="#ef4444" stroke="#111" stroke-width="1.5" transform="rotate(-35 63 55)" />
+                    <line x1="61" y1="62" x2="71" y2="69" stroke="#fff" stroke-width="1.5" />
+                    <line x1="66" y1="72" x2="76" y2="79" stroke="#fff" stroke-width="1.5" />
+                    <!-- Fire particles -->
+                    <circle cx="110" cy="110" r="3" fill="#f97316" opacity="0.8" style="animation: floatSparkle 1.2s infinite ease-in-out;" />
+                    <circle cx="120" cy="95" r="2.5" fill="#ef4444" opacity="0.8" style="animation: floatSparkle 1.5s infinite ease-in-out 0.3s;" />
+                </g>
+            `;
+        } else if (c.accessory === 13) { // Cyber Laser Greatsword
+            backAccessoryHtml = `
+                <!-- Huge Laser Cyber Blade -->
+                <g class="${isD ? 'chibi-tail-dance' : ''}">
+                    <!-- Blade energy glow -->
+                    <rect x="72" y="50" width="12" height="110" rx="4" fill="#00f3ff" opacity="0.85" stroke="#fff" stroke-width="1" transform="rotate(30 72 50)" style="filter: drop-shadow(0 0 6px #00f3ff);" />
+                    <!-- Core -->
+                    <rect x="75" y="53" width="6" height="104" rx="2" fill="#ffffff" transform="rotate(30 75 53)" />
+                    <!-- Hilt / Handle -->
+                    <rect x="68" y="145" width="10" height="25" rx="3" fill="#1e2937" stroke="#111" stroke-width="1.5" transform="rotate(30 68 145)" />
+                </g>
+            `;
+        }
+
+        // 10. Tattoo Layer (Over Body skin, under clothes)
+        let tattooHtml = '';
+        if (c.accessory === 10) { // Red Dragon Tattoo
+            tattooHtml = `
+                <!-- Dragon Tattoo on Right Arm & Chest -->
+                <g class="${isD ? 'chibi-arm-right-dance' : ''}" opacity="0.85">
+                    <path d="M 116 122 Q 126 128 132 134 Q 130 137 124 133 Q 118 128 116 124 Z" fill="#ef4444" />
+                    <path d="M 125 125 C 132 129 133 135 128 138" stroke="#b91c1c" stroke-width="1.5" fill="none" stroke-linecap="round" />
+                    <circle cx="129" cy="138" r="1.5" fill="#ef4444" />
+                </g>
+                <path d="M 104 116 Q 109 119 106 124 Q 102 120 104 116 Z" fill="#ef4444" opacity="0.8" />
+            `;
+        } else if (c.accessory === 14) { // Tribal Sleeve Tattoos
+            tattooHtml = `
+                <!-- Tribal Sleeve Tattoos on BOTH arms -->
+                <g class="${isD ? 'chibi-arm-left-dance' : ''}" opacity="0.85">
+                    <path d="M 84 122 Q 74 128 68 134 Q 70 137 76 133" stroke="#1f2937" stroke-width="3" fill="none" stroke-linecap="round" />
+                    <path d="M 82 120 L 72 132" stroke="#374151" stroke-width="1" />
+                    <circle cx="71" cy="138" r="1.5" fill="#1f2937" />
+                </g>
+                <g class="${isD ? 'chibi-arm-right-dance' : ''}" opacity="0.85">
+                    <path d="M 116 122 Q 126 128 132 134 Q 130 137 124 133" stroke="#1f2937" stroke-width="3" fill="none" stroke-linecap="round" />
+                    <path d="M 118 120 L 128 132" stroke="#374151" stroke-width="1" />
+                    <circle cx="129" cy="138" r="1.5" fill="#1f2937" />
+                </g>
+            `;
+        }
+
+        // 11. Shoes Layer
+        let shoeHtml = '';
+        if (shoeStyle === 1) { // Active Sneakers (Giày thể thao năng động)
+            shoeHtml = `
+                <!-- Active Sneakers -->
+                <!-- Left Shoe -->
+                <path d="M 78 171 L 91 171 L 93 182 L 80 182 Z" fill="${shoeColor}" stroke="#1e1b4b" stroke-width="2" />
+                <path d="M 80 182 L 85 182 L 84 179 L 79 179 Z" fill="#fff" />
+                <rect x="79" y="180" width="14" height="2.5" fill="#ffffff" rx="0.5" />
+                <line x1="84" y1="172" x2="88" y2="176" stroke="#ffffff" stroke-width="1.2" />
+                <line x1="88" y1="172" x2="84" y2="176" stroke="#ffffff" stroke-width="1.2" />
+
+                <!-- Right Shoe -->
+                <path d="M 122 171 L 109 171 L 107 182 L 120 182 Z" fill="${shoeColor}" stroke="#1e1b4b" stroke-width="2" />
+                <path d="M 120 182 L 115 182 L 116 179 L 121 179 Z" fill="#fff" />
+                <rect x="107" y="180" width="14" height="2.5" fill="#ffffff" rx="0.5" />
+                <line x1="116" y1="172" x2="112" y2="176" stroke="#ffffff" stroke-width="1.2" />
+                <line x1="112" y1="172" x2="116" y2="176" stroke="#ffffff" stroke-width="1.2" />
+            `;
+        } else if (shoeStyle === 2) { // Cyber Neon Boots
+            shoeHtml = `
+                <!-- Cyber Neon Boots -->
+                <!-- Left Boot -->
+                <path d="M 76 166 L 92 166 L 93 182 L 78 182 Z" fill="${shoeColor}" stroke="#1e1b4b" stroke-width="2" />
+                <path d="M 78 174 L 92 174" stroke="#00f3ff" stroke-width="2" style="filter: drop-shadow(0 0 3px #00f3ff);" />
+                <rect x="77" y="180" width="16" height="2.5" fill="#00f3ff" rx="0.5" style="filter: drop-shadow(0 0 3px #00f3ff);" />
+                
+                <!-- Right Boot -->
+                <path d="M 124 166 L 108 166 L 107 182 L 122 182 Z" fill="${shoeColor}" stroke="#1e1b4b" stroke-width="2" />
+                <path d="M 122 174 L 108 174" stroke="#00f3ff" stroke-width="2" style="filter: drop-shadow(0 0 3px #00f3ff);" />
+                <rect x="107" y="180" width="16" height="2.5" fill="#00f3ff" rx="0.5" style="filter: drop-shadow(0 0 3px #00f3ff);" />
+            `;
+        } else if (shoeStyle === 3) { // High Heels
+            shoeHtml = `
+                <!-- High Heels -->
+                <!-- Left -->
+                <path d="M 80 172 Q 86 174 91 176 L 87 183 L 81 181 Z" fill="${shoeColor}" stroke="#1e1b4b" stroke-width="1.8" />
+                <line x1="81" y1="180" x2="81" y2="184" stroke="${shoeColor}" stroke-width="2.5" stroke-linecap="round" />
+                <path d="M 82 171 Q 86 168 90 171" stroke="${shoeColor}" stroke-width="1.5" fill="none" />
+                
+                <!-- Right -->
+                <path d="M 120 172 Q 114 174 109 176 L 113 183 L 119 181 Z" fill="${shoeColor}" stroke="#1e1b4b" stroke-width="1.8" />
+                <line x1="119" y1="180" x2="119" y2="184" stroke="${shoeColor}" stroke-width="2.5" stroke-linecap="round" />
+                <path d="M 118 171 Q 114 168 110 171" stroke="${shoeColor}" stroke-width="1.5" fill="none" />
+            `;
+        } else if (shoeStyle === 4) { // Combat Boots
+            shoeHtml = `
+                <!-- Combat Boots -->
+                <!-- Left -->
+                <path d="M 76 162 L 93 162 L 94 182 L 78 182 Z" fill="${shoeColor}" stroke="#1e1b4b" stroke-width="2" />
+                <line x1="85" y1="165" x2="85" y2="178" stroke="#111" stroke-width="2" stroke-dasharray="2,2" />
+                <rect x="77" y="180" width="17" height="3" fill="#111" />
+                
+                <!-- Right -->
+                <path d="M 124 162 L 107 162 L 106 182 L 122 182 Z" fill="${shoeColor}" stroke="#1e1b4b" stroke-width="2" />
+                <line x1="115" y1="165" x2="115" y2="178" stroke="#111" stroke-width="2" stroke-dasharray="2,2" />
+                <rect x="106" y="180" width="17" height="3" fill="#111" />
+            `;
+        } else if (shoeStyle === 5) { // Panda Slippers
+            shoeHtml = `
+                <!-- Panda Slippers -->
+                <!-- Left Slipper -->
+                <ellipse cx="84" cy="178" rx="8" ry="5.5" fill="#ffffff" stroke="#1e1b4b" stroke-width="2" />
+                <circle cx="79" cy="175" r="2.5" fill="#111" />
+                <circle cx="89" cy="175" r="2.5" fill="#111" />
+                <circle cx="82" cy="178" r="1.2" fill="#111" />
+                <circle cx="86" cy="178" r="1.2" fill="#111" />
+                <path d="M 83 181 Q 84 182 85 181" stroke="#111" stroke-width="1" fill="none" />
+                
+                <!-- Right Slipper -->
+                <ellipse cx="116" cy="178" rx="8" ry="5.5" fill="#ffffff" stroke="#1e1b4b" stroke-width="2" />
+                <circle cx="111" cy="175" r="2.5" fill="#111" />
+                <circle cx="121" cy="175" r="2.5" fill="#111" />
+                <circle cx="114" cy="178" r="1.2" fill="#111" />
+                <circle cx="118" cy="178" r="1.2" fill="#111" />
+                <path d="M 115 181 Q 116 182 117 181" stroke="#111" stroke-width="1" fill="none" />
+            `;
+        } else if (shoeStyle === 6) { // Retro Converse
+            shoeHtml = `
+                <!-- Retro Converse -->
+                <!-- Left -->
+                <path d="M 77 167 L 91 167 L 93 182 L 78 182 Z" fill="${shoeColor}" stroke="#1e1b4b" stroke-width="2" />
+                <path d="M 86 182 L 93 182 L 93 175 Z" fill="#fff" stroke="#1e1b4b" stroke-width="1.5" />
+                <circle cx="82" cy="172" r="2" fill="#fff" />
+                <rect x="77" y="180" width="16" height="2.5" fill="#ffffff" rx="0.5" />
+                
+                <!-- Right -->
+                <path d="M 123 167 L 109 167 L 107 182 L 122 182 Z" fill="${shoeColor}" stroke="#1e1b4b" stroke-width="2" />
+                <path d="M 114 182 L 107 182 L 107 175 Z" fill="#fff" stroke="#1e1b4b" stroke-width="1.5" />
+                <circle cx="118" cy="172" r="2" fill="#fff" />
+                <rect x="107" y="180" width="16" height="2.5" fill="#ffffff" rx="0.5" />
+            `;
+        } else if (shoeStyle === 7) { // Rainbow Light-up Sneakers
+            shoeHtml = `
+                <!-- Rainbow Light-up Sneakers -->
+                <!-- Left -->
+                <path d="M 78 171 L 91 171 L 93 182 L 80 182 Z" fill="${shoeColor}" stroke="#1e1b4b" stroke-width="2" />
+                <rect x="79" y="180" width="14" height="2.5" fill="url(#rainbowGlow)" rx="0.5" style="filter: drop-shadow(0 0 4px #a855f7);" />
+                
+                <!-- Right -->
+                <path d="M 122 171 L 109 171 L 107 182 L 120 182 Z" fill="${shoeColor}" stroke="#1e1b4b" stroke-width="2" />
+                <rect x="107" y="180" width="14" height="2.5" fill="url(#rainbowGlow)" rx="0.5" style="filter: drop-shadow(0 0 4px #a855f7);" />
+                
+                <defs>
+                    <linearGradient id="rainbowGlow" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#ef4444" />
+                        <stop offset="33%" stop-color="#3b82f6" />
+                        <stop offset="66%" stop-color="#10b981" />
+                        <stop offset="100%" stop-color="#eab308" />
+                    </linearGradient>
+                </defs>
+            `;
+        }
+
+        // 12. Accessories Layer
         let accHtml = '';
         if (c.accessory === 1) { // Sunglasses
             accHtml = `<path d="M 72 76 Q 84 76 84 84 Q 84 90 72 90 Z M 116 76 Q 128 76 128 84 Q 128 90 116 90 Z" fill="#111" stroke="#fff" stroke-width="1.5" /><line x1="84" y1="80" x2="116" y2="80" stroke="#fff" stroke-width="2.5" />`;
@@ -403,9 +597,19 @@ const ChibiModule = {
                 <path d="M 85 45 Q 100 52 115 45 Q 125 35 110 38 Q 100 50 90 38 Q 75 35 85 45 Z" fill="#ef4444" stroke="#1e1b4b" stroke-width="2" />
                 <circle cx="100" cy="44" r="4.5" fill="#b91c1c" />
             `;
+        } else if (c.accessory === 12) { // Ninja Kunai/Dagger
+            accHtml = `
+                <!-- Floating Ninja Kunai -->
+                <g class="${isD ? 'chibi-arm-right-dance' : ''}" style="filter: drop-shadow(0 0 3px #00f3ff);">
+                    <path d="M 136 136 L 146 142 L 138 144 L 134 140 Z" fill="#94a3b8" stroke="#1e1b4b" stroke-width="1.5" />
+                    <line x1="134" y1="140" x2="128" y2="134" stroke="#ef4444" stroke-width="2.5" />
+                    <circle cx="127" cy="133" r="2.5" fill="none" stroke="#ef4444" stroke-width="1.5" />
+                    <circle cx="138" cy="138" r="3" fill="#00f3ff" opacity="0.5" />
+                </g>
+            `;
         }
 
-        // 9. Sparkle / Aura effects for high merit points
+        // 13. Sparkle / Aura effects for high merit points
         let sparklesHtml = '';
         if (pts > 20) {
             const auraColor = pts > 50 ? '#fbbf24' : '#60a5fa';
@@ -467,11 +671,15 @@ const ChibiModule = {
                     }
                 </style>
                 ${sparklesHtml}
+                ${backAccessoryHtml}
                 ${backHairHtml}
                 ${bodyBaseHtml}
+                ${tattooHtml}
+                ${shoeHtml}
                 ${bottomHtml}
                 ${topHtml}
                 ${eyesHtml}
+                ${eyelashesHtml}
                 ${mouthHtml}
                 ${frontHairHtml}
                 ${accHtml}
@@ -484,6 +692,7 @@ const ChibiModule = {
      */
     renderMiniOption: function(type, index, color) {
         const tempConfig = {
+            gender: 'nam',
             skinColor: '#ffd1a9',
             hairStyle: 0,
             hairColor: '#343a40',
@@ -493,6 +702,8 @@ const ChibiModule = {
             topColor: '#e83e8c',
             bottomStyle: 0,
             bottomColor: '#007bff',
+            shoeStyle: 0,
+            shoeColor: '#1f2937',
             accessory: 0
         };
 
@@ -512,6 +723,9 @@ const ChibiModule = {
         } else if (type === 'bottom') {
             tempConfig.bottomStyle = index;
             tempConfig.bottomColor = color || '#007bff';
+        } else if (type === 'shoe') {
+            tempConfig.shoeStyle = index;
+            tempConfig.shoeColor = color || '#1f2937';
         } else if (type === 'accessory') {
             tempConfig.accessory = index;
         }
@@ -525,6 +739,7 @@ const ChibiModule = {
         else if (type === 'mouth') viewBox = '85 86 30 18';
         else if (type === 'top') viewBox = '62 105 76 40';
         else if (type === 'bottom') viewBox = '70 135 60 38';
+        else if (type === 'shoe') viewBox = '70 160 60 25';
         else if (type === 'accessory') viewBox = '50 25 100 70';
 
         return svgStr.replace(/<svg viewBox="0 0 200 200"/g, `<svg viewBox="${viewBox}"`);
@@ -543,8 +758,14 @@ const ChibiModule = {
 
         const profile = user.profile || {};
         
-        // Initialize config (clone existing or load default)
-        ChibiModule.currentConfig = profile.chibiConfig ? { ...profile.chibiConfig } : {
+        // Initialize config (clone existing or load default with fallbacks)
+        ChibiModule.currentConfig = profile.chibiConfig ? {
+            gender: 'nam',
+            shoeStyle: 1,
+            shoeColor: '#1f2937',
+            ...profile.chibiConfig
+        } : {
+            gender: 'nam',
             skinColor: '#ffcd94',
             hairStyle: 1,
             hairColor: '#111827',
@@ -554,6 +775,8 @@ const ChibiModule = {
             topColor: '#3b82f6',
             bottomStyle: 1,
             bottomColor: '#1f2937',
+            shoeStyle: 1,
+            shoeColor: '#1f2937',
             accessory: 0
         };
 
@@ -580,6 +803,12 @@ const ChibiModule = {
                     color: #fff;
                     border-color: rgba(255,255,255,0.25);
                     transform: translateY(-1px);
+                }
+                .chibi-btn-outline.active {
+                    background: rgba(139,92,246,0.25);
+                    color: #fff;
+                    border-color: #8b5cf6;
+                    box-shadow: 0 0 10px rgba(139,92,246,0.3);
                 }
                 .chibi-tab-btn {
                     background: none;
@@ -786,9 +1015,24 @@ const ChibiModule = {
         let contentHtml = '';
 
         if (tabId === 'skin') {
-            // SKIN COLOR PICKER
+            // GENDER & SKIN COLOR PICKER
             contentHtml = `
                 <div style="display: flex; flex-direction: column; gap: 16px;">
+                    <div>
+                        <h4 style="margin: 0 0 8px 0; font-size: 13px; color: #94a3b8; text-transform: uppercase;">Giới Tính (Gender)</h4>
+                        <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+                            <button class="chibi-btn-outline ${ChibiModule.currentConfig.gender === 'nam' ? 'active' : ''}" 
+                                    style="flex: 1; padding: 10px; font-weight: bold; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer;"
+                                    onclick="ChibiModule.selectGender('nam')">
+                                ♂️ NAM
+                            </button>
+                            <button class="chibi-btn-outline ${ChibiModule.currentConfig.gender === 'nữ' ? 'active' : ''}" 
+                                    style="flex: 1; padding: 10px; font-weight: bold; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer;"
+                                    onclick="ChibiModule.selectGender('nữ')">
+                                ♀️ NỮ
+                            </button>
+                        </div>
+                    </div>
                     <div>
                         <h4 style="margin: 0 0 8px 0; font-size: 13px; color: #94a3b8; text-transform: uppercase;">Lựa Chọn Màu Da</h4>
                         <div style="display: flex; flex-wrap: wrap; gap: 10px;">
@@ -895,9 +1139,12 @@ const ChibiModule = {
             `;
         } 
         else if (tabId === 'clothing') {
-            // TOPS & BOTTOMS WITH INDEPENDENT STYLE + COLOR
+            // TOPS, BOTTOMS & SHOES WITH INDEPENDENT STYLE + COLOR
             const topOptions = Array.from({ length: ChibiModule.counts.top }, (_, i) => i);
             const bottomOptions = Array.from({ length: ChibiModule.counts.bottom }, (_, i) => i);
+            const shoeOptions = Array.from({ length: ChibiModule.counts.shoe }, (_, i) => i);
+            const shoeNames = ['Chân trần', 'Sneaker', 'Bốt Cyber', 'Cao gót', 'Bốt chiến binh', 'Dép gấu', 'Converse', 'Giày phát sáng'];
+
             contentHtml = `
                 <div style="display: flex; flex-direction: column; gap: 20px;">
                     <div>
@@ -959,12 +1206,61 @@ const ChibiModule = {
                                    style="background: none; border: none; width: 26px; height: 22px; cursor: pointer; outline: none; padding: 0;">
                         </div>
                     </div>
+
+                    <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.08); margin: 5px 0;">
+
+                    <div>
+                        <h4 style="margin: 0 0 10px 0; font-size: 13px; color: #94a3b8; text-transform: uppercase;">Kiểu Giày (Shoes)</h4>
+                        <div class="chibi-item-grid" style="margin-bottom: 12px;">
+                            ${shoeOptions.map(i => {
+                                const activeClass = ChibiModule.currentConfig.shoeStyle === i ? 'active' : '';
+                                const miniSvg = ChibiModule.renderMiniOption('shoe', i, ChibiModule.currentConfig.shoeColor);
+                                return `
+                                    <div class="chibi-item-card ${activeClass}" onclick="ChibiModule.selectItem('shoeStyle', ${i})">
+                                        <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; transform: scale(1.65);">
+                                            ${miniSvg}
+                                        </div>
+                                        <span class="chibi-item-label">${shoeNames[i]}</span>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                        <h5 style="margin: 8px 0 8px 0; font-size: 11px; color: #64748b; text-transform: uppercase;">Màu Giày</h5>
+                        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                            ${ChibiModule.colors.clothing.map(col => `
+                                <div class="chibi-color-circle ${ChibiModule.currentConfig.shoeColor === col ? 'active' : ''}" 
+                                     style="background: ${col}; width: 22px; height: 22px;" 
+                                     onclick="ChibiModule.selectColor('shoeColor', '${col}')"></div>
+                            `).join('')}
+                            <input type="color" value="${ChibiModule.currentConfig.shoeColor || '#1f2937'}" 
+                                   onchange="ChibiModule.selectColor('shoeColor', this.value)" 
+                                   style="background: none; border: none; width: 26px; height: 22px; cursor: pointer; outline: none; padding: 0;">
+                        </div>
+                    </div>
                 </div>
             `;
         } 
         else if (tabId === 'accessory') {
             // ACCESSORIES SELECTION (Style 0 is None)
             const options = Array.from({ length: ChibiModule.counts.accessory }, (_, i) => i);
+            const accNames = [
+                'Trống',
+                'Kính râm',
+                'Cài tóc mèo',
+                'Tai nghe Gaming',
+                'Vòng thiên sứ',
+                'Vương miện',
+                'Khẩu trang',
+                'Mũ đầu bếp',
+                'Bịt mắt cướp biển',
+                'Nơ đỏ',
+                'Xăm Rồng đỏ',
+                'Kiếm Katana Lửa',
+                'Dao Kunai Ninja',
+                'Kiếm Cyber Laser',
+                'Xăm Tribal'
+            ];
+
             contentHtml = `
                 <div>
                     <h4 style="margin: 0 0 10px 0; font-size: 13px; color: #94a3b8; text-transform: uppercase;">Phụ Kiện Đi Kèm</h4>
@@ -977,7 +1273,7 @@ const ChibiModule = {
                                     <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; transform: scale(1.15);">
                                         ${miniSvg}
                                     </div>
-                                    <span class="chibi-item-label">${i === 0 ? 'Trống' : 'Phụ Kiện ' + i}</span>
+                                    <span class="chibi-item-label">${accNames[i]}</span>
                                 </div>
                             `;
                         }).join('')}
@@ -1008,6 +1304,15 @@ const ChibiModule = {
     },
 
     /**
+     * Choose gender (nam/nữ) and update eyelashes
+     */
+    selectGender: function(gender) {
+        ChibiModule.currentConfig.gender = gender;
+        ChibiModule.updatePreview();
+        ChibiModule.switchTab(ChibiModule.activeTab);
+    },
+
+    /**
      * Render and update live preview
      */
     updatePreview: function() {
@@ -1027,7 +1332,13 @@ const ChibiModule = {
         const user = Auth.currentUser;
         const profile = user?.profile || {};
         
-        ChibiModule.currentConfig = profile.chibiConfig ? { ...profile.chibiConfig } : {
+        ChibiModule.currentConfig = profile.chibiConfig ? {
+            gender: 'nam',
+            shoeStyle: 1,
+            shoeColor: '#1f2937',
+            ...profile.chibiConfig
+        } : {
+            gender: 'nam',
             skinColor: '#ffcd94',
             hairStyle: 1,
             hairColor: '#111827',
@@ -1037,6 +1348,8 @@ const ChibiModule = {
             topColor: '#3b82f6',
             bottomStyle: 1,
             bottomColor: '#1f2937',
+            shoeStyle: 1,
+            shoeColor: '#1f2937',
             accessory: 0
         };
 
@@ -1058,8 +1371,10 @@ const ChibiModule = {
         const randomHair = randItem(ChibiModule.colors.hair);
         const randomClothing1 = randItem(ChibiModule.colors.clothing);
         const randomClothing2 = randItem(ChibiModule.colors.clothing);
+        const randomClothing3 = randItem(ChibiModule.colors.clothing);
 
         ChibiModule.currentConfig = {
+            gender: Math.random() > 0.5 ? 'nam' : 'nữ',
             skinColor: randomSkin,
             hairStyle: randStyle(ChibiModule.counts.hair - 1) + 1, // Avoid bald (style 0) in random
             hairColor: randomHair,
@@ -1069,6 +1384,8 @@ const ChibiModule = {
             topColor: randomClothing1,
             bottomStyle: randStyle(ChibiModule.counts.bottom - 1) + 1, // Avoid underwear in random
             bottomColor: randomClothing2,
+            shoeStyle: randStyle(ChibiModule.counts.shoe - 1) + 1, // Avoid barefoot in random
+            shoeColor: randomClothing3,
             accessory: randStyle(ChibiModule.counts.accessory) // Can be none (style 0)
         };
 

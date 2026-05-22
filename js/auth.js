@@ -126,7 +126,16 @@ const Auth = {
 
         // Update user profile UI
         const profileEl = document.querySelector('.user-profile .avatar');
-        if (Auth.currentUser.profile && Auth.currentUser.profile.avatar) {
+        if (Auth.currentUser.profile && Auth.currentUser.profile.chibiConfig) {
+            profileEl.innerHTML = ChibiModule.renderChibiSVG(Auth.currentUser.profile.chibiConfig, true, 0);
+            profileEl.style.background = 'transparent';
+            profileEl.style.overflow = 'hidden';
+            profileEl.style.border = '2px solid rgba(168,85,247,0.3)';
+            profileEl.style.boxShadow = '0 0 10px rgba(168,85,247,0.5)';
+            profileEl.style.display = 'flex';
+            profileEl.style.alignItems = 'center';
+            profileEl.style.justifyContent = 'center';
+        } else if (Auth.currentUser.profile && Auth.currentUser.profile.avatar) {
             profileEl.innerHTML = `<img src="${Auth.currentUser.profile.avatar}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
             profileEl.style.background = 'transparent';
         } else {
