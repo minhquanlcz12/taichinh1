@@ -625,6 +625,7 @@ const Auth = {
         document.getElementById('profile-dob').value = profile.dob || '';
         document.getElementById('profile-phone').value = profile.phone || '';
         document.getElementById('profile-address').value = profile.address || '';
+        document.getElementById('profile-position').value = profile.position || '';
         document.getElementById('profile-color').value = profile.color || '#00b4d8';
 
         const previewImg = document.getElementById('profile-preview-img');
@@ -688,13 +689,16 @@ const Auth = {
     },
 
     saveProfile: async () => {
+        const currentProfile = Auth.currentUser.profile || {};
         const profile = {
             fullname: document.getElementById('profile-fullname').value,
             dob: document.getElementById('profile-dob').value,
             phone: document.getElementById('profile-phone').value,
             address: document.getElementById('profile-address').value,
             color: document.getElementById('profile-color').value,
-            avatar: document.getElementById('profile-img-base64').value
+            avatar: document.getElementById('profile-img-base64').value,
+            position: document.getElementById('profile-position').value,
+            chibiConfig: currentProfile.chibiConfig || null
         };
 
         Auth.currentUser.profile = profile;
@@ -710,6 +714,12 @@ const Auth = {
 
         Auth.closeProfileModal();
         Auth.showApp(); // Re-render avatar
+        
+        // Also re-render rewards if visible
+        if (typeof RewardsModule !== 'undefined' && document.getElementById('rewards-view') && document.getElementById('rewards-view').style.display !== 'none') {
+            RewardsModule.render();
+        }
+
         Utils.showToast("Đã lưu hồ sơ thành công!", "success");
     },
 

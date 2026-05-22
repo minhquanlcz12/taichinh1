@@ -72,6 +72,7 @@ const RewardsModule = {
 
         const meritInfo = await RewardsModule.calcUserMerit(currentUser.username);
         const allRewardsHistory = await RewardsModule.loadData();
+        const accounts = await DB.getAccounts() || [];
         
         // Kiểm tra xem hôm nay đã quay chưa
         const today = new Date().toLocaleDateString();
@@ -188,6 +189,85 @@ const RewardsModule = {
             </div>
             `;
         }).join('');
+
+        const positionIcons = {
+            'Editor': 'fa-video',
+            'Content Creator': 'fa-pen-nib',
+            'Diễn viên': 'fa-masks-theater',
+            'Designer': 'fa-palette',
+            'Photographer': 'fa-camera',
+            'MC/Host': 'fa-microphone-lines',
+            'Marketing': 'fa-chart-line',
+            'Manager': 'fa-user-tie'
+        };
+        const positionLabels = {
+            'Editor': '🎬 Editor',
+            'Content Creator': '📝 Content Creator',
+            'Diễn viên': '🎭 Diễn viên',
+            'Designer': '🎨 Designer',
+            'Photographer': '📸 Photographer',
+            'MC/Host': '🎙️ MC / Host',
+            'Marketing': '📊 Marketing',
+            'Manager': '💼 Manager'
+        };
+
+        let employeesHtml = '';
+        for (const acc of accounts) {
+            const accMerit = await RewardsModule.calcUserMerit(acc.username);
+            const profile = acc.profile || {};
+            const fullname = profile.fullname || acc.username;
+            const position = profile.position || 'Nhân sự';
+            const positionLabel = positionLabels[position] || `💼 ${position}`;
+            const positionIcon = positionIcons[position] || 'fa-user';
+            const themeColor = profile.color || '#10b981';
+            
+            // Chibi rendering logic (if ChibiModule is defined and config exists)
+            let chibiSvgHtml = '';
+            if (profile.chibiConfig && typeof ChibiModule !== 'undefined') {
+                chibiSvgHtml = ChibiModule.renderChibiSVG(profile.chibiConfig, true);
+            } else {
+                chibiSvgHtml = `
+                <div class="chibi-placeholder" style="width: 100px; height: 100px; border-radius: 50%; background: rgba(255,255,255,0.05); border: 2px dashed ${themeColor}; display: flex; align-items: center; justify-content: center; position: relative; margin: 0 auto; box-shadow: 0 0 10px rgba(0,0,0,0.5);">
+                    <i class="fa-solid fa-ghost" style="font-size: 36px; color: ${themeColor}; opacity: 0.6; animation: floatGhost 3s infinite ease-in-out;"></i>
+                    <div style="font-size: 9px; color: #64748b; position: absolute; bottom: 8px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Chưa tạo Chibi</div>
+                </div>
+                `;
+            }
+
+            employeesHtml += `
+            <div class="employee-tcg-card" style="--emp-color: ${themeColor}; cursor: default;">
+                <div class="tcg-card-inner">
+                    <div class="tcg-card-cost" style="background: ${themeColor}; box-shadow: 0 0 10px ${themeColor}; border: 1px solid rgba(255,255,255,0.3); border-top: none;">
+                        ⭐ ${accMerit.current}đ
+                    </div>
+                    
+                    <div class="tcg-card-art-chibi">
+                        <div style="transform: scale(0.95); display: flex; align-items: center; justify-content: center;">
+                            ${chibiSvgHtml}
+                        </div>
+                        <div class="tcg-art-overlay"></div>
+                    </div>
+                    
+                    <div class="tcg-card-body" style="text-align: center; padding: 10px;">
+                        <div class="tcg-card-type" style="color: ${themeColor}; border: 1px solid rgba(255,255,255,0.15); display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 10px; font-weight: bold; background: rgba(0,0,0,0.3); text-transform: uppercase; letter-spacing: 1px;">
+                            <i class="fa-solid ${positionIcon}" style="margin-right: 4px;"></i> ${positionLabel}
+                        </div>
+                        <div class="tcg-card-title" style="font-size: 15px; font-weight: 800; color: #fff; margin-top: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: uppercase; letter-spacing: 1px;">
+                            ${fullname}
+                        </div>
+                        <p class="tcg-card-desc" style="font-size: 11px; color: #64748b; font-family: monospace; margin: 4px 0 0 0;">
+                            @${acc.username}
+                        </p>
+                    </div>
+                    
+                    <div class="tcg-card-footer" style="margin-top: auto; border-top: 1px solid rgba(255,255,255,0.05); padding: 8px 10px 10px; font-size: 10px; color: #475569; font-family: monospace; display: flex; justify-content: space-between; align-items: center;">
+                        <span>MEM_ID: 1000${acc.username.length}</span>
+                        <span style="color: ${themeColor}; font-weight: bold;">ACTIVE</span>
+                    </div>
+                </div>
+            </div>
+            `;
+        }
 
         // === Build Inventory Bag Content ===
         const userItems = allRewardsHistory.filter(r => 
@@ -321,6 +401,74 @@ const RewardsModule = {
                 z-index: 10;
             }
 
+            .employee-tcg-card {
+                position: relative;
+                width: 100%;
+                aspect-ratio: 2.2 / 3.3;
+                max-width: 280px;
+                margin: 0 auto;
+                border-radius: 12px;
+                background: linear-gradient(135deg, rgba(20,20,30,0.95), rgba(5,5,10,0.98));
+                border: 2px solid var(--emp-color);
+                box-shadow: 0 0 15px rgba(0,0,0,0.8), inset 0 0 20px rgba(0,0,0,0.5);
+                padding: 6px;
+                cursor: pointer;
+                transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                overflow: hidden;
+            }
+
+            .employee-tcg-card:hover {
+                transform: translateY(-10px) scale(1.05);
+                box-shadow: 0 20px 40px rgba(0,0,0,0.9), 0 0 30px var(--emp-color);
+                z-index: 10;
+            }
+
+            .employee-tcg-card::before {
+                content: '';
+                position: absolute;
+                top: -50%; left: -50%;
+                width: 200%; height: 200%;
+                background: linear-gradient(
+                    115deg,
+                    transparent 0%,
+                    rgba(255, 255, 255, 0.05) 30%,
+                    rgba(0, 224, 255, 0.1) 40%,
+                    rgba(255, 0, 128, 0.1) 50%,
+                    rgba(0, 255, 0, 0.05) 60%,
+                    transparent 100%
+                );
+                transform: rotate(45deg);
+                animation: holoShine 4s infinite alternate ease-in-out;
+                pointer-events: none;
+                z-index: 3;
+                opacity: 0.3;
+                transition: opacity 0.3s;
+            }
+            
+            .employee-tcg-card:hover::before {
+                opacity: 0.8;
+                animation: holoShine 2s infinite alternate ease-in-out;
+            }
+
+            @keyframes holoShine {
+                0% { transform: translate(-20%, -20%) rotate(25deg); }
+                100% { transform: translate(20%, 20%) rotate(25deg); }
+            }
+
+            .tcg-card-art-chibi {
+                height: 140px;
+                margin: 10px;
+                background: radial-gradient(circle at center, rgba(255,255,255,0.05) 0%, rgba(0,0,0,0.9) 100%);
+                border-radius: 6px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                position: relative;
+                border: 1px solid rgba(255,255,255,0.08);
+                overflow: hidden;
+                box-shadow: inset 0 0 20px rgba(0,0,0,0.9);
+            }
+
             .tcg-digital-card::before {
                 content: '';
                 position: absolute;
@@ -339,6 +487,12 @@ const RewardsModule = {
             @keyframes cardShine {
                 0% { transform: translateY(-100%) rotate(45deg); }
                 100% { transform: translateY(100%) rotate(45deg); }
+            }
+
+            @keyframes floatGhost {
+                0% { transform: translateY(0); }
+                50% { transform: translateY(-8px); }
+                100% { transform: translateY(0); }
             }
 
             .tcg-digital-card.locked {
@@ -1067,9 +1221,20 @@ const RewardsModule = {
                 </div>
                 <!-- ====== END WHEEL ARENA ====== -->
 
-                <!-- Card Shop Grid -->
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 24px; padding: 10px;">
+                <!-- CỬA HÀNG ĐẶC QUYỀN -->
+                <div style="margin-top: 40px; margin-bottom: 20px; font-size: 18px; text-transform: uppercase; font-weight: 900; letter-spacing: 2px; color: #10b981; text-shadow: 0 0 10px rgba(16,185,129,0.3); display: flex; align-items: center; gap: 10px;">
+                    <i class="fa-solid fa-store"></i> CỬA HÀNG ĐẶC QUYỀN CÔNG ĐỨC
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 24px; padding: 10px; margin-bottom: 40px;">
                     ${cardsHtml}
+                </div>
+
+                <!-- ĐỘI NGŨ NHÂN SỰ PREMIUM -->
+                <div style="margin-top: 40px; margin-bottom: 20px; font-size: 18px; text-transform: uppercase; font-weight: 900; letter-spacing: 2px; color: #ec4899; text-shadow: 0 0 10px rgba(236,72,153,0.3); display: flex; align-items: center; gap: 10px;">
+                    <i class="fa-solid fa-users-viewfinder"></i> ĐỘI NGŨ NHÂN SỰ HOLOGRAPHIC
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 24px; padding: 10px; margin-bottom: 20px;">
+                    ${employeesHtml}
                 </div>
 
                 <!-- Admin History Table -->

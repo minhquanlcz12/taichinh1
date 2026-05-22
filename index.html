@@ -494,11 +494,16 @@
                             <img id="profile-preview-img" src="" style="display: none; width: 100%; height: 100%; object-fit: cover; border-radius: inherit;">
                             <i class="fa-solid fa-camera placeholder-icon" id="profile-cam-icon"></i>
                         </div>
-                        <label class="btn btn-outline btn-sm upload-btn" style="margin-top: 12px; cursor: pointer;">
-                            <i class="fa-solid fa-upload"></i> Chọn Ảnh Đại Diện
-                            <input type="file" id="profile-img-upload" accept="image/*" style="display: none;"
-                                onchange="Auth.handleProfileImageUpload(event)">
-                        </label>
+                        <div style="display: flex; flex-direction: column; gap: 8px; align-items: center; margin-top: 12px; width: 100%; max-width: 200px; margin-left: auto; margin-right: auto;">
+                            <label class="btn btn-outline btn-sm upload-btn" style="cursor: pointer; margin: 0; width: 100%; text-align: center;">
+                                <i class="fa-solid fa-upload"></i> Chọn Ảnh Đại Diện
+                                <input type="file" id="profile-img-upload" accept="image/*" style="display: none;"
+                                    onchange="Auth.handleProfileImageUpload(event)">
+                            </label>
+                            <button type="button" class="btn btn-sm" onclick="ChibiModule.openBuilder()" style="width: 100%; background: linear-gradient(135deg, #ec4899, #8b5cf6); border: none; color: #fff; font-weight: bold; cursor: pointer; padding: 6px 12px; border-radius: 4px; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 0 10px rgba(236,72,153,0.4);">
+                                <i class="fa-solid fa-ghost"></i> Tạo Pet Chibi Avatar
+                            </button>
+                        </div>
                         <input type="hidden" id="profile-img-base64">
                     </div>
 
@@ -534,6 +539,24 @@
                             <i class="fa-solid fa-location-dot input-icon"></i>
                             <input type="text" id="profile-address" class="form-control" placeholder="Địa chỉ hiện hành"
                                 spellcheck="false" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group with-icon">
+                        <label>Vai trò / Chức danh Media</label>
+                        <div class="input-icon-wrap">
+                            <i class="fa-solid fa-briefcase input-icon"></i>
+                            <select id="profile-position" class="form-control" style="background: rgba(0,0,0,0.3); color: #fff; cursor: pointer;" required>
+                                <option value="">-- Chọn vai trò media --</option>
+                                <option value="Editor">🎬 Editor (Biên tập video)</option>
+                                <option value="Content Creator">📝 Content Creator (Sáng tạo nội dung)</option>
+                                <option value="Diễn viên">🎭 Diễn viên (Talent/Diễn viên)</option>
+                                <option value="Designer">🎨 Designer (Thiết kế đồ họa)</option>
+                                <option value="Photographer">📸 Photographer (Quay phim/Nhiếp ảnh)</option>
+                                <option value="MC/Host">🎙️ MC / Host (Dẫn chương trình)</option>
+                                <option value="Marketing">📊 Marketing (Tiếp thị)</option>
+                                <option value="Manager">💼 Manager (Quản lý)</option>
+                            </select>
                         </div>
                     </div>
 
@@ -961,6 +984,7 @@
     <script src="js/finance.js?v=32.1"></script>
     <script src="js/work.js?v=25.7"></script>
     <script src="js/attendance.js?v=33.2"></script>
+    <script src="js/chibi.js?v=1.0"></script>
     <script src="js/rewards.js?v=103.0"></script>
     <script src="js/payroll.js?v=33.2"></script>
     <script src="js/chat.js?v=25.1"></script>
