@@ -73,6 +73,14 @@ const RewardsModule = {
         const meritInfo = await RewardsModule.calcUserMerit(currentUser.username);
         const allRewardsHistory = await RewardsModule.loadData();
         
+        // Kiểm tra xem hôm nay đã quay chưa
+        const today = new Date().toLocaleDateString();
+        const hasSpunToday = allRewardsHistory.some(r => 
+            r.username === currentUser.username && 
+            r.cardId === 'wheel_entry' && 
+            new Date(r.timestamp).toLocaleDateString() === today
+        );
+        
         let customHistoryHtml = '';
         if (currentUser.role === 'admin') {
             const history = allRewardsHistory.sort((a,b) => b.timestamp - a.timestamp).slice(0, 50);
@@ -578,10 +586,14 @@ const RewardsModule = {
                         </div>
 
                         <div class="spin-controls">
-                            <button id="spin-btn-v2" onclick="RewardsModule.spinWheel()" class="spin-btn-premium" ${meritInfo.current < 1 || RewardsModule._isSpinning ? 'disabled' : ''}>
-                                ${RewardsModule._isSpinning ? '<i class="fa-solid fa-sync fa-spin"></i> COMPUTER... ' : '<i class="fa-solid fa-bolt"></i> LIỀU THÌ ĂN NHIỀU (-1đ)'}
+                            <button id="spin-btn-v2" onclick="RewardsModule.spinWheel()" class="spin-btn-premium" 
+                                ${meritInfo.current < 1 || RewardsModule._isSpinning || hasSpunToday ? 'disabled' : ''}>
+                                ${RewardsModule._isSpinning ? '<i class="fa-solid fa-sync fa-spin"></i> COMPUTER... ' : 
+                                  (hasSpunToday ? '<i class="fa-solid fa-calendar-check"></i> MAI QUAY TIẾP NHÉ' : '<i class="fa-solid fa-bolt"></i> LIỀU THÌ ĂN NHIỀU (-1đ)')}
                             </button>
-                            <div style="margin-top: 15px; font-size: 11px; color: #10b981; font-family: monospace; letter-spacing: 1px; text-shadow: 0 0 5px #10b981;">SYSLOAD: STATUS_REDHOT_READY</div>
+                            <div style="margin-top: 15px; font-size: 11px; color: #10b981; font-family: monospace; letter-spacing: 1px; text-shadow: 0 0 5px #10b981;">
+                                ${hasSpunToday ? 'LIMIT: DAILY_QUOTA_EXHAUSTED' : 'SYSLOAD: STATUS_REDHOT_READY'}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -625,7 +637,20 @@ const RewardsModule = {
 
         const meritInfo = await RewardsModule.calcUserMerit(user.username);
         if (meritInfo.current < 1) {
-            Utils.showToast("Bạn cần ít nhất 1 điểm Công Đức để quay!", "error");
+            Utils.showToast("Bạn cần ít nhất 1 điểm Công Đức để tham gia!", "error");
+            return;
+        }
+
+        // Kiểm tra giới hạn 1 lần/ngày
+        const allRewardsInit = await RewardsModule.loadData();
+        const today = new Date().toLocaleDateString();
+        const hasSpunToday = allRewardsInit.some(r => 
+            r.username === user.username && 
+            r.cardId === 'wheel_entry' && 
+            new Date(r.timestamp).toLocaleDateString() === today
+        );
+        if (hasSpunToday) {
+            Utils.showToast("Mỗi ngày chỉ được quay 1 lần thôi sếp ơi!", "warning");
             return;
         }
 
