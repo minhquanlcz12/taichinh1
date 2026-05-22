@@ -224,7 +224,7 @@ const RewardsModule = {
             // Chibi rendering logic (if ChibiModule is defined and config exists)
             let chibiSvgHtml = '';
             if (profile.chibiConfig && typeof ChibiModule !== 'undefined') {
-                chibiSvgHtml = ChibiModule.renderChibiSVG(profile.chibiConfig, true);
+                chibiSvgHtml = ChibiModule.renderChibiSVG(profile.chibiConfig, true, accMerit.current);
             } else {
                 chibiSvgHtml = `
                 <div class="chibi-placeholder" style="width: 100px; height: 100px; border-radius: 50%; background: rgba(255,255,255,0.05); border: 2px dashed ${themeColor}; display: flex; align-items: center; justify-content: center; position: relative; margin: 0 auto; box-shadow: 0 0 10px rgba(0,0,0,0.5);">
