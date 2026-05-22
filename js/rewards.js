@@ -410,14 +410,14 @@ const RewardsModule = {
                 width: 100%;
                 height: 100%;
                 background: conic-gradient(
-                    #1e1b4b 0deg 45deg,
-                    #059669 45deg 90deg,
-                    #064e3b 90deg 135deg,
-                    #1e1b4b 135deg 180deg,
-                    #059669 180deg 225deg,
-                    #92400e 225deg 270deg,
-                    #1e1b4b 270deg 315deg,
-                    #9d174d 315deg 360deg
+                    #1e1b4b 0deg 45deg,   /* 0: Miss */
+                    #059669 45deg 90deg,  /* 1: +1 */
+                    #064e3b 90deg 135deg, /* 2: +2 */
+                    #1e1b4b 135deg 180deg, /* 3: Miss */
+                    #059669 180deg 225deg, /* 4: +1 */
+                    #92400e 225deg 270deg, /* 5: +5 */
+                    #991b1b 270deg 315deg, /* 6: -1đ (Loss) */
+                    #9d174d 315deg 360deg  /* 7: Card */
                 );
             }
             .wheel-content-layer {
@@ -429,7 +429,8 @@ const RewardsModule = {
                 position: absolute;
                 width: 100%;
                 height: 100%;
-                transform: rotate(calc(45deg * var(--i)));
+                /* Cân chỉnh chữ nằm CHÍNH GIỮA ô (45deg/2 = 22.5deg) */
+                transform: rotate(calc(45deg * var(--i) + 22.5deg));
                 display: flex;
                 justify-content: center;
                 padding-top: 35px;
@@ -567,7 +568,7 @@ const RewardsModule = {
                                     <div class="wheel-item" style="--i:3;"><span>Hụt rồi!</span></div>
                                     <div class="wheel-item" style="--i:4;"><span>+1đ</span></div>
                                     <div class="wheel-item" style="--i:5;"><span>+5đ</span></div>
-                                    <div class="wheel-item" style="--i:6;"><span>Hụt rồi!</span></div>
+                                    <div class="wheel-item" style="--i:6;"><span style="color:#ff9999;">-1đ</span></div>
                                     <div class="wheel-item" style="--i:7;"><span>THẺ TRÀ</span></div>
                                 </div>
                             </div>
@@ -674,21 +675,23 @@ const RewardsModule = {
                 { label: 'Hụt rồi!', pts: 0, msg: 'Suýt trúng! Cố lên bạn ơi 🍀' },
                 { label: '+1 Điểm', pts: 1, msg: 'Hòa vốn! Nhận lại 1 công đức nè 🧧' },
                 { label: '+5 Điểm', pts: 5, msg: 'XUẤT SẮC! Bạn trúng hũ +5 công đức 💎' },
-                { label: 'Hụt rồi!', pts: 0, msg: 'Hụt mất rồi! Quay lại phát nữa xem sao? ✨' },
+                { label: '-1 Điểm', pts: -1, msg: 'ỐI GIỒI ÔI! Mất sạch vốn lẫn lãi (-1đ) 💀' },
                 { label: 'THẺ TRÀ', pts: 0, isCard: true, cardId: 'card_tea', msg: 'SIÊU CẤP MAY MẮN! Trúng ngay 1 THẺ TRÀ CHIỀU 🥤' }
             ];
 
             const rand = Math.random();
             let prizeIdx = 0;
-            if (rand < 0.40) prizeIdx = [0, 3, 6][Math.floor(Math.random() * 3)];
-            else if (rand < 0.75) prizeIdx = [1, 4][Math.floor(Math.random() * 2)];
-            else if (rand < 0.88) prizeIdx = 2;
-            else if (rand < 0.96) prizeIdx = 5;
-            else prizeIdx = 7;
+            if (rand < 0.40) prizeIdx = [0, 3][Math.floor(Math.random() * 2)]; // 40% hụt
+            else if (rand < 0.70) prizeIdx = [1, 4][Math.floor(Math.random() * 2)]; // 30% hòa
+            else if (rand < 0.85) prizeIdx = 2; // 15% lãi +2
+            else if (rand < 0.93) prizeIdx = 5; // 8% trúng hũ +5
+            else if (rand < 0.97) prizeIdx = 6; // 4% MẤT ĐIỂM (nhọ)
+            else prizeIdx = 7; // 3% trúng thẻ
 
             const prize = prizes[prizeIdx];
             
             const segmentAngle = 360 / 8;
+            // Dừng ở tâm của phân đoạn (offset 22.5deg)
             const stopAngle = 360 - (prizeIdx * segmentAngle) - (segmentAngle / 2); 
             
             // Tính toán rotation tiếp theo cộng dồn vào currentAngle
@@ -756,10 +759,18 @@ const RewardsModule = {
         `;
 
         const isWin = prize.pts > 0 || prize.isCard;
-        const color = isWin ? '#10b981' : '#ef4444';
+        const color = prize.pts < 0 ? '#ef4444' : (isWin ? '#10b981' : '#64748b');
         
         let humorMsg = "";
-        if (prize.pts === 0 && !prize.isCard) {
+        if (prize.pts < 0) {
+            const painMsgs = [
+                "NHỌ HƠN CÀ PHÊ! ☕ Mất thêm 1đ nữa rồi sếp ơi. Hệ thống này 'cay' thật!",
+                "MẤT CẢ CHÌ LẪN CHÀI! 🔫 Vừa tốn điểm quay vừa bị trừ thêm, đen thôi đỏ quên đi.",
+                "AI KHÓC CHO NỖI ĐAU NÀY? 🕯️ Vòng quay không có mắt, trừ thẳng tay luôn sếp ạ.",
+                "HÔM NAY ĂN GÌ? 🍜 Chắc là ăn hành rồi, -1đ nhé sếp!"
+            ];
+            humorMsg = painMsgs[Math.floor(Math.random() * painMsgs.length)];
+        } else if (prize.pts === 0 && !prize.isCard) {
             const fails = [
                 "NHÂN PHẨM BAY MÀU! 🕯️ Chắc tại nãy đi làm sếp quên thắp nhang rồi.",
                 "TRƯỢT VỎ CHUỐI! 🍌 Gần lắm rồi, chỉ thiếu 0.0001mm là trúng hũ.",
