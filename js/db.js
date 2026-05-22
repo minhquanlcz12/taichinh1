@@ -351,6 +351,54 @@ const DB = {
         return Utils.storage.get('backup_cb_history', []);
     },
 
+    // --- LƯU TRỮ LỊCH SỬ ĐỔI THƯỞNG CÔNG ĐỨC ---
+    saveRewards: async (rewardsArray) => {
+        try {
+            Utils.storage.set('backup_rewards', rewardsArray);
+            await db.collection("system").doc("rewards").set({ data: rewardsArray });
+            return true;
+        } catch (e) {
+            console.error("Error saving rewards:", e);
+            return false;
+        }
+    },
+
+    getRewards: async () => {
+        try {
+            const doc = await db.collection("system").doc("rewards").get();
+            if (doc.exists && doc.data() && doc.data().data) {
+                return doc.data().data;
+            }
+        } catch (e) {
+            console.error("Error getting rewards :", e);
+        }
+        return Utils.storage.get('backup_rewards', []);
+    },
+
+    // --- LƯU TRỮ PHÊ DUYỆT THƯỞNG CHUYÊN CẦN / THÁNG ---
+    saveBonusApprovals: async (approvalsObj) => {
+        try {
+            Utils.storage.set('backup_bonus_approvals', approvalsObj);
+            await db.collection("system").doc("bonus_approvals").set(approvalsObj);
+            return true;
+        } catch (e) {
+            console.error("Error saving bonus approvals:", e);
+            return false;
+        }
+    },
+
+    getBonusApprovals: async () => {
+        try {
+            const doc = await db.collection("system").doc("bonus_approvals").get();
+            if (doc.exists && doc.data()) {
+                return doc.data();
+            }
+        } catch (e) {
+            console.error("Error getting bonus approvals:", e);
+        }
+        return Utils.storage.get('backup_bonus_approvals', {});
+    },
+
     // Xóa trắng dữ liệu thiết lập lại từ đầu
     clearAll: async () => {
         try {
@@ -364,6 +412,7 @@ const DB = {
             Utils.storage.remove('backup_chatbots');
             Utils.storage.remove('backup_topup_reqs');
             Utils.storage.remove('backup_cb_history');
+            Utils.storage.remove('backup_rewards');
             await db.collection("system").doc("accounts").delete();
             await db.collection("finance").doc("main").delete();
             await db.collection("work").doc("main").delete();
@@ -374,6 +423,7 @@ const DB = {
             await db.collection("system").doc("chatbots").delete();
             await db.collection("system").doc("topup_requests").delete();
             await db.collection("system").doc("chatbot_history").delete();
+            await db.collection("system").doc("rewards").delete();
             console.log("Database reset");
         } catch (e) {
             console.error("Error clearing data:", e);

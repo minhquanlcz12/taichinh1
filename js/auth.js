@@ -345,6 +345,7 @@ const Auth = {
 
         let currentKey = Utils.storage.get('claude_api_key') || '';
         let currentModel = Utils.storage.get('claude_api_model') || 'claude-3-haiku-20240307';
+        let isCustomModel = !['claude-3-haiku-20240307', 'claude-3-5-sonnet-20240620', 'claude-3-opus-20240229', 'opus-4.7', 'sonnet-4.6', 'haiku-4.5'].includes(currentModel);
         
         let html = '';
 
@@ -368,7 +369,7 @@ const Auth = {
                 <div style="display:flex; align-items:center; gap:16px;">
                     <div class="avatar" style="width: 50px; height: 50px; font-size: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.5); background: ${userColor}; color: #fff;">${Auth.currentUser.username[0].toUpperCase()}</div>
                     <div>
-                        <h4 style="font-size:16px; margin: 0 0 4px 0; color: var(--primary);">${Auth.currentUser.username} <span class="badge ${Auth.currentUser.role === 'admin' ? 'badge-orange' : 'badge-blue'}" style="vertical-align: middle; margin-left: 4px; font-size: 10px;">${Auth.currentUser.role.toUpperCase()}</span></h4>
+                        <h4 style="font-size:16px; margin: 0 0 4px 0; color: var(--primary);">${Auth.currentUser.username} <span class="badge ${Auth.currentUser.role === 'admin' ? 'badge-orange' : 'badge-blue'}" style="vertical-align: middle; margin-left: 4px; font-size: 10px;">${Auth.currentUser.role.toUpperCase()} (v1.1)</span></h4>
                         <p style="color:var(--text-secondary); margin: 0; font-size: 12px;">Phiên đăng nhập hiện tại</p>
                     </div>
                 </div>
@@ -378,23 +379,46 @@ const Auth = {
             </div>
         `;
 
-        html += Auth.createAccordionBlock('acc-ai', 'Tích hợp AI (Claude API)', 'fa-robot', `
+        html += Auth.createAccordionBlock('acc-ai', 'Tích hợp AI Claude (MỚI - v1.1)', 'fa-robot', `
             <p style="color:var(--text-secondary); margin-bottom: 16px; margin-top: 0;">Nhập mã API Anthropic của bạn để kích hoạt chức năng tự động viết Nội dung/Kịch bản ở cấp độ chuyên gia.</p>
             <div class="form-group" style="display:flex; gap: 8px;">
                 <input type="password" id="claude-api-key" class="form-control" placeholder="sk-ant-api03-..." value="${currentKey}" style="flex:1;">
                 <button class="btn btn-primary" onclick="Auth.saveClaudeKey()"><i class="fa-solid fa-floppy-disk"></i> Lưu Cấu Hình</button>
             </div>
+
+            <div class="form-group" style="margin-top: 12px;">
+                <label style="color: var(--text-secondary); font-size: 13px;">API Base URL (Dành cho Proxy/Mirror):</label>
+                <input type="text" id="claude-api-base" class="form-control" placeholder="Mặc định: https://api.anthropic.com" value="${Utils.storage.get('claude_api_base') || ''}" style="margin-top:4px; background: rgba(0,0,0,0.2); font-size:12px;">
+                <p style="color: var(--text-secondary); font-size: 11px; margin-top: 4px;">* Nếu dùng API từ web khác (như OpenAI Proxy), hãy nhập URL gốc của backend proxy đó.</p>
+            </div>
             
-            <div class="form-group" style="margin-top: 12px; display: flex; gap: 16px; align-items: center;">
-                <label style="color: var(--text-secondary); font-size: 13px;">Chọn Model AI:</label>
-                <label style="display:flex; align-items:center; gap:4px; font-size: 13px;">
-                    <input type="radio" name="claude-model" value="claude-3-haiku-20240307" ${currentModel === 'claude-3-haiku-20240307' ? 'checked' : ''}>
-                    Claude 3 Haiku (Nhanh, Rẻ)
-                </label>
-                <label style="display:flex; align-items:center; gap:4px; font-size: 13px; color: var(--warning);">
-                    <input type="radio" name="claude-model" value="claude-3-5-sonnet-20240620" ${currentModel === 'claude-3-5-sonnet-20240620' ? 'checked' : ''}>
-                    Claude 3.5 Sonnet (Thông minh, Đắt hơn)
-                </label>
+            <div class="form-group" style="margin-top: 12px;">
+                <label style="color: var(--text-secondary); font-size: 13px;">Chọn Model AI (Ưu tiên hàng mạnh nhất):</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
+                    <label style="display:flex; align-items:center; gap:4px; font-size: 12px;">
+                        <input type="radio" name="claude-model" value="claude-3-haiku-20240307" ${currentModel === 'claude-3-haiku-20240307' ? 'checked' : ''}>
+                        Haiku 3.0 (Cơ bản)
+                    </label>
+                    <label style="display:flex; align-items:center; gap:4px; font-size: 12px; color: var(--warning);">
+                        <input type="radio" name="claude-model" value="claude-3-5-sonnet-20240620" ${currentModel === 'claude-3-5-sonnet-20240620' ? 'checked' : ''}>
+                        Sonnet 3.5 (Chuẩn)
+                    </label>
+                    <label style="display:flex; align-items:center; gap:4px; font-size: 12px; color: var(--danger); font-weight: bold;">
+                        <input type="radio" name="claude-model" value="opus-4.7" ${currentModel === 'opus-4.7' ? 'checked' : ''}>
+                        OPUS 4.7 (Vô đối 🔥)
+                    </label>
+                    <label style="display:flex; align-items:center; gap:4px; font-size: 12px; color: #a855f7;">
+                        <input type="radio" name="claude-model" value="sonnet-4.6" ${currentModel === 'sonnet-4.6' ? 'checked' : ''}>
+                        Sonnet 4.6 (Mạnh)
+                    </label>
+                    <label style="display:flex; align-items:center; gap:4px; font-size: 12px;">
+                        <input type="radio" name="claude-model" value="custom" ${isCustomModel ? 'checked' : ''} onclick="document.getElementById('custom-model-input-group').style.display='block'">
+                        Khác (Tùy chỉnh)
+                    </label>
+                </div>
+                <div id="custom-model-input-group" style="margin-top: 10px; display: ${isCustomModel ? 'block' : 'none'};">
+                    <input type="text" id="claude-model-custom" class="form-control" placeholder="Nhập tên model (vd: claude-3-opus-20240229)" value="${isCustomModel ? currentModel : ''}" style="font-size: 12px; background: rgba(168, 85, 247, 0.1); border-color: var(--primary);">
+                </div>
             </div>
 
             <small style="color: var(--text-secondary); display:block; margin-top:8px;"><i class="fa-solid fa-circle-info"></i> API Key chỉ lưu bảo mật trên trình duyệt máy tính của bạn. Nếu API bị lỗi CORS do Browser, app sẽ tự động fallback về mẫu Local.</small>
@@ -502,9 +526,16 @@ const Auth = {
 
     saveClaudeKey: () => {
         const key = document.getElementById('claude-api-key').value.trim();
-        const model = document.querySelector('input[name="claude-model"]:checked').value;
+        const baseUrl = document.getElementById('claude-api-base').value.trim();
+        let model = document.querySelector('input[name="claude-model"]:checked').value;
+        if (model === 'custom') {
+            model = document.getElementById('claude-model-custom').value.trim() || 'claude-3-haiku-20240307';
+        }
+        
         Utils.storage.set('claude_api_key', key);
+        Utils.storage.set('claude_api_base', baseUrl);
         Utils.storage.set('claude_api_model', model);
+        
         Utils.showToast('Đã lưu Cấu hình AI an toàn tại trình duyệt!', 'success');
     },
 

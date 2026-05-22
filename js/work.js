@@ -1170,41 +1170,22 @@ Chỉ xuất ra đúng chuỗi JSON, không giải thích hay bao bọc XML/HTML
             const finalPrompt = prompt + `\n\n[Bắt buộc: Bạn hãy nghĩ ra các ý tưởng hoang dã, góc nhìn hoàn toàn MỚI LẠ. Sử dụng văn phong, từ vựng và cấu trúc hoàn toàn KHÁC BIỆT so với các mẫu thông thường! Mã tạo ngẫu nhiên để ép tính sáng tạo: ${randomSeed}]`;
 
             try {
-                const response = await fetch('https://api.anthropic.com/v1/messages', {
-                    method: 'POST',
-                    headers: {
-                        'x-api-key': claudeKey,
-                        'anthropic-version': '2023-06-01',
-                        'content-type': 'application/json',
-                        'anthropic-dangerous-direct-browser-access': 'true' // Bắt buộc cho trình duyệt
-                    },
-                    body: JSON.stringify({
-                        model: activeModel,
-                        max_tokens: 4096,
-                        temperature: 0.9,
-                        messages: [
-                            { role: "user", content: finalPrompt }
-                        ]
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error('API Request Failed: ' + response.statusText);
+                const aiText = await ClaudeModule.sendMessage(finalPrompt, "Bạn là một trợ lý JSON chuyên nghiệp.", 4000);
+                
+                if (!aiText) {
+                    throw new Error("Không nhận được phản hồi từ Claude.");
                 }
 
-                const data = await response.json();
-                let aiText = data.content[0].text;
-                
                 // Trích xuất JSON an toàn (Xử lý cả trường hợp Claude nói 'Dạ đây là JSON: ...')
-                aiText = aiText.replace(/```json/gi, '').replace(/```/g, '').trim();
-                const startIdx = aiText.indexOf('{');
-                const endIdx = aiText.lastIndexOf('}');
+                let cleanJson = aiText.replace(/```json/gi, '').replace(/```/g, '').trim();
+                const startIdx = cleanJson.indexOf('{');
+                const endIdx = cleanJson.lastIndexOf('}');
                 
                 if (startIdx !== -1 && endIdx !== -1) {
-                    aiText = aiText.substring(startIdx, endIdx + 1);
+                    cleanJson = cleanJson.substring(startIdx, endIdx + 1);
                 }
                 
-                const aiDataObj = JSON.parse(aiText);
+                const aiDataObj = JSON.parse(cleanJson);
 
                 // Gán vào giao diện
                 document.getElementById('ai-tomtat').innerHTML = WorkModule.renderAITomTat(aiDataObj.tomTat);
@@ -1216,7 +1197,7 @@ Chỉ xuất ra đúng chuỗi JSON, không giải thích hay bao bọc XML/HTML
                 Utils.showToast('Đã tạo thành công đủ 5 mục bằng AI!', 'success');
             } catch (error) {
                 console.error("Claude API Error:", error);
-                Utils.showToast('Lỗi khi gọi API hoặc định dạng JSON không hợp lệ. Vui lòng thử lại!', 'error');
+                Utils.showToast('Lỗi khi gọi AI: ' + error.message, 'error');
             }
             btn.innerHTML = originalBtnHtml;
             btn.disabled = false;

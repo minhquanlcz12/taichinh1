@@ -173,7 +173,7 @@ const Attendance = {
                 badgeClass = 'late-excused';
             } else {
                 meritPts = -1;
-                statusText = `⏰ Muộn ${todayRecord.lateMinutes}p — Công đức -1`;
+                statusText = `⏰ Muộn ${todayRecord.lateMinutes}p — Phạt 20k & Trừ 1 Công đức`;
                 badgeClass = 'late';
             }
             checkInHtml = `
@@ -273,7 +273,7 @@ const Attendance = {
                         </div>
                         <div style="text-align: right; font-size: 12px; color: var(--text-secondary);">
                             <div><i class="fa-solid fa-calendar-days" style="color: var(--primary); margin-right: 4px;"></i>${passedWorkDays} / ${workingDaysInMonth} ngày công</div>
-                            <div style="margin-top: 4px; font-size: 10px; color: rgba(255,255,255,0.3);">Cập nhật theo chấm công</div>
+                        <div style="margin-top: 4px; font-size: 10px; color: rgba(255,255,255,0.3);">Cập nhật theo chấm công</div>
                         </div>
                     </div>
                 </div>
@@ -286,22 +286,31 @@ const Attendance = {
         // Lấy lịch sử xin nghỉ
         const allLeaves = await Attendance.loadLeaveData();
         const userLeaves = allLeaves.filter(l => l.username === user.username).sort((a,b) => b.timestamp - a.timestamp);
-        const totalMerit = userHistory.reduce((acc, r) => acc + ((r.status === 'on_time' || r.status === 'late_excused') ? 1 : -1), 0);
+        const RESET_DATE = '2026-05-20';
+        let currentMeritDisplay = '?';
+        if (typeof RewardsModule !== 'undefined') {
+            const mInfo = await RewardsModule.calcUserMerit(user.username);
+            currentMeritDisplay = mInfo.current;
+        } else {
+            const meritHistory = userHistory.filter(r => r.dateStr >= RESET_DATE);
+            currentMeritDisplay = 1 + meritHistory.reduce((acc, r) => acc + ((r.status === 'on_time' || r.status === 'late_excused') ? 1 : -1), 0);
+        }
         let historyHtml = `
             <div class="wf-history-panel">
-                <h3><i class="fa-solid fa-scroll" style="margin-right:8px;"></i> Sổ Công Đức <span class="wf-stat">Tích lũy: ${totalMerit} công đức</span></h3>
+                <h3><i class="fa-solid fa-scroll" style="margin-right:8px;"></i> Sổ Công Đức <span class="wf-stat">Khả dụng: ${currentMeritDisplay} <i class="fa-solid fa-star"></i></span></h3>
+                <p style="font-size:11.5px; color:var(--success); margin-top:-5px; margin-bottom:10px;"><i class="fa-solid fa-gift"></i> Đã được tự động Reset tặng khởi đầu +1 điểm (Bỏ qua lịch sử vi phạm quá hạn trước ngày 20/05/2026).</p>
                 <div class="table-responsive">
                     <table class="tl-table">
                         <thead>
                             <tr>
                                 <th>Ngày</th>
-                                <th>Thời gian</th>
-                                <th>Trạng thái</th>
+                                <th>Kết quả điểm danh</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${userHistory.length === 0 ? '<tr><td colspan="3" style="text-align:center;color:rgba(218,165,32,0.3);">Chưa có công đức nào</td></tr>' : ''}
+                            ${userHistory.length === 0 ? '<tr><td colspan="2" style="text-align:center;color:rgba(218,165,32,0.3);">Chưa có công đức nào</td></tr>' : ''}
                             ${userHistory.map(r => {
+                                const isOld = r.dateStr < RESET_DATE;
                                 const pts = (r.status === 'on_time' || r.status === 'late_excused') ? 1 : -1;
                                 let badgeHtml = '';
                                 if (r.status === 'on_time') {
@@ -312,12 +321,12 @@ const Attendance = {
                                     badgeHtml = `<span class="badge bg-danger">Muộn ${r.lateMinutes}p</span>`;
                                 }
                                 return `
-                                <tr>
+                                <tr style="${isOld ? 'opacity: 0.5;' : ''}">
                                     <td>${r.dateStr}</td>
-                                    <td>${new Date(r.timestamp).toLocaleTimeString('vi-VN')} ${r.checkoutTimestamp ? `<br><small style="color:#2ecc71">Ra: ${new Date(r.checkoutTimestamp).toLocaleTimeString('vi-VN')}</small>` : ''}</td>
                                     <td>
                                         ${badgeHtml}
-                                        <span class="wf-merit-badge ${pts < 0 ? 'negative' : ''}">${pts > 0 ? '+' : ''}${pts}</span>
+                                        ${isOld ? `<span class="wf-merit-badge" style="background:rgba(255,255,255,0.05);color:#888;border:1px solid rgba(255,255,255,0.1);">Không tính</span>` 
+                                                : `<span class="wf-merit-badge ${pts < 0 ? 'negative' : ''}" style="${pts > 0 ? '' : 'background:rgba(239,68,68,0.2);color:#ef4444;border-color:rgba(239,68,68,0.3);'}">${pts > 0 ? '+' : ''}${pts}</span>`}
                                     </td>
                                 </tr>
                                 `;
@@ -820,6 +829,8 @@ const Attendance = {
             // Check if there is an approved late request for today
             const lates = await Attendance.loadLateRequests();
             const todayApprovedRequest = lates.find(r => r.username === user.username && r.date === dateStr && r.status === 'approved');
+            const locStr = lat ? `\n📍 <b>Vị trí:</b> <a href="https://google.com/maps?q=${lat},${lng}">Xem bản đồ</a>` : '';
+            const shiftName = now.getHours() < 12 ? 'CA SÁNG' : 'CA CHIỀU';
             
             if (todayApprovedRequest) {
                 const requestedMinutes = parseInt(todayApprovedRequest.minutes) || 0;
@@ -830,8 +841,14 @@ const Attendance = {
                         actualLateMinutes: lateMinutes,
                         reason: todayApprovedRequest.reason
                     };
-                    const locStr = lat ? `\n📍 https://google.com/maps?q=${lat},${lng}` : '';
-                    Utils.notifyTelegram(`ℹ️ <b>[ĐI MUỘN CÓ PHÉP]</b>\n👤 ${user.username}\n⏰ ${now.toLocaleTimeString('vi-VN')}\n⏳ Muộn thực tế ${lateMinutes}p (Đã xin ${requestedMinutes}p)\n📝 Lý do: ${todayApprovedRequest.reason}${locStr}`);
+                    let telegramMsg = `ℹ️ <b>[ĐI MUỘN CÓ PHÉP]</b>\n\n`;
+                    telegramMsg += `👤 <b>Nhân sự:</b> ${user.username}\n`;
+                    telegramMsg += `⏰ <b>Thời gian:</b> ${now.toLocaleTimeString('vi-VN')} (${shiftName})\n`;
+                    telegramMsg += `⏳ <b>Muộn thực tế:</b> ${lateMinutes}p (Đã xin phép muộn ${requestedMinutes}p)\n`;
+                    telegramMsg += `📝 <b>Lý do:</b> ${todayApprovedRequest.reason}\n`;
+                    telegramMsg += `${locStr}\n\n`;
+                    telegramMsg += `<i>"Đã ghi nhận đi muộn có phép. Công đức được cộng +1đ như thường lệ."</i>`;
+                    Utils.notifyTelegram(telegramMsg);
                 } else {
                     status = 'late';
                     lateExcuseDetails = {
@@ -839,13 +856,27 @@ const Attendance = {
                         actualLateMinutes: lateMinutes,
                         reason: todayApprovedRequest.reason
                     };
-                    const locStr = lat ? `\n📍 https://google.com/maps?q=${lat},${lng}` : '';
-                    Utils.notifyTelegram(`⚠️ <b>[ĐI MUỘN QUÁ HẠN XIN PHÉP]</b>\n👤 ${user.username}\n⏰ ${now.toLocaleTimeString('vi-VN')}\n⏳ Xin muộn ${requestedMinutes}p nhưng thực tế muộn ${lateMinutes}p (Quá hạn ${lateMinutes - requestedMinutes}p)${locStr}`);
+                    let telegramMsg = `🚨 <b>CẢNH BÁO VI PHẠM KỶ LUẬT (QUÁ HẠN XIN PHÉP)</b> 🚨\n\n`;
+                    telegramMsg += `👤 <b>Nhân sự:</b> ${user.username}\n`;
+                    telegramMsg += `⏰ <b>Thời gian:</b> ${now.toLocaleTimeString('vi-VN')} (${shiftName})\n`;
+                    telegramMsg += `⏳ <b>Trạng thái:</b> Xin muộn ${requestedMinutes}p nhưng thực tế muộn ${lateMinutes}p (Quá hạn ${lateMinutes - requestedMinutes}p)\n`;
+                    telegramMsg += `💸 <b>Phạt vi phạm:</b> 20,000đ (Đã tự động trừ lương)\n`;
+                    telegramMsg += `📉 <b>Trừ công đức:</b> -1đ\n`;
+                    telegramMsg += `${locStr}\n\n`;
+                    telegramMsg += `<i>"Kỷ luật là sức mạnh! Đề nghị sếp ${user.username} rút kinh nghiệm sâu sắc."</i>`;
+                    Utils.notifyTelegram(telegramMsg);
                 }
             } else {
                 status = 'late';
-                const locStr = lat ? `\n📍 https://google.com/maps?q=${lat},${lng}` : '';
-                Utils.notifyTelegram(`⚠️ <b>[ĐI MUỘN]</b>\n👤 ${user.username}\n⏰ ${now.toLocaleTimeString('vi-VN')}\n⏳ Muộn ${lateMinutes}p${locStr}`);
+                let telegramMsg = `🚨 <b>CẢNH BÁO VI PHẠM KỶ LUẬT</b> 🚨\n\n`;
+                telegramMsg += `👤 <b>Nhân sự:</b> ${user.username}\n`;
+                telegramMsg += `⏰ <b>Thời gian:</b> ${now.toLocaleTimeString('vi-VN')} (${shiftName})\n`;
+                telegramMsg += `❗ <b>Tình trạng:</b> ĐI MUỘN KHÔNG PHÉP <b>${lateMinutes}</b> PHÚT\n`;
+                telegramMsg += `💸 <b>Phạt vi phạm:</b> 20,000đ (Đã tự động trừ lương)\n`;
+                telegramMsg += `📉 <b>Trừ công đức:</b> -1đ\n`;
+                telegramMsg += `${locStr}\n\n`;
+                telegramMsg += `<i>"Kỷ luật là sức mạnh! Đề nghị sếp ${user.username} rút kinh nghiệm sâu sắc."</i>`;
+                Utils.notifyTelegram(telegramMsg);
             }
         }
 

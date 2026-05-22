@@ -45,8 +45,26 @@ const ChatbotModule = {
         if (!container) return;
         const isAdmin = Auth.currentUser && Auth.currentUser.role === 'admin';
 
-        let cardsHtml = '';
-        if (ChatbotModule.data.chatbots.length === 0) {
+        let cardsHtml = `
+            <!-- Claude Direct API Card (Fixed at top) -->
+            <div class="glass-card storefront-card" style="display: flex; flex-direction: column; overflow: hidden; padding: 0; border: 1px solid var(--primary); border-radius: 12px; height: 100%; background: linear-gradient(145deg, #131722, #1b2131); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 24px rgba(0,240,255,0.2)';" onmouseout="this.style.transform='none';this.style.boxShadow='none';">
+                <div style="position: relative; height: 180px; width: 100%; background: #fff; display:flex; align-items:center; justify-content:center;">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/d/d4/Anthropic_logo.svg" style="width: 120px; opacity: 0.8;">
+                    <div style="position: absolute; top: 12px; left: 12px; display: flex; flex-direction: column; gap: 6px;">
+                        <span style="background: var(--primary); color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"><i class="fa-solid fa-bolt"></i> Direct Connect</span>
+                    </div>
+                </div>
+                <div style="padding: 16px; display: flex; flex-direction: column; flex: 1;">
+                    <h4 class="title-glow" style="color: #fff; margin: 0 0 8px; font-size: 16px; font-weight: bold;">Claude 3.5 Sonnet (Direct API)</h4>
+                    <p style="color: var(--text-secondary); font-size: 12px; margin: 0 0 16px; line-height: 1.5; height: 36px;">Chat trực tiếp với AI thông minh nhất thế giới qua API Key chính chủ của sếp.</p>
+                    <button class="btn btn-primary" onclick="ClaudeModule.openChat()" style="margin-top:auto; width:100%; font-weight:bold; background: linear-gradient(135deg, var(--primary), #a855f7); border:none;">
+                        <i class="fa-solid fa-comments" style="margin-right:8px;"></i> CHAT NGAY BÂY GIỜ
+                    </button>
+                </div>
+            </div>
+        `;
+
+        if (ChatbotModule.data.chatbots.length === 0 && cardsHtml === '') {
             cardsHtml = `<div style="grid-column: 1 / -1; text-align: center; color: var(--text-secondary); padding: 40px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px dashed var(--border-color);">Chưa có Chatbot nào. Admin hãy thêm vào!</div>`;
         } else {
             ChatbotModule.data.chatbots.forEach(p => {
