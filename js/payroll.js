@@ -3,6 +3,7 @@
 const PayrollModule = {
     currentMonth: new Date().toISOString().slice(0, 7), // YYYY-MM
     LATE_PENALTY: 20000,
+    viewMode: 'cards', // Dạng hiển thị mặc định (Thẻ Premium)
 
     // Đếm số ngày làm việc Thứ 2 - Thứ 7 trong tháng
     getWorkingDaysInMonth: (year, month) => {
@@ -31,6 +32,11 @@ const PayrollModule = {
         // Nothing heavy on init, data is fetched on render
     },
 
+    toggleViewMode: (mode) => {
+        PayrollModule.viewMode = mode;
+        PayrollModule.render();
+    },
+
     render: async () => {
         const container = document.getElementById('payroll-view');
         if (!container) return;
@@ -43,19 +49,410 @@ const PayrollModule = {
             <div class="finance-header" style="display:flex; justify-content:space-between; margin-bottom: 24px; align-items:center; flex-wrap: wrap; gap: 12px;">
                 <h3 style="font-size: 20px; color: var(--success);"><i class="fa-solid fa-money-check-dollar" style="margin-right: 8px;"></i>${currentUser.role === 'admin' ? 'Bảng Lương Tổng Hợp' : 'Bảng Lương Cá Nhân'}</h3>
                 
-                <div style="display: flex; gap: 8px; align-items: center;">
-                    <label style="color: var(--text-secondary); font-size: 13px;">Chọn tháng:</label>
-                    <button id="payroll-month-btn" class="btn btn-outline" style="min-width: 140px; border-color: rgba(255,255,255,0.1); color: #fff; background: rgba(0,0,0,0.1); height: 38px; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="PayrollModule.openMonthPicker()">
-                        <i class="fa-solid fa-calendar-check" style="color: var(--success);"></i>
-                        <span>Tháng ${PayrollModule.currentMonth.split('-')[1]} ${PayrollModule.currentMonth.split('-')[0]}</span>
-                    </button>
-                    <button class="btn btn-success" onclick="PayrollModule.exportToExcel()"><i class="fa-solid fa-file-excel"></i> Excel</button>
-                    <button class="btn btn-outline" style="border-color: #f1c40f; color: #f1c40f;" onclick="PayrollModule.exportToPDF()"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+                <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                    <!-- View Mode Toggle -->
+                    <div class="view-mode-toggle" style="display: flex; background: rgba(0,0,0,0.4); padding: 4px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);">
+                        <button class="btn-toggle-view ${PayrollModule.viewMode === 'cards' ? 'active' : ''}" onclick="PayrollModule.toggleViewMode('cards')" style="padding: 6px 14px; font-size: 12px; border-radius: 8px; border: none; background: ${PayrollModule.viewMode === 'cards' ? 'linear-gradient(135deg, #10b981, #059669)' : 'transparent'}; color: ${PayrollModule.viewMode === 'cards' ? '#000000' : 'var(--text-secondary)'}; font-weight: bold; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; align-items: center; gap: 6px;">
+                            <i class="fa-solid fa-id-card" style="font-size: 13px;"></i> Thẻ Premium
+                        </button>
+                        <button class="btn-toggle-view ${PayrollModule.viewMode === 'table' ? 'active' : ''}" onclick="PayrollModule.toggleViewMode('table')" style="padding: 6px 14px; font-size: 12px; border-radius: 8px; border: none; background: ${PayrollModule.viewMode === 'table' ? 'linear-gradient(135deg, #10b981, #059669)' : 'transparent'}; color: ${PayrollModule.viewMode === 'table' ? '#000000' : 'var(--text-secondary)'}; font-weight: bold; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; align-items: center; gap: 6px;">
+                            <i class="fa-solid fa-table" style="font-size: 13px;"></i> Bảng Dữ Liệu
+                        </button>
+                    </div>
+
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <label style="color: var(--text-secondary); font-size: 13px; font-weight: 500;">Chọn tháng:</label>
+                        <button id="payroll-month-btn" class="btn btn-outline" style="min-width: 140px; border-color: rgba(255,255,255,0.12); color: #fff; background: rgba(20,20,30,0.6); height: 38px; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 8px; transition: all 0.3s;" onclick="PayrollModule.openMonthPicker()">
+                            <i class="fa-solid fa-calendar-check" style="color: var(--success);"></i>
+                            <span style="font-weight: 600;">Tháng ${PayrollModule.currentMonth.split('-')[1]} ${PayrollModule.currentMonth.split('-')[0]}</span>
+                        </button>
+                        <button class="btn btn-success" style="border-radius: 8px; height: 38px; display: flex; align-items: center; gap: 6px;" onclick="PayrollModule.exportToExcel()"><i class="fa-solid fa-file-excel"></i> Excel</button>
+                        <button class="btn btn-outline" style="border-color: #f1c40f; color: #f1c40f; border-radius: 8px; height: 38px; display: flex; align-items: center; gap: 6px;" onclick="PayrollModule.exportToPDF()"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+                    </div>
                 </div>
             </div>
             
-            <div class="glass-card" style="overflow-x: auto;">
-                <table class="data-table" style="width: 100%; min-width: 800px;">
+            <style>
+                /* Cyber Card Grid Layout */
+                .cyber-payroll-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+                    gap: 24px;
+                    padding: 8px 4px;
+                }
+                
+                /* TCG Card Outer Container with glowing border */
+                .cyber-payroll-card {
+                    position: relative;
+                    border-radius: 18px;
+                    background: linear-gradient(135deg, rgba(22,22,35,0.92), rgba(8,8,18,0.98));
+                    border: 2px solid rgba(var(--card-glow-color, 255, 255, 255), 0.15);
+                    box-shadow: 0 12px 35px rgba(0,0,0,0.6), inset 0 0 25px rgba(255,255,255,0.02);
+                    padding: 6px;
+                    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                    overflow: hidden;
+                    display: flex;
+                    flex-direction: column;
+                }
+                
+                /* Animated card overlay glow */
+                .cyber-payroll-card::before {
+                    content: '';
+                    position: absolute;
+                    top: -50%; left: -50%;
+                    width: 200%; height: 200%;
+                    background: linear-gradient(45deg, transparent, rgba(var(--card-glow-color, 255, 255, 255), 0.05), transparent);
+                    transform: rotate(45deg);
+                    transition: all 0.8s ease;
+                    pointer-events: none;
+                    z-index: 1;
+                    opacity: 0;
+                }
+                
+                .cyber-payroll-card:hover {
+                    transform: translateY(-8px) scale(1.02);
+                    box-shadow: 0 20px 40px rgba(0,0,0,0.7), 0 0 25px rgba(var(--card-glow-color, 0, 229, 255), 0.35);
+                    border-color: rgba(var(--card-glow-color, 0, 229, 255), 0.8);
+                }
+                
+                .cyber-payroll-card:hover::before {
+                    opacity: 1;
+                    transform: translate(20%, 20%) rotate(45deg);
+                }
+                
+                /* Card Inner Border */
+                .card-inner {
+                    position: relative;
+                    z-index: 2;
+                    border: 1px solid rgba(255,255,255,0.05);
+                    border-radius: 12px;
+                    padding: 16px;
+                    background-image: 
+                        linear-gradient(rgba(255,255,255,0.01) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(255,255,255,0.01) 1px, transparent 1px);
+                    background-size: 20px 20px;
+                    display: flex;
+                    flex-direction: column;
+                    height: 100%;
+                    justify-content: space-between;
+                }
+                
+                /* Header: Avatar, Name, Role badge */
+                .card-header {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    margin-bottom: 14px;
+                }
+                
+                .user-avatar {
+                    width: 46px;
+                    height: 46px;
+                    border-radius: 12px;
+                    border: 2px solid rgba(var(--card-glow-color), 1);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: radial-gradient(circle, rgba(var(--card-glow-color), 0.2) 0%, rgba(0,0,0,0.5) 100%);
+                    font-size: 18px;
+                    box-shadow: 0 0 10px rgba(var(--card-glow-color), 0.3);
+                    color: rgba(var(--card-glow-color), 1);
+                    text-shadow: 0 0 8px rgba(var(--card-glow-color), 0.6);
+                }
+                
+                .user-meta {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 2px;
+                }
+                
+                .user-name {
+                    font-size: 16px;
+                    font-weight: 800;
+                    color: #ffffff;
+                    letter-spacing: 0.5px;
+                    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+                }
+                
+                .user-role-badge {
+                    font-size: 9px;
+                    font-weight: 900;
+                    padding: 2px 6px;
+                    border-radius: 4px;
+                    color: #000000;
+                    letter-spacing: 0.8px;
+                    width: fit-content;
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+                    text-transform: uppercase;
+                }
+                
+                .card-divider {
+                    height: 1px;
+                    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08) 50%, transparent);
+                    margin-bottom: 14px;
+                }
+                
+                .card-stats {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+                    flex-grow: 1;
+                }
+                
+                .stat-item {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+                
+                .stat-label {
+                    font-size: 12.5px;
+                    color: var(--text-secondary);
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                }
+                
+                .stat-value {
+                    font-size: 13.5px;
+                    font-weight: 700;
+                    color: #ffffff;
+                }
+                
+                .stat-value.text-gold {
+                    color: #ffd700;
+                    text-shadow: 0 0 10px rgba(255,215,0,0.25);
+                }
+                
+                .stat-group-title {
+                    font-size: 9.5px;
+                    font-weight: 900;
+                    color: var(--text-secondary);
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                    margin-top: 6px;
+                    margin-bottom: 2px;
+                    border-left: 2px solid rgba(var(--card-glow-color), 1);
+                    padding-left: 6px;
+                }
+                
+                /* Grid of Attendance */
+                .attendance-grid {
+                    display: grid;
+                    grid-template-columns: repeat(4, 1fr);
+                    gap: 6px;
+                    margin-bottom: 2px;
+                }
+                
+                .att-box {
+                    background: rgba(0,0,0,0.3);
+                    border-radius: 8px;
+                    padding: 8px 2px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    border: 1px solid rgba(255,255,255,0.03);
+                    transition: all 0.2s ease;
+                }
+                
+                .att-box:hover {
+                    background: rgba(255,255,255,0.04);
+                    border-color: rgba(255,255,255,0.08);
+                }
+                
+                .att-num {
+                    font-size: 15px;
+                    font-weight: 800;
+                }
+                
+                .att-lbl {
+                    font-size: 8px;
+                    color: var(--text-secondary);
+                    margin-top: 3px;
+                    text-align: center;
+                    transform: scale(0.95);
+                }
+                
+                .att-box.on-time { border-bottom: 2px solid var(--success); }
+                .att-box.on-time .att-num { color: var(--success); text-shadow: 0 0 8px rgba(16,185,129,0.3); }
+                
+                .att-box.late-excused { border-bottom: 2px solid #64ffda; }
+                .att-box.late-excused .att-num { color: #64ffda; text-shadow: 0 0 8px rgba(100,255,218,0.3); }
+                
+                .att-box.late { border-bottom: 2px solid var(--warning); }
+                .att-box.late .att-num { color: var(--warning); text-shadow: 0 0 8px rgba(245,158,11,0.3); }
+                
+                .att-box.leave { border-bottom: 2px solid var(--primary); }
+                .att-box.leave .att-num { color: var(--primary); text-shadow: 0 0 8px rgba(59,130,246,0.3); }
+                
+                /* Task badges row */
+                .work-stats-row {
+                    display: flex;
+                    gap: 6px;
+                }
+                
+                .work-badge {
+                    flex: 1;
+                    padding: 5px;
+                    border-radius: 8px;
+                    font-size: 10.5px;
+                    font-weight: bold;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 4px;
+                    background: rgba(0,0,0,0.25);
+                    border: 1px solid rgba(255,255,255,0.03);
+                }
+                
+                .work-badge.done {
+                    color: var(--success);
+                    border-bottom: 1.5px solid rgba(16,185,129,0.6);
+                }
+                
+                .work-badge.expired {
+                    color: var(--danger);
+                    border-bottom: 1.5px solid rgba(239,68,68,0.6);
+                }
+                
+                /* Custom bonus and approved badging */
+                .custom-bonus-section {
+                    background: rgba(0,0,0,0.25);
+                    border-radius: 8px;
+                    padding: 8px 10px;
+                    border: 1px solid rgba(255,255,255,0.04);
+                    display: flex;
+                    flex-direction: column;
+                    gap: 6px;
+                }
+                
+                .admin-input-group {
+                    display: flex;
+                    align-items: center;
+                    background: rgba(0,0,0,0.35);
+                    border: 1px solid rgba(255,255,255,0.08);
+                    border-radius: 6px;
+                    padding: 2px 8px;
+                }
+                
+                .card-input {
+                    background: transparent;
+                    border: none;
+                    outline: none;
+                    color: #ffffff;
+                    font-size: 12.5px;
+                    font-weight: bold;
+                    width: 100%;
+                    text-align: right;
+                    padding: 3px 0;
+                }
+                
+                .card-input::-webkit-outer-spin-button,
+                .card-input::-webkit-inner-spin-button {
+                    -webkit-appearance: none;
+                    margin: 0;
+                }
+                
+                .currency-unit {
+                    font-size: 11px;
+                    color: var(--text-secondary);
+                    margin-left: 4px;
+                }
+                
+                .bonus-value {
+                    font-size: 13px;
+                    text-align: right;
+                    display: block;
+                    font-weight: 700;
+                }
+                
+                .punctuality-bonus-badge {
+                    margin-top: 2px;
+                }
+                
+                .bonus-approved {
+                    color: #64ffda;
+                    font-size: 11.5px;
+                    font-weight: bold;
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
+                    background: rgba(100,255,218,0.08);
+                    padding: 4px 8px;
+                    border-radius: 6px;
+                    border: 1.5px solid rgba(100,255,218,0.3);
+                }
+                
+                .bonus-pending {
+                    color: var(--warning);
+                    font-size: 11px;
+                    font-style: italic;
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
+                }
+                
+                .btn-approve-bonus {
+                    width: 100%;
+                    padding: 6px;
+                    background: linear-gradient(135deg, var(--primary), #1d4ed8);
+                    color: #ffffff;
+                    font-size: 11px;
+                    font-weight: bold;
+                    border: none;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+                }
+                
+                .btn-approve-bonus:hover {
+                    background: linear-gradient(135deg, #2563eb, #1e40af);
+                    transform: translateY(-1px);
+                }
+                
+                .penalty-text {
+                    color: var(--danger);
+                    font-size: 10.5px;
+                    text-align: right;
+                    font-weight: 600;
+                }
+                
+                /* Net salary display footer */
+                .card-footer {
+                    margin-top: 14px;
+                    background: rgba(0,0,0,0.45);
+                    border-radius: 10px;
+                    padding: 8px 12px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    border: 1px solid rgba(255,255,255,0.06);
+                    box-shadow: inset 0 2px 5px rgba(0,0,0,0.4);
+                }
+                
+                .net-pay-label {
+                    font-size: 10px;
+                    font-weight: 900;
+                    color: var(--text-secondary);
+                    letter-spacing: 1.5px;
+                }
+                
+                .net-pay-val {
+                    font-size: 16px;
+                    font-weight: 900;
+                    letter-spacing: 0.5px;
+                }
+            </style>
+            
+            <!-- Main Content Area -->
+            <div id="payroll-content-area" style="margin-top: 10px;">
+                <div style="text-align: center; padding: 40px; color: var(--text-secondary);"><i class="fa-solid fa-spinner fa-spin"></i> Đang tổng hợp dữ liệu...</div>
+            </div>
+            
+            <!-- Hidden Table Area to facilitate PDF and Excel exports -->
+            <div id="payroll-hidden-table-container" style="display: none;">
+                <table class="data-table" style="width: 100%;">
                     <thead>
                         <tr>
                             <th>Nhân sự</th>
@@ -67,12 +464,11 @@ const PayrollModule = {
                         </tr>
                     </thead>
                     <tbody id="payroll-table-body">
-                        <tr><td colspan="6" style="text-align: center; padding: 20px;"><i class="fa-solid fa-spinner fa-spin"></i> Đang tính toán...</td></tr>
                     </tbody>
                 </table>
             </div>
 
-            <div style="margin-top: 16px; font-size: 13px; color: var(--text-secondary); display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+            <div style="margin-top: 20px; font-size: 13px; color: var(--text-secondary); display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
                 <span><i class="fa-solid fa-circle-info text-primary"></i> Lịch làm việc: <b>Thứ 2 - Thứ 7</b></span>
                 <span><i class="fa-solid fa-sack-dollar text-success"></i> Ngày trả lương: <b>Mùng 10 hàng tháng</b></span>
                 <span><i class="fa-solid fa-circle-info text-warning"></i> Phạt đi muộn = ${Utils.formatCurrency(PayrollModule.LATE_PENALTY)}/lần</span>
@@ -160,8 +556,10 @@ const PayrollModule = {
 
     calculateAndRenderBody: async () => {
         const tbody = document.getElementById('payroll-table-body');
-        if (!tbody) return;
+        const contentArea = document.getElementById('payroll-content-area');
+        if (!tbody || !contentArea) return;
 
+        contentArea.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-secondary);"><i class="fa-solid fa-spinner fa-spin"></i> Đang tổng hợp dữ liệu...</div>';
         tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;"><i class="fa-solid fa-spinner fa-spin"></i> Đang tổng hợp dữ liệu...</td></tr>';
 
         try {
@@ -181,7 +579,6 @@ const PayrollModule = {
             
             // Load tasks ensuring we wait for them if not loaded
             if (WorkModule.data.tasks.length === 0 && document.getElementById('work-view')) {
-                // Try to load tasks explicitly if empty
                 await WorkModule.load();
             }
             const allTasks = WorkModule.data.tasks;
@@ -197,7 +594,10 @@ const PayrollModule = {
             const now = new Date();
             const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
 
-            const rowsHtml = accounts.map(acc => {
+            let cardsHtml = '';
+            let rowsHtml = '';
+
+            accounts.forEach(acc => {
                 const username = acc.username;
                 const baseSalary = acc.baseSalary || 0;
                 
@@ -223,7 +623,6 @@ const PayrollModule = {
                 allLeaves.forEach(l => {
                     const lDate = l.startDate || l.date || '';
                     if (l.username === username && l.status === 'approved' && lDate < todayStr) {
-                        // Assuming lDate is YYYY-MM-DD
                         const d = new Date(lDate);
                         if (d.getMonth() === targetMonth && d.getFullYear() === targetYear) {
                             approvedLeaveDays += (parseInt(l.days) || 1);
@@ -237,8 +636,6 @@ const PayrollModule = {
 
                 allTasks.forEach(t => {
                     if (t.owner === username || (!t.owner && username === 'admin')) {
-                        // Check if task deadline or completion falls in this month
-                        // Usually we check deadline
                         const dStr = t.deadline || t.ngayDang;
                         if (dStr) {
                             let d;
@@ -282,8 +679,108 @@ const PayrollModule = {
                 const customBonus = parseFloat(monthlyBonuses[username]) || 0;
 
                 const netSalary = attendancePay + customBonus + punctualityBonusVal - latePenaltyTotal;
+                const roundedNetSalary = Math.round(netSalary > 0 ? netSalary : 0);
 
-                return `
+                // Setup Neon Border Theme based on role and success
+                let glowColor = '0, 229, 255'; // Cyan neon
+                let displayRole = 'Nhân sự';
+                if (acc.role === 'admin') {
+                    glowColor = '245, 158, 11'; // Vàng sếp (Amber)
+                    displayRole = 'Giám Đốc';
+                } else if (acc.role === 'kế toán' || acc.role === 'accountant') {
+                    glowColor = '168, 85, 247'; // Tím mộng mơ (Purple)
+                    displayRole = 'Kế Toán';
+                } else if (roundedNetSalary > 10000000) {
+                    glowColor = '16, 185, 129'; // Xanh lá chiến binh (Emerald)
+                }
+
+                // A. Generating Holographic Cards HTML
+                cardsHtml += `
+                    <div class="cyber-payroll-card" style="--card-glow-color: ${glowColor}; --card-color: rgb(${glowColor});">
+                        <div class="card-inner">
+                            <!-- Card Header -->
+                            <div class="card-header">
+                                <div class="user-avatar">
+                                    <i class="fa-solid ${acc.role === 'admin' ? 'fa-crown' : (acc.role === 'kế toán' ? 'fa-file-invoice-dollar' : 'fa-user-ninja')}"></i>
+                                </div>
+                                <div class="user-meta">
+                                    <span class="user-name" title="${username}">${Utils.getUserDisplayName(username) || username}</span>
+                                    <span class="user-role-badge" style="background: rgb(${glowColor}); color: #000000;">${displayRole}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="card-divider"></div>
+                            
+                            <!-- Card Body stats -->
+                            <div class="card-stats">
+                                <div class="stat-item">
+                                    <span class="stat-label"><i class="fa-solid fa-gem" style="color: #ffd700;"></i> Lương cứng</span>
+                                    <span class="stat-value text-gold">${Utils.formatCurrency(baseSalary)}</span>
+                                </div>
+                                
+                                <div class="stat-group-title">Chấm công tháng</div>
+                                <div class="attendance-grid">
+                                    <div class="att-box on-time" title="Đúng giờ">
+                                        <span class="att-num">${onTimeDays}</span>
+                                        <span class="att-lbl">Đúng giờ</span>
+                                    </div>
+                                    <div class="att-box late-excused" title="Muộn có phép">
+                                        <span class="att-num">${lateExcusedDays}</span>
+                                        <span class="att-lbl">Có phép</span>
+                                    </div>
+                                    <div class="att-box late" title="Muộn không phép">
+                                        <span class="att-num">${lateDays}</span>
+                                        <span class="att-lbl">Muộn</span>
+                                    </div>
+                                    <div class="att-box leave" title="Nghỉ phép">
+                                        <span class="att-num">${approvedLeaveDays}</span>
+                                        <span class="att-lbl">Nghỉ phép</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="stat-group-title">Hiệu suất (Task)</div>
+                                <div class="work-stats-row">
+                                    <div class="work-badge done" title="Hoàn thành xuất sắc"><i class="fa-solid fa-square-check"></i> ${doneTasks} Done</div>
+                                    <div class="work-badge expired" title="Task quá hạn"><i class="fa-solid fa-circle-exclamation"></i> ${expiredTasks} Expired</div>
+                                </div>
+
+                                <div class="stat-group-title">Thưởng & Phạt khác</div>
+                                <div class="custom-bonus-section">
+                                    ${currentUser.role === 'admin' ? 
+                                    `<div class="admin-input-group" title="Sếp nhập thưởng phạt trực tiếp">
+                                        <input type="number" class="card-input" style="color: ${customBonus >= 0 ? '#10b981' : '#ef4444'};" value="${customBonus}" placeholder="0" onchange="PayrollModule.saveCustomBonus('${username}', this.value)">
+                                        <span class="currency-unit">đ</span>
+                                    </div>` 
+                                    : `<strong class="bonus-value" style="color: ${customBonus >= 0 ? '#10b981' : '#ef4444'};">${customBonus > 0 ? '+' : ''}${Utils.formatCurrency(customBonus)}</strong>`}
+                                    
+                                    ${eligibleForBonus ? `
+                                        <div class="punctuality-bonus-badge">
+                                            ${isApproved ? 
+                                                `<span class="bonus-approved"><i class="fa-solid fa-award"></i> Chuyên cần: +${Utils.formatCurrency(200000)}</span>` : 
+                                                (currentUser.role === 'admin' ? 
+                                                    `<button class="btn-approve-bonus" onclick="PayrollModule.approvePunctualityBonus('${username}')"><i class="fa-solid fa-thumbs-up"></i> Duyệt chuyên cần (+200k)</button>` : 
+                                                    `<span class="bonus-pending"><i class="fa-solid fa-hourglass-half"></i> Chờ sếp duyệt (+200k)</span>`)
+                                            }
+                                        </div>
+                                    ` : ''}
+                                    
+                                    ${latePenaltyTotal > 0 ? `<div class="penalty-text"><i class="fa-solid fa-triangle-exclamation"></i> Phạt muộn: -${Utils.formatCurrency(latePenaltyTotal)}</div>` : ''}
+                                </div>
+                            </div>
+
+                            <!-- Card Footer: Thực Lĩnh -->
+                            <div class="card-footer">
+                                <div class="net-pay-label">THỰC LĨNH</div>
+                                <div class="net-pay-val" style="text-shadow: 0 0 10px rgba(${roundedNetSalary >= 0 ? '16,185,129' : '239,68,68'}, 0.5); color: ${roundedNetSalary >= 0 ? '#10b981' : '#ef4444'};">
+                                    ${roundedNetSalary >= 0 ? '' : '-'}${Utils.formatCurrency(Math.abs(roundedNetSalary))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // B. Generating standard table rows (for printing/exports)
+                rowsHtml += `
                     <tr>
                         <td>
                             <strong style="color: var(--primary); font-size: 15px;" title="${username}">${Utils.getUserDisplayName(username) || username}</strong><br>
@@ -321,22 +818,53 @@ const PayrollModule = {
                             ${latePenaltyTotal > 0 ? `<div style="color: var(--danger); font-size: 11px; margin-top: 4px;">Phạt muộn: -${Utils.formatCurrency(latePenaltyTotal)}</div>` : ''}
                         </td>
                         <td style="text-align: right;">
-                            <strong style="font-size: 16px; color: ${netSalary >= 0 ? 'var(--success)' : 'var(--danger)'};">
-                                ${netSalary >= 0 ? '' : '-'}${Utils.formatCurrency(Math.abs(Math.round(netSalary)))}
+                            <strong style="font-size: 16px; color: ${roundedNetSalary >= 0 ? 'var(--success)' : 'var(--danger)'};">
+                                ${roundedNetSalary >= 0 ? '' : '-'}${Utils.formatCurrency(Math.abs(roundedNetSalary))}
                             </strong>
                         </td>
                     </tr>
                 `;
-            }).join('');
+            });
 
+            // Update standard hidden table body
             if (accounts.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--text-secondary);">Không có dữ liệu tài khoản</td></tr>';
             } else {
                 tbody.innerHTML = rowsHtml;
             }
 
+            // Render view mode selection
+            if (accounts.length === 0) {
+                contentArea.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-secondary);"><i class="fa-solid fa-circle-exclamation"></i> Không có dữ liệu tài khoản</div>';
+            } else {
+                if (PayrollModule.viewMode === 'cards') {
+                    contentArea.innerHTML = `<div class="cyber-payroll-grid">${cardsHtml}</div>`;
+                } else {
+                    contentArea.innerHTML = `
+                        <div class="glass-card" style="overflow-x: auto; padding: 0; border-radius: 12px; border: 1px solid rgba(255,255,255,0.06); background: rgba(10,10,15,0.7);">
+                            <table class="data-table" style="width: 100%; min-width: 800px; margin: 0;">
+                                <thead>
+                                    <tr>
+                                        <th>Nhân sự</th>
+                                        <th style="text-align: right;">Lương cứng</th>
+                                        <th style="text-align: center;">Chấm công</th>
+                                        <th style="text-align: center;">Hiệu suất (Task)</th>
+                                        <th style="text-align: right;">Thưởng/Phạt khác</th>
+                                        <th style="text-align: right;">Thực Lĩnh</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${rowsHtml}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+            }
+
         } catch (e) {
             console.error("Lỗi khi tính lương:", e);
+            contentArea.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--danger);"><i class="fa-solid fa-triangle-exclamation"></i> Đã xảy ra lỗi trong quá trình tính toán.</div>';
             tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--danger);">Đã xảy ra lỗi trong quá trình tính toán.</td></tr>';
         }
     },
