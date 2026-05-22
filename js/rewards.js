@@ -102,7 +102,15 @@ const RewardsModule = {
                                 <tr>
                                     <td>${new Date(h.timestamp).toLocaleString('vi-VN')}</td>
                                     <td><strong style="color: var(--primary);">${Utils.getUserDisplayName(h.username) || h.username}</strong></td>
-                                    <td style="color: #fff;"><i class="fa-solid ${h.icon}" style="margin-right: 6px; color: ${h.color};"></i>${h.title}</td>
+                                    <td style="color: #fff;">
+                                        ${h.isUnopened ? `
+                                            <span style="color: #ec4899; font-weight: bold; text-shadow: 0 0 10px rgba(236,72,153,0.3);">
+                                                <i class="fa-solid fa-box-open" style="margin-right: 6px;"></i>${h.title} (Chưa Mở)
+                                            </span>
+                                        ` : `
+                                            <i class="fa-solid ${h.icon}" style="margin-right: 6px; color: ${h.color};"></i>${h.title}
+                                        `}
+                                    </td>
                                     <td style="color: var(--danger); font-weight: bold;">-${h.cost}</td>
                                 </tr>
                                 `).join('')}
@@ -129,7 +137,20 @@ const RewardsModule = {
                                 ${history.length === 0 ? '<tr><td colspan="3" style="text-align: center;">Bạn chưa đổi thẻ nào</td></tr>' : history.map(h => `
                                 <tr>
                                     <td>${new Date(h.timestamp).toLocaleString('vi-VN')}</td>
-                                    <td style="color: #fff;"><i class="fa-solid ${h.icon}" style="margin-right: 6px; color: ${h.color};"></i>${h.title}</td>
+                                    <td style="color: #fff;">
+                                        ${h.isUnopened ? `
+                                            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                                                <span style="color: #ec4899; font-weight: bold; text-shadow: 0 0 10px rgba(236,72,153,0.3); display: flex; align-items: center; gap: 6px;">
+                                                    <i class="fa-solid fa-box-open"></i> ${h.title}
+                                                </span>
+                                                <button onclick="RewardsModule.openMysteryPack('${h.id}')" class="boc-bao-btn">
+                                                    <i class="fa-solid fa-envelope-open-text"></i> BÓC BAO THƯ
+                                                </button>
+                                            </div>
+                                        ` : `
+                                            <i class="fa-solid ${h.icon}" style="margin-right: 6px; color: ${h.color};"></i>${h.title}
+                                        `}
+                                    </td>
                                     <td style="color: var(--danger); font-weight: bold;">-${h.cost}</td>
                                 </tr>
                                 `).join('')}
@@ -418,14 +439,14 @@ const RewardsModule = {
                 width: 100%;
                 height: 100%;
                 background: conic-gradient(
-                    #1e1b4b 0deg 45deg,   /* 0: Miss */
-                    #059669 45deg 90deg,  /* 1: +1 */
-                    #064e3b 90deg 135deg, /* 2: +2 */
-                    #d97706 135deg 180deg, /* 3: 10,000 VNĐ Cash */
-                    #059669 180deg 225deg, /* 4: +1 */
-                    #92400e 225deg 270deg, /* 5: +5 */
-                    #991b1b 270deg 315deg, /* 6: -1đ (Loss) */
-                    #9d174d 315deg 360deg  /* 7: Card */
+                    #1e1b4b 0deg 45deg,   /* 0: Hụt rồi */
+                    #059669 45deg 90deg,  /* 1: +1đ */
+                    #064e3b 90deg 135deg, /* 2: +2đ */
+                    #d97706 135deg 180deg, /* 3: 10,000 VNĐ */
+                    #ec4899 180deg 225deg, /* 4: ĐỘC ĐẮC */
+                    #92400e 225deg 270deg, /* 5: +5đ */
+                    #991b1b 270deg 315deg, /* 6: -1đ */
+                    #f43f5e 315deg 360deg  /* 7: NƯỚC NGỌT */
                 );
             }
             .wheel-content-layer {
@@ -448,6 +469,39 @@ const RewardsModule = {
                 text-transform: uppercase;
                 letter-spacing: 1px;
                 text-shadow: 0 2px 8px rgba(0,0,0,1);
+            }
+            .wheel-item span {
+                display: block;
+                text-align: center;
+                max-width: 70px;
+                font-size: 11.5px;
+                line-height: 1.25;
+                word-wrap: break-word;
+                white-space: normal;
+                font-weight: 900;
+            }
+            .boc-bao-btn {
+                background: linear-gradient(135deg, #ec4899, #8b5cf6);
+                color: #fff;
+                border: none;
+                padding: 6px 14px;
+                font-size: 11px;
+                font-weight: bold;
+                border-radius: 20px;
+                cursor: pointer;
+                box-shadow: 0 0 15px rgba(236,72,153,0.6);
+                transition: all 0.3s ease;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                animation: packPulse 1.5s infinite alternate;
+            }
+            .boc-bao-btn:hover {
+                transform: scale(1.08);
+                box-shadow: 0 0 25px rgba(236,72,153,0.9);
+            }
+            @keyframes packPulse {
+                0% { transform: scale(1); box-shadow: 0 0 10px rgba(236,72,153,0.5); }
+                100% { transform: scale(1.04); box-shadow: 0 0 20px rgba(139,92,246,0.8); }
             }
             .wheel-center-cap {
                 position: absolute;
@@ -570,14 +624,14 @@ const RewardsModule = {
                             <div id="lucky-wheel-main" class="wheel-container-p idle">
                                 <div class="wheel-bg-gradient"></div>
                                 <div class="wheel-content-layer">
-                                    <div class="wheel-item" style="--i:0;"><span>Hụt rồi!</span></div>
+                                    <div class="wheel-item" style="--i:0;"><span>HỤT<br>RỒI!</span></div>
                                     <div class="wheel-item" style="--i:1;"><span>+1đ</span></div>
                                     <div class="wheel-item" style="--i:2;"><span>+2đ</span></div>
-                                    <div class="wheel-item" style="--i:3;"><span style="color:#ffd700;">10,000 VNĐ</span></div>
-                                    <div class="wheel-item" style="--i:4;"><span>+1đ</span></div>
+                                    <div class="wheel-item" style="--i:3;"><span style="color:#ffd700;">10,000<br>VNĐ</span></div>
+                                    <div class="wheel-item" style="--i:4;"><span style="color:#ec4899;">ĐỘC<br>ĐẮC</span></div>
                                     <div class="wheel-item" style="--i:5;"><span>+5đ</span></div>
                                     <div class="wheel-item" style="--i:6;"><span style="color:#ff9999;">-1đ</span></div>
-                                    <div class="wheel-item" style="--i:7;"><span>NƯỚC NGỌT 10K</span></div>
+                                    <div class="wheel-item" style="--i:7;"><span style="color:#f43f5e;">NƯỚC<br>NGỌT</span></div>
                                 </div>
                             </div>
                             <div class="wheel-center-cap">
@@ -585,7 +639,7 @@ const RewardsModule = {
                             </div>
                         </div>
 
-                        <div class="spin-controls">
+                        <div class="spin-controls" style="display: flex; flex-direction: column; align-items: center; width: 100%;">
                             <button id="spin-btn-v2" onclick="RewardsModule.spinWheel()" class="spin-btn-premium" 
                                 ${meritInfo.current < 1 || RewardsModule._isSpinning || hasSpunToday ? 'disabled' : ''}>
                                 ${RewardsModule._isSpinning ? '<i class="fa-solid fa-sync fa-spin"></i> COMPUTER... ' : 
@@ -593,6 +647,50 @@ const RewardsModule = {
                             </button>
                             <div style="margin-top: 15px; font-size: 11px; color: #10b981; font-family: monospace; letter-spacing: 1px; text-shadow: 0 0 5px #10b981;">
                                 ${hasSpunToday ? 'LIMIT: DAILY_QUOTA_EXHAUSTED' : 'SYSLOAD: STATUS_REDHOT_READY'}
+                            </div>
+
+                            <!-- Bảng công khai HUD tỉ lệ % -->
+                            <div class="probability-hud" style="margin-top: 25px; width: 100%; max-width: 480px; background: rgba(15,23,42,0.7); border: 1px solid rgba(16,185,129,0.3); border-radius: 12px; padding: 16px; backdrop-filter: blur(8px); box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
+                                <div style="font-size: 13px; font-weight: bold; color: #10b981; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                    <i class="fa-solid fa-circle-info"></i> BẢNG CÔNG BỐ TỶ LỆ NHÂN PHẨM
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11.5px; text-align: left; font-family: monospace;">
+                                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 4px;">
+                                        <span style="color: #94a3b8;"><i class="fa-solid fa-circle" style="color:#1e1b4b; font-size:8px; margin-right:4px;"></i> Hụt rồi:</span>
+                                        <span style="color: #fff; font-weight: bold;">50.0%</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 4px;">
+                                        <span style="color: #94a3b8;"><i class="fa-solid fa-circle" style="color:#059669; font-size:8px; margin-right:4px;"></i> Hòa vốn (+1đ):</span>
+                                        <span style="color: #fff; font-weight: bold;">12.0%</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 4px;">
+                                        <span style="color: #94a3b8;"><i class="fa-solid fa-circle" style="color:#064e3b; font-size:8px; margin-right:4px;"></i> Lãi nhẹ (+2đ):</span>
+                                        <span style="color: #fff; font-weight: bold;">10.0%</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 4px;">
+                                        <span style="color: #94a3b8;"><i class="fa-solid fa-circle" style="color:#d97706; font-size:8px; margin-right:4px;"></i> Tiền mặt 10k:</span>
+                                        <span style="color: #fbbf24; font-weight: bold;">5.0%</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 4px; grid-column: span 2;">
+                                        <span style="color: #94a3b8;"><i class="fa-solid fa-circle" style="color:#ec4899; font-size:8px; margin-right:4px;"></i> GIẢI ĐỘC ĐẮC (Mystery Pack/VVIP):</span>
+                                        <span style="color: #ec4899; font-weight: bold;">10.1% <span style="font-size:10px; color:#cbd5e1;">(Bao Thẻ: 10.0% | Ăn Buffet Sếp Bao: 0.1%)</span></span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 4px;">
+                                        <span style="color: #94a3b8;"><i class="fa-solid fa-circle" style="color:#92400e; font-size:8px; margin-right:4px;"></i> Hũ lớn (+5đ):</span>
+                                        <span style="color: #fff; font-weight: bold;">3.0%</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 4px;">
+                                        <span style="color: #94a3b8;"><i class="fa-solid fa-circle" style="color:#991b1b; font-size:8px; margin-right:4px;"></i> Hắc ám (-1đ):</span>
+                                        <span style="color: #ef4444; font-weight: bold;">4.9%</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 4px; grid-column: span 2;">
+                                        <span style="color: #94a3b8;"><i class="fa-solid fa-circle" style="color:#f43f5e; font-size:8px; margin-right:4px;"></i> Nước ngọt 10k:</span>
+                                        <span style="color: #fff; font-weight: bold;">5.0%</span>
+                                    </div>
+                                </div>
+                                <div style="font-size: 10px; color: #64748b; margin-top: 10px; font-style: italic; line-height: 1.4;">
+                                    * Tất cả tỷ lệ là hoàn toàn tĩnh và độc lập cho từng lượt quay riêng lẻ.
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -692,28 +790,43 @@ const RewardsModule = {
             allRewards.push(participationRecord);
             await RewardsModule.saveData(allRewards);
 
-            // Tính toán kết quả
-            // Danh sách các phần thưởng trên vòng quay (được cố định theo tỷ lệ % tĩnh ban đầu)
+            // Tính toán kết quả theo đúng tỷ lệ tĩnh, độc lập 100% được công khai
             const prizes = [
                 { label: 'Hụt rồi!', pts: 0, msg: 'Hụt rồi! May mắn lần sau nhé 😅' },
                 { label: '+1 Điểm', pts: 1, msg: 'Hòa vốn! Bạn nhận lại 1 công đức 🧧' },
                 { label: '+2 Điểm', pts: 2, msg: 'Lãi rồi! Chúc mừng bạn được +2 công đức 🎆' },
-                { label: '10.000 VNĐ', pts: 0, isCash: true, amount: 10000, msg: 'TRÚNG LỚN! Bạn trúng ngay 10,000 VNĐ tiền mặt từ Sếp 💸' },
-                { label: '+1 Điểm', pts: 1, msg: 'Hòa vốn! Nhận lại 1 công đức nè 🧧' },
+                { label: '10,000 VNĐ', pts: 0, isCash: true, amount: 10000, msg: 'TRÚNG LỚN! Bạn trúng ngay 10,000 VNĐ tiền mặt từ Sếp 💸' },
+                { label: 'ĐỘC ĐẮC', pts: 0, isJackpot: true, msg: 'ỐI DỒI ÔI! TRÚNG GIẢI ĐỘC ĐẮC RỒI SẾP ƠI!!! 🎉🎉🎉' },
                 { label: '+5 Điểm', pts: 5, msg: 'XUẤT SẮC! Bạn trúng hũ +5 công đức 💎' },
                 { label: '-1 Điểm', pts: -1, msg: 'ỐI GIỒI ÔI! Mất sạch vốn lẫn lãi (-1đ) 💀' },
-                { label: 'LON NƯỚC 10K', pts: 0, isCard: true, cardId: 'card_tea', msg: 'SIÊU CẤP MAY MẮN! Trúng ngay 1 LON NƯỚC NGỌT 10K 🥤' }
+                { label: 'NƯỚC NGỌT', pts: 0, isCard: true, cardId: 'card_tea', msg: 'SIÊU CẤP MAY MẮN! Trúng ngay 1 LON NƯỚC NGỌT 10K 🥤' }
             ];
 
-            // Tỷ lệ quay là hoàn toàn tĩnh và độc lập (không tích lũy, không tăng tỷ lệ thắng)
             const rand = Math.random();
             let prizeIdx = 0;
-            if (rand < 0.40) prizeIdx = [0, 3][Math.floor(Math.random() * 2)]; // 40% hụt hoặc trúng tiền mặt 10k (chia đôi mỗi ô 20%)
-            else if (rand < 0.70) prizeIdx = [1, 4][Math.floor(Math.random() * 2)]; // 30% hòa vốn +1đ (mỗi ô 15%)
-            else if (rand < 0.85) prizeIdx = 2; // 15% lãi +2đ
-            else if (rand < 0.93) prizeIdx = 5; // 8% trúng hũ +5đ
-            else if (rand < 0.97) prizeIdx = 6; // 4% nhọ mất 1đ
-            else prizeIdx = 7; // 3% trúng Lon Nước Ngọt 10k
+            let isVVIP = false;
+
+            if (rand < 0.50) {
+                prizeIdx = 0; // Hụt rồi (50.0%)
+            } else if (rand < 0.62) {
+                prizeIdx = 1; // +1đ (12.0%)
+            } else if (rand < 0.72) {
+                prizeIdx = 2; // +2đ (10.0%)
+            } else if (rand < 0.77) {
+                prizeIdx = 3; // 10,000 VNĐ (5.0%)
+            } else if (rand < 0.871) {
+                prizeIdx = 4; // ĐỘC ĐẮC (10.1% tổng)
+                // Sub-roll cho Siêu Độc Đắc VVIP (0.1% trên tổng 10.1%)
+                if (Math.random() < (0.1 / 10.1)) {
+                    isVVIP = true;
+                }
+            } else if (rand < 0.901) {
+                prizeIdx = 5; // +5đ (3.0%)
+            } else if (rand < 0.95) {
+                prizeIdx = 6; // -1đ (4.9%)
+            } else {
+                prizeIdx = 7; // Nước ngọt 10k (5.0%)
+            }
 
             const prize = prizes[prizeIdx];
             
@@ -797,6 +910,41 @@ const RewardsModule = {
                     data.push(winCashRecord);
                     await RewardsModule.saveData(data);
                     Utils.notifyTelegram(`💵 <b>[TRÚNG TIỀN MẶT]</b>\n👤 <b>${user.username}</b> vừa quay hũ trúng ngay <b>${prize.label}</b> tiền mặt trao tay cực nóng!`);
+                } else if (prize.isJackpot) {
+                    if (isVVIP) {
+                        const winJackpotRecord = {
+                            id: 'spin_jackpot_vvip_' + Date.now(),
+                            username: user.username,
+                            timestamp: Date.now(),
+                            cardId: 'wheel_jackpot_vvip',
+                            title: '💎 VVIP: Sếp Mời Đi Ăn 1 Chầu (Buffet)',
+                            icon: 'fa-utensils',
+                            color: '#ffd700',
+                            cost: 0
+                        };
+                        const data = await RewardsModule.loadData();
+                        data.push(winJackpotRecord);
+                        await RewardsModule.saveData(data);
+                        Utils.notifyTelegram(`💎 <b>[SIÊU ĐỘC ĐẮC - VVIP]</b>\n👤 <b>${user.username}</b> vừa quay hũ trúng ngay giải <b>SIÊU ĐỘC ĐẮC (Sếp Mời Đi Ăn Buffet)</b>! 🎉🎉🎉 Nhân phẩm vô cực!`);
+                        prize.isVVIP = true; // Mark to show custom message in popup
+                    } else {
+                        const winGachaRecord = {
+                            id: 'spin_gacha_pack_' + Date.now(),
+                            username: user.username,
+                            timestamp: Date.now(),
+                            cardId: 'mystery_pack',
+                            title: '🎁 Gói Thẻ Bí Ẩn (Chưa Mở)',
+                            icon: 'fa-box-open',
+                            color: '#ec4899',
+                            cost: 0,
+                            isUnopened: true
+                        };
+                        const data = await RewardsModule.loadData();
+                        data.push(winGachaRecord);
+                        await RewardsModule.saveData(data);
+                        Utils.notifyTelegram(`🎁 <b>[TRÚNG GÓI THẺ BÍ ẨN]</b>\n👤 <b>${user.username}</b> vừa trúng <b>Gói Thẻ Bí Ẩn</b>! Hãy vào Kho Thưởng để bóc thẻ ngay! 🎫`);
+                        prize.isGacha = true; // Mark to show custom message in popup
+                    }
                 }
 
                 RewardsModule._isSpinning = false;
@@ -816,8 +964,8 @@ const RewardsModule = {
             animation: fadeIn 0.5s ease; backdrop-filter: blur(10px);
         `;
 
-        const isWin = prize.pts > 0 || prize.isCard || prize.isCash;
-        const color = prize.pts < 0 ? '#ef4444' : (prize.isCash ? '#fbbf24' : (isWin ? '#10b981' : '#64748b'));
+        const isWin = prize.pts > 0 || prize.isCard || prize.isCash || prize.isJackpot;
+        const color = prize.pts < 0 ? '#ef4444' : (prize.isCash ? '#fbbf24' : (prize.isJackpot ? '#ec4899' : (isWin ? '#10b981' : '#64748b')));
         
         let humorMsg = "";
         if (prize.pts < 0) {
@@ -830,7 +978,7 @@ const RewardsModule = {
             humorMsg = painMsgs[Math.floor(Math.random() * painMsgs.length)];
         } else if (prize.isCash) {
             humorMsg = "HỐT BẠC! 💸 Sếp chuẩn bị sẵn 10.000 VNĐ tiền mặt trao tay nhé! Đỉnh của chóp!";
-        } else if (prize.pts === 0 && !prize.isCard) {
+        } else if (prize.pts === 0 && !prize.isCard && !prize.isJackpot) {
             const fails = [
                 "NHÂN PHẨM BAY MÀU! 🕯️ Chắc tại nãy đi làm sếp quên thắp nhang rồi.",
                 "TRƯỢT VỎ CHUỐI! 🍌 Gần lắm rồi, chỉ thiếu 0.0001mm là trúng hũ.",
@@ -846,6 +994,12 @@ const RewardsModule = {
             humorMsg = "ĂN ĐẬM +5đ! 💎 TRỜI ƠI TIN ĐƯỢC KHÔNG? Sếp vừa 'hack' hệ thống à?";
         } else if (prize.isCard) {
             humorMsg = "TRÚNG NƯỚC NGỌT! 🥤 Đã quá sếp ơi, chuẩn bị nhận 1 lon nước ngọt mát lạnh 10k rồi nhé!";
+        } else if (prize.isJackpot) {
+            if (prize.isVVIP) {
+                humorMsg = "💎 SIÊU THẦN THOẠI 0.1%! Bạn vừa giật giải độc đắc tối thượng: ĐƯỢC SẾP MỜI BUFFET HOÀNH TRÁNG! 🍾 Sếp sẽ khóc ròng chiêu đãi bạn!";
+            } else {
+                humorMsg = "🎁 SIÊU CẤP MAY MẮN! Bạn vừa trúng <b>Gói Thẻ Bí Ẩn</b>! Nhận ngay một bao gacha và hãy vào Lịch Sử Cá Nhân để BÓC BAO THƯ xem nhận thẻ bài gì nhé! 🎫";
+            }
         }
 
         overlay.innerHTML = `
@@ -940,5 +1094,221 @@ const RewardsModule = {
 
         // Render lại tab
         RewardsModule.render();
+    },
+
+    openMysteryPack: async (recordId) => {
+        const user = Auth.currentUser;
+        if (!user) return;
+
+        const allRewards = await RewardsModule.loadData();
+        const packRecord = allRewards.find(r => r.id === recordId && r.username === user.username && r.isUnopened);
+        if (!packRecord) {
+            Utils.showToast("Không tìm thấy gói thẻ bí ẩn hợp lệ hoặc gói đã được mở!", "error");
+            return;
+        }
+
+        // Chọn ngẫu nhiên 1 thẻ đặc quyền từ cửa hàng (loại trừ card_mystery bản thân nó để tránh vô hạn)
+        const validCards = RewardsModule._catalog.filter(c => c.id !== 'card_mystery');
+        const luckyCard = validCards[Math.floor(Math.random() * validCards.length)];
+
+        // Cập nhật bản ghi thành thẻ được mở
+        packRecord.cardId = luckyCard.id;
+        packRecord.title = `🎁 Đã Mở: Thẻ ${luckyCard.title}`;
+        packRecord.icon = luckyCard.icon;
+        packRecord.color = luckyCard.color;
+        packRecord.isUnopened = false;
+        packRecord.openedAt = Date.now();
+
+        await RewardsModule.saveData(allRewards);
+
+        // Hiển thị hiệu ứng gacha mở thẻ bài hoành tráng
+        RewardsModule.showGachaOpeningEffect(luckyCard, () => {
+            Utils.showToast(`Bóc bao thành công: Thẻ ${luckyCard.title}!`, "success");
+            // Gửi Telegram
+            Utils.notifyTelegram(`🎁 <b>[MỞ GÓI THẺ BÍ ẨN]</b>\n👤 Nhân sự: <b>${user.username}</b>\n🎫 Đã bóc bao nhận ngay Thẻ Đặc Quyền: <b>${luckyCard.title}</b>!`);
+            RewardsModule.render();
+        });
+    },
+
+    showGachaOpeningEffect: (card, onComplete) => {
+        const overlay = document.createElement('div');
+        overlay.id = 'gacha-opening-overlay';
+        overlay.style = `
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(8,8,12,0.98); z-index: 10000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            overflow: hidden; font-family: 'Inter', sans-serif; color: #fff;
+        `;
+
+        overlay.innerHTML = `
+            <style>
+                .gacha-bg-glow {
+                    position: absolute; width: 600px; height: 600px;
+                    background: radial-gradient(circle, rgba(236,72,153,0.15) 0%, transparent 70%);
+                    z-index: 1; pointer-events: none;
+                    animation: pulseGlowBg 4s infinite alternate;
+                }
+                @keyframes pulseGlowBg {
+                    0% { transform: scale(1); opacity: 0.6; }
+                    100% { transform: scale(1.2); opacity: 1; }
+                }
+                .gacha-stage {
+                    position: relative; z-index: 2;
+                    display: flex; flex-direction: column; align-items: center;
+                    justify-content: center; width: 100%; height: 100%;
+                }
+                .gacha-pack-container {
+                    perspective: 1000px; cursor: pointer;
+                    transition: all 0.3s;
+                }
+                .gacha-pack {
+                    width: 240px; height: 350px;
+                    background: linear-gradient(135deg, #1e1b4b, #2e1065);
+                    border: 3px solid #ec4899; border-radius: 16px;
+                    display: flex; flex-direction: column; align-items: center; justify-content: center;
+                    box-shadow: 0 0 30px rgba(236,72,153,0.4), inset 0 0 20px rgba(0,0,0,0.6);
+                    position: relative; transition: all 0.3s ease;
+                }
+                .gacha-pack::before {
+                    content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+                    background: linear-gradient(45deg, transparent, rgba(255,255,255,0.05), transparent);
+                    transform: rotate(45deg); animation: cardShine 3s infinite linear;
+                }
+                .gacha-pack-seal {
+                    position: absolute; top: 20px;
+                    width: 40px; height: 40px; border-radius: 50%;
+                    background: #ec4899; color: #fff;
+                    display: flex; align-items: center; justify-content: center;
+                    font-size: 18px; box-shadow: 0 0 15px #ec4899;
+                }
+                .gacha-pack:hover {
+                    transform: scale(1.05) rotateY(8deg);
+                    box-shadow: 0 0 50px rgba(236,72,153,0.7), 0 0 35px rgba(139,92,246,0.5);
+                    border-color: #8b5cf6;
+                }
+                .gacha-pack.shake {
+                    animation: packShake 0.15s infinite alternate;
+                }
+                @keyframes packShake {
+                    0% { transform: translate(5px, 5px) rotate(1deg); }
+                    100% { transform: translate(-5px, -5px) rotate(-1deg); }
+                }
+                .gacha-flash {
+                    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+                    background: #fff; z-index: 99; opacity: 0; pointer-events: none;
+                }
+                .gacha-flash.active {
+                    animation: flashAnim 0.8s ease-out forwards;
+                }
+                @keyframes flashAnim {
+                    0% { opacity: 0; }
+                    20% { opacity: 1; }
+                    100% { opacity: 0; }
+                }
+                
+                /* Thẻ bài sau khi mở */
+                .gacha-card-reveal {
+                    display: none; flex-direction: column; align-items: center;
+                    animation: scaleUpReveal 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+                }
+                @keyframes scaleUpReveal {
+                    0% { transform: scale(0.1) rotateY(180deg); opacity: 0; }
+                    100% { transform: scale(1) rotateY(360deg); opacity: 1; }
+                }
+                
+                .gacha-close-btn {
+                    opacity: 0; transform: translateY(20px);
+                    transition: all 0.5s ease 0.8s;
+                }
+                .gacha-close-btn.visible {
+                    opacity: 1; transform: translateY(0);
+                }
+            </style>
+            <div class="gacha-bg-glow"></div>
+            <div class="gacha-flash" id="gacha-flash-screen"></div>
+            <div class="gacha-stage">
+                <!-- Màn 1: Gói thẻ bài chờ bốc -->
+                <div class="gacha-pack-container" id="gacha-pack-envelope" onclick="RewardsModule.triggerPackRip('${card.id}')">
+                    <div class="gacha-pack">
+                        <div class="gacha-pack-seal"><i class="fa-solid fa-certificate"></i></div>
+                        <i class="fa-solid fa-envelope-open-text" style="font-size: 80px; color: #ffd700; filter: drop-shadow(0 0 25px #ffd700); margin-bottom: 20px; animation: pulseGlow 1.5s infinite;"></i>
+                        <div style="font-size: 19px; font-weight: 900; color: #fff; letter-spacing: 2px; text-transform: uppercase;">GÓI THẺ BÍ ẨN</div>
+                        <div style="font-size: 11px; color: #cbd5e1; text-transform: uppercase; margin-top: 10px; letter-spacing: 1px; animation: pulseGlow 1s infinite alternate;">Nhấp Vào Bao Để Bóc Thẻ</div>
+                    </div>
+                </div>
+
+                <!-- Màn 2: Thẻ bài lộ diện -->
+                <div class="gacha-card-reveal" id="gacha-card-reveal-box">
+                    <div class="tcg-digital-card" style="--card-color: ${card.color}; cursor: default; margin-bottom: 20px; box-shadow: 0 0 50px ${card.color}; pointer-events: none;">
+                        <div class="tcg-card-inner">
+                            <div class="tcg-card-cost">
+                                <i class="fa-solid fa-star"></i> ${card.cost}
+                            </div>
+                            <div class="tcg-card-art">
+                                <i class="fa-solid ${card.icon}" style="text-shadow: 0 0 25px ${card.color};"></i>
+                                <div class="tcg-art-overlay"></div>
+                            </div>
+                            <div class="tcg-card-body">
+                                <div class="tcg-card-type"><i class="fa-solid fa-microchip"></i> ĐẶC QUYỀN SỐ</div>
+                                <div class="tcg-card-title">${card.title}</div>
+                                <p class="tcg-card-desc">${card.desc}</p>
+                            </div>
+                            <div class="tcg-card-footer">
+                                <span class="status-ready" style="color: ${card.color}; font-weight: bold;"><i class="fa-solid fa-gift"></i> ĐÃ BÓC THÀNH CÔNG</span>
+                            </div>
+                        </div>
+                    </div>
+                    <h2 style="font-size: 26px; font-weight: 900; color: #fff; text-shadow: 0 0 15px ${card.color}; text-transform: uppercase; margin-bottom: 10px; letter-spacing: 2px;">
+                        Chúc mừng bạn!
+                    </h2>
+                    <p style="color: #cbd5e1; font-size: 14px; margin-bottom: 25px;">Bạn đã nhận được Thẻ Đặc Quyền <strong>${card.title}</strong> cực chất!</p>
+                    <button class="gacha-close-btn spin-btn-premium" id="gacha-finish-btn" style="padding: 12px 35px; font-size: 15px;">
+                        ĐÚT KHO & ĐÓNG <i class="fa-solid fa-circle-check" style="margin-left: 6px;"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        RewardsModule._gachaOnComplete = onComplete;
+    },
+
+    triggerPackRip: (cardId) => {
+        const packEl = document.getElementById('gacha-pack-envelope');
+        const flashEl = document.getElementById('gacha-flash-screen');
+        const revealEl = document.getElementById('gacha-card-reveal-box');
+        const finishBtn = document.getElementById('gacha-finish-btn');
+        
+        if (!packEl || packEl.classList.contains('shake')) return;
+
+        // Bật âm thanh nếu có
+        if (typeof AttendanceMusic !== 'undefined' && typeof AttendanceMusic.playRewardSound === 'function') {
+            AttendanceMusic.playRewardSound();
+        }
+
+        // Tạo hiệu ứng rung lắc bao thư
+        packEl.classList.add('shake');
+
+        setTimeout(() => {
+            // Flash sáng trắng cực đại
+            flashEl.classList.add('active');
+
+            setTimeout(() => {
+                // Ẩn bao thư, hiện thẻ bài
+                packEl.style.display = 'none';
+                revealEl.style.display = 'flex';
+                
+                // Show nút Đóng
+                setTimeout(() => {
+                    finishBtn.classList.add('visible');
+                    // Gán sự kiện cho nút để gọi callback
+                    finishBtn.onclick = () => {
+                        document.getElementById('gacha-opening-overlay').remove();
+                        if (typeof RewardsModule._gachaOnComplete === 'function') {
+                            RewardsModule._gachaOnComplete();
+                        }
+                    };
+                }, 200);
+            }, 200);
+        }, 1200);
     }
 };
