@@ -368,7 +368,7 @@ const Auth = {
                 <div style="display:flex; align-items:center; gap:16px;">
                     <div class="avatar" style="width: 50px; height: 50px; font-size: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.5); background: ${userColor}; color: #fff;">${Auth.currentUser.username[0].toUpperCase()}</div>
                     <div>
-                        <h4 style="font-size:16px; margin: 0 0 4px 0; color: var(--primary);">${Auth.currentUser.username} <span class="badge ${Auth.currentUser.role === 'admin' ? 'badge-orange' : 'badge-blue'}" style="vertical-align: middle; margin-left: 4px; font-size: 10px;">${Auth.currentUser.role.toUpperCase()}</span></h4>
+                        <h4 style="font-size:16px; margin: 0 0 4px 0; color: var(--primary);">${Auth.currentUser.username} <span class="badge ${Auth.currentUser.role === 'admin' ? 'badge-orange' : 'badge-blue'}" style="vertical-align: middle; margin-left: 4px; font-size: 10px;">${Auth.currentUser.role.toUpperCase()} (v1.1)</span></h4>
                         <p style="color:var(--text-secondary); margin: 0; font-size: 12px;">Phiên đăng nhập hiện tại</p>
                     </div>
                 </div>
@@ -378,11 +378,17 @@ const Auth = {
             </div>
         `;
 
-        html += Auth.createAccordionBlock('acc-ai', 'Tích hợp AI (Claude API)', 'fa-robot', `
+        html += Auth.createAccordionBlock('acc-ai', 'Tích hợp AI Claude (MỚI - v1.1)', 'fa-robot', `
             <p style="color:var(--text-secondary); margin-bottom: 16px; margin-top: 0;">Nhập mã API Anthropic của bạn để kích hoạt chức năng tự động viết Nội dung/Kịch bản ở cấp độ chuyên gia.</p>
             <div class="form-group" style="display:flex; gap: 8px;">
                 <input type="password" id="claude-api-key" class="form-control" placeholder="sk-ant-api03-..." value="${currentKey}" style="flex:1;">
                 <button class="btn btn-primary" onclick="Auth.saveClaudeKey()"><i class="fa-solid fa-floppy-disk"></i> Lưu Cấu Hình</button>
+            </div>
+
+            <div class="form-group" style="margin-top: 12px;">
+                <label style="color: var(--text-secondary); font-size: 13px;">API Base URL (Dành cho Proxy/Mirror):</label>
+                <input type="text" id="claude-api-base" class="form-control" placeholder="Mặc định: https://api.anthropic.com" value="${Utils.storage.get('claude_api_base') || ''}" style="margin-top:4px; background: rgba(0,0,0,0.2); font-size:12px;">
+                <p style="color: var(--text-secondary); font-size: 11px; margin-top: 4px;">* Nếu dùng API từ web khác (như OpenAI Proxy), hãy nhập URL gốc của backend proxy đó.</p>
             </div>
             
             <div class="form-group" style="margin-top: 12px; display: flex; gap: 16px; align-items: center;">
@@ -502,9 +508,13 @@ const Auth = {
 
     saveClaudeKey: () => {
         const key = document.getElementById('claude-api-key').value.trim();
+        const baseUrl = document.getElementById('claude-api-base').value.trim();
         const model = document.querySelector('input[name="claude-model"]:checked').value;
+        
         Utils.storage.set('claude_api_key', key);
+        Utils.storage.set('claude_api_base', baseUrl);
         Utils.storage.set('claude_api_model', model);
+        
         Utils.showToast('Đã lưu Cấu hình AI an toàn tại trình duyệt!', 'success');
     },
 

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thanh Long Work - Quản lý Gia đình & Công việc</title>
+    <title>Thanh Long Work - Quản lý Gia đình & Công việc (v1.1)</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
@@ -683,7 +683,12 @@
                     <h3 style="color: var(--primary);"><i class="fa-solid fa-ticket" style="margin-right: 8px;"></i>Phiếu Làm Việc</h3>
                     <div id="ticket-subtitle" style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">--</div>
                 </div>
-                <button class="btn-close" onclick="WorkModule.closeTicketModal()"><i class="fa-solid fa-times"></i></button>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <button class="btn" onclick="ClaudeModule.assistTaskContent(WorkModule.activeTicketId)" style="background: linear-gradient(135deg, #a855f7, var(--primary)); color: #fff; border: none; font-weight: bold; font-size: 13px; padding: 10px 16px; border-radius: 8px; box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4); display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> CLAUDE AI ASSIST
+                    </button>
+                    <button class="btn-close" onclick="WorkModule.closeTicketModal()"><i class="fa-solid fa-times"></i></button>
+                </div>
             </div>
             <div class="modal-body" style="padding: 20px;">
                 <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr; gap: 16px;">
@@ -842,12 +847,13 @@
     <script src="js/payroll.js?v=33.2"></script>
     <script src="js/chat.js?v=25.1"></script>
     <script src="js/prompt.js?v=27.4"></script>
-    <script src="js/chatbot.js?v=4.6"></script>
+    <script src="js/chatbot.js?v=4.7"></script>
     <script src="js/music.js?v=11.1"></script>
     <script src="js/attendance_music.js?v=1.0.1"></script>
     <script src="js/reports.js?v=3.0"></script>
-    <script src="js/auth.js?v=27.1"></script>
-    <script src="js/app.js?v=25.6"></script>
+    <script src="js/auth.js?v=27.2"></script>
+    <script src="js/claude.js?v=1.1"></script>
+    <script src="js/app.js?v=25.7"></script>
 
     <!-- Toast Notification Container -->
     <div id="toast-container" class="toast-container"></div>

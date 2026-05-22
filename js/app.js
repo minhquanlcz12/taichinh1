@@ -29,6 +29,7 @@ const app = {
         if (typeof PromptModule !== 'undefined') PromptModule.init();
         if (typeof ChatbotModule !== 'undefined') ChatbotModule.init();
         if (typeof RewardsModule !== 'undefined') RewardsModule.init();
+        if (typeof ClaudeModule !== 'undefined') ClaudeModule.init();
 
         // Bật vòng lặp kiểm tra các sự kiện theo thời gian (nhắc telegram, v.v)
         setTimeout(() => {
