@@ -501,16 +501,6 @@ const RewardsModule = {
                 cursor: not-allowed;
                 opacity: 0.5;
                 color: #475569;
-            }              transform: scale(1.05) skewX(-2deg);
-                box-shadow: 0 0 40px rgba(16, 185, 129, 0.8);
-                color: #fff;
-            }
-            .spin-btn-premium:disabled {
-                background: #334155;
-                cursor: not-allowed;
-                box-shadow: none;
-                opacity: 0.5;
-                color: #64748b;
             }
 
             .rewards-container {
