@@ -1775,8 +1775,7 @@ const ChibiModule = {
         if (property === 'accessory' && ChibiModule.isGearLocked(index)) {
             const req = ChibiModule.gearRequirements[index];
             const completed = ChibiModule.getCompletedTasksCount();
-            Utils.showToast(`🔒 Bạn cần hoàn thành ít nhất ${req.count} công việc trong tháng này để mở khóa "${req.label}"! (Hiện tại: ${completed}/${req.count})`, "error");
-            return;
+            Utils.showToast(`✨ Đang mặc thử: "${req ? req.label : ''}". Đạt đủ ${req ? req.count : 0} Task trong tháng để lưu chính thức! (Hiện tại: ${completed}/${req ? req.count : 0})`, "info");
         }
         ChibiModule.currentConfig[property] = index;
         ChibiModule.updatePreview();
