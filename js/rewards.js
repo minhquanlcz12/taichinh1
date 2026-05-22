@@ -5,8 +5,13 @@ const RewardsModule = {
         { id: 'card_early', title: 'Về Sớm 1 Tiếng', icon: 'fa-person-running', cost: 8, color: '#3b82f6', desc: 'Xin sếp về sớm 1 chút để xử lý việc cá nhân.' },
         { id: 'card_leave', title: 'Nghỉ Phép Thêm 1 Ngày', icon: 'fa-umbrella-beach', cost: 25, color: '#a855f7', desc: 'Có ngay 1 ngày phép hưởng nguyên lương.' },
         { id: 'card_tea', title: 'Trà Chiều Miễn Phí', icon: 'fa-mug-hot', cost: 5, color: '#f43f5e', desc: 'Sếp bao trà sữa / cafe ban chiều.' },
-        { id: 'card_mystery', title: 'Quà Bất Ngờ', icon: 'fa-gift', cost: 30, color: '#ffd700', desc: 'Một món quà bí mật và giá trị do sếp chuẩn bị.' }
+        { id: 'card_rescue', title: 'Thánh Nhân Cứu Bồ', icon: 'fa-handshake-angle', cost: 12, color: '#ec4899', desc: 'Dùng để bảo lãnh/xoá án phạt đi muộn cho 1 NGƯỜI KHÁC (Tăng tình kết nghĩa anh em).' },
+        { id: 'card_mystery', title: 'Quà Bất Ngờ', icon: 'fa-gift', cost: 30, color: '#ffd700', desc: 'Một món quà bí mật và giá trị do sếp chuẩn bị.' },
+        { id: 'card_king', title: 'Chiếc Ghế Quyền Lực', icon: 'fa-crown', cost: 50, color: '#fbbf24', desc: 'Được quyền nhờ Sếp đi pha 1 ly cafe/trà, hoặc Sếp bao ăn trưa 1-1 đàm đạo riêng.' }
     ],
+    
+    _isSpinning: false,
+    _currentRotation: 0,
 
     init: () => {
         console.log("RewardsModule Initialized");
@@ -339,6 +344,84 @@ const RewardsModule = {
                 font-size: 14px;
                 letter-spacing: 1px;
             }
+
+            /* Lucky Wheel Styles */
+            .wheel-outer {
+                position: relative;
+                width: 280px;
+                height: 280px;
+                border-radius: 50%;
+                border: 8px solid #111;
+                box-shadow: 0 0 0 4px #34d399, 0 0 20px #34d399;
+                background: #111;
+                overflow: hidden;
+            }
+            .wheel-pointer {
+                position: absolute;
+                top: -5px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 30px;
+                height: 30px;
+                background: #fff;
+                clip-path: polygon(0 0, 100% 0, 50% 100%);
+                z-index: 10;
+                filter: drop-shadow(0 0 5px #000);
+            }
+            .wheel-main {
+                position: relative;
+                width: 100%;
+                height: 100%;
+                border-radius: 50%;
+                transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1);
+                overflow: hidden;
+            }
+            .wheel-segment {
+                position: absolute;
+                width: 50%;
+                height: 50%;
+                background: var(--c);
+                transform-origin: bottom right;
+                transform: rotate(calc(45deg * var(--i))) skewY(-45deg);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                border: 0.5px solid rgba(255,255,255,0.05);
+            }
+            .wheel-segment span {
+                position: absolute;
+                transform: skewY(45deg) rotate(22.5deg);
+                left: 35px;
+                top: 35px;
+                font-weight: 900;
+                color: #fff;
+                font-size: 18px;
+                text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            }
+            .spin-btn {
+                background: linear-gradient(135deg, #10b981, #059669);
+                color: #fff;
+                border: none;
+                padding: 12px 40px;
+                border-radius: 30px;
+                font-weight: 900;
+                font-size: 16px;
+                cursor: pointer;
+                box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+                transition: all 0.2s;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+            }
+            .spin-btn:hover:not(:disabled) {
+                transform: scale(1.05);
+                box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
+            }
+            .spin-btn:disabled {
+                background: #334155;
+                cursor: not-allowed;
+                box-shadow: none;
+                opacity: 0.5;
+            }
             
             .rewards-container {
                 max-width: 1200px;
@@ -371,7 +454,35 @@ const RewardsModule = {
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 24px; padding: 10px;">
+                <!-- Lucky Wheel Section -->
+                <div class="glass-panel wheel-section" style="margin-bottom: 40px; padding: 30px; text-align: center; background: linear-gradient(135deg, rgba(16,185,129,0.05), rgba(0,0,0,0.8)); border: 1px dashed rgba(16,185,129,0.3);">
+                    <div style="max-width: 500px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 20px;">
+                        <h3 style="color: #34d399; margin: 0; text-transform: uppercase; letter-spacing: 2px;">
+                            <i class="fa-solid fa-dharmachakra fa-spin" style="--fa-animation-duration: 5s;"></i> Vòng Quay Nhân Phẩm
+                        </h3>
+                        <p style="font-size: 13px; color: var(--text-secondary);">Chỉ với <b>1 Công Đức</b>, thử vận may nhận lại lên đến 5 điểm hoặc Thẻ Bài Đặc Quyền!</p>
+                        
+                        <div class="wheel-outer">
+                            <div class="wheel-pointer"></div>
+                            <div id="lucky-wheel-main" class="wheel-main">
+                                <div class="wheel-segment" style="--i:0; --c:#1e293b;"><span>😅</span></div>
+                                <div class="wheel-segment" style="--i:1; --c:#065f46;"><span>1đ</span></div>
+                                <div class="wheel-segment" style="--i:2; --c:#064e3b;"><span>2đ</span></div>
+                                <div class="wheel-segment" style="--i:3; --c:#1e293b;"><span>🍀</span></div>
+                                <div class="wheel-segment" style="--i:4; --c:#065f46;"><span>1đ</span></div>
+                                <div class="wheel-segment" style="--i:5; --c:#b45309;"><span>5đ</span></div>
+                                <div class="wheel-segment" style="--i:6; --c:#1e293b;"><span>😅</span></div>
+                                <div class="wheel-segment" style="--i:7; --c:#be185d;"><span>🥤</span></div>
+                            </div>
+                        </div>
+
+                        <button onclick="RewardsModule.spinWheel()" class="spin-btn" ${meritInfo.current < 1 || RewardsModule._isSpinning ? 'disabled' : ''}>
+                            ${RewardsModule._isSpinning ? '<i class="fa-solid fa-spinner fa-spin"></i> ĐANG QUAY...' : '<i class="fa-solid fa-play"></i> QUAY NGAY (-1đ)'}
+                        </button>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 24px; padding: 10px;">
                     ${cardsHtml}
                 </div>
 
@@ -400,6 +511,115 @@ const RewardsModule = {
         
         Utils.showToast("Bơm thành công +50 điểm!", "success");
         RewardsModule.render();
+    },
+
+    spinWheel: async () => {
+        if (RewardsModule._isSpinning) return;
+        
+        const user = Auth.currentUser;
+        if (!user) return;
+
+        const meritInfo = await RewardsModule.calcUserMerit(user.username);
+        if (meritInfo.current < 1) {
+            Utils.showToast("Bạn cần ít nhất 1 điểm Công Đức để quay!", "error");
+            return;
+        }
+
+        // Bắt đầu quay
+        RewardsModule._isSpinning = true;
+        const wheelEl = document.getElementById('lucky-wheel-main');
+        if (!wheelEl) return;
+
+        // Trừ 1 điểm phí tham gia ngay lập tức
+        const participationRecord = {
+            id: 'spin_fee_' + Date.now(),
+            username: user.username,
+            timestamp: Date.now(),
+            cardId: 'wheel_entry',
+            title: '🎡 Lượt Quay May Mắn',
+            icon: 'fa-spinner',
+            color: '#34d399',
+            cost: 1
+        };
+        const allRewards = await RewardsModule.loadData();
+        allRewards.push(participationRecord);
+        await RewardsModule.saveData(allRewards);
+
+        // Tính toán kết quả
+        // 8 phân đoạn: 0-45: Miss, 45-90: +1, 90-135: +2, 135-180: Miss, 180-225: +1, 225-270: +5, 270-315: Miss, 315-360: THẺ TRÀ
+        const prizes = [
+            { label: 'Hụt rồi!', pts: 0, msg: 'Hụt rồi! May mắn lần sau nhé 😅' },
+            { label: '+1 Điểm', pts: 1, msg: 'Hòa vốn! Bạn nhận lại 1 công đức 🧧' },
+            { label: '+2 Điểm', pts: 2, msg: 'Lãi rồi! Chúc mừng bạn được +2 công đức 🎆' },
+            { label: 'Hụt rồi!', pts: 0, msg: 'Suýt trúng! Cố lên bạn ơi 🍀' },
+            { label: '+1 Điểm', pts: 1, msg: 'Hòa vốn! Nhận lại 1 công đức nè 🧧' },
+            { label: '+5 Điểm', pts: 5, msg: 'XUẤT SẮC! Bạn trúng hũ +5 công đức 💎' },
+            { label: 'Hụt rồi!', pts: 0, msg: 'Hụt mất rồi! Quay lại phát nữa xem sao? ✨' },
+            { label: 'THẺ TRÀ', pts: 0, isCard: true, cardId: 'card_tea', msg: 'SIÊU CẤP MAY MẮN! Trúng ngay 1 THẺ TRÀ CHIỀU (trị giá 5đ) 🥤' }
+        ];
+
+        const rand = Math.random();
+        let prizeIdx = 0;
+        // Xác suất tùy chỉnh: 
+        if (rand < 0.40) prizeIdx = [0, 3, 6][Math.floor(Math.random() * 3)]; // 40% hụt
+        else if (rand < 0.75) prizeIdx = [1, 4][Math.floor(Math.random() * 2)]; // 35% hòa vốn
+        else if (rand < 0.90) prizeIdx = 2; // 15% lãi +2
+        else if (rand < 0.97) prizeIdx = 5; // 7% trúng +5
+        else prizeIdx = 7; // 3% trúng thẻ
+
+        const prize = prizes[prizeIdx];
+        
+        // Tính góc quay (quay ít nhất 5 vòng + góc tới prize)
+        const segmentAngle = 360 / 8;
+        const targetAngle = 360 - (prizeIdx * segmentAngle) - (segmentAngle / 2); // Căn giữa segment
+        const extraSpins = 5 + Math.floor(Math.random() * 3);
+        const finalRotation = (extraSpins * 360) + targetAngle;
+        
+        RewardsModule._currentRotation += finalRotation;
+        wheelEl.style.transform = `rotate(${RewardsModule._currentRotation}deg)`;
+
+        // Đợi quay xong (4s trong CSS transition)
+        setTimeout(async () => {
+            if (prize.pts > 0) {
+                // Cộng điểm
+                const winRecord = {
+                    id: 'spin_win_' + Date.now(),
+                    username: user.username,
+                    timestamp: Date.now(),
+                    cardId: 'wheel_win',
+                    title: `🎡 Thưởng: ${prize.label}`,
+                    icon: 'fa-gift',
+                    color: '#ffd700',
+                    cost: -prize.pts // Âm = Cộng điểm
+                };
+                const data = await RewardsModule.loadData();
+                data.push(winRecord);
+                await RewardsModule.saveData(data);
+            } else if (prize.isCard) {
+                // Tặng thẻ
+                const card = RewardsModule._catalog.find(c => c.id === prize.cardId);
+                const winCardRecord = {
+                    id: 'spin_card_' + Date.now(),
+                    username: user.username,
+                    timestamp: Date.now(),
+                    cardId: card.id,
+                    title: `🎡 Trúng Thẻ: ${card.title}`,
+                    icon: card.icon,
+                    color: card.color,
+                    cost: 0 // Free
+                };
+                const data = await RewardsModule.loadData();
+                data.push(winCardRecord);
+                await RewardsModule.saveData(data);
+                
+                // Báo Telegram
+                Utils.notifyTelegram(`🎰 <b>[SIÊU CẤP MAY MẮN]</b>\n👤 <b>${user.username}</b> vừa quay hũ trúng ngay <b>${card.title}</b> miễn phí!`);
+            }
+
+            Utils.showToast(prize.msg, prize.pts > 0 || prize.isCard ? "success" : "info");
+            RewardsModule._isSpinning = false;
+            RewardsModule.render();
+        }, 4100);
     },
 
     redeem: async (cardId) => {
