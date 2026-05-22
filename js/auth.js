@@ -126,22 +126,17 @@ const Auth = {
 
         // Update user profile UI
         const profileEl = document.querySelector('.user-profile .avatar');
-        if (Auth.currentUser.profile && Auth.currentUser.profile.chibiConfig) {
-            profileEl.innerHTML = ChibiModule.renderChibiSVG(Auth.currentUser.profile.chibiConfig, true, 0);
-            profileEl.style.background = 'transparent';
-            profileEl.style.overflow = 'hidden';
-            profileEl.style.border = '2px solid rgba(168,85,247,0.3)';
-            profileEl.style.boxShadow = '0 0 10px rgba(168,85,247,0.5)';
-            profileEl.style.display = 'flex';
-            profileEl.style.alignItems = 'center';
-            profileEl.style.justifyContent = 'center';
-        } else if (Auth.currentUser.profile && Auth.currentUser.profile.avatar) {
+        if (Auth.currentUser.profile && Auth.currentUser.profile.avatar) {
             profileEl.innerHTML = `<img src="${Auth.currentUser.profile.avatar}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
             profileEl.style.background = 'transparent';
+            profileEl.style.border = '';
+            profileEl.style.boxShadow = '';
         } else {
             const userColor = Utils.getUserAvatarColor(Auth.currentUser.username);
-            profileEl.innerHTML = `<span style="color: #fff;">${Auth.currentUser.username[0].toUpperCase()}</span>`;
+            profileEl.innerHTML = `<span style="color: #fff; font-weight: bold;">${Auth.currentUser.username[0].toUpperCase()}</span>`;
             profileEl.style.background = userColor;
+            profileEl.style.border = '';
+            profileEl.style.boxShadow = '';
         }
         profileEl.setAttribute('title', `Role: ${Auth.currentUser.role}`);
 

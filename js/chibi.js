@@ -50,7 +50,7 @@ const ChibiModule = {
         top: 10,  // Style 0 is naked, 1-9 are top styles
         bottom: 8, // Style 0 is underwear, 1-7 are bottoms
         shoe: 8,   // Style 0 is barefoot, 1-7 are shoe styles
-        accessory: 15 // Style 0 is none, 1-14 are accessory styles
+        accessory: 17 // Style 0 is none, 1-16 are accessory styles
     },
 
     // State
@@ -375,61 +375,109 @@ const ChibiModule = {
 
         // 9. Back Accessories Layer
         let backAccessoryHtml = '';
-        if (c.accessory === 11) { // Floating Fire Katana
+        if (c.accessory === 11) { // Đại Đao Lửa (Epic Guan Dao)
             backAccessoryHtml = `
-                <!-- Katana Sheath & Handle behind back -->
-                <g class="${isD ? 'chibi-tail-dance' : ''}">
-                    <!-- Blade/Sheath -->
-                    <rect x="70" y="80" width="8" height="90" rx="3" fill="#1e1b4b" stroke="#111" stroke-width="1.5" transform="rotate(-35 70 80)" />
-                    <!-- Guard -->
-                    <ellipse cx="67" cy="85" rx="10" ry="4" fill="#fbbf24" stroke="#111" stroke-width="1.5" transform="rotate(-35 67 85)" />
-                    <!-- Handle -->
-                    <rect x="63" y="55" width="8" height="30" rx="2" fill="#ef4444" stroke="#111" stroke-width="1.5" transform="rotate(-35 63 55)" />
-                    <line x1="61" y1="62" x2="71" y2="69" stroke="#fff" stroke-width="1.5" />
-                    <line x1="66" y1="72" x2="76" y2="79" stroke="#fff" stroke-width="1.5" />
-                    <!-- Fire particles -->
-                    <circle cx="110" cy="110" r="3" fill="#f97316" opacity="0.8" style="animation: floatSparkle 1.2s infinite ease-in-out;" />
-                    <circle cx="120" cy="95" r="2.5" fill="#ef4444" opacity="0.8" style="animation: floatSparkle 1.5s infinite ease-in-out 0.3s;" />
+                <!-- Huge Epic Flame Guan Dao behind back -->
+                <g class="${isD ? 'chibi-tail-dance' : ''}" style="filter: drop-shadow(0 0 12px #ff4500) drop-shadow(0 0 25px #ff8c00);">
+                    <g transform="rotate(-32 70 85)">
+                        <!-- Pole/Shaft -->
+                        <rect x="68" y="-10" width="6" height="180" rx="3" fill="#1e2937" stroke="#fbbf24" stroke-width="1.2" />
+                        
+                        <!-- Gold fittings & Dragon Guard -->
+                        <path d="M 60 25 L 82 25 L 86 42 L 56 42 Z" fill="#fbbf24" stroke="#78350f" stroke-width="1.5" />
+                        <circle cx="71" cy="33" r="3" fill="#ef4444" />
+                        
+                        <!-- Giant Flame Blade -->
+                        <path d="M 46 25 C 32 -30 15 -70 35 -85 C 60 -55 58 5 71 25 Z" fill="url(#bladeFlame)" stroke="#991b1b" stroke-width="2.5" />
+                        
+                        <!-- Inner Glowing Edge -->
+                        <path d="M 42 15 C 33 -25 22 -55 35 -75" stroke="#fff" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.9" />
+                        
+                        <!-- Tassel on the hilt -->
+                        <g transform="translate(71, 170)">
+                            <circle cx="0" cy="0" r="4.5" fill="#d97706" stroke="#111" stroke-width="1" />
+                            <path d="M 0 0 C -5 10 -8 25 -5 32 C -2 35 4 35 5 32 C 8 25 5 10 0 0" fill="#ef4444" stroke="#991b1b" stroke-width="1" />
+                            <path d="M -3 12 L -3 28 M 3 12 L 3 28" stroke="#fbbf24" stroke-width="0.8" />
+                        </g>
+                    </g>
+                    <!-- Floating Sparks & Fire Aura Particles -->
+                    <circle cx="35" cy="20" r="3.5" fill="#fbbf24" style="animation: floatSparkle 1.2s infinite ease-in-out;" />
+                    <circle cx="50" cy="5" r="2.5" fill="#f97316" style="animation: floatSparkle 1.5s infinite 0.3s;" />
+                    <circle cx="20" cy="-10" r="4" fill="#ef4444" style="animation: floatSparkle 1.8s infinite 0.6s;" />
                 </g>
+                <defs>
+                    <linearGradient id="bladeFlame" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#ffffff" />
+                        <stop offset="20%" stop-color="#fef08a" />
+                        <stop offset="55%" stop-color="#f97316" />
+                        <stop offset="85%" stop-color="#ef4444" />
+                        <stop offset="100%" stop-color="#7f1d1d" />
+                    </linearGradient>
+                </defs>
             `;
-        } else if (c.accessory === 13) { // Cyber Laser Greatsword
+        } else if (c.accessory === 13) { // Cyber Laser Greatsword (Scale up & Neon)
             backAccessoryHtml = `
                 <!-- Huge Laser Cyber Blade -->
-                <g class="${isD ? 'chibi-tail-dance' : ''}">
-                    <!-- Blade energy glow -->
-                    <rect x="72" y="50" width="12" height="110" rx="4" fill="#00f3ff" opacity="0.85" stroke="#fff" stroke-width="1" transform="rotate(30 72 50)" style="filter: drop-shadow(0 0 6px #00f3ff);" />
-                    <!-- Core -->
-                    <rect x="75" y="53" width="6" height="104" rx="2" fill="#ffffff" transform="rotate(30 75 53)" />
-                    <!-- Hilt / Handle -->
-                    <rect x="68" y="145" width="10" height="25" rx="3" fill="#1e2937" stroke="#111" stroke-width="1.5" transform="rotate(30 68 145)" />
+                <g class="${isD ? 'chibi-tail-dance' : ''}" style="filter: drop-shadow(0 0 12px #00f3ff) drop-shadow(0 0 25px #a855f7);">
+                    <g transform="rotate(32 70 85)">
+                        <!-- Blade outer energy glow -->
+                        <rect x="61" y="-35" width="20" height="155" rx="8" fill="#00f3ff" opacity="0.4" />
+                        <!-- Main Blade -->
+                        <rect x="63" y="-32" width="16" height="150" rx="6" fill="#00f3ff" opacity="0.9" stroke="#fff" stroke-width="1.8" />
+                        <!-- Core -->
+                        <rect x="67" y="-28" width="8" height="142" rx="3" fill="#ffffff" />
+                        
+                        <!-- Futuristic Crossguard -->
+                        <path d="M 50 118 L 92 118 L 86 128 L 56 128 Z" fill="#8b5cf6" stroke="#00f3ff" stroke-width="1.5" />
+                        <rect x="66" y="119" width="10" height="8" fill="#00f3ff" style="animation: muzzleGlow 0.8s infinite alternate;" />
+                        
+                        <!-- Hilt / Handle -->
+                        <rect x="67" y="128" width="8" height="42" rx="3" fill="#1e2937" stroke="#8b5cf6" stroke-width="1.5" />
+                        <line x1="71" y1="134" x2="71" y2="164" stroke="#a855f7" stroke-width="1.5" stroke-dasharray="2,3" />
+                        
+                        <!-- Pommel glow -->
+                        <circle cx="71" cy="172" r="3.5" fill="#00f3ff" />
+                    </g>
+                    <!-- Cyber Sparkles / Digitized Particles -->
+                    <circle cx="45" cy="35" r="3.5" fill="#a855f7" style="animation: floatSparkle 1.2s infinite ease-in-out;" />
+                    <circle cx="110" cy="5" r="2" fill="#00f3ff" style="animation: floatSparkle 1.5s infinite 0.3s;" />
+                    <circle cx="30" cy="-15" r="2.8" fill="#ffffff" style="animation: floatSparkle 1.7s infinite 0.5s;" />
                 </g>
             `;
         }
 
         // 10. Tattoo Layer (Over Body skin, under clothes)
         let tattooHtml = '';
-        if (c.accessory === 10) { // Red Dragon Tattoo
+        if (c.accessory === 10) { // Xăm Kín Người
             tattooHtml = `
-                <!-- Dragon Tattoo on Right Arm & Chest -->
-                <g class="${isD ? 'chibi-arm-right-dance' : ''}" opacity="0.85">
-                    <path d="M 116 122 Q 126 128 132 134 Q 130 137 124 133 Q 118 128 116 124 Z" fill="#ef4444" />
-                    <path d="M 125 125 C 132 129 133 135 128 138" stroke="#b91c1c" stroke-width="1.5" fill="none" stroke-linecap="round" />
-                    <circle cx="129" cy="138" r="1.5" fill="#ef4444" />
+                <!-- Full Body Tattoo (Chest, Neck, Arms, Legs) -->
+                <!-- Chest & Neck Tattoo -->
+                <path d="M 96 106 Q 100 110 104 106 L 105 118 Q 100 125 95 118 Z" fill="#2d3748" opacity="0.8" />
+                <path d="M 88 114 Q 100 118 112 114 L 110 128 Q 100 135 90 128 Z" fill="#1a202c" opacity="0.75" />
+                <path d="M 94 116 C 90 120 92 135 100 132 C 108 135 110 120 106 116" stroke="#2d3748" stroke-width="1.8" fill="none" opacity="0.8" />
+                
+                <!-- Left Arm Tattoo sleeve -->
+                <g class="${isD ? 'chibi-arm-left-dance' : ''}" opacity="0.8">
+                    <path d="M 85 116 Q 66 128 64 140 C 63 145 69 146 72 142 L 85 125 Z" fill="#1a202c" />
+                    <path d="M 83 118 L 68 138" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="2,2" />
+                    <path d="M 80 122 Q 72 130 70 138" stroke="#1a202c" stroke-width="2.5" fill="none" />
                 </g>
-                <path d="M 104 116 Q 109 119 106 124 Q 102 120 104 116 Z" fill="#ef4444" opacity="0.8" />
-            `;
-        } else if (c.accessory === 14) { // Tribal Sleeve Tattoos
-            tattooHtml = `
-                <!-- Tribal Sleeve Tattoos on BOTH arms -->
-                <g class="${isD ? 'chibi-arm-left-dance' : ''}" opacity="0.85">
-                    <path d="M 84 122 Q 74 128 68 134 Q 70 137 76 133" stroke="#1f2937" stroke-width="3" fill="none" stroke-linecap="round" />
-                    <path d="M 82 120 L 72 132" stroke="#374151" stroke-width="1" />
-                    <circle cx="71" cy="138" r="1.5" fill="#1f2937" />
+                
+                <!-- Right Arm Tattoo sleeve -->
+                <g class="${isD ? 'chibi-arm-right-dance' : ''}" opacity="0.8">
+                    <path d="M 115 116 Q 134 128 136 140 C 137 145 131 146 128 142 L 115 125 Z" fill="#1a202c" />
+                    <path d="M 117 118 L 132 138" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="2,2" />
+                    <path d="M 120 122 Q 128 130 130 138" stroke="#1a202c" stroke-width="2.5" fill="none" />
                 </g>
-                <g class="${isD ? 'chibi-arm-right-dance' : ''}" opacity="0.85">
-                    <path d="M 116 122 Q 126 128 132 134 Q 130 137 124 133" stroke="#1f2937" stroke-width="3" fill="none" stroke-linecap="round" />
-                    <path d="M 118 120 L 128 132" stroke="#374151" stroke-width="1" />
-                    <circle cx="129" cy="138" r="1.5" fill="#1f2937" />
+                
+                <!-- Legs Tattoo sleeves -->
+                <g opacity="0.8">
+                    <!-- Left Leg -->
+                    <path d="M 86 145 Q 83 165 82 175 L 89 175 L 94 145 Z" fill="#2d3748" />
+                    <path d="M 84 150 Q 88 158 83 168" stroke="#1a202c" stroke-width="2" fill="none" />
+                    <!-- Right Leg -->
+                    <path d="M 114 145 Q 117 165 118 175 L 111 175 L 106 145 Z" fill="#2d3748" />
+                    <path d="M 116 150 Q 112 158 117 168" stroke="#1a202c" stroke-width="2" fill="none" />
                 </g>
             `;
         }
@@ -595,17 +643,184 @@ const ChibiModule = {
         } else if (c.accessory === 9) { // Ribbon Bow
             accHtml = `
                 <path d="M 85 45 Q 100 52 115 45 Q 125 35 110 38 Q 100 50 90 38 Q 75 35 85 45 Z" fill="#ef4444" stroke="#1e1b4b" stroke-width="2" />
-                <circle cx="100" cy="44" r="4.5" fill="#b91c1c" />
+                <circle cx="100" cy="45" r="4.5" fill="#fbbf24" stroke="#1e1b4b" stroke-width="2" />
             `;
-        } else if (c.accessory === 12) { // Ninja Kunai/Dagger
+        } else if (c.accessory === 12) { // Súng Vô Cực (Sci-Fi Rifle)
             accHtml = `
-                <!-- Floating Ninja Kunai -->
-                <g class="${isD ? 'chibi-arm-right-dance' : ''}" style="filter: drop-shadow(0 0 3px #00f3ff);">
-                    <path d="M 136 136 L 146 142 L 138 144 L 134 140 Z" fill="#94a3b8" stroke="#1e1b4b" stroke-width="1.5" />
-                    <line x1="134" y1="140" x2="128" y2="134" stroke="#ef4444" stroke-width="2.5" />
-                    <circle cx="127" cy="133" r="2.5" fill="none" stroke="#ef4444" stroke-width="1.5" />
-                    <circle cx="138" cy="138" r="3" fill="#00f3ff" opacity="0.5" />
+                <!-- Glowing Infinite Sci-Fi Rifle held in front -->
+                <g class="${isD ? 'chibi-arm-right-dance' : ''}" style="filter: drop-shadow(0 0 10px #00f3ff) drop-shadow(0 0 18px #3b82f6);">
+                    <!-- Gun Stock / Body -->
+                    <rect x="52" y="116" width="88" height="18" rx="4" fill="#1e2937" stroke="#475569" stroke-width="1.8" />
+                    <!-- Carbon fiber patterns -->
+                    <line x1="60" y1="120" x2="130" y2="120" stroke="#0f172a" stroke-width="1.5" stroke-dasharray="3,3" />
+                    <line x1="60" y1="128" x2="130" y2="128" stroke="#0f172a" stroke-width="1.5" stroke-dasharray="3,3" />
+                    
+                    <!-- Gun Barrel -->
+                    <rect x="140" y="121" width="36" height="8" rx="2" fill="#334155" stroke="#111" stroke-width="1.2" />
+                    <line x1="140" y1="125" x2="176" y2="125" stroke="#00f3ff" stroke-width="2" />
+                    
+                    <!-- Scope -->
+                    <rect x="80" y="102" width="26" height="14" fill="#0f172a" stroke="#475569" stroke-width="1.5" rx="2" />
+                    <circle cx="102" cy="109" r="2.5" fill="#ef4444" style="animation: muzzleGlow 0.5s infinite alternate;" />
+                    <line x1="80" y1="109" x2="106" y2="109" stroke="#ef4444" stroke-width="1" opacity="0.7" />
+                    
+                    <!-- Laser Ammo Core -->
+                    <rect x="84" y="120" width="40" height="10" rx="3" fill="#00f3ff" style="animation: muzzleGlow 0.7s infinite alternate;" />
+                    <rect x="90" y="122" width="28" height="6" rx="1.5" fill="#fff" />
+                    
+                    <!-- Front Grip & Trigger -->
+                    <rect x="70" y="134" width="8" height="14" rx="2" fill="#0f172a" stroke="#111" stroke-width="1.2" />
+                    <rect x="115" y="134" width="8" height="12" rx="2" fill="#0f172a" stroke="#111" stroke-width="1.2" />
+                    
+                    <!-- Hands holding weapon -->
+                    <circle cx="119" cy="136" r="5" fill="${skinColor}" stroke="#1e1b4b" stroke-width="1.5" />
+                    <circle cx="74" cy="136" r="5" fill="${skinColor}" stroke="#1e1b4b" stroke-width="1.5" />
+                    
+                    <!-- Energy muzzle flash -->
+                    <polygon points="176,118 196,125 176,132 182,125" fill="#00f3ff" opacity="0.9" style="animation: muzzleGlow 0.3s infinite alternate;" />
+                    <circle cx="196" cy="125" r="2.5" fill="#fff" />
                 </g>
+                <style>
+                    @keyframes muzzleGlow {
+                        0% { opacity: 0.5; transform: scale(0.9); }
+                        100% { opacity: 1; transform: scale(1.15); }
+                    }
+                </style>
+            `;
+        } else if (c.accessory === 14) { // Cưỡi Ô Tô Siêu Cấp (Sports Car Rider)
+            accHtml = `
+                <!-- Super Sports Car Rider covering legs -->
+                <g style="filter: drop-shadow(0 6px 12px rgba(0,0,0,0.6));">
+                    <!-- Wheels -->
+                    <circle cx="46" cy="178" r="16" fill="#111" stroke="#ef4444" stroke-width="2.5" />
+                    <circle cx="46" cy="178" r="7" fill="#cbd5e1" stroke="#334155" stroke-width="1" />
+                    <circle cx="154" cy="178" r="16" fill="#111" stroke="#ef4444" stroke-width="2.5" />
+                    <circle cx="154" cy="178" r="7" fill="#cbd5e1" stroke="#334155" stroke-width="1" />
+                    
+                    <!-- Car Body -->
+                    <path d="M 20 176 C 20 156 35 140 60 138 L 140 138 C 165 140 180 156 180 176 C 180 188 170 192 140 192 L 60 192 C 30 192 20 188 20 176 Z" fill="url(#carRedBody)" stroke="#1e1b4b" stroke-width="2.5" />
+                    
+                    <!-- Front Grill & LED Strip -->
+                    <rect x="70" y="174" width="60" height="8" rx="2" fill="#111" stroke="#475569" stroke-width="1" />
+                    <line x1="74" y1="178" x2="126" y2="178" stroke="#00f3ff" stroke-width="2" style="filter: drop-shadow(0 0 3px #00f3ff);" />
+                    
+                    <!-- Windshield -->
+                    <path d="M 58 138 L 72 120 L 128 120 L 142 138 Z" fill="rgba(6, 182, 212, 0.45)" stroke="#06b6d4" stroke-width="2.2" />
+                    <line x1="76" y1="124" x2="124" y2="124" stroke="#fff" stroke-width="2.5" opacity="0.75" />
+                    
+                    <!-- Spoiler -->
+                    <path d="M 22 146 L 6 132 L 10 148 Z" fill="#1e2937" stroke="#111" stroke-width="1.5" />
+                    <!-- Decal sấm sét vàng -->
+                    <path d="M 75 158 L 125 152 L 105 166 Z" fill="#fbbf24" stroke="#d97706" stroke-width="1.2" />
+                    
+                    <!-- Glowing Headlights & LED Beams -->
+                    <polygon points="166,161 198,154 198,178 166,171" fill="url(#headlightBeam)" opacity="0.7" />
+                    <ellipse cx="169" cy="166" rx="4.5" ry="7" fill="#ffffff" style="filter: drop-shadow(0 0 10px #ffffff);" />
+                    <ellipse cx="31" cy="166" rx="3.5" ry="5.5" fill="#f59e0b" />
+                    
+                    <!-- Steering Wheel -->
+                    <ellipse cx="100" cy="132" rx="14" ry="5" fill="none" stroke="#1f2937" stroke-width="3" />
+                    <!-- Hands driving -->
+                    <circle cx="91" cy="132" r="4.8" fill="${skinColor}" stroke="#1e1b4b" stroke-width="1.2" />
+                    <circle cx="109" cy="132" r="4.8" fill="${skinColor}" stroke="#1e1b4b" stroke-width="1.2" />
+                </g>
+                <defs>
+                    <linearGradient id="carRedBody" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#ef4444" />
+                        <stop offset="40%" stop-color="#dc2626" />
+                        <stop offset="85%" stop-color="#991b1b" />
+                        <stop offset="100%" stop-color="#450a0a" />
+                    </linearGradient>
+                    <linearGradient id="headlightBeam" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95" />
+                        <stop offset="30%" stop-color="#fef08a" stop-opacity="0.7" />
+                        <stop offset="100%" stop-color="#fbbf24" stop-opacity="0" />
+                    </linearGradient>
+                </defs>
+            `;
+        } else if (c.accessory === 15) { // Cưỡi Xe Máy Cực Ngầu (Cyber Motorcycle)
+            accHtml = `
+                <!-- Cyberpunk Heavy Motorcycle -->
+                <g style="filter: drop-shadow(0 6px 12px rgba(0,0,0,0.65));">
+                    <!-- Neon wheels -->
+                    <circle cx="42" cy="176" r="19" fill="#111" stroke="#00f3ff" stroke-width="4.5" style="filter: drop-shadow(0 0 6px #00f3ff);" />
+                    <circle cx="42" cy="176" r="9" fill="#1e2937" stroke="#4b5563" stroke-width="1.5" />
+                    <circle cx="158" cy="176" r="19" fill="#111" stroke="#00f3ff" stroke-width="4.5" style="filter: drop-shadow(0 0 6px #00f3ff);" />
+                    <circle cx="158" cy="176" r="9" fill="#1e2937" stroke="#4b5563" stroke-width="1.5" />
+                    
+                    <!-- Heavy Metal Frame -->
+                    <path d="M 42 176 L 82 142 L 118 142 L 158 176 Z" stroke="#334155" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+                    <path d="M 42 176 L 82 142 L 118 142 L 158 176 Z" stroke="#00f3ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.75" />
+                    
+                    <!-- Exhaust Pipe with Flame Trail -->
+                    <g transform="rotate(-12 34 176)">
+                        <rect x="30" y="174" width="56" height="10" rx="3" fill="#475569" stroke="#111" stroke-width="1.5" />
+                        <rect x="32" y="176" width="52" height="6" fill="#1e2937" />
+                        <!-- Real Fire Exhaust Flame Effect -->
+                        <polygon points="28,179 4,172 12,179 2,186" fill="#f97316" stroke="#ef4444" stroke-width="1" />
+                        <polygon points="28,179 10,175 14,179 8,183" fill="#ffd700" />
+                    </g>
+                    
+                    <!-- Moto Body -->
+                    <path d="M 60 166 C 56 138 78 130 98 130 C 120 130 138 138 148 162 L 140 176 Z" fill="url(#motoBody)" stroke="#111" stroke-width="2.2" />
+                    <!-- Cyber energy bar on body -->
+                    <path d="M 78 146 Q 98 140 124 148" stroke="#a855f7" stroke-width="3" stroke-linecap="round" fill="none" style="filter: drop-shadow(0 0 4px #a855f7);" />
+                    
+                    <!-- Handlebars -->
+                    <line x1="104" y1="134" x2="132" y2="114" stroke="#1e2937" stroke-width="6" stroke-linecap="round" />
+                    <circle cx="132" cy="114" r="4.5" fill="#00f3ff" style="filter: drop-shadow(0 0 3px #00f3ff);" />
+                    <!-- Hand holding handlebars -->
+                    <circle cx="123" cy="120" r="5" fill="${skinColor}" stroke="#111" stroke-width="1.5" />
+                    
+                    <!-- Front visor & LED Headlight -->
+                    <path d="M 126 122 L 148 132 L 142 144 L 122 134 Z" fill="#8b5cf6" stroke="#111" stroke-width="1.8" />
+                    <polygon points="144,136 172,136 166,148 142,142" fill="url(#headlightBeam)" opacity="0.65" />
+                    <ellipse cx="143" cy="139" rx="3" ry="5" fill="#00f3ff" style="filter: drop-shadow(0 0 6px #00f3ff);" />
+                </g>
+                <defs>
+                    <linearGradient id="motoBody" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#8b5cf6" />
+                        <stop offset="45%" stop-color="#3b0764" />
+                        <stop offset="85%" stop-color="#1e1b4b" />
+                        <stop offset="100%" stop-color="#090514" />
+                    </linearGradient>
+                </defs>
+            `;
+        } else if (c.accessory === 16) { // Đeo Phao Hồng Hạc (Pink Flamingo Float)
+            accHtml = `
+                <!-- Adorable Pink Flamingo Swim Float around waist -->
+                <g style="filter: drop-shadow(0 5px 8px rgba(0,0,0,0.4));">
+                    <!-- Float Ring -->
+                    <ellipse cx="100" cy="148" rx="32" ry="15" fill="#f43f5e" stroke="#1e1b4b" stroke-width="2.5" />
+                    <!-- Inner shading for 3D depth -->
+                    <ellipse cx="100" cy="146" rx="20" ry="8" fill="#be123c" opacity="0.35" />
+                    
+                    <!-- Water ripples under float -->
+                    <ellipse cx="100" cy="164" rx="42" ry="6" fill="none" stroke="#38bdf8" stroke-width="2" opacity="0.7" stroke-dasharray="10,5;5,10" style="animation: waterSpin 3s infinite linear;" />
+                    
+                    <!-- Flamingo Neck & Head -->
+                    <path d="M 118 148 C 126 148 136 142 134 122 C 132 110 123 104 126 96 C 128 90 137 90 139 96 C 141 104 137 112 137 120" fill="#f43f5e" stroke="#1e1b4b" stroke-width="2.5" stroke-linecap="round" />
+                    
+                    <!-- Beak -->
+                    <path d="M 139 94 C 143 94 148 99 146 103 C 142 104 139 100 139 94" fill="#111" />
+                    <path d="M 139 95 C 141 95 143 98 142 99" fill="#ffffff" />
+                    
+                    <!-- Flamingo Eye with long eyelashes -->
+                    <circle cx="132" cy="95" r="1.6" fill="#111" />
+                    <circle cx="131" cy="94" r="0.6" fill="#fff" />
+                    <path d="M 133 93 L 136 91" stroke="#111" stroke-width="0.8" />
+                    
+                    <!-- Cute Flamingo Wings on sides -->
+                    <path d="M 72 144 C 64 144 60 152 68 155 C 72 153 74 148 72 144 Z" fill="#fda4af" stroke="#1e1b4b" stroke-width="1.8" />
+                    <!-- Little Tail feather behind -->
+                    <path d="M 68 140 Q 60 132 64 144 Z" fill="#f43f5e" stroke="#1e1b4b" stroke-width="1.8" />
+                </g>
+                <style>
+                    @keyframes waterSpin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
+                </style>
             `;
         }
 
@@ -740,7 +955,20 @@ const ChibiModule = {
         else if (type === 'top') viewBox = '62 105 76 40';
         else if (type === 'bottom') viewBox = '70 135 60 38';
         else if (type === 'shoe') viewBox = '70 160 60 25';
-        else if (type === 'accessory') viewBox = '50 25 100 70';
+        else if (type === 'accessory') {
+            if (index === 14 || index === 15 || index === 16) {
+                // Ô tô, xe máy, phao: lấy vùng thân dưới rộng ra để vừa vặn
+                viewBox = '15 100 170 100';
+            } else if (index === 11 || index === 13) {
+                // Đại đao, kiếm laser: cần toàn cảnh chéo cao
+                viewBox = '20 15 160 175';
+            } else if (index === 12) {
+                // Súng vô cực: lấy vùng ngực tay cầm
+                viewBox = '45 100 120 70';
+            } else {
+                viewBox = '50 25 100 70';
+            }
+        }
 
         return svgStr.replace(/<svg viewBox="0 0 200 200"/g, `<svg viewBox="${viewBox}"`);
     },
@@ -844,21 +1072,23 @@ const ChibiModule = {
                     }
                 }
                 .chibi-item-card {
-                    aspect-ratio: 1;
-                    background: rgba(0,0,0,0.2);
+                    height: 108px;
+                    background: rgba(0,0,0,0.3);
                     border: 1.5px solid rgba(255,255,255,0.08);
                     border-radius: 10px;
                     display: flex;
+                    flex-direction: column;
                     align-items: center;
-                    justify-content: center;
+                    justify-content: flex-start;
+                    padding: 4px;
                     cursor: pointer;
                     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-                    overflow: hidden;
                     position: relative;
+                    overflow: hidden;
                 }
                 .chibi-item-card:hover {
                     background: rgba(255,255,255,0.08);
-                    border-color: rgba(139,92,246,0.4);
+                    border-color: rgba(139,92,246,0.45);
                     transform: scale(1.04);
                 }
                 .chibi-item-card.active {
@@ -866,16 +1096,40 @@ const ChibiModule = {
                     border-color: #8b5cf6;
                     box-shadow: 0 0 15px rgba(139,92,246,0.4);
                 }
+                .chibi-item-preview-wrap {
+                    width: 100%;
+                    height: 70px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    margin-bottom: 28px;
+                }
                 .chibi-item-label {
                     position: absolute;
-                    bottom: 4px;
-                    font-size: 8px;
-                    color: #64748b;
-                    font-weight: bold;
+                    bottom: 0;
+                    left: 0;
+                    width: 100%;
+                    min-height: 28px;
+                    background: rgba(15, 23, 42, 0.92);
+                    border-top: 1px solid rgba(255, 255, 255, 0.08);
+                    padding: 4px 2px;
+                    font-size: 10px;
+                    color: #cbd5e1;
+                    font-weight: 800;
+                    text-align: center;
+                    white-space: normal;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    box-sizing: border-box;
+                    z-index: 2;
                     text-transform: uppercase;
+                    transition: all 0.2s;
                 }
                 .chibi-item-card.active .chibi-item-label {
                     color: #a78bfa;
+                    background: rgba(139, 92, 246, 0.25);
+                    border-top-color: rgba(139, 92, 246, 0.4);
                 }
                 .chibi-color-circle {
                     width: 28px;
@@ -1065,7 +1319,7 @@ const ChibiModule = {
                                 const miniSvg = ChibiModule.renderMiniOption('hair', i, ChibiModule.currentConfig.hairColor);
                                 return `
                                     <div class="chibi-item-card ${activeClass}" onclick="ChibiModule.selectItem('hairStyle', ${i})">
-                                        <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; transform: scale(1.15);">
+                                        <div class="chibi-item-preview-wrap" style="transform: scale(1.15);">
                                             ${miniSvg}
                                         </div>
                                         <span class="chibi-item-label">${i === 0 ? 'Trọc' : 'Tóc ' + i}</span>
@@ -1108,7 +1362,7 @@ const ChibiModule = {
                                 const miniSvg = ChibiModule.renderMiniOption('eyes', i);
                                 return `
                                     <div class="chibi-item-card ${activeClass}" onclick="ChibiModule.selectItem('eyeStyle', ${i})">
-                                        <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; transform: scale(1.6);">
+                                        <div class="chibi-item-preview-wrap" style="transform: scale(1.6);">
                                             ${miniSvg}
                                         </div>
                                         <span class="chibi-item-label">Mắt ${i + 1}</span>
@@ -1126,7 +1380,7 @@ const ChibiModule = {
                                 const miniSvg = ChibiModule.renderMiniOption('mouth', i);
                                 return `
                                     <div class="chibi-item-card ${activeClass}" onclick="ChibiModule.selectItem('mouthStyle', ${i})">
-                                        <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; transform: scale(1.8);">
+                                        <div class="chibi-item-preview-wrap" style="transform: scale(1.8);">
                                             ${miniSvg}
                                         </div>
                                         <span class="chibi-item-label">Miệng ${i + 1}</span>
@@ -1155,7 +1409,7 @@ const ChibiModule = {
                                 const miniSvg = ChibiModule.renderMiniOption('top', i, ChibiModule.currentConfig.topColor);
                                 return `
                                     <div class="chibi-item-card ${activeClass}" onclick="ChibiModule.selectItem('topStyle', ${i})">
-                                        <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; transform: scale(1.3);">
+                                        <div class="chibi-item-preview-wrap" style="transform: scale(1.3);">
                                             ${miniSvg}
                                         </div>
                                         <span class="chibi-item-label">${i === 0 ? 'Mặc định' : 'Áo ' + i}</span>
@@ -1186,7 +1440,7 @@ const ChibiModule = {
                                 const miniSvg = ChibiModule.renderMiniOption('bottom', i, ChibiModule.currentConfig.bottomColor);
                                 return `
                                     <div class="chibi-item-card ${activeClass}" onclick="ChibiModule.selectItem('bottomStyle', ${i})">
-                                        <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; transform: scale(1.35);">
+                                        <div class="chibi-item-preview-wrap" style="transform: scale(1.35);">
                                             ${miniSvg}
                                         </div>
                                         <span class="chibi-item-label">${i === 0 ? 'Mặc định' : 'Quần ' + i}</span>
@@ -1217,7 +1471,7 @@ const ChibiModule = {
                                 const miniSvg = ChibiModule.renderMiniOption('shoe', i, ChibiModule.currentConfig.shoeColor);
                                 return `
                                     <div class="chibi-item-card ${activeClass}" onclick="ChibiModule.selectItem('shoeStyle', ${i})">
-                                        <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; transform: scale(1.65);">
+                                        <div class="chibi-item-preview-wrap" style="transform: scale(1.65);">
                                             ${miniSvg}
                                         </div>
                                         <span class="chibi-item-label">${shoeNames[i]}</span>
@@ -1254,11 +1508,13 @@ const ChibiModule = {
                 'Mũ đầu bếp',
                 'Bịt mắt cướp biển',
                 'Nơ đỏ',
-                'Xăm Rồng đỏ',
-                'Kiếm Katana Lửa',
-                'Dao Kunai Ninja',
+                'Xăm Kín Người',
+                'Đại Đao Lửa',
+                'Súng Vô Cực',
                 'Kiếm Cyber Laser',
-                'Xăm Tribal'
+                'Cưỡi Ô Tô Siêu Cấp',
+                'Cưỡi Xe Máy Cực Ngầu',
+                'Đeo Phao Hồng Hạc'
             ];
 
             contentHtml = `
@@ -1270,7 +1526,7 @@ const ChibiModule = {
                             const miniSvg = ChibiModule.renderMiniOption('accessory', i);
                             return `
                                 <div class="chibi-item-card ${activeClass}" onclick="ChibiModule.selectItem('accessory', ${i})">
-                                    <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; transform: scale(1.15);">
+                                    <div class="chibi-item-preview-wrap" style="transform: scale(1.15);">
                                         ${miniSvg}
                                     </div>
                                     <span class="chibi-item-label">${accNames[i]}</span>

@@ -957,6 +957,9 @@ const app = {
         const container = document.getElementById('dash-hall-of-shame');
         if (!container) return;
 
+        // Apply style override
+        container.style.maxHeight = 'none';
+
         // Tải dữ liệu chấm công từ AttendanceModule
         if (typeof Attendance === 'undefined' || !Attendance.loadData) return;
         
@@ -985,7 +988,7 @@ const app = {
                 displayName: Utils.getUserDisplayName(u) || u,
                 count: lateStats[u].count,
                 totalMinutes: lateStats[u].totalMinutes,
-                avatarHtml: "" // Sẽ lấy sau
+                avatarHtml: ""
             };
         }).sort((a, b) => b.count - a.count || b.totalMinutes - a.totalMinutes);
 
@@ -995,27 +998,338 @@ const app = {
         }
 
         const accounts = await Auth.getAccounts();
-        
-        container.innerHTML = rankedShame.slice(0, 5).map((u, i) => {
+
+        const placeholderChibi = {
+            gender: 'nam',
+            skinColor: '#cbd5e1',
+            hairStyle: 0,
+            hairColor: '#475569',
+            eyeStyle: 3,
+            mouthStyle: 5,
+            topStyle: 0,
+            topColor: '#64748b',
+            bottomStyle: 0,
+            bottomColor: '#475569',
+            shoeStyle: 0,
+            shoeColor: '#334155',
+            accessory: 0
+        };
+
+        const defaultChibi = {
+            gender: 'nam',
+            skinColor: '#ffcd94',
+            hairStyle: 1,
+            hairColor: '#111827',
+            eyeStyle: 3,
+            mouthStyle: 5,
+            topStyle: 1,
+            topColor: '#3b82f6',
+            bottomStyle: 1,
+            bottomColor: '#1f2937',
+            shoeStyle: 1,
+            shoeColor: '#1f2937',
+            accessory: 0
+        };
+
+        const makePlaceholder = (rankVal) => {
+            return {
+                username: '',
+                displayName: 'Bình yên...',
+                count: 0,
+                totalMinutes: 0,
+                profile: { chibiConfig: placeholderChibi },
+                placeholder: true
+            };
+        };
+
+        const u1 = rankedShame[0] || makePlaceholder(1);
+        const u2 = rankedShame[1] || makePlaceholder(2);
+        const u3 = rankedShame[2] || makePlaceholder(3);
+
+        const getShameChibiSvg = (u) => {
+            const acc = accounts.find(a => a.username === u.username);
+            let config = (acc && acc.profile && acc.profile.chibiConfig) ? acc.profile.chibiConfig : (u.placeholder ? placeholderChibi : defaultChibi);
+            
+            // Force sad/regretful expressions on Shame Podium: sleepy eyes (3) + flat straight mouth (5)
+            const sadConfig = {
+                ...config,
+                eyeStyle: 3,
+                mouthStyle: 5
+            };
+            return ChibiModule.renderChibiSVG(sadConfig, false, 0); // No dancing, no merits
+        };
+
+        // Inject Shame Podium Styles dynamically if not already added
+        if (!document.getElementById('podium-shame-stage-styles')) {
+            const style = document.createElement('style');
+            style.id = 'podium-shame-stage-styles';
+            style.textContent = `
+                .shame-stage {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    width: 100%;
+                    background: linear-gradient(180deg, rgba(30,10,10,0.65) 0%, rgba(15,5,5,0.9) 100%);
+                    border-radius: 16px;
+                    padding: 24px 16px;
+                    border: 1px solid rgba(239, 68, 68, 0.2);
+                    box-shadow: 0 0 25px rgba(239, 68, 68, 0.1), inset 0 0 20px rgba(0,0,0,0.6);
+                    position: relative;
+                    overflow: hidden;
+                    margin-bottom: 20px;
+                }
+                .shame-stage::before {
+                    content: '';
+                    position: absolute;
+                    bottom: 0;
+                    left: 0;
+                    right: 0;
+                    height: 120px;
+                    background: radial-gradient(ellipse at bottom, rgba(239, 68, 68, 0.22) 0%, transparent 70%);
+                    pointer-events: none;
+                    z-index: 1;
+                }
+                .shame-podium-container {
+                    display: flex;
+                    justify-content: center;
+                    align-items: flex-end;
+                    width: 100%;
+                    height: 310px;
+                    position: relative;
+                    z-index: 2;
+                }
+                .shame-podium-col {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    position: relative;
+                    transition: all 0.3s ease;
+                }
+                .shame-podium-col.rank-1 { width: 36%; z-index: 5; }
+                .shame-podium-col.rank-2 { width: 32%; z-index: 4; }
+                .shame-podium-col.rank-3 { width: 32%; z-index: 3; }
+
+                .shame-podium-spotlight {
+                    position: absolute;
+                    bottom: 0;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    width: 140px;
+                    height: 280px;
+                    clip-path: polygon(30% 0%, 70% 0%, 100% 100%, 0% 100%);
+                    pointer-events: none;
+                    opacity: 0.65;
+                    z-index: 1;
+                    transform-origin: bottom center;
+                }
+                .shame-podium-col.rank-1 .shame-podium-spotlight {
+                    background: linear-gradient(to top, rgba(239, 68, 68, 0.5) 0%, rgba(239, 68, 68, 0.1) 60%, transparent 100%);
+                    animation: shame-spotlight-pulse-red-1 3s infinite ease-in-out;
+                }
+                .shame-podium-col.rank-2 .shame-podium-spotlight {
+                    background: linear-gradient(to top, rgba(249, 115, 22, 0.4) 0%, rgba(249, 115, 22, 0.08) 65%, transparent 100%);
+                    animation: shame-spotlight-pulse-red-2 3.5s infinite ease-in-out;
+                }
+                .shame-podium-col.rank-3 .shame-podium-spotlight {
+                    background: linear-gradient(to top, rgba(249, 115, 22, 0.35) 0%, rgba(249, 115, 22, 0.08) 65%, transparent 100%);
+                    animation: shame-spotlight-pulse-red-3 4s infinite ease-in-out;
+                }
+
+                @keyframes shame-spotlight-pulse-red-1 {
+                    0%, 100% { opacity: 0.45; transform: translateX(-50%) scaleX(0.9); }
+                    50% { opacity: 0.85; transform: translateX(-50%) scaleX(1.2); filter: drop-shadow(0 0 20px rgba(239,68,68,0.5)); }
+                }
+                @keyframes shame-spotlight-pulse-red-2 {
+                    0%, 100% { opacity: 0.35; transform: translateX(-50%) scaleX(0.95); }
+                    50% { opacity: 0.75; transform: translateX(-50%) scaleX(1.15); filter: drop-shadow(0 0 15px rgba(249,115,22,0.4)); }
+                }
+                @keyframes shame-spotlight-pulse-red-3 {
+                    0%, 100% { opacity: 0.35; transform: translateX(-50%) scaleX(1.15); }
+                    50% { opacity: 0.75; transform: translateX(-50%) scaleX(0.95); filter: drop-shadow(0 0 15px rgba(249,115,22,0.4)); }
+                }
+
+                .shame-podium-character {
+                    width: 90px;
+                    height: 90px;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    position: relative;
+                    margin-bottom: 6px;
+                    z-index: 3;
+                }
+                .shame-podium-col.rank-1 .shame-podium-character {
+                    width: 120px;
+                    height: 120px;
+                    margin-bottom: 10px;
+                }
+                .shame-podium-character svg {
+                    width: 100%;
+                    height: 100%;
+                }
+
+                .shame-podium-name {
+                    font-size: 12px;
+                    font-weight: 800;
+                    color: #ff9999;
+                    text-shadow: 0 2px 4px rgba(0,0,0,0.9);
+                    margin-bottom: 2px;
+                    text-align: center;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    max-width: 95%;
+                    z-index: 3;
+                }
+                .shame-podium-col.rank-1 .shame-podium-name {
+                    font-size: 15px;
+                    color: #ff4d4d;
+                    font-weight: 900;
+                }
+
+                .shame-podium-score {
+                    font-size: 10px;
+                    font-weight: bold;
+                    color: #a8a29e;
+                    text-shadow: 0 1px 2px rgba(0,0,0,0.9);
+                    margin-bottom: 8px;
+                    z-index: 3;
+                }
+                .shame-podium-col.rank-1 .shame-podium-score {
+                    color: #ffb3b3;
+                }
+
+                .shame-podium-badge {
+                    position: absolute;
+                    top: -12px;
+                    z-index: 4;
+                }
+                .shame-podium-col.rank-1 .shame-podium-badge {
+                    top: -20px;
+                }
+
+                .shame-podium-block {
+                    width: 90%;
+                    border-radius: 8px 8px 4px 4px;
+                    position: relative;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+                    z-index: 2;
+                    border: 1px solid rgba(255,255,255,0.08);
+                }
+                .shame-podium-col.rank-1 .shame-podium-block {
+                    height: 110px;
+                    background: linear-gradient(135deg, rgba(239, 68, 68, 0.3) 0%, rgba(239, 68, 68, 0.05) 100%);
+                    border-color: rgba(239, 68, 68, 0.5);
+                    box-shadow: 0 10px 30px rgba(239, 68, 68, 0.25), inset 0 0 20px rgba(239, 68, 68, 0.2);
+                }
+                .shame-podium-col.rank-2 .shame-podium-block {
+                    height: 80px;
+                    background: linear-gradient(135deg, rgba(249, 115, 22, 0.25) 0%, rgba(249, 115, 22, 0.05) 100%);
+                    border-color: rgba(249, 115, 22, 0.4);
+                    box-shadow: 0 8px 22px rgba(249, 115, 22, 0.15), inset 0 0 15px rgba(249, 115, 22, 0.15);
+                }
+                .shame-podium-col.rank-3 .shame-podium-block {
+                    height: 60px;
+                    background: linear-gradient(135deg, rgba(249, 115, 22, 0.2) 0%, rgba(249, 115, 22, 0.05) 100%);
+                    border-color: rgba(249, 115, 22, 0.35);
+                    box-shadow: 0 6px 18px rgba(249, 115, 22, 0.15), inset 0 0 12px rgba(249, 115, 22, 0.1);
+                }
+
+                .shame-podium-number {
+                    font-size: 26px;
+                    font-weight: 900;
+                    font-family: 'Outfit', sans-serif;
+                    opacity: 0.9;
+                }
+                .shame-podium-col.rank-1 .shame-podium-number { color: #ff4d4d; text-shadow: 0 0 12px rgba(239, 68, 68, 0.6); font-size: 34px; }
+                .shame-podium-col.rank-2 .shame-podium-number { color: #f97316; text-shadow: 0 0 8px rgba(249, 115, 22, 0.4); }
+                .shame-podium-col.rank-3 .shame-podium-number { color: #f97316; text-shadow: 0 0 8px rgba(249, 115, 22, 0.3); }
+
+                .shame-podium-list {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px;
+                    width: 100%;
+                    margin-top: 16px;
+                    padding-top: 16px;
+                    border-top: 1px solid rgba(255,255,255,0.06);
+                }
+
+                @keyframes zzz-bounce {
+                    0% { transform: translate(0, 0) scale(0.6); opacity: 0; }
+                    50% { opacity: 0.8; }
+                    100% { transform: translate(12px, -20px) scale(1.1); opacity: 0; }
+                }
+                .zzz {
+                    position: absolute;
+                    color: #ff5555;
+                    font-weight: bold;
+                    font-family: monospace;
+                    animation: zzz-bounce 2s infinite linear;
+                    opacity: 0;
+                }
+                .zzz-1 { font-size: 10px; left: 16px; top: -10px; animation-delay: 0s; }
+                .zzz-2 { font-size: 14px; left: 24px; top: -18px; animation-delay: 0.6s; }
+                .zzz-3 { font-size: 18px; left: 32px; top: -26px; animation-delay: 1.2s; }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // Render Podium columns: Rank 2 (Left), Rank 1 (Center), Rank 3 (Right)
+        const renderColumn = (u, rank) => {
+            const shameBadge = rank === 1 
+                ? `<div style="position: relative; width: 40px; height: 30px;"><i class="fa-solid fa-moon" style="color: #ff4d4d; font-size: 24px; filter: drop-shadow(0 0 6px #ff4d4d);"></i><span class="zzz zzz-1">z</span><span class="zzz zzz-2">Z</span><span class="zzz zzz-3">z</span></div>` 
+                : (rank === 2 
+                    ? '<i class="fa-solid fa-clock" style="color: #f97316; font-size: 18px;"></i>' 
+                    : '<i class="fa-solid fa-hourglass-half" style="color: #f97316; font-size: 18px;"></i>');
+
+            const scoreText = u.placeholder ? 'Trong sạch' : `${u.count} lần muộn (${u.totalMinutes}p)`;
+
+            return `
+                <div class="shame-podium-col rank-${rank}">
+                    <div class="shame-podium-spotlight"></div>
+                    <div class="shame-podium-badge">${shameBadge}</div>
+                    <div class="shame-podium-character">
+                        ${getShameChibiSvg(u)}
+                    </div>
+                    <div class="shame-podium-name">${u.displayName}</div>
+                    <div class="shame-podium-score">${scoreText}</div>
+                    <div class="shame-podium-block">
+                        <div class="shame-podium-number">${rank}</div>
+                    </div>
+                </div>
+            `;
+        };
+
+        const shamePodiumStageHtml = `
+            <div class="shame-stage">
+                <div class="shame-podium-container">
+                    ${renderColumn(u2, 2)}
+                    ${renderColumn(u1, 1)}
+                    ${renderColumn(u3, 3)}
+                </div>
+            </div>
+        `;
+
+        // Render the remaining late comers (Rank 4 and below) in the standard list format below
+        const restUsersHtml = rankedShame.slice(3).map((u, idx) => {
+            const actualRank = idx + 4;
             const acc = accounts.find(a => a.username === u.username);
             const userColor = Utils.getUserAvatarColor(u.username);
-            let avatarHtml = `<span style="display:flex; align-items:center; justify-content:center; width:36px; height:36px; background:${userColor}; border-radius:50%; color:#fff; font-weight:bold; font-size:14px; border: 2px solid ${userColor}; box-shadow:0 0 8px ${userColor}88;">${u.username[0].toUpperCase()}</span>`;
-            if (acc && acc.profile && acc.profile.chibiConfig) {
-                const sadConfig = {
-                    ...acc.profile.chibiConfig,
-                    eyeStyle: 3,
-                    mouthStyle: 5
-                };
-                avatarHtml = `<div style="width:36px; height:36px; border-radius:50%; overflow:hidden; border: 2px solid rgba(231,76,60,0.4); box-shadow: 0 0 8px rgba(231,76,60,0.5); display:flex; align-items:center; justify-content:center; background: rgba(0,0,0,0.2);">${ChibiModule.renderChibiSVG(sadConfig, false, 0)}</div>`;
-            } else if (acc && acc.profile && acc.profile.avatar) {
-                avatarHtml = `<img src="${acc.profile.avatar}" style="width:36px; height:36px; border-radius:50%; object-fit:cover; border: 2px solid rgba(255,255,255,0.1);">`;
+            
+            let listAvatarHtml = `<span style="display:flex; align-items:center; justify-content:center; width:36px; height:36px; background:${userColor}; border-radius:50%; color:#fff; font-weight:bold; font-size:14px; border: 2px solid ${userColor}; box-shadow:0 0 8px ${userColor}88;">${u.username[0].toUpperCase()}</span>`;
+            if (acc && acc.profile && acc.profile.avatar) {
+                listAvatarHtml = `<img src="${acc.profile.avatar}" style="width:36px; height:36px; border-radius:50%; object-fit:cover; border: 2px solid rgba(255,255,255,0.1);">`;
             }
 
             return `
-                <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(231,76,60,0.05); padding: 8px 12px; border-radius: 8px; border-left: 3px solid #e74c3c;">
+                <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(231,76,60,0.05); padding: 8px 12px; border-radius: 8px; position: relative; border-left: 3px solid #ef4444;">
                     <div style="display: flex; align-items: center; gap: 12px;">
-                        <span style="font-size: 14px; font-weight: bold; color: #ff6b6b; width: 15px;">#${i + 1}</span>
-                        ${avatarHtml}
+                        <span style="font-size: 13px; font-weight: bold; color: #ff6b6b; width: 15px; text-align: center;">${actualRank}</span>
+                        ${listAvatarHtml}
                         <div>
                             <div style="font-weight: 600; font-size: 13px; color: #ff6b6b;">${u.displayName}</div>
                             <div style="font-size: 11px; color: var(--text-secondary);">Vi phạm: <b>${u.count} lần</b> (${u.totalMinutes}p)</div>
@@ -1024,6 +1338,12 @@ const app = {
                 </div>
             `;
         }).join('');
+
+        const restContainerHtml = restUsersHtml.length > 0 
+            ? `<div class="shame-podium-list">${restUsersHtml}</div>` 
+            : '';
+
+        container.innerHTML = shamePodiumStageHtml + restContainerHtml;
     },
 
     viewUserTasks: (username) => {
@@ -1088,59 +1408,76 @@ const app = {
 
             const userColor = Utils.getUserAvatarColor(u);
             const initial = u[0].toUpperCase();
-            const avatarHtml = acc.profile && acc.profile.chibiConfig
-                ? `<div style="width:40px; height:40px; border-radius:50%; overflow:hidden; border: 2px solid ${userColor}; box-shadow: 0 0 10px ${userColor}88; display:flex; align-items:center; justify-content:center; background: rgba(0,0,0,0.2);">${ChibiModule.renderChibiSVG(acc.profile.chibiConfig, true, 0)}</div>`
-                : (acc.profile && acc.profile.avatar 
-                    ? `<img src="${acc.profile.avatar}" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border: 2px solid ${userColor}; box-shadow: 0 0 10px ${userColor}88;">`
-                    : `<div style="width:40px; height:40px; border-radius:50%; background:${userColor}; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:16px; box-shadow: 0 0 10px ${userColor}88;">${initial}</div>`);
+            const avatarHtml = acc.profile && acc.profile.avatar 
+                ? `<img src="${acc.profile.avatar}" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border: 2px solid ${userColor}; box-shadow: 0 0 10px ${userColor}88;">`
+                : `<div style="width:40px; height:40px; border-radius:50%; background:${userColor}; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:16px; box-shadow: 0 0 10px ${userColor}88;">${initial}</div>`;
             const dName = Utils.getUserDisplayName(u) || u;
 
+            let chibiPetHtml = '';
+            if (acc.profile && acc.profile.chibiConfig) {
+                chibiPetHtml = `
+                    <div class="chibi-pet-standing-card" style="width: 110px; height: 150px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; position: relative; margin-bottom: 8px; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5)); transform-origin: bottom center; transition: all 0.3s;" onmouseover="this.style.transform='scale(1.08)';" onmouseout="this.style.transform='scale(1)';">
+                        ${ChibiModule.renderChibiSVG(acc.profile.chibiConfig, true, 45)}
+                    </div>
+                `;
+            } else {
+                chibiPetHtml = `
+                    <div onclick="ChibiModule.openBuilder()" class="chibi-pet-standing-card placeholder-dashed" style="width: 110px; height: 150px; flex-shrink: 0; border: 2px dashed rgba(168,85,247,0.3); border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; cursor: pointer; background: rgba(168,85,247,0.03); margin-bottom: 8px; box-sizing: border-box; transition: all 0.2s;" onmouseover="this.style.borderColor='#a855f7'; this.style.background='rgba(168,85,247,0.08)'; this.style.transform='scale(1.04)';" onmouseout="this.style.borderColor='rgba(168,85,247,0.3)'; this.style.background='rgba(168,85,247,0.03)'; this.style.transform='scale(1)';">
+                        <i class="fa-solid fa-plus-circle" style="font-size: 24px; color: rgba(168,85,247,0.7);"></i>
+                        <span style="font-size: 11px; font-weight: 800; color: rgba(168,85,247,0.8); text-align: center; text-transform: uppercase; letter-spacing: 0.5px;">+ Tạo Pet</span>
+                    </div>
+                `;
+            }
+
             return `
-                <div class="glass-card" style="min-width: 280px; flex: 0 0 auto; background: linear-gradient(180deg, rgba(20,20,30,0.8) 0%, rgba(10,10,15,0.95) 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 24px; position: relative; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.3); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 8px 25px ${userColor}33';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(0,0,0,0.3)';">
-                    <!-- Badge role -->
-                    <div style="position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: bold; text-transform: uppercase; color: var(--text-secondary); backdrop-filter: blur(4px);">
-                        ${acc.role === 'admin' ? '<i class="fa-solid fa-crown" style="color: gold; margin-right: 4px;"></i>' : ''}${acc.role}
-                    </div>
+                <div class="employee-performance-wrapper" style="display: flex; align-items: flex-end; gap: 16px; min-width: 390px; flex: 1 0 auto; position: relative;">
+                    <div class="glass-card" style="flex: 1; min-width: 280px; background: linear-gradient(180deg, rgba(20,20,30,0.8) 0%, rgba(10,10,15,0.95) 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 24px; position: relative; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.3); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 8px 25px ${userColor}33';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(0,0,0,0.3)';">
+                        <!-- Badge role -->
+                        <div style="position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: bold; text-transform: uppercase; color: var(--text-secondary); backdrop-filter: blur(4px);">
+                            ${acc.role === 'admin' ? '<i class="fa-solid fa-crown" style="color: gold; margin-right: 4px;"></i>' : ''}${acc.role}
+                        </div>
 
-                    <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 24px;">
-                        ${avatarHtml}
-                        <div>
-                            <h4 style="margin: 0; font-size: 16px; color: #fff; font-weight: 600;">${dName}</h4>
-                            <p style="margin: 0; font-size: 12px; color: var(--text-secondary);">@${u}</p>
+                        <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 24px;">
+                            ${avatarHtml}
+                            <div>
+                                <h4 style="margin: 0; font-size: 16px; color: #fff; font-weight: 600;">${dName}</h4>
+                                <p style="margin: 0; font-size: 12px; color: var(--text-secondary);">@${u}</p>
+                            </div>
                         </div>
-                    </div>
 
-                    <div style="margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.08);">
-                        <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">Nhiệm vụ trong tháng</div>
-                        <div style="font-size: 36px; font-weight: 800; color: #fff; line-height: 1;">${stats.total} <span style="font-size: 14px; font-weight: normal; color: var(--text-secondary);">/ tháng</span></div>
-                    </div>
+                        <div style="margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+                            <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">Nhiệm vụ trong tháng</div>
+                            <div style="font-size: 36px; font-weight: 800; color: #fff; line-height: 1;">${stats.total} <span style="font-size: 14px; font-weight: normal; color: var(--text-secondary);">/ tháng</span></div>
+                        </div>
 
-                    <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 28px; font-size: 14px;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <i class="fa-solid fa-circle-check" style="color: #10b981; width: 16px; font-size: 16px;"></i>
-                            <span style="color: var(--text-secondary);">Đã hoàn thành</span>
-                            <strong style="margin-left: auto; color: #fff; font-size: 15px;">${stats.done}</strong>
+                        <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 28px; font-size: 14px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <i class="fa-solid fa-circle-check" style="color: #10b981; width: 16px; font-size: 16px;"></i>
+                                <span style="color: var(--text-secondary);">Đã hoàn thành</span>
+                                <strong style="margin-left: auto; color: #fff; font-size: 15px;">${stats.done}</strong>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <i class="fa-solid fa-clock" style="color: #f59e0b; width: 16px; font-size: 16px;"></i>
+                                <span style="color: var(--text-secondary);">Đang xử lý</span>
+                                <strong style="margin-left: auto; color: #fff; font-size: 15px;">${stats.doing}</strong>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <i class="fa-solid fa-circle-dot" style="color: #3b82f6; width: 16px; font-size: 16px;"></i>
+                                <span style="color: var(--text-secondary);">Chưa làm / Mới</span>
+                                <strong style="margin-left: auto; color: #fff; font-size: 15px;">${stats.new}</strong>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <i class="fa-solid fa-circle-exclamation" style="color: #ef4444; width: 16px; font-size: 16px;"></i>
+                                <span style="color: var(--text-secondary);">Trễ hạn</span>
+                                <strong style="margin-left: auto; color: ${stats.expired > 0 ? '#ef4444' : '#fff'}; font-size: 15px;">${stats.expired}</strong>
+                            </div>
                         </div>
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <i class="fa-solid fa-clock" style="color: #f59e0b; width: 16px; font-size: 16px;"></i>
-                            <span style="color: var(--text-secondary);">Đang xử lý</span>
-                            <strong style="margin-left: auto; color: #fff; font-size: 15px;">${stats.doing}</strong>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <i class="fa-solid fa-circle-dot" style="color: #3b82f6; width: 16px; font-size: 16px;"></i>
-                            <span style="color: var(--text-secondary);">Chưa làm / Mới</span>
-                            <strong style="margin-left: auto; color: #fff; font-size: 15px;">${stats.new}</strong>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <i class="fa-solid fa-circle-exclamation" style="color: #ef4444; width: 16px; font-size: 16px;"></i>
-                            <span style="color: var(--text-secondary);">Trễ hạn</span>
-                            <strong style="margin-left: auto; color: ${stats.expired > 0 ? '#ef4444' : '#fff'}; font-size: 15px;">${stats.expired}</strong>
-                        </div>
-                    </div>
 
-                    <button class="btn" style="width: 100%; background: #a855f7; color: #fff; border: none; font-weight: 600; font-size: 15px; border-radius: 8px; padding: 12px; transition: background 0.2s;" onmouseover="this.style.background='#9333ea'" onmouseout="this.style.background='#a855f7'" onclick="app.viewUserTasks('${u}')">
-                        Xem chi tiết
-                    </button>
+                        <button class="btn" style="width: 100%; background: #a855f7; color: #fff; border: none; font-weight: 600; font-size: 15px; border-radius: 8px; padding: 12px; transition: background 0.2s;" onmouseover="this.style.background='#9333ea'" onmouseout="this.style.background='#a855f7'" onclick="app.viewUserTasks('${u}')">
+                            Xem chi tiết
+                        </button>
+                    </div>
+                    ${chibiPetHtml}
                 </div>
             `;
         }).join('');
