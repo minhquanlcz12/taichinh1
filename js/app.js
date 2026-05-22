@@ -556,11 +556,26 @@ const app = {
         const container = document.getElementById('dash-hall-of-fame');
         if (!container) return;
 
-        // Bảng vàng chỉ nên hiện task done
+        // Bảng vàng chỉ nên hiện các task đã hoàn thành TRONG THÁNG NÀY
         const allSystemTasks = WorkModule.data.tasks || [];
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+
+        const monthlyTasks = allSystemTasks.filter(t => {
+            const dateStr = t.ngayDang || t.deadline;
+            if (!dateStr) return false;
+            let d;
+            if (dateStr.includes('-')) d = new Date(dateStr);
+            else if (dateStr.includes('/')) {
+                const p = dateStr.split('/');
+                d = new Date(`${p[2]}-${p[1]}-${p[0]}`);
+            }
+            return d && d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+        });
         
         const users = {};
-        allSystemTasks.forEach(t => {
+        monthlyTasks.forEach(t => {
             const owner = t.owner || 'admin';
             if (!users[owner]) users[owner] = { total: 0, done: 0, expired: 0 };
             users[owner].total++;
@@ -576,13 +591,16 @@ const app = {
         const rankedUsers = Object.keys(users).map(u => {
             const account = accounts.find(a => a.username === u);
             const userColor = Utils.getUserAvatarColor(u);
+            const displayName = Utils.getUserDisplayName(u) || u;
+            
             let avatarHtml = `<span style="display:flex; align-items:center; justify-content:center; width:36px; height:36px; background:${userColor}; border-radius:50%; color:#fff; font-weight:bold; font-size:14px; border: 2px solid ${userColor}; box-shadow:0 0 8px ${userColor}88;">${u[0].toUpperCase()}</span>`;
             if (account && account.profile && account.profile.avatar) {
                 avatarHtml = `<img src="${account.profile.avatar}" style="width:36px; height:36px; border-radius:50%; object-fit:cover; border: 2px solid rgba(255,255,255,0.1);">`;
             }
 
             return {
-                name: Utils.getUserDisplayName(u) || u,
+                username: u,
+                displayName: displayName,
                 done: users[u].done,
                 total: users[u].total,
                 expired: users[u].expired,
@@ -590,30 +608,37 @@ const app = {
                 rate: users[u].total > 0 ? (users[u].done / users[u].total * 100) : 0
             }
         })
-        .filter(u => accounts.some(a => a.username === u.name))
+        .filter(u => accounts.some(a => a.username === u.username)) // Fix: so sánh username thay vì displayName
         .filter(u => u.done > 0)
         .sort((a, b) => b.done - a.done);
 
         if (rankedUsers.length === 0) {
-            container.innerHTML = '<div style="color: var(--text-secondary); font-size: 13px; text-align: center; padding: 20px 0;">Chưa có thành tích nào được ghi nhận...</div>';
+            container.innerHTML = '<div style="color: var(--text-secondary); font-size: 13px; text-align: center; padding: 20px 0;">Chưa có thành tích xuất sắc nào được ghi nhận trong tháng này...</div>';
             return;
         }
 
-        container.innerHTML = rankedUsers.slice(0, 5).map((u, index) => {
-            let rankIcon = `<span style="display:inline-block; width:20px; text-align:center; font-weight:bold; color:var(--text-secondary);">#${index + 1}</span>`;
-            if (index === 0) rankIcon = `<i class="fa-solid fa-medal" style="color: #ffd700; font-size: 16px;"></i>`;
-            else if (index === 1) rankIcon = `<i class="fa-solid fa-medal" style="color: #c0c0c0; font-size: 16px;"></i>`;
-            else if (index === 2) rankIcon = `<i class="fa-solid fa-medal" style="color: #cd7f32; font-size: 16px;"></i>`;
-
-            const isFlawless = (u.expired === 0 && u.done === u.total);
+        container.innerHTML = rankedUsers.map((u, i) => {
+            let badge = '';
+            if (i === 0) badge = '<i class="fa-solid fa-crown" style="color: #ffd700; position: absolute; top: -10px; right: 0; font-size: 18px; transform: rotate(15deg);"></i>';
+            else if (i === 1) badge = '<i class="fa-solid fa-medal" style="color: #c0c0c0; position: absolute; top: -8px; right: 2px;"></i>';
+            else if (i === 2) badge = '<i class="fa-solid fa-medal" style="color: #cd7f32; position: absolute; top: -8px; right: 2px;"></i>';
 
             return `
-                <div style="display: flex; align-items: center; gap: 12px; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid ${index === 0 ? '#ffd700' : 'rgba(255,255,255,0.1)'};">
-                    <div style="width: 24px; text-align: center;">${rankIcon}</div>
-                    <div style="width: 36px; height: 36px; flex-shrink: 0;">${u.avatarHtml}</div>
-                    <div style="flex: 1; display: flex; flex-direction: column;">
-                        <strong style="color: #fff; font-size: 14px;">${u.name} ${isFlawless ? '<i class="fa-solid fa-fire" style="color: #ff4500; font-size: 12px;" title="Tỷ lệ hoàn thành 100%"></i>' : ''}</strong>
-                        <span style="color: var(--text-secondary); font-size: 11px;">Hoàn thành: <span style="color: #10b981; font-weight:bold;">${u.done}</span> nhiệm vụ</span>
+                <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 8px; position: relative;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="font-size: 14px; font-weight: bold; color: var(--text-secondary); width: 15px;">${i + 1}</span>
+                        <div style="position: relative;">
+                            ${u.avatarHtml}
+                            ${badge}
+                        </div>
+                        <div>
+                            <div style="font-weight: 600; font-size: 13px; color: #fff;">${u.displayName}</div>
+                            <div style="font-size: 11px; color: var(--text-secondary);">${u.done} nhiệm vụ hoàn thành</div>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 14px; font-weight: 900; color: var(--primary);">${Math.round(u.rate)}%</div>
+                        <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary);">Hiệu suất</div>
                     </div>
                 </div>
             `;
