@@ -222,7 +222,10 @@ const RewardsModule = {
                 border-radius: 8px;
                 display: flex;
                 flex-direction: column;
-                background: url('data:image/svg+xml;utf8,<svg width="20" height="20" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h20v20H0z" fill="none"/><path d="M10 0v20M0 10h20" stroke="rgba(255,255,255,0.02)" stroke-width="1"/></svg>') repeat;
+                background-image: 
+                    linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+                background-size: 20px 20px;
                 position: relative;
             }
 
@@ -333,7 +336,9 @@ const RewardsModule = {
             .status-ready {
                 color: #fff;
                 font-weight: bold;
-                           .wheel-wrapper {
+            }
+
+            .wheel-wrapper {
                 position: relative;
                 width: 360px;
                 height: 360px;
@@ -537,7 +542,7 @@ const RewardsModule = {
                 <!-- Lucky Wheel Section - Premium Cyberpunk Version -->
                 <div class="glass-panel wheel-section" style="margin-bottom: 50px; padding: 40px 20px; text-align: center; background: radial-gradient(circle at center, rgba(16,185,129,0.1), rgba(0,0,0,0.9)); border: 1px solid rgba(16,185,129,0.2); position: relative; overflow: hidden; border-radius: 20px;">
                     <!-- Trang trí nền -->
-                    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('data:image/svg+xml;utf8,<svg width=&quot;40&quot; height=&quot;40&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;><path d=&quot;M0 0h40v40H0z&quot; fill=&quot;none&quot;/><path d=&quot;M0 20h40M20 0v40&quot; stroke=&quot;rgba(16,185,129,0.03)&quot; stroke-width=&quot;1&quot;/></svg>'); opacity: 0.5; pointer-events: none;"></div>
+                    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(16,185,129,0.05), transparent); opacity: 0.5; pointer-events: none;"></div>
                     
                     <div style="max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 30px; position: relative; z-index: 2;">
                         <div class="wheel-title-container">
