@@ -694,16 +694,17 @@ const RewardsModule = {
             // Dừng ở tâm của phân đoạn (offset 22.5deg)
             const stopAngle = 360 - (prizeIdx * segmentAngle) - (segmentAngle / 2); 
             
-            // Tính toán rotation tiếp theo cộng dồn vào currentAngle
-            // Ta muốn rotation mới = currentAngle + (vòng quay thêm) + (góc tới đích từ currentAngle)
-            const extraSpins = 8 + Math.floor(Math.random() * 5); 
-            const finalRotation = (extraSpins * 360) + stopAngle;
+            // Logic quay chuẩn: Dừng ở stopAngle tuyệt đối tính từ 12h
+            if (RewardsModule._totalRot === undefined) RewardsModule._totalRot = currentAngle;
             
-            // Tổng rotation từ lúc load trang đến giờ (để CSS transition chạy mượt)
-            // Vì currentAngle là góc hiện tại mod 360, ta cần cẩn thận
-            // Để đơn giản ta dùng biến lưu trữ tổng rotation tích lũy
-            if (!RewardsModule._totalRot) RewardsModule._totalRot = currentAngle;
-            RewardsModule._totalRot += finalRotation;
+            const extraSpins = 8 + Math.floor(Math.random() * 5); 
+            let currentMod = RewardsModule._totalRot % 360;
+            if (currentMod < 0) currentMod += 360;
+            
+            let distance = stopAngle - currentMod;
+            if (distance <= 0) distance += 360; // Luôn quay tối thiểu 1 vòng để mượt
+            
+            RewardsModule._totalRot += (extraSpins * 360) + distance;
             
             wheelEl.style.transform = `rotate(${RewardsModule._totalRot}deg)`;
 
@@ -723,6 +724,21 @@ const RewardsModule = {
                     const data = await RewardsModule.loadData();
                     data.push(winRecord);
                     await RewardsModule.saveData(data);
+                } else if (prize.pts < 0) {
+                    const lossRecord = {
+                        id: 'spin_loss_' + Date.now(),
+                        username: user.username,
+                        timestamp: Date.now(),
+                        cardId: 'wheel_loss',
+                        title: `🎡 Mất điểm: ${prize.label}`,
+                        icon: 'fa-skull',
+                        color: '#ef4444',
+                        cost: Math.abs(prize.pts) // Phí dương = Trừ điểm
+                    };
+                    const data = await RewardsModule.loadData();
+                    data.push(lossRecord);
+                    await RewardsModule.saveData(data);
+                    Utils.notifyTelegram(`💀 <b>[NHỌ QUÁ NHỌ]</b>\n👤 <b>${user.username}</b> vừa "đen" tới mức quay hũ trúng ngay ô <b>Mất 1 Điểm</b>!`);
                 } else if (prize.isCard) {
                     const card = RewardsModule._catalog.find(c => c.id === prize.cardId);
                     const winCardRecord = {
