@@ -17,7 +17,7 @@ const ClaudeModule = {
         return {
             key: Utils.storage.get('claude_api_key') || '',
             model: Utils.storage.get('claude_api_model') || 'claude-3-haiku-20240307',
-            baseUrl: Utils.storage.get('claude_api_base') || 'https://api.anthropic.com'
+            baseUrl: (Utils.storage.get('claude_api_base') || 'https://api.anthropic.com').replace(/\/+$/, '')
         };
     },
 
