@@ -657,7 +657,6 @@ const ChibiModule = {
                 ${dragonHtml || ''}
                 ${wingHtml || ''}
                 ${sparklesHtml}
-                ${bodyWrapperStart}
                 ${backAccessoryHtml}
                 ${backHairHtml}
                 ${bodyBaseHtml}
@@ -671,7 +670,6 @@ const ChibiModule = {
                 ${frontHairHtml}
                 ${gearHtml}
                 ${mountHtml}
-                ${bodyWrapperEnd}
                 ${accHtml}
             </svg>
         `;
