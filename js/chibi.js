@@ -572,6 +572,21 @@ const ChibiModule = {
                     <path d="M 20 176 C 20 156 35 140 60 138 L 140 138 C 165 140 180 156 180 176 C 180 188 170 192 140 192 L 60 192 C 30 192 20 188 20 176 Z" fill="#dc2626" stroke="#1e1b4b" stroke-width="2.5" />
                 </g>
             `;
+        } else if (c.mount === 2) { // Xe Máy Cực Ngầu
+            mountHtml = `
+                <g style="filter: drop-shadow(0 6px 12px rgba(0,0,0,0.6));">
+                    <circle cx="42" cy="176" r="19" fill="#111" stroke="#00f3ff" stroke-width="4.5" />
+                    <circle cx="158" cy="176" r="19" fill="#111" stroke="#00f3ff" stroke-width="4.5" />
+                    <path d="M 60 166 C 56 138 78 130 98 130 C 120 130 138 138 148 162 L 140 176 Z" fill="#8b5cf6" stroke="#111" stroke-width="2.2" />
+                </g>
+            `;
+        } else if (c.mount === 3) { // Phao Hồng Hạc
+            mountHtml = `
+                <g style="filter: drop-shadow(0 5px 8px rgba(0,0,0,0.4));">
+                    <ellipse cx="100" cy="148" rx="32" ry="15" fill="#f43f5e" stroke="#1e1b4b" stroke-width="2.5" />
+                    <path d="M 118 148 C 126 148 136 142 134 122 C 132 110 123 104 126 96 C 128 90 137 90 139 96" fill="#f43f5e" stroke="#1e1b4b" stroke-width="2.5" />
+                </g>
+            `;
         } else if (c.mount === 4) { // Xe Máy Dream Neon
             mountHtml = `
                 <g style="filter: drop-shadow(0 8px 15px rgba(0,0,0,0.7));">
