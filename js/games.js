@@ -132,7 +132,12 @@ const GamesModule = {
         invitesListener: null,
         lobbyRooms: [],
         lobbyListener: null,
-        availableEmployees: [] 
+        availableEmployees: [],
+        startBonus: 5,
+        startingCash: 30,
+        visualPositions: {},
+        visualAnimationRunning: null,
+        awaitingAction: false
     },
 
     init: async () => {
@@ -474,6 +479,39 @@ const GamesModule = {
                 text-overflow: ellipsis;
             }
 
+            /* Level 2 Pro Office Styles */
+            .mono-tile.level-2 {
+                border: 1.5px solid rgba(0, 243, 255, 0.45) !important;
+                box-shadow: inset 0 0 10px rgba(0, 243, 255, 0.1), 0 0 15px rgba(0, 243, 255, 0.1) !important;
+            }
+            .mono-tile.level-2 .mono-color-bar, .mono-tile.level-3 .mono-color-bar {
+                animation: colorBarPulse 1.5s infinite alternate;
+            }
+            .level-2.side-top .mono-color-bar, .level-3.side-top .mono-color-bar { height: 8px !important; }
+            .level-2.side-bottom .mono-color-bar, .level-3.side-bottom .mono-color-bar { height: 8px !important; }
+            .level-2.side-left .mono-color-bar, .level-3.side-left .mono-color-bar { width: 8px !important; }
+            .level-2.side-right .mono-color-bar, .level-3.side-right .mono-color-bar { width: 8px !important; }
+
+            @keyframes colorBarPulse {
+                0% { opacity: 0.7; filter: brightness(0.9); }
+                100% { opacity: 1; filter: brightness(1.3); }
+            }
+            
+            /* Level 3 VVIP Headquarters Styles */
+            .mono-tile.level-3 {
+                border: 1.5px solid #fbbf24 !important;
+                box-shadow: inset 0 0 15px rgba(251,191,36,0.25), 0 0 20px rgba(251,191,36,0.2) !important;
+                background: linear-gradient(135deg, rgba(31,10,50,0.95), rgba(15,23,42,0.95)) !important;
+            }
+            .mono-tile.level-3 .mono-tile-name {
+                color: #fbbf24 !important;
+                text-shadow: 0 0 8px rgba(251,191,36,0.3);
+            }
+            .mono-tile.level-3 .mono-color-bar {
+                background: linear-gradient(90deg, #fbbf24, #ec4899) !important;
+                box-shadow: 0 0 12px #fbbf24 !important;
+            }
+
             /* Pawns */
             .mono-tile-pawns {
                 display: flex;
@@ -540,35 +578,50 @@ const GamesModule = {
                 gap: 14px;
                 margin: 6px 0;
                 perspective: 300px;
+                z-index: 1;
             }
             .mono-dice {
-                width: 52px;
-                height: 52px;
-                background: linear-gradient(145deg, #2d1b69, #1a0e42);
-                border: 2.5px solid #8b5cf6;
-                border-radius: 11px;
+                width: 64px;
+                height: 64px;
+                background: linear-gradient(135deg, #1e1b4b 0%, #311042 100%);
+                border: 3px solid #c084fc;
+                border-radius: 14px;
+                box-shadow: 0 0 20px rgba(192, 132, 252, 0.4), inset 0 0 10px rgba(0,0,0,0.8);
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                font-size: 26px;
-                color: #fff;
-                text-shadow: 0 0 12px #a78bfa;
-                box-shadow:
-                    0 4px 20px rgba(139,92,246,0.35),
-                    inset 0 -3px 6px rgba(0,0,0,0.4),
-                    inset 0 2px 4px rgba(255,255,255,0.06);
-                transition: all 0.15s;
+                position: relative;
+                transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             }
             .mono-dice.rolling {
-                animation: dice3D 0.2s infinite;
+                animation: diceShake3D 0.2s infinite alternate;
             }
-            @keyframes dice3D {
-                0%   { transform: rotateX(-12deg) rotateZ(-8deg) scale(0.94); }
-                25%  { transform: rotateX(12deg) rotateZ(6deg) scale(1.06); filter: brightness(1.25); }
-                50%  { transform: rotateX(-6deg) rotateZ(12deg) scale(0.97); }
-                75%  { transform: rotateX(10deg) rotateZ(-10deg) scale(1.03); filter: brightness(1.15); }
-                100% { transform: rotateX(-12deg) rotateZ(-8deg) scale(0.94); }
+            @keyframes diceShake3D {
+                0% { transform: scale(0.95) rotateX(15deg) rotateY(-15deg) rotateZ(5deg) translateY(-2px); }
+                100% { transform: scale(1.05) rotateX(-15deg) rotateY(15deg) rotateZ(-5deg) translateY(2px); }
             }
+            .mono-dice-face {
+                width: 100%;
+                height: 100%;
+                position: relative;
+                box-sizing: border-box;
+            }
+            .dice-dot {
+                position: absolute;
+                width: 10px;
+                height: 10px;
+                background: #00ffff;
+                box-shadow: 0 0 8px #00ffff;
+                border-radius: 50%;
+                transform: translate(-50%, -50%);
+            }
+            .dot-center { top: 50%; left: 50%; }
+            .dot-top-left { top: 25%; left: 25%; }
+            .dot-top-right { top: 25%; left: 75%; }
+            .dot-mid-left { top: 50%; left: 25%; }
+            .dot-mid-right { top: 50%; left: 75%; }
+            .dot-bottom-left { top: 75%; left: 25%; }
+            .dot-bottom-right { top: 75%; left: 75%; }
 
             /* HUD Panels */
             .mono-hud-players, .mono-hud-logs {
@@ -941,7 +994,6 @@ const GamesModule = {
         return totalScore;
     },
 
-
     // ==========================================
     // =========== CỜ TỶ PHÚ ENGINE ============
     // ==========================================
@@ -976,11 +1028,34 @@ const GamesModule = {
             boardContainer = overlay;
         }
 
+        // Initialize visual positions local track if not present
+        if (!GamesModule.monopoly.visualPositions) {
+            GamesModule.monopoly.visualPositions = {};
+        }
+        mState.players.forEach(p => {
+            if (GamesModule.monopoly.visualPositions[p.name] === undefined) {
+                GamesModule.monopoly.visualPositions[p.name] = p.position;
+            }
+        });
+
+        // Trigger hopping animation for any player whose visual position is catching up
+        mState.players.forEach(p => {
+            if (!p.isBankrupt && GamesModule.monopoly.visualPositions[p.name] !== p.position) {
+                if (GamesModule.monopoly.visualAnimationRunning !== p.name) {
+                    GamesModule.animateVisualPawn(p.name);
+                }
+            }
+        });
+
         // Active game board
         const getTileHtml = (idx) => {
             const tile = mState.tiles[idx];
             const isOwned = tile.type === 'property' && tile.owner !== null;
             const isCorner = [0, 5, 10, 15].includes(idx);
+            const lvl = tile.level || 1;
+            
+            // Level class mapping
+            const lvlClass = isOwned ? `level-${lvl}` : '';
 
             // Determine side for color bar direction + grid position
             let sideClass = '', gridPos = '';
@@ -999,17 +1074,28 @@ const GamesModule = {
             }
 
             const tilePawns = mState.players
-                .filter(p => !p.isBankrupt && p.position === idx)
+                .filter(p => !p.isBankrupt && GamesModule.monopoly.visualPositions[p.name] === idx)
                 .map(p => `<div class="mono-pawn" style="background:${p.color};" title="${p.displayName}">${p.name.charAt(0).toUpperCase()}</div>`)
                 .join('');
-            const hasPawns = mState.players.some(p => !p.isBankrupt && p.position === idx);
+            const hasPawns = mState.players.some(p => !p.isBankrupt && GamesModule.monopoly.visualPositions[p.name] === idx);
+
+            // Icon markup based on level
+            let levelIcon = '';
+            let stars = '';
+            if (isOwned) {
+                if (lvl === 1) levelIcon = '🏠 ';
+                else if (lvl === 2) levelIcon = '🏢 ';
+                else if (lvl === 3) levelIcon = '👑 ';
+                stars = '★'.repeat(lvl);
+            }
+            const rentValue = isOwned ? GamesModule.getTileRent(tile) : tile.rent;
 
             return `
-                <div class="mono-tile ${tile.type} ${sideClass} ${isCorner ? 'corner-tile' : ''} ${hasPawns ? 'has-player' : ''}" style="--bar-color: ${tile.color || 'transparent'}; ${gridPos}">
+                <div class="mono-tile ${tile.type} ${sideClass} ${lvlClass} ${isCorner ? 'corner-tile' : ''} ${hasPawns ? 'has-player' : ''}" style="--bar-color: ${tile.color || 'transparent'}; ${gridPos}">
                     ${tile.type === 'property' ? '<div class="mono-color-bar"></div>' : ''}
                     <div class="mono-tile-name">${tile.name}</div>
-                    ${tile.type === 'property' ? `<div class="mono-tile-cost">${tile.cost}đ</div>` : ''}
-                    ${isOwned ? `<div class="mono-tile-owner" style="border-left:2px solid ${tile.owner.color}">@${tile.owner.name}</div>` : ''}
+                    ${tile.type === 'property' ? `<div class="mono-tile-cost">${levelIcon}${tile.cost}đ ${stars ? `<span style="color:#fbbf24; font-weight: 900;">${stars}</span>` : ''}</div>` : ''}
+                    ${isOwned ? `<div class="mono-tile-owner" style="border-left:2px solid ${tile.owner.color}">@${tile.owner.name} (${rentValue}đ)</div>` : ''}
                     ${tilePawns ? `<div class="mono-tile-pawns">${tilePawns}</div>` : ''}
                 </div>`;
         };
@@ -1020,12 +1106,32 @@ const GamesModule = {
         const activePlayer = mState.players[mState.currentPlayerIdx];
         const isMyTurn = activePlayer && activePlayer.name === Auth.currentUser.username;
 
+        // Custom Dice rendering HTML
+        const getDiceFaceHtml = (v) => {
+            const dotCenters = {
+                1: ['dot-center'],
+                2: ['dot-top-left', 'dot-bottom-right'],
+                3: ['dot-top-left', 'dot-center', 'dot-bottom-right'],
+                4: ['dot-top-left', 'dot-top-right', 'dot-bottom-left', 'dot-bottom-right'],
+                5: ['dot-top-left', 'dot-top-right', 'dot-center', 'dot-bottom-left', 'dot-bottom-right'],
+                6: ['dot-top-left', 'dot-top-right', 'dot-mid-left', 'dot-mid-right', 'dot-bottom-left', 'dot-bottom-right']
+            };
+            const dots = dotCenters[v] || [];
+            return `
+                <div class="mono-dice ${mState.isRolling ? 'rolling' : ''}">
+                    <div class="mono-dice-face">
+                        ${dots.map(d => `<span class="dice-dot ${d}"></span>`).join('')}
+                    </div>
+                </div>
+            `;
+        };
+
         const centerPanelHtml = `
             <div class="mono-center-panel">
-                <div style="font-size: 18px; font-weight: 900; color: #a78bfa; letter-spacing: 2px; text-transform: uppercase; text-shadow: 0 0 20px rgba(167,139,250,0.35); position: relative; z-index: 1;">
+                <div style="font-size: 16px; font-weight: 900; color: #a78bfa; letter-spacing: 2px; text-transform: uppercase; text-shadow: 0 0 20px rgba(167,139,250,0.35); position: relative; z-index: 1;">
                     🎲 CỜ TỶ PHÚ
                 </div>
-                <div style="font-size: 9px; color: #64748b; text-transform: uppercase; letter-spacing: 2px; position: relative; z-index: 1; font-weight: 600;">ONLINE REAL-TIME</div>
+                <div style="font-size: 8px; color: #64748b; text-transform: uppercase; letter-spacing: 2px; position: relative; z-index: 1; font-weight: 600; margin-bottom: 4px;">ONLINE REAL-TIME</div>
 
                 <div style="display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.5); padding: 7px 14px; border-radius: 20px; border: 1.5px solid ${activePlayer.color}; box-shadow: 0 0 12px ${activePlayer.color}35; position: relative; z-index: 1; max-width: 90%;">
                     <div style="width: 22px; height: 22px; border-radius: 50%; background: ${activePlayer.color}; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 10px; color: #fff; box-shadow: 0 0 8px ${activePlayer.color}; flex-shrink: 0;">
@@ -1037,15 +1143,17 @@ const GamesModule = {
                     </div>
                 </div>
 
-                <div class="mono-dice-wrap">
-                    ${mState.diceValues.map(v => `
-                        <div class="mono-dice ${mState.isRolling ? 'rolling' : ''}">
-                            ${v === 1 ? '⚀' : v === 2 ? '⚁' : v === 3 ? '⚂' : v === 4 ? '⚃' : v === 5 ? '⚄' : '⚅'}
-                        </div>
-                    `).join('')}
+                <div class="mono-dice-wrap" style="margin: 8px 0;">
+                    ${mState.diceValues.map(v => getDiceFaceHtml(v)).join('')}
                 </div>
 
-                <div style="width: 100%; max-width: 200px; position: relative; z-index: 1;">
+                ${mState.isRolling ? `
+                    <div style="font-size: 9px; color: #ec4899; font-weight: 800; animation: pulse 0.5s infinite alternate; z-index: 1;">
+                        🔥 ĐANG LẮC XÚC XẮC...
+                    </div>
+                ` : ''}
+
+                <div style="width: 100%; max-width: 200px; position: relative; z-index: 1; margin-top: 4px;">
                     ${isMyTurn ? `
                         <button onclick="GamesModule.rollMonopolyDice()" ${mState.isRolling ? 'disabled' : ''} style="width: 100%; padding: 11px; background: linear-gradient(135deg, #8b5cf6, #ec4899); border: none; border-radius: 12px; color: #fff; font-weight: 900; font-size: 13px; cursor: pointer; box-shadow: 0 4px 20px rgba(139,92,246,0.4); text-transform: uppercase; letter-spacing: 1px; transition: all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 25px rgba(139,92,246,0.5)'" onmouseout="this.style.transform=''; this.style.boxShadow='0 4px 20px rgba(139,92,246,0.4)'">
                             🎲 ĐỔ XÚC XẮC
@@ -1056,7 +1164,8 @@ const GamesModule = {
                         </div>
                     `}
                 </div>
-            </div>`;
+            </div>
+        `;
 
         boardContainer.innerHTML = `
             <div class="mono-arena">
@@ -1124,6 +1233,166 @@ const GamesModule = {
 
         const logArea = document.getElementById('mono-log-area');
         if (logArea) logArea.scrollTop = logArea.scrollHeight;
+    },
+
+    getTileRent: (tile) => {
+        const baseRent = tile.rent || 1;
+        const lvl = tile.level || 1;
+        if (lvl === 1) return baseRent;
+        if (lvl === 2) return Math.round(baseRent * 2.2 * 10) / 10;
+        return Math.round(baseRent * 4.5 * 10) / 10;
+    },
+
+    getTileUpgradeCost: (tile) => {
+        return Math.round((tile.cost || 5) * 0.8);
+    },
+
+    animateVisualPawn: (playerName) => {
+        const mState = GamesModule.monopoly;
+        const player = mState.players.find(p => p.name === playerName);
+        if (!player) return;
+
+        GamesModule.monopoly.visualAnimationRunning = playerName;
+
+        const step = () => {
+            const visualPos = GamesModule.monopoly.visualPositions[playerName];
+            const targetPos = player.position;
+
+            if (visualPos !== targetPos) {
+                // Hop step
+                GamesModule.monopoly.visualPositions[playerName] = (visualPos + 1) % 20;
+                GamesSynth.playMove();
+
+                // Re-render
+                let container = document.getElementById('games-view') || document.getElementById('hub-content-monopoly');
+                if (container) {
+                    GamesModule.renderMonopoly(container);
+                }
+
+                setTimeout(step, 300);
+            } else {
+                GamesModule.monopoly.visualAnimationRunning = null;
+
+                // Only active player triggers the logical tile action on their screen
+                const activePlayer = mState.players[mState.currentPlayerIdx];
+                const isMyTurn = activePlayer && activePlayer.name === Auth.currentUser.username;
+                
+                if (isMyTurn && playerName === activePlayer.name && GamesModule.monopoly.awaitingAction) {
+                    GamesModule.monopoly.awaitingAction = false;
+                    GamesModule.executeTileAction(activePlayer);
+                }
+            }
+        };
+
+        setTimeout(step, 300);
+    },
+
+    executeTileAction: async (player) => {
+        const mState = GamesModule.monopoly;
+        const tile = mState.tiles[player.position];
+
+        if (tile.type === 'property') {
+            GamesModule.handlePropertyTile(player, tile);
+        } else if (tile.type === 'tax') {
+            player.cash = Math.max(0, player.cash - tile.cost);
+            mState.logs.push(`💸 <b>@${player.name}</b> ${tile.desc}. Trừ ${tile.cost}đ Công Đức!`);
+            GamesModule.checkBankruptcy(player);
+            await GamesModule.finishMonopolyTurn();
+        } else if (tile.type === 'buff') {
+            player.cash += mState.startBonus || 5;
+            mState.logs.push(`🍔 <b>@${player.name}</b> ${tile.desc}. Cộng +${mState.startBonus || 5}đ Công Đức!`);
+            await GamesModule.finishMonopolyTurn();
+        } else if (tile.type === 'jail') {
+            player.isJailed = true;
+            mState.logs.push(`🔒 Cảnh báo! <b>@${player.name}</b> bị HR phát hiện Đi Muộn không lý do! Bị tạm giam phạt đứng tại đây.`);
+            await GamesModule.finishMonopolyTurn();
+        } else if (tile.type === 'chance' || tile.type === 'lucky') {
+            GamesModule.drawMonopolyCard(player, tile.type);
+        } else {
+            await GamesModule.finishMonopolyTurn();
+        }
+    },
+
+    renderMonopolyUpgradeModal: (player, tile) => {
+        const overlay = document.createElement('div');
+        overlay.id = 'mono-upgrade-overlay';
+        overlay.className = 'chance-overlay';
+        overlay.style.zIndex = '99999';
+
+        const currentLvl = tile.level || 1;
+        const nextLvl = currentLvl + 1;
+        const upgradeCost = GamesModule.getTileUpgradeCost(tile);
+        const nextRent = GamesModule.getTileRent({ ...tile, level: nextLvl });
+        const canAfford = player.cash >= upgradeCost;
+
+        overlay.innerHTML = `
+            <div style="background: rgba(15,23,42,0.96); border: 2px solid #a855f7; border-radius: 16px; padding: 24px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 0 30px rgba(168,85,247,0.4); color: #fff;">
+                <div style="font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: bold; margin-bottom: 6px;">Nâng Cấp Phòng Ban</div>
+                <h3 style="margin: 0; color: #a855f7; font-size: 20px; font-weight: 900;">${tile.name}</h3>
+                
+                <div style="margin: 20px 0; background: rgba(0,0,0,0.3); padding: 14px; border-radius: 10px; text-align: left; font-size: 13px; line-height: 1.6;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom: 6px;">
+                        <span>Cấp độ hiện tại:</span>
+                        <strong style="color: #cbd5e1;">Cấp ${currentLvl} ${'★'.repeat(currentLvl)}</strong>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom: 6px;">
+                        <span>Chi phí nâng cấp:</span>
+                        <strong style="color: #fbbf24;">${upgradeCost}đ Công Đức</strong>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom: 6px;">
+                        <span>Điểm thuê hiện tại:</span>
+                        <strong style="color: #94a3b8;">${GamesModule.getTileRent(tile)}đ</strong>
+                    </div>
+                    <div style="display:flex; justify-content:space-between;">
+                        <span>Điểm thuê mới (Cấp ${nextLvl}):</span>
+                        <strong style="color: #10b981;">${nextRent}đ Công Đức</strong>
+                    </div>
+                </div>
+
+                <div style="font-size: 12px; margin-bottom: 20px; color: ${canAfford ? '#38bdf8' : '#f87171'}; font-weight: bold;">
+                    Số dư hiện tại của bạn: ${player.cash}đ Công Đức 
+                    ${canAfford ? '(Đủ điều kiện)' : '(Không đủ điểm)'}
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="GamesModule.upgradeProperty('${tile.id}')" ${!canAfford ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''} style="flex: 1; padding: 12px; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 8px; color: #fff; font-weight: bold; cursor: pointer;">
+                        ⭐ NÂNG CẤP
+                    </button>
+                    <button onclick="GamesModule.skipUpgrade()" style="flex: 1; padding: 12px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #cbd5e1; font-weight: bold; cursor: pointer;">
+                        ❌ BỎ QUA
+                    </button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+    },
+
+    upgradeProperty: async (tileId) => {
+        const mState = GamesModule.monopoly;
+        const player = mState.players[mState.currentPlayerIdx];
+        const tile = mState.tiles.find(t => t.id === parseInt(tileId, 10));
+
+        if (tile && tile.owner && tile.owner.name === player.name) {
+            const cost = GamesModule.getTileUpgradeCost(tile);
+            if (player.cash >= cost) {
+                player.cash -= cost;
+                tile.level = (tile.level || 1) + 1;
+                mState.logs.push(`⭐ <b>@${player.name}</b> đã nâng cấp thành công <b>${tile.name}</b> lên Cấp ${tile.level} (${'★'.repeat(tile.level)})!`);
+                GamesSynth.playWin();
+            }
+        }
+
+        document.getElementById('mono-upgrade-overlay')?.remove();
+        await GamesModule.finishMonopolyTurn();
+    },
+
+    skipUpgrade: async () => {
+        const mState = GamesModule.monopoly;
+        const player = mState.players[mState.currentPlayerIdx];
+        mState.logs.push(`💨 <b>@${player.name}</b> giữ nguyên cấp độ phòng ban hiện tại.`);
+        document.getElementById('mono-upgrade-overlay')?.remove();
+        await GamesModule.finishMonopolyTurn();
     },
 
     // Sảnh Chờ Lobby Danh Sách Các Phòng Đang Mở Real-time
@@ -1274,7 +1543,7 @@ const GamesModule = {
             color: theme,
             chibiConfig: user.profile?.chibiConfig || null,
             position: 0,
-            cash: 15,
+            cash: GamesModule.monopoly.startingCash || 30,
             isJailed: false,
             isBankrupt: false
         };
@@ -1286,10 +1555,10 @@ const GamesModule = {
             status: 'waiting',
             players: [playerObj],
             currentPlayerIdx: 0,
-            diceValues: [1],
+            diceValues: [1, 1],
             isRolling: false,
             logs: [`🏁 Phòng đấu online được kiến tạo bởi @${user.username}.`],
-            tiles: GamesModule.monopoly.tiles.map(t => ({ id: t.id, ownerName: null }))
+            tiles: GamesModule.monopoly.tiles.map(t => ({ id: t.id, ownerName: null, level: 1 }))
         };
 
         try {
@@ -1316,7 +1585,7 @@ const GamesModule = {
             color: theme,
             chibiConfig: user.profile?.chibiConfig || null,
             position: 0,
-            cash: 15,
+            cash: GamesModule.monopoly.startingCash || 30,
             isJailed: false,
             isBankrupt: false
         };
@@ -1374,6 +1643,7 @@ const GamesModule = {
                 room.tiles.forEach(rt => {
                     const localTile = GamesModule.monopoly.tiles.find(t => t.id === rt.id);
                     if (localTile) {
+                        localTile.level = rt.level || 1;
                         if (rt.ownerName) {
                             localTile.owner = room.players.find(p => p.name === rt.ownerName) || null;
                         } else {
@@ -1467,13 +1737,14 @@ const GamesModule = {
         // Load available users dynamically to ensure we always have the list
         let emps = [];
         try {
-            if (typeof DB !== 'undefined' && typeof DB.getAccounts === 'function') {
-                const accounts = await DB.getAccounts() || [];
-                // Exclude current user and admin
-                const currentUser = Auth.currentUser;
-                emps = accounts.filter(a => a.username !== 'admin' && a.username !== currentUser?.username);
-                GamesModule.monopoly.availableEmployees = emps;
-            }
+            const accounts = (typeof Auth !== 'undefined' && typeof Auth.getAccounts === 'function')
+                ? await Auth.getAccounts()
+                : (typeof DB !== 'undefined' && typeof DB.getAccounts === 'function')
+                    ? await DB.getAccounts()
+                    : [];
+            const currentUser = Auth.currentUser || { username: '' };
+            emps = accounts.filter(a => a.username !== currentUser.username);
+            GamesModule.monopoly.availableEmployees = emps;
         } catch (e) {
             console.error("Error loading accounts:", e);
         }
@@ -1562,7 +1833,7 @@ const GamesModule = {
             diceValues: mState.diceValues,
             isRolling: mState.isRolling,
             logs: mState.logs,
-            tiles: mState.tiles.map(t => ({ id: t.id, ownerName: t.owner ? t.owner.name : null }))
+            tiles: mState.tiles.map(t => ({ id: t.id, ownerName: t.owner ? t.owner.name : null, level: t.level || 1 }))
         };
 
         try {
@@ -1585,7 +1856,9 @@ const GamesModule = {
         // Local Dice roll animation tick
         let rollCounter = 0;
         const interval = setInterval(async () => {
-            mState.diceValues = [Math.floor(Math.random() * 6) + 1];
+            const tempD1 = Math.floor(Math.random() * 6) + 1;
+            const tempD2 = Math.floor(Math.random() * 6) + 1;
+            mState.diceValues = [tempD1, tempD2];
             GamesModule.renderTabContent();
             rollCounter++;
 
@@ -1593,9 +1866,11 @@ const GamesModule = {
                 clearInterval(interval);
                 mState.isRolling = false;
 
-                // Final Dice Result calculation
-                const finalRoll = Math.floor(Math.random() * 6) + 1;
-                mState.diceValues = [finalRoll];
+                // Final Dice Result calculation (2 dice)
+                const d1 = Math.floor(Math.random() * 6) + 1;
+                const d2 = Math.floor(Math.random() * 6) + 1;
+                mState.diceValues = [d1, d2];
+                const finalRoll = d1 + d2;
                 
                 GamesModule.processMonopolyTurn(finalRoll);
             }
@@ -1606,13 +1881,14 @@ const GamesModule = {
         const mState = GamesModule.monopoly;
         const player = mState.players[mState.currentPlayerIdx];
 
-        mState.logs.push(`🎲 <b>@${player.name}</b> đổ ra <b>${roll}</b> nút!`);
+        mState.logs.push(`🎲 <b>@${player.name}</b> đổ ra <b>${roll}</b> nút (${mState.diceValues[0]} - ${mState.diceValues[1]})!`);
 
         // Check if Jailed
         if (player.isJailed) {
-            if (roll === 6) {
+            const isDouble = mState.diceValues[0] === mState.diceValues[1];
+            if (isDouble || roll === 6) {
                 player.isJailed = false;
-                mState.logs.push(`🔓 <b>@${player.name}</b> đổ ra 6 và đã thoát án Phạt Đi Muộn thành công!`);
+                mState.logs.push(`🔓 <b>@${player.name}</b> đổ ra cú đúp/6 nút và đã thoát án Phạt Đi Muộn thành công!`);
             } else {
                 if (player.cash >= 2) {
                     player.cash -= 2;
@@ -1631,33 +1907,18 @@ const GamesModule = {
         player.position = newPos;
 
         if (newPos < oldPos) {
-            player.cash += 2;
-            mState.logs.push(`🚩 <b>@${player.name}</b> đâm qua ô Khởi Đầu, HR thưởng nóng +2đ Công Đức!`);
+            const bonus = mState.startBonus || 5;
+            player.cash += bonus;
+            mState.logs.push(`🚩 <b>@${player.name}</b> đi qua ô BẮT ĐẦU, HR thưởng nóng +${bonus}đ Công Đức!`);
         }
 
         const tile = mState.tiles[newPos];
-        mState.logs.push(`📍 <b>@${player.name}</b> đặt chân lên ô <b>${tile.name}</b>.`);
+        mState.logs.push(`📍 <b>@${player.name}</b> đang di chuyển đến ô <b>${tile.name}</b>...`);
 
-        if (tile.type === 'property') {
-            GamesModule.handlePropertyTile(player, tile);
-        } else if (tile.type === 'tax') {
-            player.cash = Math.max(0, player.cash - tile.cost);
-            mState.logs.push(`💸 <b>@${player.name}</b> ${tile.desc}. Trừ ${tile.cost}đ Công Đức!`);
-            GamesModule.checkBankruptcy(player);
-            await GamesModule.finishMonopolyTurn();
-        } else if (tile.type === 'buff') {
-            player.cash += 2;
-            mState.logs.push(`🍔 <b>@${player.name}</b> ${tile.desc}. Cộng +2đ Công Đức!`);
-            await GamesModule.finishMonopolyTurn();
-        } else if (tile.type === 'jail') {
-            player.isJailed = true;
-            mState.logs.push(`🔒 Cảnh báo! <b>@${player.name}</b> bị HR phát hiện Đi Muộn không lý do! Bị tạm giam phạt đứng tại đây.`);
-            await GamesModule.finishMonopolyTurn();
-        } else if (tile.type === 'chance' || tile.type === 'lucky') {
-            GamesModule.drawMonopolyCard(player, tile.type);
-        } else {
-            await GamesModule.finishMonopolyTurn();
-        }
+        // Set action flag for visual step-by-step complete trigger
+        GamesModule.monopoly.awaitingAction = true;
+
+        await GamesModule.syncRoomToFirestore();
     },
 
     handlePropertyTile: (player, tile) => {
@@ -1666,10 +1927,14 @@ const GamesModule = {
         if (tile.owner === null) {
             GamesModule.renderMonopolyPurchaseModal(player, tile);
         } else if (tile.owner.name === player.name) {
-            mState.logs.push(`🏠 <b>@${player.name}</b> thanh tra phòng ban của chính mình.`);
-            GamesModule.finishMonopolyTurn();
+            if (!tile.level || tile.level < 3) {
+                GamesModule.renderMonopolyUpgradeModal(player, tile);
+            } else {
+                mState.logs.push(`👑 <b>@${player.name}</b> ghé thăm trụ sở VVIP tối thượng <b>${tile.name}</b>!`);
+                GamesModule.finishMonopolyTurn();
+            }
         } else {
-            const rent = tile.rent;
+            const rent = GamesModule.getTileRent(tile);
             player.cash -= rent;
             
             // Find owner in roster and add rent
@@ -1702,29 +1967,29 @@ const GamesModule = {
                         <strong style="color: #fbbf24;">${tile.cost}đ Công Đức</strong>
                     </div>
                     <div style="display:flex; justify-content:space-between;">
-                        <span>Điểm thuê phòng ban:</span>
+                        <span>Điểm thuê mặc định:</span>
                         <strong style="color: #ef4444;">${tile.rent}đ Công Đức</strong>
-                    </div>
-                </div>
+                      </div>
+                  </div>
 
-                <div style="font-size: 12px; margin-bottom: 20px; color: ${canAfford ? '#38bdf8' : '#f87171'}; font-weight: bold;">
-                    Số dư hiện tại của bạn: ${player.cash}đ Công Đức 
-                    ${canAfford ? '(Đủ điều kiện)' : '(Không đủ điểm)'}
-                </div>
+                  <div style="font-size: 12px; margin-bottom: 20px; color: ${canAfford ? '#38bdf8' : '#f87171'}; font-weight: bold;">
+                      Số dư hiện tại của bạn: ${player.cash}đ Công Đức 
+                      ${canAfford ? '(Đủ điều kiện)' : '(Không đủ điểm)'}
+                  </div>
 
-                <div style="display: flex; gap: 10px;">
-                    <button onclick="GamesModule.buyProperty('${tile.id}')" ${!canAfford ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''} style="flex: 1; padding: 12px; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 8px; color: #fff; font-weight: bold; cursor: pointer;">
-                        🤝 MUA NGAY
-                    </button>
-                    <button onclick="GamesModule.skipProperty()" style="flex: 1; padding: 12px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #cbd5e1; font-weight: bold; cursor: pointer;">
-                        ❌ BỎ QUA
-                    </button>
-                </div>
-            </div>
-        `;
+                  <div style="display: flex; gap: 10px;">
+                      <button onclick="GamesModule.buyProperty('${tile.id}')" ${!canAfford ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''} style="flex: 1; padding: 12px; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 8px; color: #fff; font-weight: bold; cursor: pointer;">
+                          🤝 MUA NGAY
+                      </button>
+                      <button onclick="GamesModule.skipProperty()" style="flex: 1; padding: 12px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #cbd5e1; font-weight: bold; cursor: pointer;">
+                          ❌ BỎ QUA
+                      </button>
+                  </div>
+              </div>
+          `;
 
-        document.body.appendChild(overlay);
-    },
+          document.body.appendChild(overlay);
+      },
 
     buyProperty: async (tileId) => {
         const mState = GamesModule.monopoly;
@@ -1734,6 +1999,7 @@ const GamesModule = {
         if (tile && player.cash >= tile.cost) {
             player.cash -= tile.cost;
             tile.owner = player;
+            tile.level = 1;
             mState.logs.push(`🤝 <b>@${player.name}</b> quyết định nhượng quyền ô <b>${tile.name}</b> với giá ${tile.cost}đ Công Đức!`);
             GamesSynth.playWin();
         }
