@@ -271,6 +271,7 @@ const ChibiModule = {
         const bottomColor = c.bottomColor || '#007bff';
         const shoeStyle = c.shoeStyle !== undefined ? c.shoeStyle : 1;
         const shoeColor = c.shoeColor || '#1f2937';
+        const hc = hairColor; // Fixed missing hc definition
 
         // 0. Dynamic ViewBox & Scaling
         let viewBox = "0 0 200 200";
@@ -481,27 +482,27 @@ const ChibiModule = {
         else if (c.bottomStyle === 6) bottomHtml = `<path d="M 84 138 L 116 138 L 118 160 L 102 160 L 100 146 L 98 160 L 82 160 Z" fill="${bottomColor}" stroke="#1e1b4b" stroke-width="2.5" /><line x1="83" y1="145" x2="97" y2="145" stroke="#00f3ff" stroke-width="2" />`;
 
         let topHtml = '';
-        if (config.topStyle === 1) { // Basic Shirt
+        if (c.topStyle === 1) { // Basic Shirt
             topHtml = `<path d="M 88 114 Q 100 112 112 114 L 115 138 Q 100 140 85 138 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" />`;
-        } else if (config.topStyle === 2) { // Formal Suit
+        } else if (c.topStyle === 2) { // Formal Suit
             topHtml = `
                 <path d="M 85 114 L 115 114 L 118 140 Q 100 145 82 140 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" />
                 <path d="M 100 114 L 100 142" stroke="rgba(255,255,255,0.2)" stroke-width="1" />
                 <path d="M 100 114 L 94 125 L 100 125 L 106 125 Z" fill="#ef4444" /> <!-- Tie -->
             `;
-        } else if (config.topStyle === 3) { // Cyber Armor
+        } else if (c.topStyle === 3) { // Cyber Armor
             topHtml = `
                 <path d="M 88 114 Q 100 112 112 114 L 115 140 Q 100 142 85 140 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" />
                 <rect x="92" y="120" width="16" height="12" rx="2" fill="rgba(0,243,255,0.2)" stroke="#00f3ff" stroke-width="0.8" />
                 <path d="M 88 114 L 95 125 M 112 114 L 105 125" stroke="#00f3ff" stroke-width="1.5" />
             `;
-        } else if (config.topStyle === 4) { // Samurai Kimono
+        } else if (c.topStyle === 4) { // Samurai Kimono
             topHtml = `
                 <path d="M 85 114 L 115 114 L 125 150 L 75 150 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" />
                 <path d="M 100 114 L 125 150 M 100 114 L 75 150" stroke="rgba(255,255,255,0.3)" stroke-width="2" />
                 <rect x="85" y="140" width="30" height="6" fill="#111" /> <!-- Belt -->
             `;
-        } else if (config.topStyle === 5) { // Tactical Vest
+        } else if (c.topStyle === 5) { // Tactical Vest
             topHtml = `
                 <path d="M 88 114 Q 100 112 112 114 L 115 140 Q 100 142 85 140 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" />
                 <rect x="90" y="118" width="20" height="18" rx="1" fill="rgba(0,0,0,0.3)" stroke="#fff" stroke-width="0.5" />
