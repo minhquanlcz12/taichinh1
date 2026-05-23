@@ -359,15 +359,18 @@ window.LobbyNeon = {
                         <span style="margin: 0 10px; opacity: 0.5;">VS</span> 
                         <span style="color: #2ed573; font-weight: 900; text-shadow: 0 0 5px #2ed573;">${game.player2} (O)</span>
                     </div>
-                    <button class="btn-neon-danger" onclick="LobbyNeon.forfeitGame()">Rút lui</button>
+                    <button class="btn-neon-danger" id="caro-btn-quit" onclick="LobbyNeon.forfeitGame()">Rút lui</button>
                 </div>
                 <div id="caro-status-msg" style="color: #fff; font-weight: 800; font-size: 14px; margin-bottom: 15px; text-align: center; background: rgba(168, 85, 247, 0.2); padding: 5px; border-radius: 8px;">Đang chuẩn bị...</div>
                 <div class="caro-grid" id="caro-grid">
                     ${Array(225).fill(0).map((_, i) => `<div class="caro-cell" onclick="LobbyNeon.makeMove(${i})"></div>`).join('')}
                 </div>
-                <div id="caro-winner-ui" class="caro-winner-overlay" style="display: none;">
+                <div id="caro-winner-ui" class="caro-winner-overlay" style="display: none; flex-direction: column; gap: 20px;">
                     <div class="winner-text">🎉 THẮNG CUỘC!</div>
-                    <p style="color: #fff; font-size: 18px;">Hài lòng với chiến tích này?</p>
+                    <div style="display: flex; gap: 15px; z-index: 10;">
+                        <button class="btn-neon" onclick="LobbyNeon.requestRematch()">Thách Đấu Lại</button>
+                        <button class="btn-neon-danger" onclick="LobbyNeon.closeCaroBoard()">Kết Thúc</button>
+                    </div>
                 </div>
             </div>
         `;
@@ -443,16 +446,30 @@ window.LobbyNeon = {
                 winnerText.style.textShadow = "0 0 20px #ff4757";
             }
             
-            setTimeout(() => {
-                const overlay = document.getElementById('caro-overlay');
-                if (overlay) overlay.remove();
-                LobbyNeon.state.currentGameId = null;
-            }, 6000);
+            const quitBtn = document.getElementById('caro-btn-quit');
+            if (quitBtn) quitBtn.style.display = 'none';
+            statusMsg.innerHTML = `<span style="color:#fff">Trận đấu đã kết thúc.</span>`;
         } else {
             statusMsg.innerHTML = game.turn === me ? 
                 `<span style="color:#2ed573">🟢 ĐẾN LƯỢT TIÊN PHONG</span>` : 
                 `<span style="color:#94a3b8">⏳ CHỜ ĐỐI THỦ HÀNH QUÂN...</span>`;
         }
+    },
+
+    closeCaroBoard: () => {
+        const overlay = document.getElementById('caro-overlay');
+        if (overlay) overlay.remove();
+        LobbyNeon.state.currentGameId = null;
+    },
+
+    requestRematch: async () => {
+        const gameData = LobbyNeon.state.currentGameData;
+        if (!gameData) return;
+        const opponent = (Auth.currentUser.username === gameData.player1) ? gameData.player2 : gameData.player1;
+        
+        LobbyNeon.closeCaroBoard();
+        Utils.showToast(`Đang gửi yêu cầu tái đấu tới ${opponent}...`, "info");
+        await LobbyNeon.inviteToCaro(opponent);
     },
 
     checkWin: (board, index) => {

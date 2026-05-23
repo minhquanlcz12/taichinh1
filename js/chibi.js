@@ -210,32 +210,29 @@ const ChibiModule = {
             viewBox = "-55 -55 310 310";
         }
 
-        // 1. Dragon Spirit Layer (Far Back)
+        // 1. Dragon Spirit Layer (Majestic Spirits)
         let dragonHtml = '';
         if (c.dragon >= 1 && c.dragon <= 3) {
             const colors = {
-                1: { main: '#00f3ff', alt: '#3b82f6', id: 'blue' },
-                2: { main: '#ef4444', alt: '#7f1d1d', id: 'red' },
-                3: { main: '#fbbf24', alt: '#d97706', id: 'gold' }
+                1: { main: '#00f3ff', alt: '#3b82f6', id: 'blue', name: 'Lam Long' },
+                2: { main: '#ef4444', alt: '#7f1d1d', id: 'red', name: 'Xích Long' },
+                3: { main: '#facc15', alt: '#d97706', id: 'gold', name: 'Hoàng Long' }
             };
             const col = colors[c.dragon];
             dragonHtml = `
-                <defs>
-                    <linearGradient id="${col.id}DragonGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stop-color="${col.main}" /><stop offset="100%" stop-color="${col.alt}" />
-                    </linearGradient>
-                    <filter id="dragonGlow">
-                        <feGaussianBlur stdDeviation="4" result="blur" />
-                        <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                    </filter>
-                </defs>
-                <g class="dragon-wrap" filter="url(#dragonGlow)">
-                    <path d="M 50 160 Q 0 110 50 60 Q 100 10 150 60 Q 200 110 150 160 Q 100 210 50 160" fill="none" stroke="url(#${col.id}DragonGrad)" stroke-width="14" stroke-linecap="round" stroke-dasharray="15,10" style="animation: dragonSpin 6s infinite linear;" />
+                <g class="dragon-wrap" style="filter: drop-shadow(0 0 12px ${col.main});">
+                    <!-- Serpentine Body -->
+                    <path d="M 80 50 Q 60 20 100 10 T 140 30 T 120 60" fill="none" stroke="${col.main}" stroke-width="6" stroke-linecap="round" style="animation: dragonSpin 6s infinite linear;" />
+                    <path d="M 80 50 Q 60 20 100 10 T 140 30 T 120 60" fill="none" stroke="#fff" stroke-width="1.5" stroke-dasharray="2 4" opacity="0.6" style="animation: dragonSpin 6s infinite linear;" />
+                    <!-- Majestic Head -->
                     <g style="animation: dragonSpin 6s infinite linear;">
-                        <!-- Dragon Head -->
-                        <path d="M 50 160 L 40 150 Q 50 140 60 150 Z" fill="${col.main}" />
-                        <circle cx="50" cy="155" r="3" fill="#fff" />
-                        <path d="M 45 160 L 30 170 M 55 160 L 70 170" stroke="${col.main}" stroke-width="2" />
+                        <g transform="translate(75, 45)">
+                            <path d="M 0 0 C -10 -5 -15 10 5 10 C 15 10 10 -5 0 0" fill="${col.main}" />
+                            <path d="M -5 -2 L -12 -12 M 5 -2 L 12 -12" stroke="#fff" stroke-width="1.5" /> <!-- Horns -->
+                            <path d="M -8 5 Q -15 8 -12 15 M 8 5 Q 15 8 12 15" stroke="${col.main}" stroke-width="0.8" fill="none" /> <!-- Whiskers -->
+                            <path d="M -5 -5 Q 0 -15 5 -5" fill="#fff" opacity="0.4" /> <!-- Mane -->
+                            <circle cx="-2" cy="4" r="1.5" fill="#fff" /> <circle cx="2" cy="4" r="1.5" fill="#fff" />
+                        </g>
                     </g>
                 </g>
                 <style>
@@ -330,6 +327,37 @@ const ChibiModule = {
             `;
         }
 
+        if (c.hairStyle === 1) { // Basic
+            hairHtml = `<path d="M 85 105 Q 100 85 115 105 L 115 115 Q 100 105 85 115 Z" fill="${hc}" />`;
+        } else if (c.hairStyle === 2) { // Spiky Cyber
+            hairHtml = `
+                <path d="M 85 105 Q 100 65 115 105" fill="${hc}" />
+                <path d="M 85 105 L 80 90 L 90 100 L 95 80 L 100 100 L 105 80 L 110 100 L 120 90 L 115 105 Z" fill="${hc}" stroke="#fff" stroke-width="0.5" />
+            `;
+        } else if (c.hairStyle === 3) { // Mohawk
+            hairHtml = `
+                <path d="M 82 105 L 118 105 L 118 115 L 82 115 Z" fill="${hc}" opacity="0.4" />
+                <path d="M 95 105 L 95 65 Q 100 60 105 65 L 105 105 Z" fill="${hc}" stroke="#fff" stroke-width="1" />
+            `;
+        } else if (c.hairStyle === 4) { // Samurai Bun
+            hairHtml = `
+                <path d="M 85 105 Q 100 85 115 105 Q 115 115 100 115 Q 85 115 85 105" fill="${hc}" />
+                <circle cx="100" cy="85" r="8" fill="${hc}" />
+                <rect x="97" y="80" width="6" height="15" fill="#555" transform="rotate(45 100 85)" />
+            `;
+        } else if (c.hairStyle === 5) { // Long Braids
+            hairHtml = `
+                <path d="M 85 105 Q 100 85 115 105" fill="${hc}" />
+                <path d="M 85 105 L 80 145" stroke="${hc}" stroke-width="4" stroke-dasharray="5 2" />
+                <path d="M 115 105 L 120 145" stroke="${hc}" stroke-width="4" stroke-dasharray="5 2" />
+            `;
+        } else if (c.hairStyle === 6) { // Pompadour Rocker
+            hairHtml = `
+                <path d="M 80 105 Q 100 50 120 105 L 115 115 Q 100 105 85 115 Z" fill="${hc}" />
+                <path d="M 80 105 Q 100 60 120 105" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2" />
+            `;
+        }
+
         // 3. Back Hair Layer
         let backHairHtml = '';
         if (c.hairStyle === 2) { // Bob cut back hair
@@ -384,9 +412,33 @@ const ChibiModule = {
         else if (c.bottomStyle === 6) bottomHtml = `<path d="M 84 138 L 116 138 L 118 160 L 102 160 L 100 146 L 98 160 L 82 160 Z" fill="${bottomColor}" stroke="#1e1b4b" stroke-width="2.5" /><line x1="83" y1="145" x2="97" y2="145" stroke="#00f3ff" stroke-width="2" />`;
 
         let topHtml = '';
-        if (c.topStyle === 1) topHtml = `<path d="M 88 114 Q 100 112 112 114 L 115 138 Q 100 140 85 138 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" />`;
-        else if (c.topStyle === 2) topHtml = `<path d="M 80 114 C 80 102 120 102 120 114 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" /><path d="M 85 114 Q 100 112 115 114 L 116 142 Q 100 145 84 142 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" />`;
-        else if (c.topStyle === 9) topHtml = `<path d="M 88 114 Q 100 112 112 114 L 115 140 Q 100 142 85 140 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" /><circle cx="100" cy="126" r="4.5" fill="#00f3ff" style="filter: drop-shadow(0 0 4px #00f3ff);" />`;
+        if (config.topStyle === 1) { // Basic Shirt
+            topHtml = `<path d="M 88 114 Q 100 112 112 114 L 115 138 Q 100 140 85 138 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" />`;
+        } else if (config.topStyle === 2) { // Formal Suit
+            topHtml = `
+                <path d="M 85 114 L 115 114 L 118 140 Q 100 145 82 140 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" />
+                <path d="M 100 114 L 100 142" stroke="rgba(255,255,255,0.2)" stroke-width="1" />
+                <path d="M 100 114 L 94 125 L 100 125 L 106 125 Z" fill="#ef4444" /> <!-- Tie -->
+            `;
+        } else if (config.topStyle === 3) { // Cyber Armor
+            topHtml = `
+                <path d="M 88 114 Q 100 112 112 114 L 115 140 Q 100 142 85 140 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" />
+                <rect x="92" y="120" width="16" height="12" rx="2" fill="rgba(0,243,255,0.2)" stroke="#00f3ff" stroke-width="0.8" />
+                <path d="M 88 114 L 95 125 M 112 114 L 105 125" stroke="#00f3ff" stroke-width="1.5" />
+            `;
+        } else if (config.topStyle === 4) { // Samurai Kimono
+            topHtml = `
+                <path d="M 85 114 L 115 114 L 125 150 L 75 150 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" />
+                <path d="M 100 114 L 125 150 M 100 114 L 75 150" stroke="rgba(255,255,255,0.3)" stroke-width="2" />
+                <rect x="85" y="140" width="30" height="6" fill="#111" /> <!-- Belt -->
+            `;
+        } else if (config.topStyle === 5) { // Tactical Vest
+            topHtml = `
+                <path d="M 88 114 Q 100 112 112 114 L 115 140 Q 100 142 85 140 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" />
+                <rect x="90" y="118" width="20" height="18" rx="1" fill="rgba(0,0,0,0.3)" stroke="#fff" stroke-width="0.5" />
+                <rect x="94" y="122" width="5" height="4" fill="#666" /> <rect x="101" y="122" width="5" height="4" fill="#666" />
+            `;
+        }
 
         let shoeHtml = '';
         if (shoeStyle === 1) shoeHtml = `<path d="M 78 171 L 91 171 L 93 182 L 80 182 Z" fill="${shoeColor}" stroke="#1e1b4b" stroke-width="2" /><path d="M 122 171 L 109 171 L 107 182 L 120 182 Z" fill="${shoeColor}" stroke="#1e1b4b" stroke-width="2" />`;
