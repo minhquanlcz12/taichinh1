@@ -145,58 +145,42 @@ const LobbyNeon = {
     },
 
     initMusic: () => {
-        // Load YouTube IFrame API if not already loaded
-        if (!window.YT) {
-            const tag = document.createElement('script');
-            tag.src = "https://www.youtube.com/iframe_api";
-            const firstScriptTag = document.getElementsByTagName('script')[0];
-            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+        if (!LobbyNeon.state.audio) {
+            // Using a stable direct link from Archive.org
+            const audioUrl = 'https://archive.org/download/DanTruongDongMauLacHong/01%20Dong%20Mau%20Lac%20Hong.mp3';
+            LobbyNeon.state.audio = new Audio(audioUrl);
+            LobbyNeon.state.audio.loop = true;
+            LobbyNeon.state.audio.volume = 0.5;
         }
-
-        window.onYouTubeIframeAPIReady = () => {
-            LobbyNeon.state.player = new YT.Player('music-player-container', {
-                height: '0',
-                width: '0',
-                videoId: 'R9K1Wf3992o', // Dòng Máu Lạc Hồng - Đan Trường
-                playerVars: {
-                    'autoplay': 0,
-                    'controls': 0,
-                    'loop': 1,
-                    'playlist': 'R9K1Wf3992o'
-                },
-                events: {
-                    'onReady': (event) => {
-                        const isMuted = localStorage.getItem('lobby_muted') === 'true';
-                        LobbyNeon.setMusicState(!isMuted);
-                    }
-                }
-            });
-        };
         
-        // If API already loaded (re-render), just init
-        if (window.YT && window.YT.Player) {
-            window.onYouTubeIframeAPIReady();
-        }
+        const isMuted = localStorage.getItem('lobby_muted') === 'true';
+        LobbyNeon.setMusicState(!isMuted);
     },
 
     toggleMusic: () => {
-        const player = LobbyNeon.state.player;
-        if (!player || typeof player.getPlayerState !== 'function') return;
-        const isPlaying = player.getPlayerState() === 1; // 1 = playing
+        const audio = LobbyNeon.state.audio;
+        if (!audio) return;
+        const isPlaying = !audio.paused;
         LobbyNeon.setMusicState(!isPlaying);
     },
 
     setMusicState: (play) => {
         const icon = document.getElementById('music-icon');
-        const player = LobbyNeon.state.player;
-        if (!icon || !player || typeof player.playVideo !== 'function') return;
+        const audio = LobbyNeon.state.audio;
+        if (!icon || !audio) return;
 
         if (play) {
-            player.playVideo();
-            icon.className = 'fas fa-volume-up';
-            localStorage.setItem('lobby_muted', 'false');
+            audio.play().catch(e => {
+                console.log("Autoplay blocked - Waiting for user interaction");
+                icon.className = 'fas fa-volume-mute';
+                localStorage.setItem('lobby_muted', 'true');
+            });
+            if (!audio.paused) {
+                icon.className = 'fas fa-volume-up';
+                localStorage.setItem('lobby_muted', 'false');
+            }
         } else {
-            player.pauseVideo();
+            audio.pause();
             icon.className = 'fas fa-volume-mute';
             localStorage.setItem('lobby_muted', 'true');
         }
