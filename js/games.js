@@ -364,200 +364,265 @@ const GamesModule = {
                     gap: 20px;
                 }
 
-                /* MONOPOLY STYLES */
+                /* MONOPOLY PREMIUM STYLES */
                 .mono-arena {
                     display: flex;
                     flex-direction: column;
-                    gap: 24px;
+                    gap: 20px;
                 }
                 .mono-setup-panel {
-                    background: rgba(15,23,42,0.7);
-                    border: 1px solid rgba(139,92,246,0.25);
+                    background: linear-gradient(145deg, rgba(15,23,42,0.85), rgba(22,12,52,0.9));
+                    border: 1.5px solid rgba(139,92,246,0.3);
                     border-radius: 20px;
-                    padding: 24px;
-                    backdrop-filter: blur(12px);
-                    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+                    padding: 28px;
+                    backdrop-filter: blur(16px);
+                    box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 25px rgba(139,92,246,0.08);
                 }
-                
-                /* 6x6 Board Layout for 20 Tiles */
+
+                /* Premium Monopoly Board */
                 .mono-board {
                     display: grid;
-                    grid-template-columns: repeat(6, 1fr);
-                    grid-template-rows: repeat(6, 1fr);
-                    gap: 6px;
-                    background: rgba(15,23,42,0.6);
-                    border: 2px solid rgba(139,92,246,0.3);
-                    border-radius: 16px;
-                    padding: 8px;
+                    grid-template-columns: 1.5fr repeat(4, 1fr) 1.5fr;
+                    grid-template-rows: 1.5fr repeat(4, 1fr) 1.5fr;
+                    gap: 2px;
+                    background: linear-gradient(145deg, #060d1e 0%, #130830 45%, #080e20 100%);
+                    border: 3px solid;
+                    border-image: linear-gradient(135deg, #8b5cf6, #a855f7, #ec4899, #06b6d4, #8b5cf6) 1;
+                    padding: 3px;
                     width: 100%;
-                    max-width: 680px;
+                    max-width: 740px;
                     margin: 0 auto;
                     aspect-ratio: 1;
-                    box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+                    box-shadow:
+                        0 0 50px rgba(139,92,246,0.12),
+                        0 0 100px rgba(139,92,246,0.06),
+                        0 10px 40px rgba(0,0,0,0.7),
+                        inset 0 0 30px rgba(0,0,0,0.5);
                     position: relative;
                 }
+                .mono-board::before {
+                    content: '';
+                    position: absolute;
+                    inset: 0;
+                    background: radial-gradient(circle at 50% 50%, rgba(139,92,246,0.05) 0%, transparent 60%);
+                    pointer-events: none;
+                    z-index: 0;
+                }
+
+                /* Individual Tile */
                 .mono-tile {
-                    background: rgba(30,41,59,0.75);
-                    border: 1.5px solid rgba(255,255,255,0.06);
-                    border-radius: 8px;
-                    padding: 4px;
+                    background: rgba(16,24,48,0.92);
+                    border: 1px solid rgba(255,255,255,0.06);
+                    padding: 2px;
                     display: flex;
                     flex-direction: column;
-                    justify-content: space-between;
-                    font-size: 11px;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 1px;
                     position: relative;
-                    box-sizing: border-box;
                     overflow: hidden;
-                    transition: all 0.2s;
+                    transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+                    z-index: 1;
+                    cursor: default;
                 }
-                .mono-tile.property {
-                    border-top: 4px solid var(--bar-color);
+                .mono-tile:hover {
+                    z-index: 10;
+                    box-shadow: 0 0 20px rgba(139,92,246,0.3), inset 0 0 15px rgba(139,92,246,0.08);
+                    border-color: rgba(139,92,246,0.4);
+                    transform: scale(1.06);
                 }
-                .mono-tile-header {
-                    font-size: 8px;
-                    color: #94a3b8;
-                    font-weight: bold;
-                    text-transform: uppercase;
-                    margin-bottom: 2px;
-                    text-align: center;
+                .mono-tile.has-player {
+                    box-shadow: 0 0 12px rgba(255,255,255,0.08);
                 }
+
+                /* Corner Tiles */
+                .mono-tile.corner-tile {
+                    background: linear-gradient(135deg, rgba(22,18,55,0.95), rgba(18,28,52,0.95));
+                    border-color: rgba(139,92,246,0.25);
+                }
+
+                /* Color bars on property tiles facing center */
+                .mono-color-bar {
+                    position: absolute;
+                    background: var(--bar-color);
+                    box-shadow: 0 0 8px var(--bar-color);
+                    z-index: 2;
+                }
+                .side-top .mono-color-bar { bottom: 0; left: 0; right: 0; height: 5px; }
+                .side-right .mono-color-bar { top: 0; left: 0; bottom: 0; width: 5px; }
+                .side-bottom .mono-color-bar { top: 0; left: 0; right: 0; height: 5px; }
+                .side-left .mono-color-bar { top: 0; right: 0; bottom: 0; width: 5px; }
+
                 .mono-tile-name {
                     font-weight: 800;
-                    color: #fff;
-                    font-size: 9px;
+                    color: #e2e8f0;
+                    font-size: 8px;
                     text-align: center;
-                    line-height: 1.2;
+                    line-height: 1.15;
+                    max-width: 100%;
+                    padding: 0 1px;
                 }
-                .mono-tile-owner {
-                    position: absolute;
-                    bottom: 2px;
-                    left: 2px;
-                    font-size: 7px;
-                    background: rgba(0,0,0,0.8);
-                    color: #cbd5e1;
-                    padding: 1px 4px;
-                    border-radius: 4px;
-                    font-weight: bold;
+                .corner-tile .mono-tile-name {
+                    font-size: 9px;
+                    color: #a78bfa;
                 }
                 .mono-tile-cost {
                     font-size: 9px;
-                    font-weight: bold;
+                    font-weight: 900;
                     color: #fbbf24;
-                    text-align: center;
-                    margin-top: auto;
+                    text-shadow: 0 0 5px rgba(251,191,36,0.25);
                 }
-                
-                /* Pawns Container inside Tile */
+                .mono-tile-owner {
+                    position: absolute;
+                    bottom: 1px; right: 1px;
+                    font-size: 6px;
+                    background: rgba(0,0,0,0.9);
+                    color: #94a3b8;
+                    padding: 1px 3px;
+                    border-radius: 3px;
+                    font-weight: bold;
+                    max-width: 85%;
+                    overflow: hidden;
+                    white-space: nowrap;
+                    text-overflow: ellipsis;
+                }
+
+                /* Pawns */
                 .mono-tile-pawns {
                     display: flex;
                     flex-wrap: wrap;
                     gap: 2px;
                     justify-content: center;
-                    position: absolute;
-                    bottom: 4px;
-                    left: 0;
-                    right: 0;
-                    padding: 0 4px;
-                    z-index: 2;
+                    margin-top: 1px;
                 }
                 .mono-pawn {
-                    width: 14px;
-                    height: 14px;
+                    width: 16px;
+                    height: 16px;
                     border-radius: 50%;
-                    border: 1.5px solid #fff;
-                    box-shadow: 0 0 6px rgba(255,255,255,0.7);
+                    border: 2px solid rgba(255,255,255,0.85);
+                    box-shadow: 0 0 6px currentColor, 0 1px 3px rgba(0,0,0,0.6);
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     font-size: 7px;
                     font-weight: 900;
                     color: #fff;
-                    animation: floatPawn 1s infinite alternate;
+                    animation: pawnBob 1.5s ease-in-out infinite alternate;
+                    z-index: 5;
+                    position: relative;
                 }
-                @keyframes floatPawn {
-                    0% { transform: translateY(0); }
-                    100% { transform: translateY(-3px); }
+                @keyframes pawnBob {
+                    0% { transform: translateY(0) scale(1); }
+                    100% { transform: translateY(-2px) scale(1.05); }
                 }
 
+                /* Center Panel - Premium Dashboard */
                 .mono-center-panel {
                     grid-column: 2 / 6;
                     grid-row: 2 / 6;
-                    background: radial-gradient(circle, rgba(15,23,42,0.92) 0%, rgba(8,15,30,0.98) 100%);
-                    border: 1px dashed rgba(139,92,246,0.3);
-                    border-radius: 12px;
+                    background:
+                        radial-gradient(ellipse at 50% 50%, rgba(139,92,246,0.07) 0%, transparent 65%),
+                        linear-gradient(145deg, rgba(10,15,30,0.98), rgba(14,10,35,0.98));
+                    border: 1.5px dashed rgba(139,92,246,0.18);
+                    border-radius: 8px;
                     display: flex;
                     flex-direction: column;
                     align-items: center;
                     justify-content: center;
-                    padding: 16px;
-                    gap: 12px;
+                    padding: 12px;
+                    gap: 8px;
                     text-align: center;
-                    box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+                    box-shadow: inset 0 0 50px rgba(0,0,0,0.6);
+                    position: relative;
+                    z-index: 1;
+                    overflow: hidden;
                 }
-                
+                .mono-center-panel::before {
+                    content: '';
+                    position: absolute;
+                    inset: -80%;
+                    background: conic-gradient(from 0deg, transparent 0%, rgba(139,92,246,0.03) 12%, transparent 25%, rgba(236,72,153,0.03) 37%, transparent 50%, rgba(6,182,212,0.03) 62%, transparent 75%, rgba(139,92,246,0.03) 87%, transparent 100%);
+                    animation: rotGlow 30s linear infinite;
+                    pointer-events: none;
+                }
+                @keyframes rotGlow { to { transform: rotate(360deg); } }
+
+                /* Dice */
                 .mono-dice-wrap {
                     display: flex;
-                    gap: 12px;
-                    margin: 8px 0;
+                    gap: 14px;
+                    margin: 6px 0;
+                    perspective: 300px;
                 }
                 .mono-dice {
-                    width: 50px;
-                    height: 50px;
-                    background: rgba(139,92,246,0.15);
-                    border: 2px solid #8b5cf6;
-                    border-radius: 10px;
+                    width: 52px;
+                    height: 52px;
+                    background: linear-gradient(145deg, #2d1b69, #1a0e42);
+                    border: 2.5px solid #8b5cf6;
+                    border-radius: 11px;
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     font-size: 26px;
                     color: #fff;
-                    font-weight: bold;
-                    text-shadow: 0 0 8px #8b5cf6;
-                    box-shadow: 0 0 15px rgba(139,92,246,0.3);
-                    transition: all 0.3s;
+                    text-shadow: 0 0 12px #a78bfa;
+                    box-shadow:
+                        0 4px 20px rgba(139,92,246,0.35),
+                        inset 0 -3px 6px rgba(0,0,0,0.4),
+                        inset 0 2px 4px rgba(255,255,255,0.06);
+                    transition: all 0.15s;
                 }
                 .mono-dice.rolling {
-                    animation: diceShake 0.4s infinite alternate;
+                    animation: dice3D 0.2s infinite;
                 }
-                @keyframes diceShake {
-                    0% { transform: rotate(-15deg) scale(0.9); }
-                    100% { transform: rotate(15deg) scale(1.1); filter: brightness(1.5); }
+                @keyframes dice3D {
+                    0%   { transform: rotateX(-12deg) rotateZ(-8deg) scale(0.94); }
+                    25%  { transform: rotateX(12deg) rotateZ(6deg) scale(1.06); filter: brightness(1.25); }
+                    50%  { transform: rotateX(-6deg) rotateZ(12deg) scale(0.97); }
+                    75%  { transform: rotateX(10deg) rotateZ(-10deg) scale(1.03); filter: brightness(1.15); }
+                    100% { transform: rotateX(-12deg) rotateZ(-8deg) scale(0.94); }
                 }
 
-                .mono-hud {
-                    display: flex;
-                    gap: 20px;
-                    flex-wrap: wrap;
-                }
-                .mono-hud-players {
-                    flex: 1;
-                    min-width: 280px;
-                    background: rgba(15,23,42,0.65);
+                /* HUD Panels */
+                .mono-hud-players, .mono-hud-logs {
+                    background: linear-gradient(145deg, rgba(15,23,42,0.75), rgba(20,12,48,0.7));
                     border: 1px solid rgba(255,255,255,0.06);
-                    border-radius: 20px;
-                    padding: 20px;
+                    border-radius: 16px;
+                    padding: 18px;
+                    backdrop-filter: blur(8px);
                 }
                 .mono-hud-logs {
-                    flex: 0.8;
-                    min-width: 260px;
-                    background: rgba(15,23,42,0.65);
-                    border: 1px solid rgba(255,255,255,0.06);
-                    border-radius: 20px;
-                    padding: 20px;
                     display: flex;
                     flex-direction: column;
                 }
+                #mono-log-area::-webkit-scrollbar { width: 4px; }
+                #mono-log-area::-webkit-scrollbar-track { background: transparent; }
+                #mono-log-area::-webkit-scrollbar-thumb { background: rgba(139,92,246,0.3); border-radius: 4px; }
 
+                /* Overlays */
                 .chance-overlay {
                     position: fixed;
                     top: 0; left: 0; width: 100vw; height: 100vh;
-                    background: rgba(0,0,0,0.85);
+                    background: rgba(0,0,0,0.88);
                     z-index: 10001;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    backdrop-filter: blur(8px);
-                    animation: fadeIn 0.3s ease;
+                    backdrop-filter: blur(10px);
+                    animation: overlayFadeIn 0.3s ease;
+                }
+                @keyframes overlayFadeIn { from { opacity: 0; } to { opacity: 1; } }
+                @keyframes chibiScaleIn {
+                    from { transform: scale(0.7) translateY(20px); opacity: 0; }
+                    to { transform: scale(1) translateY(0); opacity: 1; }
+                }
+                @keyframes bounce {
+                    0%, 100% { transform: translateY(0); }
+                    50% { transform: translateY(-8px); }
+                }
+                @keyframes pulse {
+                    0%, 100% { opacity: 1; }
+                    50% { opacity: 0.5; }
                 }
             </style>
 
@@ -905,41 +970,38 @@ const GamesModule = {
         const getTileHtml = (idx) => {
             const tile = mState.tiles[idx];
             const isOwned = tile.type === 'property' && tile.owner !== null;
-            
-            const tilePawns = mState.players
-                .filter(p => !p.isBankrupt && p.position === idx)
-                .map(p => `
-                    <div class="mono-pawn" style="background: ${p.color};" title="${p.displayName}">
-                        ${p.name.charAt(0).toUpperCase()}
-                    </div>
-                `).join('');
+            const isCorner = [0, 5, 10, 15].includes(idx);
 
-            let gridPos = '';
+            // Determine side for color bar direction + grid position
+            let sideClass = '', gridPos = '';
             if (idx >= 0 && idx <= 5) {
                 gridPos = `grid-column: ${idx + 1}; grid-row: 1;`;
+                sideClass = 'side-top';
             } else if (idx >= 6 && idx <= 9) {
                 gridPos = `grid-column: 6; grid-row: ${idx - 4};`;
+                sideClass = 'side-right';
             } else if (idx >= 10 && idx <= 15) {
                 gridPos = `grid-column: ${16 - idx}; grid-row: 6;`;
+                sideClass = 'side-bottom';
             } else if (idx >= 16 && idx <= 19) {
-                gridPos = `grid-column: 1; grid-row: ${22 - idx};`;
+                gridPos = `grid-column: 1; grid-row: ${21 - idx};`;
+                sideClass = 'side-left';
             }
 
+            const tilePawns = mState.players
+                .filter(p => !p.isBankrupt && p.position === idx)
+                .map(p => `<div class="mono-pawn" style="background:${p.color};" title="${p.displayName}">${p.name.charAt(0).toUpperCase()}</div>`)
+                .join('');
+            const hasPawns = mState.players.some(p => !p.isBankrupt && p.position === idx);
+
             return `
-                <div class="mono-tile ${tile.type}" style="--bar-color: ${tile.color || 'transparent'}; ${gridPos}">
-                    <div class="mono-tile-header">${tile.type === 'property' ? 'Phòng Ban' : 'Sự Kiện'}</div>
+                <div class="mono-tile ${tile.type} ${sideClass} ${isCorner ? 'corner-tile' : ''} ${hasPawns ? 'has-player' : ''}" style="--bar-color: ${tile.color || 'transparent'}; ${gridPos}">
+                    ${tile.type === 'property' ? '<div class="mono-color-bar"></div>' : ''}
                     <div class="mono-tile-name">${tile.name}</div>
-                    ${tile.type === 'property' ? `
-                        <div class="mono-tile-cost">${tile.cost}đ</div>
-                        ${isOwned ? `<div class="mono-tile-owner" style="background: ${tile.owner.color};">@${tile.owner.name}</div>` : ''}
-                    ` : `
-                        <div style="font-size: 8px; color: #64748b; text-align: center; margin-top: 4px;">EVENT</div>
-                    `}
-                    <div class="mono-tile-pawns">
-                        ${tilePawns}
-                    </div>
-                </div>
-            `;
+                    ${tile.type === 'property' ? `<div class="mono-tile-cost">${tile.cost}đ</div>` : ''}
+                    ${isOwned ? `<div class="mono-tile-owner" style="border-left:2px solid ${tile.owner.color}">@${tile.owner.name}</div>` : ''}
+                    ${tilePawns ? `<div class="mono-tile-pawns">${tilePawns}</div>` : ''}
+                </div>`;
         };
 
         let tilesHtml = '';
@@ -950,15 +1012,19 @@ const GamesModule = {
 
         const centerPanelHtml = `
             <div class="mono-center-panel">
-                <div style="font-size: 11px; font-weight: bold; text-transform: uppercase; color: #a78bfa; letter-spacing: 1px;">
-                    LƯỢT ĐI HIỆN TẠI
+                <div style="font-size: 18px; font-weight: 900; color: #a78bfa; letter-spacing: 2px; text-transform: uppercase; text-shadow: 0 0 20px rgba(167,139,250,0.35); position: relative; z-index: 1;">
+                    🎲 CỜ TỶ PHÚ
                 </div>
-                <div style="display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.5); padding: 8px 16px; border-radius: 20px; border: 1.5px solid ${activePlayer.color}; box-shadow: 0 0 10px ${activePlayer.color}50;">
-                    <div style="width: 24px; height: 24px; border-radius: 50%; background: ${activePlayer.color}; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 11px;">
+                <div style="font-size: 9px; color: #64748b; text-transform: uppercase; letter-spacing: 2px; position: relative; z-index: 1; font-weight: 600;">ONLINE REAL-TIME</div>
+
+                <div style="display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.5); padding: 7px 14px; border-radius: 20px; border: 1.5px solid ${activePlayer.color}; box-shadow: 0 0 12px ${activePlayer.color}35; position: relative; z-index: 1; max-width: 90%;">
+                    <div style="width: 22px; height: 22px; border-radius: 50%; background: ${activePlayer.color}; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 10px; color: #fff; box-shadow: 0 0 8px ${activePlayer.color}; flex-shrink: 0;">
                         ${activePlayer.name.charAt(0).toUpperCase()}
                     </div>
-                    <span style="font-weight: 900; font-size: 13px; color: #fff;">@${activePlayer.name} (${activePlayer.displayName})</span>
-                    ${activePlayer.isJailed ? '<span style="font-size: 10px; color:#f87171; font-weight:bold;">🔒 TRỄ HẠN</span>' : ''}
+                    <div style="overflow: hidden;">
+                        <div style="font-weight: 800; font-size: 11px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@${activePlayer.name}</div>
+                        <div style="font-size: 8px; color: #94a3b8;">${activePlayer.displayName} ${activePlayer.isJailed ? '🔒' : ''}</div>
+                    </div>
                 </div>
 
                 <div class="mono-dice-wrap">
@@ -969,71 +1035,73 @@ const GamesModule = {
                     `).join('')}
                 </div>
 
-                <div style="display: flex; gap: 10px; width: 100%; max-width: 260px;">
+                <div style="width: 100%; max-width: 200px; position: relative; z-index: 1;">
                     ${isMyTurn ? `
-                        <button onclick="GamesModule.rollMonopolyDice()" ${mState.isRolling ? 'disabled' : ''} style="flex: 1; padding: 12px; background: linear-gradient(135deg, #8b5cf6, #ec4899); border: none; border-radius: 10px; color: #fff; font-weight: bold; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 15px rgba(139,92,246,0.3);" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">
+                        <button onclick="GamesModule.rollMonopolyDice()" ${mState.isRolling ? 'disabled' : ''} style="width: 100%; padding: 11px; background: linear-gradient(135deg, #8b5cf6, #ec4899); border: none; border-radius: 12px; color: #fff; font-weight: 900; font-size: 13px; cursor: pointer; box-shadow: 0 4px 20px rgba(139,92,246,0.4); text-transform: uppercase; letter-spacing: 1px; transition: all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 25px rgba(139,92,246,0.5)'" onmouseout="this.style.transform=''; this.style.boxShadow='0 4px 20px rgba(139,92,246,0.4)'">
                             🎲 ĐỔ XÚC XẮC
                         </button>
                     ` : `
-                        <button disabled style="flex: 1; padding: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; color: #64748b; font-size: 12px; cursor: not-allowed; font-weight: bold; text-align: center;">
-                            Đang đợi lượt của @${activePlayer.name}...
-                        </button>
+                        <div style="width: 100%; padding: 11px; background: rgba(255,255,255,0.02); border: 1.5px dashed rgba(255,255,255,0.08); border-radius: 12px; color: #64748b; font-size: 10px; font-weight: 700; text-align: center;">
+                            ⏳ Đợi lượt @${activePlayer.name}...
+                        </div>
                     `}
                 </div>
-            </div>
-        `;
+            </div>`;
 
         boardContainer.innerHTML = `
             <div class="mono-arena">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <h3 style="color: #fff; margin: 0; font-size: 18px; font-weight: 800; display: flex; align-items: center; gap: 8px;">
-                        🎲 CỜ TỶ PHÚ - TRỰC TUYẾN REAL-TIME
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 2px;">
+                    <h3 style="color: #fff; margin: 0; font-size: 16px; font-weight: 900; display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 20px;">🎲</span> CỜ TỶ PHÚ VĂN PHÒNG
+                        <span style="font-size: 8px; background: linear-gradient(135deg, rgba(16,185,129,0.2), rgba(6,182,212,0.2)); color: #10b981; padding: 3px 8px; border-radius: 10px; font-weight: 800; border: 1px solid rgba(16,185,129,0.3); animation: pulse 2s infinite;">🔴 LIVE</span>
                     </h3>
-                    <button onclick="GamesModule.leaveOnlineRoom()" style="background: rgba(239,68,68,0.15); border: 1.5px solid #ef4444; color: #ef4444; padding: 6px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; font-weight: bold; transition: all 0.2s;" onmouseover="this.style.background='#ef4444'; this.style.color='#fff'">
+                    <button onclick="GamesModule.leaveOnlineRoom()" style="background: rgba(239,68,68,0.08); border: 1.5px solid rgba(239,68,68,0.3); color: #ef4444; padding: 7px 14px; border-radius: 8px; font-size: 11px; cursor: pointer; font-weight: 800; transition: all 0.25s; text-transform: uppercase;" onmouseover="this.style.background='#ef4444'; this.style.color='#fff'" onmouseout="this.style.background='rgba(239,68,68,0.08)'; this.style.color='#ef4444'">
                         🚪 RỜI PHÒNG
                     </button>
                 </div>
 
-                <div style="display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start;">
-                    <div style="flex: 1.2; min-width: 320px;">
+                <div style="display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start;">
+                    <div style="flex: 1.3; min-width: 340px;">
                         <div class="mono-board">
                             ${tilesHtml}
                             ${centerPanelHtml}
                         </div>
                     </div>
 
-                    <div style="flex: 0.8; min-width: 280px; display: flex; flex-direction: column; gap: 20px;">
+                    <div style="flex: 0.7; min-width: 260px; display: flex; flex-direction: column; gap: 14px;">
                         <div class="mono-hud-players">
-                            <h4 style="margin: 0 0 14px 0; color: #fff; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 8px;">
-                                👥 Số Dư Điểm Công Đức
+                            <h4 style="margin: 0 0 12px 0; color: #a78bfa; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid rgba(139,92,246,0.15); padding-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                                👑 BẢNG XẾP HẠNG CÔNG ĐỨC
                             </h4>
-                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
                                 ${mState.players.map((p, idx) => `
-                                    <div style="display: flex; align-items: center; justify-content: space-between; background: ${p.isBankrupt ? 'rgba(239,68,68,0.05)' : 'rgba(255,255,255,0.03)'}; border: 1px solid ${idx === mState.currentPlayerIdx && !p.isBankrupt ? p.color : 'rgba(255,255,255,0.05)'}; padding: 10px; border-radius: 10px; opacity: ${p.isBankrupt ? '0.5' : '1'};">
+                                    <div style="display: flex; align-items: center; justify-content: space-between; background: ${idx === mState.currentPlayerIdx && !p.isBankrupt ? `linear-gradient(135deg, ${p.color}12, ${p.color}06)` : 'rgba(255,255,255,0.015)'}; border: 1.5px solid ${idx === mState.currentPlayerIdx && !p.isBankrupt ? p.color + '40' : 'rgba(255,255,255,0.04)'}; padding: 10px 12px; border-radius: 10px; opacity: ${p.isBankrupt ? '0.35' : '1'}; transition: all 0.3s;">
                                         <div style="display: flex; align-items: center; gap: 8px;">
-                                            <div style="width: 20px; height: 20px; border-radius: 50%; background: ${p.color}; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; color: #fff;">
+                                            <div style="width: 26px; height: 26px; border-radius: 50%; background: ${p.color}; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: #fff; box-shadow: 0 0 8px ${p.color}50; flex-shrink: 0;">
                                                 ${p.name.charAt(0).toUpperCase()}
                                             </div>
-                                            <span style="font-weight: bold; font-size: 12px; color: ${idx === mState.currentPlayerIdx && !p.isBankrupt ? '#fff' : '#cbd5e1'};">
-                                                @${p.name}
-                                            </span>
-                                            ${p.isBankrupt ? '<span style="font-size: 9px; color: #ef4444; font-weight: bold;">(PHÁ SẢN)</span>' : ''}
+                                            <div>
+                                                <div style="font-weight: 800; font-size: 12px; color: ${idx === mState.currentPlayerIdx && !p.isBankrupt ? '#fff' : '#cbd5e1'};">@${p.name}</div>
+                                                <div style="font-size: 9px; color: #64748b;">${p.displayName} ${p.isBankrupt ? '💀' : (p.isJailed ? '🔒' : '')}</div>
+                                            </div>
                                         </div>
-                                        <span style="font-weight: 900; font-size: 14px; color: ${p.isBankrupt ? '#64748b' : '#fbbf24'};">
-                                            ${p.isBankrupt ? '0' : p.cash}đ
-                                        </span>
+                                        <div style="text-align: right;">
+                                            <div style="font-weight: 900; font-size: 15px; color: ${p.isBankrupt ? '#475569' : '#fbbf24'}; text-shadow: ${p.isBankrupt ? 'none' : '0 0 6px rgba(251,191,36,0.2)'};">
+                                                ${p.isBankrupt ? '0' : p.cash}đ
+                                            </div>
+                                        </div>
                                     </div>
                                 `).join('')}
                             </div>
                         </div>
 
                         <div class="mono-hud-logs">
-                            <h4 style="margin: 0 0 10px 0; color: #fff; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 8px;">
-                                📜 Nhật Ký Đấu Trường
+                            <h4 style="margin: 0 0 10px 0; color: #a78bfa; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid rgba(139,92,246,0.15); padding-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                                📜 NHẬT KÝ TRẬN ĐẤU
                             </h4>
-                            <div id="mono-log-area" style="flex: 1; max-height: 220px; min-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; font-size: 11px; font-family: monospace; color: #94a3b8; padding-right: 4px;">
+                            <div id="mono-log-area" style="flex: 1; max-height: 200px; min-height: 120px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; font-size: 11px; color: #94a3b8; padding-right: 4px;">
                                 ${mState.logs.map(log => `
-                                    <div style="line-height: 1.4; border-bottom: 1px solid rgba(255,255,255,0.02); padding-bottom: 4px;">
+                                    <div style="line-height: 1.4; padding: 4px 8px; border-radius: 5px; background: rgba(255,255,255,0.015); border-left: 2px solid rgba(139,92,246,0.15);">
                                         ${log}
                                     </div>
                                 `).reverse().join('')}
