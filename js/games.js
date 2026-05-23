@@ -537,8 +537,8 @@ const GamesModule = {
                 position: relative;
             }
             .mono-pawn.has-chibi {
-                width: 42px;
-                height: 56px;
+                width: 54px;
+                height: 72px;
                 border-radius: 0;
                 border: none;
                 box-shadow: none;
@@ -548,18 +548,18 @@ const GamesModule = {
                 align-items: center;
                 justify-content: flex-end;
                 position: relative;
-                animation: pawnBob 1.5s ease-in-out infinite alternate;
-                z-index: 5;
+                animation: pawnBob 1.6s ease-in-out infinite alternate;
+                z-index: 8;
             }
             .mono-pawn-chibi-wrapper {
                 width: 100%;
-                height: 48px;
+                height: 62px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 position: relative;
                 z-index: 2;
-                filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+                filter: drop-shadow(0 4px 6px rgba(0,0,0,0.65));
             }
             .mono-pawn-chibi-wrapper svg {
                 width: auto;
@@ -567,17 +567,165 @@ const GamesModule = {
                 max-width: 100%;
             }
             .mono-pawn-base {
-                width: 24px;
-                height: 6px;
+                width: 32px;
+                height: 8px;
                 border-radius: 50%;
-                margin-top: -2px;
-                border: 1px solid rgba(255,255,255,0.7);
+                margin-top: -3px;
+                border: 1.5px solid rgba(255,255,255,0.85);
                 z-index: 1;
                 flex-shrink: 0;
             }
             @keyframes pawnBob {
                 0% { transform: translateY(0) scale(1); }
-                100% { transform: translateY(-3px) scale(1.03); }
+                100% { transform: translateY(-4px) scale(1.03); }
+            }
+
+            /* Owner Badge inside property tile */
+            .mono-owner-badge {
+                font-size: 7.5px;
+                font-weight: 900;
+                color: #fff;
+                padding: 1.5px 5px;
+                border-radius: 4px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                z-index: 3;
+                margin-top: 1px;
+                text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+                border: 1px solid rgba(255,255,255,0.35);
+                max-width: 90%;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            /* Floating Point Bubbles */
+            .point-bubble {
+                position: absolute;
+                top: -24px;
+                left: 50%;
+                transform: translateX(-50%);
+                font-weight: 900;
+                font-size: 13px;
+                padding: 3px 8px;
+                border-radius: 12px;
+                z-index: 99;
+                pointer-events: none;
+                white-space: nowrap;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+                animation: pointBubbleRise 1.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+                text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+            }
+            .point-bubble.plus {
+                background: linear-gradient(135deg, #10b981, #059669);
+                border: 1.5px solid #34d399;
+                color: #fff;
+                box-shadow: 0 0 12px rgba(16,185,129,0.5);
+            }
+            .point-bubble.minus {
+                background: linear-gradient(135deg, #f43f5e, #e11d48);
+                border: 1.5px solid #fb7185;
+                color: #fff;
+                box-shadow: 0 0 12px rgba(244,63,94,0.5);
+            }
+            @keyframes pointBubbleRise {
+                0% {
+                    transform: translateX(-50%) translateY(0) scale(0.6);
+                    opacity: 0;
+                }
+                15% {
+                    transform: translateX(-50%) translateY(-10px) scale(1.15);
+                    opacity: 1;
+                }
+                80% {
+                    transform: translateX(-50%) translateY(-38px) scale(1);
+                    opacity: 1;
+                }
+                100% {
+                    transform: translateX(-50%) translateY(-48px) scale(0.85);
+                    opacity: 0;
+                }
+            }
+
+            /* Title Deed Card Overlay in center panel */
+            .title-deed-card {
+                width: 92%;
+                max-width: 220px;
+                background: rgba(10, 15, 30, 0.96);
+                border: 2px solid #fbbf24;
+                box-shadow: 0 0 25px rgba(251, 191, 36, 0.35), inset 0 0 15px rgba(251,191,36,0.15);
+                border-radius: 14px;
+                padding: 10px;
+                margin-top: 4px;
+                box-sizing: border-box;
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+                position: relative;
+                z-index: 10;
+                animation: deedPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards;
+            }
+            @keyframes deedPop {
+                from { transform: scale(0.8) translateY(10px); opacity: 0; }
+                to { transform: scale(1) translateY(0); opacity: 1; }
+            }
+            .deed-header {
+                padding: 6px;
+                border-radius: 8px;
+                text-align: center;
+                position: relative;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+                border: 1px solid rgba(255,255,255,0.15);
+            }
+            .deed-header-icon {
+                font-size: 15px;
+                margin-bottom: 2px;
+            }
+            .deed-header-name {
+                font-size: 12px;
+                font-weight: 900;
+                color: #fff;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            .deed-stars {
+                color: #fbbf24;
+                font-size: 10px;
+                font-weight: bold;
+                text-shadow: 0 0 5px rgba(251,191,36,0.8);
+            }
+            .deed-info-box {
+                background: rgba(0,0,0,0.4);
+                border: 1px solid rgba(255,255,255,0.06);
+                border-radius: 8px;
+                padding: 6px 8px;
+                font-size: 9px;
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+            }
+            .deed-rent-row {
+                display: flex;
+                justify-content: space-between;
+                color: #cbd5e1;
+            }
+            .deed-rent-row.active {
+                color: #34d399;
+                font-weight: 800;
+                text-shadow: 0 0 6px rgba(52,211,153,0.3);
+            }
+            .deed-rent-row.inactive {
+                opacity: 0.45;
+            }
+            .deed-footer {
+                font-size: 8px;
+                color: #94a3b8;
+                text-align: center;
+                border-top: 1px solid rgba(255,255,255,0.08);
+                padding-top: 4px;
             }
 
             /* Center Panel - Premium Dashboard */
@@ -1146,13 +1294,45 @@ const GamesModule = {
             }
             const rentValue = isOwned ? GamesModule.getTileRent(tile) : tile.rent;
 
+            let ownerTileStyle = '';
+            let ownerBadgeHtml = '';
+            if (isOwned) {
+                const oColor = tile.owner.color;
+                if (lvl === 1) {
+                    ownerTileStyle = `border: 2px solid ${oColor} !important; box-shadow: inset 0 0 8px ${oColor}25, 0 0 10px ${oColor}20 !important; background: linear-gradient(135deg, ${oColor}18, rgba(16,24,48,0.92)) !important;`;
+                } else if (lvl === 2) {
+                    ownerTileStyle = `border: 2.2px solid #00f3ff !important; box-shadow: inset 0 0 10px ${oColor}25, 0 0 15px rgba(0, 243, 255, 0.4) !important; background: linear-gradient(135deg, ${oColor}18, rgba(16,24,48,0.92)) !important;`;
+                } else if (lvl === 3) {
+                    ownerTileStyle = `border: 2.5px solid #fbbf24 !important; box-shadow: inset 0 0 12px ${oColor}25, 0 0 20px rgba(251, 191, 36, 0.5) !important; background: linear-gradient(135deg, rgba(31,10,50,0.95), ${oColor}15, rgba(15,23,42,0.95)) !important;`;
+                }
+                ownerBadgeHtml = `
+                    <div class="mono-owner-badge" style="background: ${oColor}; box-shadow: 0 0 6px ${oColor};" title="@${tile.owner.name}">
+                        @${tile.owner.name.toUpperCase()}
+                    </div>
+                `;
+            }
+
+            let bubbleHtml = '';
+            mState.players.forEach(p => {
+                if (!p.isBankrupt && GamesModule.monopoly.visualPositions[p.name] === idx) {
+                    const bubble = mState.pointBubbles?.[p.name];
+                    if (bubble) {
+                        bubbleHtml += `<div class="point-bubble ${bubble.type}">${bubble.text}</div>`;
+                    }
+                }
+            });
+
+            const tileClickHtml = tile.type === 'property' ? `onclick="GamesModule.selectCenterDeed('${tile.id}')" style="cursor: pointer;"` : '';
+
             return `
-                <div class="mono-tile ${tile.type} ${sideClass} ${lvlClass} ${isCorner ? 'corner-tile' : ''} ${hasPawns ? 'has-player' : ''}" style="--bar-color: ${tile.color || 'transparent'}; ${gridPos}">
+                <div class="mono-tile ${tile.type} ${sideClass} ${lvlClass} ${isCorner ? 'corner-tile' : ''} ${hasPawns ? 'has-player' : ''}" ${tileClickHtml} style="--bar-color: ${tile.color || 'transparent'}; ${gridPos} ${ownerTileStyle}">
                     ${tile.type === 'property' ? '<div class="mono-color-bar"></div>' : ''}
                     <div class="mono-tile-name">${tile.name}</div>
                     ${tile.type === 'property' ? `<div class="mono-tile-cost">${levelIcon}${tile.cost}đ ${stars ? `<span style="color:#fbbf24; font-weight: 900;">${stars}</span>` : ''}</div>` : ''}
-                    ${isOwned ? `<div class="mono-tile-owner" style="border-left:2px solid ${tile.owner.color}">@${tile.owner.name} (${rentValue}đ)</div>` : ''}
+                    ${isOwned ? `<div class="mono-tile-owner" style="border-left:2px solid ${tile.owner.color}">${rentValue}đ</div>` : ''}
+                    ${ownerBadgeHtml}
                     ${tilePawns ? `<div class="mono-tile-pawns">${tilePawns}</div>` : ''}
+                    ${bubbleHtml}
                 </div>`;
         };
 
@@ -1182,17 +1362,32 @@ const GamesModule = {
             `;
         };
 
+        let deedHtml = '';
+        if (mState.centerDeedTileId !== undefined && mState.centerDeedTileId !== null) {
+            const focusedTile = mState.tiles.find(t => t.id === mState.centerDeedTileId);
+            if (focusedTile && focusedTile.type === 'property') {
+                deedHtml = GamesModule.renderTitleDeedCardHtml(focusedTile);
+            }
+        }
+
         const centerPanelHtml = `
             <div class="mono-center-panel">
-                <div style="font-size: 16px; font-weight: 900; color: #a78bfa; letter-spacing: 2px; text-transform: uppercase; text-shadow: 0 0 20px rgba(167,139,250,0.35); position: relative; z-index: 1;">
-                    🎲 CỜ TỶ PHÚ
-                </div>
-                <div style="font-size: 8px; color: #64748b; text-transform: uppercase; letter-spacing: 2px; position: relative; z-index: 1; font-weight: 600; margin-bottom: 4px;">ONLINE REAL-TIME</div>
-
-                <div style="display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.5); padding: 7px 14px; border-radius: 20px; border: 1.5px solid ${activePlayer.color}; box-shadow: 0 0 12px ${activePlayer.color}35; position: relative; z-index: 1; max-width: 90%;">
-                    <div style="width: 22px; height: 22px; border-radius: 50%; background: ${activePlayer.color}; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 10px; color: #fff; box-shadow: 0 0 8px ${activePlayer.color}; flex-shrink: 0;">
-                        ${activePlayer.name.charAt(0).toUpperCase()}
+                ${deedHtml ? deedHtml : `
+                    <div style="font-size: 16px; font-weight: 900; color: #a78bfa; letter-spacing: 2px; text-transform: uppercase; text-shadow: 0 0 20px rgba(167,139,250,0.35); position: relative; z-index: 1;">
+                        🎲 CỜ TỶ PHÚ
                     </div>
+                    <div style="font-size: 8px; color: #64748b; text-transform: uppercase; letter-spacing: 2px; position: relative; z-index: 1; font-weight: 600; margin-bottom: 4px;">ONLINE REAL-TIME</div>
+
+                    <div style="display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.5); padding: 7px 14px; border-radius: 20px; border: 1.5px solid ${activePlayer.color}; box-shadow: 0 0 12px ${activePlayer.color}35; position: relative; z-index: 1; max-width: 90%;">
+                        <div style="width: 22px; height: 22px; border-radius: 50%; background: ${activePlayer.color}; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 10px; color: #fff; box-shadow: 0 0 8px ${activePlayer.color}; flex-shrink: 0;">
+                            ${activePlayer.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div style="overflow: hidden;">
+                            <div style="font-weight: 800; font-size: 11px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@${activePlayer.name}</div>
+                            <div style="font-size: 8px; color: #94a3b8;">${activePlayer.displayName} ${activePlayer.isJailed ? '🔒' : ''}</div>
+                        </div>
+                    </div>
+                `}       </div>
                     <div style="overflow: hidden;">
                         <div style="font-weight: 800; font-size: 11px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@${activePlayer.name}</div>
                         <div style="font-size: 8px; color: #94a3b8;">${activePlayer.displayName} ${activePlayer.isJailed ? '🔒' : ''}</div>
@@ -1329,10 +1524,22 @@ const GamesModule = {
             } else {
                 GamesModule.monopoly.visualAnimationRunning = null;
 
-                // Only active player triggers the logical tile action on their screen
+                // When visual hopping completes for the active player, focus the center panel on the landed property
                 const activePlayer = mState.players[mState.currentPlayerIdx];
+                if (playerName === activePlayer?.name) {
+                    const destTile = mState.tiles[activePlayer.position];
+                    if (destTile && destTile.type === 'property') {
+                        GamesModule.monopoly.centerDeedTileId = destTile.id;
+                    } else {
+                        GamesModule.monopoly.centerDeedTileId = null;
+                    }
+                    // Re-render center panel
+                    let container = document.getElementById('games-view') || document.getElementById('hub-content-monopoly');
+                    if (container) GamesModule.renderMonopoly(container);
+                }
+
+                // Only active player triggers the logical tile action on their screen
                 const isMyTurn = activePlayer && activePlayer.name === Auth.currentUser.username;
-                
                 if (isMyTurn && playerName === activePlayer.name && GamesModule.monopoly.awaitingAction) {
                     GamesModule.monopoly.awaitingAction = false;
                     GamesModule.executeTileAction(activePlayer);
@@ -1365,6 +1572,14 @@ const GamesModule = {
         } else if (tile.type === 'chance' || tile.type === 'lucky') {
             GamesModule.drawMonopolyCard(player, tile.type);
         } else {
+            // Check if START tile (position 0)
+            if (player.position === 0) {
+                const upgradeableTiles = mState.tiles.filter(t => t.type === 'property' && t.owner && t.owner.name === player.name && (t.level || 1) < 3);
+                if (upgradeableTiles.length > 0) {
+                    GamesModule.renderStartDistanceUpgradeModal(player, upgradeableTiles);
+                    return; // Don't finish turn yet! Wait for modal choice
+                }
+            }
             await GamesModule.finishMonopolyTurn();
         }
     },
@@ -1449,6 +1664,202 @@ const GamesModule = {
         mState.logs.push(`💨 <b>@${player.name}</b> giữ nguyên cấp độ phòng ban hiện tại.`);
         document.getElementById('mono-upgrade-overlay')?.remove();
         await GamesModule.finishMonopolyTurn();
+    },
+
+    triggerPointBubble: (username, text, type) => {
+        if (!GamesModule.monopoly.pointBubbles) GamesModule.monopoly.pointBubbles = {};
+        GamesModule.monopoly.pointBubbles[username] = { text, type };
+        
+        let container = document.getElementById('games-view') || document.getElementById('hub-content-monopoly');
+        if (container) GamesModule.renderMonopoly(container);
+
+        setTimeout(() => {
+            if (GamesModule.monopoly.pointBubbles?.[username]) {
+                delete GamesModule.monopoly.pointBubbles[username];
+                if (container) GamesModule.renderMonopoly(container);
+            }
+        }, 1600);
+    },
+
+    renderStartDistanceUpgradeModal: (player, tiles) => {
+        const overlay = document.createElement('div');
+        overlay.id = 'mono-start-upgrade-overlay';
+        overlay.className = 'chance-overlay';
+        overlay.style.zIndex = '99999';
+
+        overlay.innerHTML = `
+            <div style="background: rgba(15,23,42,0.96); border: 2px solid #10b981; border-radius: 16px; padding: 24px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 0 35px rgba(16,185,129,0.5); color: #fff;">
+                <div style="font-size: 32px; margin-bottom: 6px;">🚩 Thần Tài Gõ Cửa!</div>
+                <div style="font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: bold; margin-bottom: 6px;">Đặc Quyền Tại Ô Bắt Đầu</div>
+                <p style="font-size: 13px; color: #cbd5e1; margin-bottom: 20px;">
+                    Bạn đã dừng chân chính xác tại ô <b>BẮT ĐẦU</b>! Bạn được đặc quyền chi điểm Công Đức để nâng cấp từ xa cho một bất động sản đã sở hữu.
+                </p>
+
+                <div style="max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;">
+                    ${tiles.map(t => {
+                        const nextLvl = (t.level || 1) + 1;
+                        const cost = GamesModule.getTileUpgradeCost(t);
+                        const canAfford = player.cash >= cost;
+                        return `
+                            <button onclick="GamesModule.upgradeStartProperty('${t.id}')" ${!canAfford ? 'disabled style="opacity:0.4; cursor:not-allowed;"' : ''} style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(16,185,129,0.1); border: 1.5px solid rgba(16,185,129,0.3); border-radius: 10px; cursor: pointer; color: #fff; width: 100%; transition: all 0.2s;" onmouseover="this.style.background='rgba(16,185,129,0.25)'" onmouseout="this.style.background='rgba(16,185,129,0.1)'">
+                                <div style="text-align: left;">
+                                    <div style="font-weight: bold; font-size: 13px;">${t.name}</div>
+                                    <div style="font-size: 10px; color: #a78bfa;">Cấp ${t.level || 1} ➔ Cấp ${nextLvl}</div>
+                                </div>
+                                <div style="font-weight: bold; font-size: 12px; color: #fbbf24;">${cost}đ</div>
+                            </button>
+                        `;
+                    }).join('')}
+                </div>
+
+                <button onclick="GamesModule.skipStartDistanceUpgrade()" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #cbd5e1; font-weight: bold; cursor: pointer;">
+                    ❌ BỎ QUA ĐẶC QUYỀN
+                </button>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+    },
+
+    upgradeStartProperty: async (tileId) => {
+        const mState = GamesModule.monopoly;
+        const player = mState.players[mState.currentPlayerIdx];
+        const tile = mState.tiles.find(t => t.id === parseInt(tileId, 10));
+
+        if (tile && tile.owner && tile.owner.name === player.name) {
+            const cost = GamesModule.getTileUpgradeCost(tile);
+            if (player.cash >= cost) {
+                player.cash -= cost;
+                tile.level = (tile.level || 1) + 1;
+                mState.logs.push(`🚩⭐ <b>@${player.name}</b> đã kích hoạt đặc quyền ô BẮT ĐẦU nâng cấp từ xa <b>${tile.name}</b> lên Cấp ${tile.level} (${'★'.repeat(tile.level)})!`);
+                GamesSynth.playWin();
+            }
+        }
+
+        document.getElementById('mono-start-upgrade-overlay')?.remove();
+        await GamesModule.finishMonopolyTurn();
+    },
+
+    skipStartDistanceUpgrade: async () => {
+        document.getElementById('mono-start-upgrade-overlay')?.remove();
+        await GamesModule.finishMonopolyTurn();
+    },
+
+    renderMonopolyJailModal: (player) => {
+        const overlay = document.createElement('div');
+        overlay.id = 'mono-jail-overlay';
+        overlay.className = 'chance-overlay';
+        overlay.style.zIndex = '99999';
+
+        const bailCost = 2;
+        const canAffordBail = player.cash >= bailCost;
+        const turnsLeft = player.jailTurns || 2;
+
+        overlay.innerHTML = `
+            <div style="background: rgba(15,23,42,0.96); border: 2px solid #ec4899; border-radius: 16px; padding: 24px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 0 35px rgba(236,72,153,0.5); color: #fff;">
+                <div style="font-size: 32px; margin-bottom: 6px;">🔒 Phạt Đi Muộn!</div>
+                <div style="font-size: 11px; text-transform: uppercase; color: #ec4899; font-weight: bold; margin-bottom: 6px;">Đang Bị HR Tạm Giữ (Còn lại ${turnsLeft} lượt)</div>
+                <p style="font-size: 13px; color: #cbd5e1; margin-bottom: 20px;">
+                    Bạn đang đứng tại khu vực Tạm Giam của HR. Hãy lựa chọn phương án để thoát án phạt:
+                </p>
+
+                <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+                    <button onclick="GamesModule.payMonopolyJailBail()" ${!canAffordBail ? 'disabled style="opacity:0.4; cursor:not-allowed;"' : ''} style="padding: 14px; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 10px; color: #fff; font-weight: bold; cursor: pointer; transition: all 0.2s; font-size: 12.5px;">
+                        💸 NỘP PHẠT ${bailCost}đ CÔNG ĐỨC (Thoát ngay)
+                    </button>
+                    <button onclick="GamesModule.attemptMonopolyJailDoubleRoll()" style="padding: 14px; background: linear-gradient(135deg, #8b5cf6, #ec4899); border: none; border-radius: 10px; color: #fff; font-weight: bold; cursor: pointer; transition: all 0.2s; font-size: 12.5px;">
+                        🎲 THỬ VẬN MAY ĐỔ CÚ ĐÚP (Miễn phí)
+                    </button>
+                </div>
+
+                <div style="font-size: 11px; color: #94a3b8; font-style: italic;">
+                    Chú ý: Thử vận may không ra cú đúp sẽ mất lượt giam giữ. Hết 2 lượt buộc phải nộp phạt!
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+    },
+
+    payMonopolyJailBail: async () => {
+        const mState = GamesModule.monopoly;
+        const player = mState.players[mState.currentPlayerIdx];
+        
+        player.cash = Math.max(0, player.cash - 2);
+        player.isJailed = false;
+        player.jailTurns = 0;
+        mState.logs.push(`💸 <b>@${player.name}</b> đã nộp phạt 2đ Công Đức để thoát khỏi án Phạt đi muộn lập tức.`);
+        
+        mState.jailChoiceMade = true;
+        mState.jailRollAttempt = false;
+
+        document.getElementById('mono-jail-overlay')?.remove();
+        GamesModule.rollMonopolyDice();
+    },
+
+    attemptMonopolyJailDoubleRoll: async () => {
+        const mState = GamesModule.monopoly;
+        mState.jailChoiceMade = true;
+        mState.jailRollAttempt = true;
+
+        document.getElementById('mono-jail-overlay')?.remove();
+        GamesModule.rollMonopolyDice();
+    },
+
+    selectCenterDeed: (tileId) => {
+        GamesModule.monopoly.centerDeedTileId = tileId !== null ? parseInt(tileId, 10) : null;
+        let container = document.getElementById('games-view') || document.getElementById('hub-content-monopoly');
+        if (container) GamesModule.renderMonopoly(container);
+    },
+
+    renderTitleDeedCardHtml: (tile) => {
+        const isOwned = tile.owner !== null;
+        const lvl = tile.level || 1;
+        const baseRent = tile.rent;
+        const rent2 = Math.round(baseRent * 2.2);
+        const rent3 = Math.round(baseRent * 4.5);
+        
+        let starsHtml = '★'.repeat(lvl);
+        let levelIcon = '🏠';
+        if (lvl === 2) levelIcon = '🏢';
+        else if (lvl === 3) levelIcon = '👑';
+
+        let ownerText = isOwned ? `Đã sở hữu bởi @${tile.owner.name}` : 'Đất công chưa sở hữu';
+
+        return `
+            <div class="title-deed-card" style="border-color: ${tile.color || '#fbbf24'};">
+                <div class="deed-header" style="background: ${tile.color || '#1e293b'};">
+                    <div class="deed-header-icon">${levelIcon}</div>
+                    <div class="deed-header-name">${tile.name}</div>
+                    <div class="deed-stars">${starsHtml}</div>
+                </div>
+                <div class="deed-info-box">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-weight:800; color:#fbbf24; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:2px;">
+                        <span>Giá nhượng quyền:</span>
+                        <span>${tile.cost}đ Công Đức</span>
+                    </div>
+                    <div class="deed-rent-row ${lvl === 1 ? 'active' : 'inactive'}">
+                        <span>Cấp 1 (Phòng thô):</span>
+                        <span>${baseRent}đ</span>
+                    </div>
+                    <div class="deed-rent-row ${lvl === 2 ? 'active' : 'inactive'}">
+                        <span>Cấp 2 (Pro Office):</span>
+                        <span>${rent2}đ</span>
+                    </div>
+                    <div class="deed-rent-row ${lvl === 3 ? 'active' : 'inactive'}">
+                        <span>Cấp 3 (VVIP Suite):</span>
+                        <span>${rent3}đ</span>
+                    </div>
+                </div>
+                <div class="deed-footer">
+                    <span style="color: ${isOwned ? tile.owner.color : '#94a3b8'}; font-weight:800;">
+                        ${ownerText}
+                    </span>
+                </div>
+                <!-- Close Button to return to normal logo view -->
+                <button onclick="event.stopPropagation(); GamesModule.selectCenterDeed(null)" style="position:absolute; top:-6px; right:-6px; width:18px; height:18px; border-radius:50%; background:#ef4444; border:none; color:#fff; font-size:9px; font-weight:bold; display:flex; align-items:center; justify-content:center; box-shadow: 0 0 6px #ef4444; cursor: pointer;">
+                    ×
+                </button>
+            </div>
+        `;
     },
 
     // Sảnh Chờ Lobby Danh Sách Các Phòng Đang Mở Real-time
@@ -1689,6 +2100,20 @@ const GamesModule = {
                 }
 
                 const room = doc.data();
+
+                // Track cash changes to trigger floating point bubbles locally
+                if (GamesModule.monopoly.players && GamesModule.monopoly.players.length > 0) {
+                    room.players.forEach(newP => {
+                        const oldP = GamesModule.monopoly.players.find(p => p.name === newP.name);
+                        if (oldP && oldP.cash !== newP.cash) {
+                            const delta = newP.cash - oldP.cash;
+                            const text = `${delta > 0 ? '+' : ''}${delta}đ`;
+                            const type = delta > 0 ? 'plus' : 'minus';
+                            GamesModule.triggerPointBubble(newP.name, text, type);
+                        }
+                    });
+                }
+
                 GamesModule.monopoly.players = room.players;
                 GamesModule.monopoly.currentPlayerIdx = room.currentPlayerIdx;
                 GamesModule.monopoly.diceValues = room.diceValues;
@@ -1903,6 +2328,14 @@ const GamesModule = {
         const mState = GamesModule.monopoly;
         if (mState.isRolling) return;
 
+        const player = mState.players[mState.currentPlayerIdx];
+        if (player.isJailed) {
+            if (!mState.jailChoiceMade) {
+                GamesModule.renderMonopolyJailModal(player);
+                return;
+            }
+        }
+
         // Start roll state on Firestore to notify dice shake globally
         mState.isRolling = true;
         await GamesModule.syncRoomToFirestore();
@@ -1942,19 +2375,49 @@ const GamesModule = {
         // Check if Jailed
         if (player.isJailed) {
             const isDouble = mState.diceValues[0] === mState.diceValues[1];
-            if (isDouble || roll === 6) {
-                player.isJailed = false;
-                mState.logs.push(`🔓 <b>@${player.name}</b> đổ ra cú đúp/6 nút và đã thoát án Phạt Đi Muộn thành công!`);
-            } else {
-                if (player.cash >= 2) {
-                    player.cash -= 2;
+            if (mState.jailRollAttempt) {
+                // Tried rolling for doubles
+                if (isDouble) {
                     player.isJailed = false;
-                    mState.logs.push(`💸 <b>@${player.name}</b> tự đóng phạt 2đ Công Đức cho HR để thoát án Phạt đi muộn.`);
+                    player.jailTurns = 0;
+                    mState.logs.push(`🔓 CÚ ĐÚP TUYỆT VỜI! <b>@${player.name}</b> đã gieo cú đúp thoát án Tạm Giam thành công và di chuyển!`);
                 } else {
-                    mState.logs.push(`🔒 <b>@${player.name}</b> tiếp tục bị tạm giữ 1 lượt vì không đủ 2đ nộp phạt.`);
+                    player.jailTurns = (player.jailTurns || 2) - 1;
+                    mState.jailChoiceMade = false;
+                    mState.jailRollAttempt = false;
+
+                    if (player.jailTurns <= 0) {
+                        player.isJailed = false;
+                        player.cash = Math.max(0, player.cash - 2);
+                        mState.logs.push(`🔒 <b>@${player.name}</b> đã thất bại gieo đúp sau 2 lượt và buộc phải nộp phạt 2đ Công Đức để thoát khỏi Tạm Giam.`);
+                    } else {
+                        mState.logs.push(`🔒 Gieo đúp thất bại! <b>@${player.name}</b> tiếp tục chịu án Phạt Đi Muộn (Còn lại ${player.jailTurns} lượt). Lượt chơi kết thúc.`);
+                        await GamesModule.finishMonopolyTurn();
+                        return;
+                    }
+                }
+            }
+        } else {
+            // Check if double roll
+            const isDouble = mState.diceValues[0] === mState.diceValues[1];
+            if (isDouble) {
+                mState.doubleRollCount = (mState.doubleRollCount || 0) + 1;
+                if (mState.doubleRollCount === 3) {
+                    mState.doubleRollCount = 0;
+                    mState.rollAgain = false;
+                    player.isJailed = true;
+                    player.jailTurns = 2;
+                    player.position = 10; // Jail tile
+                    mState.logs.push(`🚨 QUÁ TAM BA BẬN! <b>@${player.name}</b> gieo cú đúp 3 lần liên tiếp, HR bắt quả tang giam giữ phạt đứng tại đây!`);
                     await GamesModule.finishMonopolyTurn();
                     return;
+                } else {
+                    mState.rollAgain = true;
+                    mState.logs.push(`🎲 CÚ ĐÚP HOÀN HẢO! <b>@${player.name}</b> được thêm lượt đổ xúc xắc!`);
                 }
+            } else {
+                mState.doubleRollCount = 0;
+                mState.rollAgain = false;
             }
         }
 
@@ -2161,6 +2624,21 @@ const GamesModule = {
             await GamesModule.syncRoomToFirestore();
             return;
         }
+
+        // Reset temporary choice flags
+        mState.jailChoiceMade = false;
+        mState.jailRollAttempt = false;
+
+        // If double roll, current player gets another turn!
+        if (mState.rollAgain) {
+            mState.rollAgain = false; // reset flag
+            mState.logs.push(`🎲 <b>@${mState.players[mState.currentPlayerIdx].name}</b> tiếp tục gieo xúc xắc vì có cú đúp!`);
+            await GamesModule.syncRoomToFirestore();
+            return;
+        }
+
+        // Reset double roll count if turn changes
+        mState.doubleRollCount = 0;
 
         let nextIdx = mState.currentPlayerIdx;
         do {
