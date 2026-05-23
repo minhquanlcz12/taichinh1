@@ -52,7 +52,7 @@ const ChibiModule = {
         shoe: 8,
         accessory: 14, // Head/Glasses (0-13)
         gear: 20,     // Weapons (0-19)
-        wing: 5,      // Wings (0-4)
+        wing: 8,      // Wings (0-7)
         mount: 5,     // Vehicles (0-4)
         dragon: 4     // Dragon Spirits (0-3)
     },
@@ -93,7 +93,10 @@ const ChibiModule = {
             1: { label: "Cánh Thiên Thần", count: 22 },
             2: { label: "Cánh Ác Quỷ", count: 25 },
             3: { label: "Cánh Thiên Thần VIP", count: 30 },
-            4: { label: "Cánh Bướm Pha Lê", count: 35 }
+            4: { label: "Cánh Bướm Pha Lê", count: 35 },
+            5: { label: "Cánh Phượng Hoàng Lửa", count: 40 },
+            6: { label: "Cánh Dơi Hắc Ám", count: 45 },
+            7: { label: "Cánh Băng Tuyết VIP", count: 50 }
         },
         dragon: {
             1: { label: "Lam Long Thần", count: 30 },
@@ -286,6 +289,32 @@ const ChibiModule = {
                     <g transform="translate(100, 120) scale(-1, 1) translate(-100, -120)">
                         <path d="M 100 120 C 50 50 10 30 -5 85 C -15 130 30 160 50 145 C 30 180 50 210 90 195 C 100 185 100 140 100 120" fill="#c084fc" opacity="0.8" stroke="#fff" />
                     </g>
+                </g>
+            `;
+        } else if (c.wing === 5) { // Fire Phoenix Wings
+            wingHtml = `
+                <g class="${isD ? 'chibi-tail-dance' : ''}" style="filter: drop-shadow(0 0 20px #ef4444) drop-shadow(0 0 40px #f59e0b);">
+                    <path d="M 100 110 C 20 40 -60 140 40 160 M 100 110 C 180 40 260 140 160 160" fill="url(#fireWingGrad)" stroke="#fff" stroke-width="0.5" />
+                    <path d="M 100 110 L 10 100 M 100 110 L 190 100" stroke="#fef08a" stroke-width="2" opacity="0.5" />
+                    <defs>
+                        <linearGradient id="fireWingGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#fef08a" /><stop offset="50%" stop-color="#f97316" /><stop offset="100%" stop-color="#991b1b" />
+                        </linearGradient>
+                    </defs>
+                </g>
+            `;
+        } else if (c.wing === 6) { // Dark Bat Wings
+            wingHtml = `
+                <g class="${isD ? 'chibi-tail-dance' : ''}" style="filter: drop-shadow(0 0 15px #a855f7);">
+                    <path d="M 100 110 C 30 40 -30 140 50 200 L 100 110 C 170 40 230 140 150 200 Z" fill="#2e1065" stroke="#a855f7" stroke-width="3" />
+                    <path d="M 100 110 L 50 150 M 100 110 L 150 150" stroke="#fff" stroke-width="1" opacity="0.2" />
+                </g>
+            `;
+        } else if (c.wing === 7) { // Ice Wings
+            wingHtml = `
+                <g class="${isD ? 'chibi-tail-dance' : ''}" style="filter: drop-shadow(0 0 18px #06b6d4);">
+                    <path d="M 100 110 L 20 60 L 50 120 L 20 160 L 100 120 L 180 160 L 150 120 L 180 60 Z" fill="rgba(165, 243, 252, 0.7)" stroke="#fff" stroke-width="2" />
+                    <path d="M 100 110 L 30 100 M 100 110 L 170 100" stroke="#fff" stroke-width="3" stroke-dasharray="8 4" />
                 </g>
             `;
         }
@@ -1309,7 +1338,7 @@ const ChibiModule = {
         }
         else if (tabId === 'wing') {
             const options = Array.from({ length: ChibiModule.counts.wing }, (_, i) => i);
-            const wingNames = ['Trống', 'Cánh Thiên Thần', 'Cánh Ác Quỷ', 'Thiên Thần VIP', 'Cánh Bướm Pha Lê'];
+            const wingNames = ['Trống', 'Cánh Thiên Thần', 'Cánh Ác Quỷ', 'Thiên Thần VIP', 'Cánh Bướm Pha Lê', 'Phượng Hoàng Lửa', 'Dơi Hắc Ám', 'Băng Tuyết'];
             contentHtml = ChibiModule.renderGrid('wing', options, wingNames, 1.1);
         }
         else if (tabId === 'mount') {
