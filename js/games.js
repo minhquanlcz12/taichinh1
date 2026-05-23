@@ -137,6 +137,7 @@ const GamesModule = {
 
     init: async () => {
         console.log("GamesModule Initialized Online Listeners");
+        GamesModule.injectStyles();
         GamesModule.listenForInvitations();
     },
 
@@ -222,6 +223,398 @@ const GamesModule = {
         Utils.showToast("Đã từ chối lời mời chơi cờ Tỷ Phú.", "info");
     },
 
+    injectStyles: () => {
+        if (document.getElementById('mono-games-module-styles')) return;
+        const style = document.createElement('style');
+        style.id = 'mono-games-module-styles';
+        style.innerHTML = `
+            .games-container {
+                padding: 20px;
+                max-width: 1200px;
+                margin: 0 auto;
+                font-family: system-ui, -apple-system, sans-serif;
+            }
+            .games-nav-tabs {
+                display: flex;
+                gap: 12px;
+                margin-bottom: 24px;
+                border-bottom: 1px solid rgba(255,255,255,0.08);
+                padding-bottom: 12px;
+            }
+            .games-nav-tab {
+                background: rgba(255,255,255,0.03);
+                border: 1px solid rgba(255,255,255,0.08);
+                padding: 10px 24px;
+                border-radius: 12px;
+                color: #94a3b8;
+                font-weight: 700;
+                cursor: pointer;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-size: 14px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+            .games-nav-tab:hover {
+                background: rgba(255,255,255,0.08);
+                color: #fff;
+                transform: translateY(-2px);
+            }
+            .games-nav-tab.active {
+                color: #fff;
+                background: linear-gradient(135deg, rgba(6,182,212,0.2), rgba(139,92,246,0.2));
+                border-color: #06b6d4;
+                box-shadow: 0 0 15px rgba(6,182,212,0.25);
+            }
+            
+            /* CARO STYLES */
+            .caro-arena {
+                display: flex;
+                gap: 24px;
+                flex-wrap: wrap;
+            }
+            .caro-board-panel {
+                flex: 1.2;
+                min-width: 320px;
+                background: rgba(15,23,42,0.7);
+                border: 1px solid rgba(255,255,255,0.06);
+                border-radius: 20px;
+                padding: 20px;
+                backdrop-filter: blur(12px);
+                box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+            .caro-grid {
+                display: grid;
+                grid-template-columns: repeat(15, 1fr);
+                gap: 1.5px;
+                background: rgba(255,255,255,0.04);
+                border: 2px solid rgba(6,182,212,0.3);
+                padding: 3px;
+                border-radius: 8px;
+                width: 100%;
+                max-width: 480px;
+                aspect-ratio: 1;
+                box-shadow: 0 0 20px rgba(6,182,212,0.15);
+            }
+            .caro-cell {
+                background: rgba(15,23,42,0.9);
+                aspect-ratio: 1;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 20px;
+                font-weight: 900;
+                cursor: pointer;
+                transition: all 0.2s;
+                user-select: none;
+                border-radius: 2px;
+            }
+            .caro-cell:hover:not(.filled) {
+                background: rgba(6,182,212,0.15);
+                box-shadow: inset 0 0 8px rgba(6,182,212,0.3);
+            }
+            .caro-cell.filled.X {
+                color: #06b6d4;
+                text-shadow: 0 0 10px #06b6d4;
+            }
+            .caro-cell.filled.O {
+                color: #ec4899;
+                text-shadow: 0 0 10px #ec4899;
+            }
+            .caro-cell.win-highlight {
+                background: rgba(34,197,94,0.35);
+                color: #22c55e !important;
+                text-shadow: 0 0 12px #22c55e;
+                animation: winPulse 1s infinite alternate;
+            }
+            @keyframes winPulse {
+                0% { transform: scale(1); }
+                100% { transform: scale(1.05); }
+            }
+
+            .caro-sidebar-panel {
+                flex: 0.8;
+                min-width: 280px;
+                background: rgba(15,23,42,0.65);
+                border: 1px solid rgba(255,255,255,0.06);
+                border-radius: 20px;
+                padding: 24px;
+                backdrop-filter: blur(12px);
+                box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            /* MONOPOLY PREMIUM STYLES */
+            .mono-arena {
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+            }
+            .mono-setup-panel {
+                background: linear-gradient(145deg, rgba(15,23,42,0.85), rgba(22,12,52,0.9));
+                border: 1.5px solid rgba(139,92,246,0.3);
+                border-radius: 20px;
+                padding: 28px;
+                backdrop-filter: blur(16px);
+                box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 25px rgba(139,92,246,0.08);
+            }
+
+            /* Premium Monopoly Board */
+            .mono-board {
+                display: grid;
+                grid-template-columns: 1.5fr repeat(4, 1fr) 1.5fr;
+                grid-template-rows: 1.5fr repeat(4, 1fr) 1.5fr;
+                gap: 2px;
+                background: linear-gradient(145deg, #060d1e 0%, #130830 45%, #080e20 100%);
+                border: 3px solid;
+                border-image: linear-gradient(135deg, #8b5cf6, #a855f7, #ec4899, #06b6d4, #8b5cf6) 1;
+                padding: 3px;
+                width: 100%;
+                max-width: 740px;
+                margin: 0 auto;
+                aspect-ratio: 1;
+                box-shadow:
+                    0 0 50px rgba(139,92,246,0.12),
+                    0 0 100px rgba(139,92,246,0.06),
+                    0 10px 40px rgba(0,0,0,0.7),
+                    inset 0 0 30px rgba(0,0,0,0.5);
+                position: relative;
+            }
+            .mono-board::before {
+                content: '';
+                position: absolute;
+                inset: 0;
+                background: radial-gradient(circle at 50% 50%, rgba(139,92,246,0.05) 0%, transparent 60%);
+                pointer-events: none;
+                z-index: 0;
+            }
+
+            /* Individual Tile */
+            .mono-tile {
+                background: rgba(16,24,48,0.92);
+                border: 1px solid rgba(255,255,255,0.06);
+                padding: 2px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 1px;
+                position: relative;
+                overflow: hidden;
+                transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+                z-index: 1;
+                cursor: default;
+            }
+            .mono-tile:hover {
+                z-index: 10;
+                box-shadow: 0 0 20px rgba(139,92,246,0.3), inset 0 0 15px rgba(139,92,246,0.08);
+                border-color: rgba(139,92,246,0.4);
+                transform: scale(1.06);
+            }
+            .mono-tile.has-player {
+                box-shadow: 0 0 12px rgba(255,255,255,0.08);
+            }
+
+            /* Corner Tiles */
+            .mono-tile.corner-tile {
+                background: linear-gradient(135deg, rgba(22,18,55,0.95), rgba(18,28,52,0.95));
+                border-color: rgba(139,92,246,0.25);
+            }
+
+            /* Color bars on property tiles facing center */
+            .mono-color-bar {
+                position: absolute;
+                background: var(--bar-color);
+                box-shadow: 0 0 8px var(--bar-color);
+                z-index: 2;
+            }
+            .side-top .mono-color-bar { bottom: 0; left: 0; right: 0; height: 5px; }
+            .side-right .mono-color-bar { top: 0; left: 0; bottom: 0; width: 5px; }
+            .side-bottom .mono-color-bar { top: 0; left: 0; right: 0; height: 5px; }
+            .side-left .mono-color-bar { top: 0; right: 0; bottom: 0; width: 5px; }
+
+            .mono-tile-name {
+                font-weight: 800;
+                color: #e2e8f0;
+                font-size: 8px;
+                text-align: center;
+                line-height: 1.15;
+                max-width: 100%;
+                padding: 0 1px;
+            }
+            .corner-tile .mono-tile-name {
+                font-size: 9px;
+                color: #a78bfa;
+            }
+            .mono-tile-cost {
+                font-size: 9px;
+                font-weight: 900;
+                color: #fbbf24;
+                text-shadow: 0 0 5px rgba(251,191,36,0.25);
+            }
+            .mono-tile-owner {
+                position: absolute;
+                bottom: 1px; right: 1px;
+                font-size: 6px;
+                background: rgba(0,0,0,0.9);
+                color: #94a3b8;
+                padding: 1px 3px;
+                border-radius: 3px;
+                font-weight: bold;
+                max-width: 85%;
+                overflow: hidden;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+            }
+
+            /* Pawns */
+            .mono-tile-pawns {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 2px;
+                justify-content: center;
+                margin-top: 1px;
+            }
+            .mono-pawn {
+                width: 16px;
+                height: 16px;
+                border-radius: 50%;
+                border: 2px solid rgba(255,255,255,0.85);
+                box-shadow: 0 0 6px currentColor, 0 1px 3px rgba(0,0,0,0.6);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 7px;
+                font-weight: 900;
+                color: #fff;
+                animation: pawnBob 1.5s ease-in-out infinite alternate;
+                z-index: 5;
+                position: relative;
+            }
+            @keyframes pawnBob {
+                0% { transform: translateY(0) scale(1); }
+                100% { transform: translateY(-2px) scale(1.05); }
+            }
+
+            /* Center Panel - Premium Dashboard */
+            .mono-center-panel {
+                grid-column: 2 / 6;
+                grid-row: 2 / 6;
+                background:
+                    radial-gradient(ellipse at 50% 50%, rgba(139,92,246,0.07) 0%, transparent 65%),
+                    linear-gradient(145deg, rgba(10,15,30,0.98), rgba(14,10,35,0.98));
+                border: 1.5px dashed rgba(139,92,246,0.18);
+                border-radius: 8px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 12px;
+                gap: 8px;
+                text-align: center;
+                box-shadow: inset 0 0 50px rgba(0,0,0,0.6);
+                position: relative;
+                z-index: 1;
+                overflow: hidden;
+            }
+            .mono-center-panel::before {
+                content: '';
+                position: absolute;
+                inset: -80%;
+                background: conic-gradient(from 0deg, transparent 0%, rgba(139,92,246,0.03) 12%, transparent 25%, rgba(236,72,153,0.03) 37%, transparent 50%, rgba(6,182,212,0.03) 62%, transparent 75%, rgba(139,92,246,0.03) 87%, transparent 100%);
+                animation: rotGlow 30s linear infinite;
+                pointer-events: none;
+            }
+            @keyframes rotGlow { to { transform: rotate(360deg); } }
+
+            /* Dice */
+            .mono-dice-wrap {
+                display: flex;
+                gap: 14px;
+                margin: 6px 0;
+                perspective: 300px;
+            }
+            .mono-dice {
+                width: 52px;
+                height: 52px;
+                background: linear-gradient(145deg, #2d1b69, #1a0e42);
+                border: 2.5px solid #8b5cf6;
+                border-radius: 11px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 26px;
+                color: #fff;
+                text-shadow: 0 0 12px #a78bfa;
+                box-shadow:
+                    0 4px 20px rgba(139,92,246,0.35),
+                    inset 0 -3px 6px rgba(0,0,0,0.4),
+                    inset 0 2px 4px rgba(255,255,255,0.06);
+                transition: all 0.15s;
+            }
+            .mono-dice.rolling {
+                animation: dice3D 0.2s infinite;
+            }
+            @keyframes dice3D {
+                0%   { transform: rotateX(-12deg) rotateZ(-8deg) scale(0.94); }
+                25%  { transform: rotateX(12deg) rotateZ(6deg) scale(1.06); filter: brightness(1.25); }
+                50%  { transform: rotateX(-6deg) rotateZ(12deg) scale(0.97); }
+                75%  { transform: rotateX(10deg) rotateZ(-10deg) scale(1.03); filter: brightness(1.15); }
+                100% { transform: rotateX(-12deg) rotateZ(-8deg) scale(0.94); }
+            }
+
+            /* HUD Panels */
+            .mono-hud-players, .mono-hud-logs {
+                background: linear-gradient(145deg, rgba(15,23,42,0.75), rgba(20,12,48,0.7));
+                border: 1px solid rgba(255,255,255,0.06);
+                border-radius: 16px;
+                padding: 18px;
+                backdrop-filter: blur(8px);
+            }
+            .mono-hud-logs {
+                display: flex;
+                flex-direction: column;
+            }
+            #mono-log-area::-webkit-scrollbar { width: 4px; }
+            #mono-log-area::-webkit-scrollbar-track { background: transparent; }
+            #mono-log-area::-webkit-scrollbar-thumb { background: rgba(139,92,246,0.3); border-radius: 4px; }
+
+            /* Overlays */
+            .chance-overlay {
+                position: fixed;
+                top: 0; left: 0; width: 100vw; height: 100vh;
+                background: rgba(0,0,0,0.88);
+                z-index: 10001;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                backdrop-filter: blur(10px);
+                animation: overlayFadeIn 0.3s ease;
+            }
+            @keyframes overlayFadeIn { from { opacity: 0; } to { opacity: 1; } }
+            @keyframes chibiScaleIn {
+                from { transform: scale(0.7) translateY(20px); opacity: 0; }
+                to { transform: scale(1) translateY(0); opacity: 1; }
+            }
+            @keyframes bounce {
+                0%, 100% { transform: translateY(0); }
+                50% { transform: translateY(-8px); }
+            }
+            @keyframes pulse {
+                0%, 100% { opacity: 1; }
+                50% { opacity: 0.5; }
+            }
+        `;
+        document.head.appendChild(style);
+    },
+
     render: async () => {
         let container = document.getElementById('games-view');
         if (!container) {
@@ -239,393 +632,9 @@ const GamesModule = {
             console.error("Error loading accounts:", e);
         }
 
+        GamesModule.injectStyles();
+
         container.innerHTML = `
-            <style>
-                .games-container {
-                    padding: 20px;
-                    max-width: 1200px;
-                    margin: 0 auto;
-                    font-family: system-ui, -apple-system, sans-serif;
-                }
-                .games-nav-tabs {
-                    display: flex;
-                    gap: 12px;
-                    margin-bottom: 24px;
-                    border-bottom: 1px solid rgba(255,255,255,0.08);
-                    padding-bottom: 12px;
-                }
-                .games-nav-tab {
-                    background: rgba(255,255,255,0.03);
-                    border: 1px solid rgba(255,255,255,0.08);
-                    padding: 10px 24px;
-                    border-radius: 12px;
-                    color: #94a3b8;
-                    font-weight: 700;
-                    cursor: pointer;
-                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                    font-size: 14px;
-                    text-transform: uppercase;
-                    letter-spacing: 0.5px;
-                }
-                .games-nav-tab:hover {
-                    background: rgba(255,255,255,0.08);
-                    color: #fff;
-                    transform: translateY(-2px);
-                }
-                .games-nav-tab.active {
-                    color: #fff;
-                    background: linear-gradient(135deg, rgba(6,182,212,0.2), rgba(139,92,246,0.2));
-                    border-color: #06b6d4;
-                    box-shadow: 0 0 15px rgba(6,182,212,0.25);
-                }
-                
-                /* CARO STYLES */
-                .caro-arena {
-                    display: flex;
-                    gap: 24px;
-                    flex-wrap: wrap;
-                }
-                .caro-board-panel {
-                    flex: 1.2;
-                    min-width: 320px;
-                    background: rgba(15,23,42,0.7);
-                    border: 1px solid rgba(255,255,255,0.06);
-                    border-radius: 20px;
-                    padding: 20px;
-                    backdrop-filter: blur(12px);
-                    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                }
-                .caro-grid {
-                    display: grid;
-                    grid-template-columns: repeat(15, 1fr);
-                    gap: 1.5px;
-                    background: rgba(255,255,255,0.04);
-                    border: 2px solid rgba(6,182,212,0.3);
-                    padding: 3px;
-                    border-radius: 8px;
-                    width: 100%;
-                    max-width: 480px;
-                    aspect-ratio: 1;
-                    box-shadow: 0 0 20px rgba(6,182,212,0.15);
-                }
-                .caro-cell {
-                    background: rgba(15,23,42,0.9);
-                    aspect-ratio: 1;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-size: 20px;
-                    font-weight: 900;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                    user-select: none;
-                    border-radius: 2px;
-                }
-                .caro-cell:hover:not(.filled) {
-                    background: rgba(6,182,212,0.15);
-                    box-shadow: inset 0 0 8px rgba(6,182,212,0.3);
-                }
-                .caro-cell.filled.X {
-                    color: #06b6d4;
-                    text-shadow: 0 0 10px #06b6d4;
-                }
-                .caro-cell.filled.O {
-                    color: #ec4899;
-                    text-shadow: 0 0 10px #ec4899;
-                }
-                .caro-cell.win-highlight {
-                    background: rgba(34,197,94,0.35);
-                    color: #22c55e !important;
-                    text-shadow: 0 0 12px #22c55e;
-                    animation: winPulse 1s infinite alternate;
-                }
-                @keyframes winPulse {
-                    0% { transform: scale(1); }
-                    100% { transform: scale(1.05); }
-                }
-
-                .caro-sidebar-panel {
-                    flex: 0.8;
-                    min-width: 280px;
-                    background: rgba(15,23,42,0.65);
-                    border: 1px solid rgba(255,255,255,0.06);
-                    border-radius: 20px;
-                    padding: 24px;
-                    backdrop-filter: blur(12px);
-                    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-                    display: flex;
-                    flex-direction: column;
-                    gap: 20px;
-                }
-
-                /* MONOPOLY PREMIUM STYLES */
-                .mono-arena {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 20px;
-                }
-                .mono-setup-panel {
-                    background: linear-gradient(145deg, rgba(15,23,42,0.85), rgba(22,12,52,0.9));
-                    border: 1.5px solid rgba(139,92,246,0.3);
-                    border-radius: 20px;
-                    padding: 28px;
-                    backdrop-filter: blur(16px);
-                    box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 25px rgba(139,92,246,0.08);
-                }
-
-                /* Premium Monopoly Board */
-                .mono-board {
-                    display: grid;
-                    grid-template-columns: 1.5fr repeat(4, 1fr) 1.5fr;
-                    grid-template-rows: 1.5fr repeat(4, 1fr) 1.5fr;
-                    gap: 2px;
-                    background: linear-gradient(145deg, #060d1e 0%, #130830 45%, #080e20 100%);
-                    border: 3px solid;
-                    border-image: linear-gradient(135deg, #8b5cf6, #a855f7, #ec4899, #06b6d4, #8b5cf6) 1;
-                    padding: 3px;
-                    width: 100%;
-                    max-width: 740px;
-                    margin: 0 auto;
-                    aspect-ratio: 1;
-                    box-shadow:
-                        0 0 50px rgba(139,92,246,0.12),
-                        0 0 100px rgba(139,92,246,0.06),
-                        0 10px 40px rgba(0,0,0,0.7),
-                        inset 0 0 30px rgba(0,0,0,0.5);
-                    position: relative;
-                }
-                .mono-board::before {
-                    content: '';
-                    position: absolute;
-                    inset: 0;
-                    background: radial-gradient(circle at 50% 50%, rgba(139,92,246,0.05) 0%, transparent 60%);
-                    pointer-events: none;
-                    z-index: 0;
-                }
-
-                /* Individual Tile */
-                .mono-tile {
-                    background: rgba(16,24,48,0.92);
-                    border: 1px solid rgba(255,255,255,0.06);
-                    padding: 2px;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 1px;
-                    position: relative;
-                    overflow: hidden;
-                    transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
-                    z-index: 1;
-                    cursor: default;
-                }
-                .mono-tile:hover {
-                    z-index: 10;
-                    box-shadow: 0 0 20px rgba(139,92,246,0.3), inset 0 0 15px rgba(139,92,246,0.08);
-                    border-color: rgba(139,92,246,0.4);
-                    transform: scale(1.06);
-                }
-                .mono-tile.has-player {
-                    box-shadow: 0 0 12px rgba(255,255,255,0.08);
-                }
-
-                /* Corner Tiles */
-                .mono-tile.corner-tile {
-                    background: linear-gradient(135deg, rgba(22,18,55,0.95), rgba(18,28,52,0.95));
-                    border-color: rgba(139,92,246,0.25);
-                }
-
-                /* Color bars on property tiles facing center */
-                .mono-color-bar {
-                    position: absolute;
-                    background: var(--bar-color);
-                    box-shadow: 0 0 8px var(--bar-color);
-                    z-index: 2;
-                }
-                .side-top .mono-color-bar { bottom: 0; left: 0; right: 0; height: 5px; }
-                .side-right .mono-color-bar { top: 0; left: 0; bottom: 0; width: 5px; }
-                .side-bottom .mono-color-bar { top: 0; left: 0; right: 0; height: 5px; }
-                .side-left .mono-color-bar { top: 0; right: 0; bottom: 0; width: 5px; }
-
-                .mono-tile-name {
-                    font-weight: 800;
-                    color: #e2e8f0;
-                    font-size: 8px;
-                    text-align: center;
-                    line-height: 1.15;
-                    max-width: 100%;
-                    padding: 0 1px;
-                }
-                .corner-tile .mono-tile-name {
-                    font-size: 9px;
-                    color: #a78bfa;
-                }
-                .mono-tile-cost {
-                    font-size: 9px;
-                    font-weight: 900;
-                    color: #fbbf24;
-                    text-shadow: 0 0 5px rgba(251,191,36,0.25);
-                }
-                .mono-tile-owner {
-                    position: absolute;
-                    bottom: 1px; right: 1px;
-                    font-size: 6px;
-                    background: rgba(0,0,0,0.9);
-                    color: #94a3b8;
-                    padding: 1px 3px;
-                    border-radius: 3px;
-                    font-weight: bold;
-                    max-width: 85%;
-                    overflow: hidden;
-                    white-space: nowrap;
-                    text-overflow: ellipsis;
-                }
-
-                /* Pawns */
-                .mono-tile-pawns {
-                    display: flex;
-                    flex-wrap: wrap;
-                    gap: 2px;
-                    justify-content: center;
-                    margin-top: 1px;
-                }
-                .mono-pawn {
-                    width: 16px;
-                    height: 16px;
-                    border-radius: 50%;
-                    border: 2px solid rgba(255,255,255,0.85);
-                    box-shadow: 0 0 6px currentColor, 0 1px 3px rgba(0,0,0,0.6);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-size: 7px;
-                    font-weight: 900;
-                    color: #fff;
-                    animation: pawnBob 1.5s ease-in-out infinite alternate;
-                    z-index: 5;
-                    position: relative;
-                }
-                @keyframes pawnBob {
-                    0% { transform: translateY(0) scale(1); }
-                    100% { transform: translateY(-2px) scale(1.05); }
-                }
-
-                /* Center Panel - Premium Dashboard */
-                .mono-center-panel {
-                    grid-column: 2 / 6;
-                    grid-row: 2 / 6;
-                    background:
-                        radial-gradient(ellipse at 50% 50%, rgba(139,92,246,0.07) 0%, transparent 65%),
-                        linear-gradient(145deg, rgba(10,15,30,0.98), rgba(14,10,35,0.98));
-                    border: 1.5px dashed rgba(139,92,246,0.18);
-                    border-radius: 8px;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    padding: 12px;
-                    gap: 8px;
-                    text-align: center;
-                    box-shadow: inset 0 0 50px rgba(0,0,0,0.6);
-                    position: relative;
-                    z-index: 1;
-                    overflow: hidden;
-                }
-                .mono-center-panel::before {
-                    content: '';
-                    position: absolute;
-                    inset: -80%;
-                    background: conic-gradient(from 0deg, transparent 0%, rgba(139,92,246,0.03) 12%, transparent 25%, rgba(236,72,153,0.03) 37%, transparent 50%, rgba(6,182,212,0.03) 62%, transparent 75%, rgba(139,92,246,0.03) 87%, transparent 100%);
-                    animation: rotGlow 30s linear infinite;
-                    pointer-events: none;
-                }
-                @keyframes rotGlow { to { transform: rotate(360deg); } }
-
-                /* Dice */
-                .mono-dice-wrap {
-                    display: flex;
-                    gap: 14px;
-                    margin: 6px 0;
-                    perspective: 300px;
-                }
-                .mono-dice {
-                    width: 52px;
-                    height: 52px;
-                    background: linear-gradient(145deg, #2d1b69, #1a0e42);
-                    border: 2.5px solid #8b5cf6;
-                    border-radius: 11px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-size: 26px;
-                    color: #fff;
-                    text-shadow: 0 0 12px #a78bfa;
-                    box-shadow:
-                        0 4px 20px rgba(139,92,246,0.35),
-                        inset 0 -3px 6px rgba(0,0,0,0.4),
-                        inset 0 2px 4px rgba(255,255,255,0.06);
-                    transition: all 0.15s;
-                }
-                .mono-dice.rolling {
-                    animation: dice3D 0.2s infinite;
-                }
-                @keyframes dice3D {
-                    0%   { transform: rotateX(-12deg) rotateZ(-8deg) scale(0.94); }
-                    25%  { transform: rotateX(12deg) rotateZ(6deg) scale(1.06); filter: brightness(1.25); }
-                    50%  { transform: rotateX(-6deg) rotateZ(12deg) scale(0.97); }
-                    75%  { transform: rotateX(10deg) rotateZ(-10deg) scale(1.03); filter: brightness(1.15); }
-                    100% { transform: rotateX(-12deg) rotateZ(-8deg) scale(0.94); }
-                }
-
-                /* HUD Panels */
-                .mono-hud-players, .mono-hud-logs {
-                    background: linear-gradient(145deg, rgba(15,23,42,0.75), rgba(20,12,48,0.7));
-                    border: 1px solid rgba(255,255,255,0.06);
-                    border-radius: 16px;
-                    padding: 18px;
-                    backdrop-filter: blur(8px);
-                }
-                .mono-hud-logs {
-                    display: flex;
-                    flex-direction: column;
-                }
-                #mono-log-area::-webkit-scrollbar { width: 4px; }
-                #mono-log-area::-webkit-scrollbar-track { background: transparent; }
-                #mono-log-area::-webkit-scrollbar-thumb { background: rgba(139,92,246,0.3); border-radius: 4px; }
-
-                /* Overlays */
-                .chance-overlay {
-                    position: fixed;
-                    top: 0; left: 0; width: 100vw; height: 100vh;
-                    background: rgba(0,0,0,0.88);
-                    z-index: 10001;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    backdrop-filter: blur(10px);
-                    animation: overlayFadeIn 0.3s ease;
-                }
-                @keyframes overlayFadeIn { from { opacity: 0; } to { opacity: 1; } }
-                @keyframes chibiScaleIn {
-                    from { transform: scale(0.7) translateY(20px); opacity: 0; }
-                    to { transform: scale(1) translateY(0); opacity: 1; }
-                }
-                @keyframes bounce {
-                    0%, 100% { transform: translateY(0); }
-                    50% { transform: translateY(-8px); }
-                }
-                @keyframes pulse {
-                    0%, 100% { opacity: 1; }
-                    50% { opacity: 0.5; }
-                }
-            </style>
-
             <div class="games-container">
                 <!-- Navigation Tabs -->
                 <div class="games-nav-tabs">
@@ -658,6 +667,7 @@ const GamesModule = {
     },
 
     renderTabContent: () => {
+        GamesModule.injectStyles();
         let panel = document.getElementById('games-tab-content');
         if (!panel) {
             panel = document.getElementById('hub-content-monopoly');
@@ -1453,8 +1463,21 @@ const GamesModule = {
     },
 
     // Mở Modal Mời Đồng Nghiệp Chơi Cờ
-    openInviteEmployeesModal: () => {
-        const emps = GamesModule.monopoly.availableEmployees;
+    openInviteEmployeesModal: async () => {
+        // Load available users dynamically to ensure we always have the list
+        let emps = [];
+        try {
+            if (typeof DB !== 'undefined' && typeof DB.getAccounts === 'function') {
+                const accounts = await DB.getAccounts() || [];
+                // Exclude current user and admin
+                const currentUser = Auth.currentUser;
+                emps = accounts.filter(a => a.username !== 'admin' && a.username !== currentUser?.username);
+                GamesModule.monopoly.availableEmployees = emps;
+            }
+        } catch (e) {
+            console.error("Error loading accounts:", e);
+        }
+
         const joinedNames = GamesModule.monopoly.players.map(p => p.name);
         const filtered = emps.filter(e => !joinedNames.includes(e.username));
 
@@ -1477,7 +1500,7 @@ const GamesModule = {
                         <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <div style="width: 18px; height: 18px; border-radius: 50%; background: ${emp.profile?.color || '#cbd5e1'};"></div>
-                                <span style="font-size: 12px; font-weight: bold;">@${emp.username}</span>
+                                <span style="font-size: 12px; font-weight: bold;">@${emp.username} (${emp.profile?.fullname || emp.username})</span>
                             </div>
                             <button onclick="GamesModule.sendOnlineInvitation('${emp.username}')" style="padding: 6px 12px; background: rgba(139,92,246,0.15); border: 1px solid #8b5cf6; border-radius: 6px; color: #8b5cf6; font-size: 11px; cursor: pointer; font-weight: bold; transition: all 0.2s;" onmouseover="this.style.background='#8b5cf6'; this.style.color='#fff'">
                                 MỜI CHƠI
