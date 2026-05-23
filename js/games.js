@@ -1567,6 +1567,7 @@ const GamesModule = {
             await GamesModule.finishMonopolyTurn();
         } else if (tile.type === 'jail') {
             player.isJailed = true;
+            player.jailTurns = 2;
             mState.logs.push(`🔒 Cảnh báo! <b>@${player.name}</b> bị HR phát hiện Đi Muộn không lý do! Bị tạm giam phạt đứng tại đây.`);
             await GamesModule.finishMonopolyTurn();
         } else if (tile.type === 'chance' || tile.type === 'lucky') {
@@ -1772,7 +1773,7 @@ const GamesModule = {
                 </div>
 
                 <div style="font-size: 11px; color: #94a3b8; font-style: italic;">
-                    Chú ý: Thử vận may không ra cú đúp sẽ mất lượt giam giữ. Hết 2 lượt buộc phải nộp phạt!
+                    Chú ý: Thử vận may không ra cú đúp sẽ mất lượt giam giữ. Hết 2 lượt sẽ được tự do miễn phí!
                 </div>
             </div>
         `;
@@ -2329,6 +2330,13 @@ const GamesModule = {
         if (mState.isRolling) return;
 
         const player = mState.players[mState.currentPlayerIdx];
+        if (player.isJailed && (player.jailTurns !== undefined && player.jailTurns <= 0)) {
+            player.isJailed = false;
+            player.jailTurns = 0;
+            mState.logs.push(`🔓 Đã hết 2 lượt giam giữ. <b>@${player.name}</b> được HR thả tự do miễn phí!`);
+            await GamesModule.syncRoomToFirestore();
+        }
+
         if (player.isJailed) {
             if (!mState.jailChoiceMade) {
                 GamesModule.renderMonopolyJailModal(player);
@@ -2386,14 +2394,9 @@ const GamesModule = {
                     mState.jailChoiceMade = false;
                     mState.jailRollAttempt = false;
 
-                    if (player.jailTurns <= 0) {
-                        player.isJailed = false;
-                        mState.logs.push(`🔓 Đã hết 2 lượt giam giữ. <b>@${player.name}</b> được HR thả tự do miễn phí và di chuyển tiếp!`);
-                    } else {
-                        mState.logs.push(`🔒 Gieo đúp thất bại! <b>@${player.name}</b> tiếp tục chịu án Phạt Đi Muộn (Còn lại ${player.jailTurns} lượt). Lượt chơi kết thúc.`);
-                        await GamesModule.finishMonopolyTurn();
-                        return;
-                    }
+                    mState.logs.push(`🔒 Gieo đúp thất bại! <b>@${player.name}</b> tiếp tục chịu án Phạt Đi Muộn (Còn lại ${player.jailTurns} lượt). Lượt chơi kết thúc.`);
+                    await GamesModule.finishMonopolyTurn();
+                    return;
                 }
             }
         } else {
