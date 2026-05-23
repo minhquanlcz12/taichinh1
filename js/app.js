@@ -148,6 +148,12 @@ const app = {
     },
 
     navigateTo: (viewId) => {
+        // Close any active game overlays
+        const monoOverlay = document.getElementById('mono-board-overlay');
+        if (monoOverlay) monoOverlay.remove();
+        const caroOverlay = document.getElementById('caro-overlay');
+        if (caroOverlay) caroOverlay.remove();
+
         // Hide all views
         document.querySelectorAll('.view').forEach(view => {
             view.classList.remove('active');
@@ -172,8 +178,7 @@ const app = {
             'settings-view': { title: 'Cài đặt', sub: 'Tùy chỉnh hệ thống' },
             'rewards-view': { title: 'Đổi Thưởng', sub: 'Dùng Công Đức đổi Đặc Quyền' },
             'music-view': { title: '🎵 YouTube Music', sub: 'Nghe nhạc & xem MV ngay trong ứng dụng' },
-            'lobby-view': { title: 'Sảnh Chờ Chibi', sub: 'Giao lưu, kết bạn và thách đấu cờ Caro' },
-            'games-view': { title: 'Đấu Trường Game', sub: 'Giải trí đỉnh cao - cờ Caro & cờ Tỷ Phú Văn Phòng' }
+            'lobby-view': { title: 'Sảnh Chờ Chibi', sub: 'Giao lưu, kết bạn và thách đấu cờ Caro' }
         };
 
         const titleInfo = titles[viewId] || titles['dashboard-view'];
@@ -248,11 +253,6 @@ const app = {
             document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
             const lobbyNav = document.querySelector('.nav-item[data-target="lobby-view"]');
             if (lobbyNav) lobbyNav.classList.add('active');
-        } else if (viewId === 'games-view') {
-            if (typeof GamesModule !== 'undefined') GamesModule.render();
-            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
-            const gamesNav = document.querySelector('.nav-item[data-target="games-view"]');
-            if (gamesNav) gamesNav.classList.add('active');
         }
         
         // Handle leaving lobby logic (custom hook)

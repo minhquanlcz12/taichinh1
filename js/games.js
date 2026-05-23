@@ -200,9 +200,16 @@ const GamesModule = {
         // Set status to accepted
         await db.collection("monopoly_invitations").doc(inviteId).update({ status: 'accepted' });
 
-        // Force switch view to Monopoly game tab
-        app.navigateTo('games-view');
-        GamesModule.switchTab('monopoly');
+        // Force switch view to Monopoly game tab in Lobby
+        app.navigateTo('lobby-view');
+        if (typeof LobbyNeon !== 'undefined') {
+            const hub = document.getElementById('lobby-game-hub');
+            if (hub) hub.classList.remove('collapsed');
+            LobbyNeon.switchHubTab('monopoly');
+        } else {
+            GamesModule.activeTab = 'monopoly';
+            GamesModule.renderTabContent();
+        }
 
         // Join Room
         await GamesModule.joinOnlineRoom(roomId);
@@ -216,7 +223,10 @@ const GamesModule = {
     },
 
     render: async () => {
-        const container = document.getElementById('games-view');
+        let container = document.getElementById('games-view');
+        if (!container) {
+            container = document.getElementById('hub-content-monopoly');
+        }
         if (!container) return;
 
         // Load available users for Monopoly pickers
@@ -583,7 +593,10 @@ const GamesModule = {
     },
 
     renderTabContent: () => {
-        const panel = document.getElementById('games-tab-content');
+        let panel = document.getElementById('games-tab-content');
+        if (!panel) {
+            panel = document.getElementById('hub-content-monopoly');
+        }
         if (!panel) return;
 
         if (GamesModule.activeTab === 'caro') {
@@ -861,14 +874,31 @@ const GamesModule = {
         const mState = GamesModule.monopoly;
 
         if (!mState.activeRoomId) {
+            const overlay = document.getElementById('mono-board-overlay');
+            if (overlay) overlay.remove();
             GamesModule.renderMonopolyLobby(container);
             return;
         }
 
         // Inside a room
         if (!mState.gameActive) {
+            const overlay = document.getElementById('mono-board-overlay');
+            if (overlay) overlay.remove();
             GamesModule.renderMonopolyRoomStandby(container);
             return;
+        }
+
+        // Active game board - redirect to overlay if inside Chibi lobby
+        let boardContainer = container;
+        if (document.getElementById('lobby-view')) {
+            let overlay = document.getElementById('mono-board-overlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'mono-board-overlay';
+                overlay.className = 'caro-modal';
+                document.getElementById('lobby-view').appendChild(overlay);
+            }
+            boardContainer = overlay;
         }
 
         // Active game board
@@ -953,7 +983,7 @@ const GamesModule = {
             </div>
         `;
 
-        container.innerHTML = `
+        boardContainer.innerHTML = `
             <div class="mono-arena">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <h3 style="color: #fff; margin: 0; font-size: 18px; font-weight: 800; display: flex; align-items: center; gap: 8px;">

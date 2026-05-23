@@ -101,6 +101,8 @@ window.LobbyNeon = {
                     LobbyNeon.renderUser(username, data.x, data.y, data.chibiConfig);
                 }
             });
+            // Update online player list in hub!
+            LobbyNeon.updateHubPlayers(allUsers);
         });
 
         LobbyNeon.state.unsubscribeChat = DB.listenLobbyChat((messages) => {
@@ -113,8 +115,90 @@ window.LobbyNeon = {
         const container = document.getElementById('lobby-view');
         if (!container) return;
 
-        console.log("Rendering Final Stable Lobby Video...");
+        console.log("Rendering Final Stable Lobby Video with Game Hub Panel...");
         container.innerHTML = `
+            <style>
+                .lobby-hub-toggle {
+                    position: absolute;
+                    top: 20px;
+                    right: 20px;
+                    z-index: 1001;
+                    background: linear-gradient(135deg, #00f3ff, #8b5cf6);
+                    border: none;
+                    border-radius: 50%;
+                    width: 50px;
+                    height: 50px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    box-shadow: 0 0 15px rgba(0, 243, 255, 0.4);
+                    transition: all 0.3s;
+                }
+                .lobby-game-hub {
+                    position: absolute;
+                    top: 80px;
+                    right: 20px;
+                    bottom: 80px;
+                    width: 360px;
+                    background: rgba(15, 23, 42, 0.95);
+                    border: 2px solid #00f3ff;
+                    border-radius: 16px;
+                    box-shadow: 0 0 35px rgba(0, 243, 255, 0.25);
+                    z-index: 1000;
+                    backdrop-filter: blur(12px);
+                    display: flex;
+                    flex-direction: column;
+                    overflow: hidden;
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    transform: translateX(0);
+                    opacity: 1;
+                    pointer-events: auto;
+                }
+                .lobby-game-hub.collapsed {
+                    transform: translateX(450px);
+                    opacity: 0;
+                    pointer-events: none;
+                }
+                .hub-tab {
+                    flex: 1;
+                    padding: 12px;
+                    background: none;
+                    border: none;
+                    border-bottom: 2px solid transparent;
+                    color: #64748b;
+                    font-weight: 800;
+                    font-size: 11px;
+                    text-transform: uppercase;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                .hub-tab.active {
+                    color: #fff;
+                    border-bottom: 2px solid #00f3ff;
+                    text-shadow: 0 0 8px rgba(0,243,255,0.4);
+                }
+                .hub-player-row {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    background: rgba(255,255,255,0.03);
+                    border: 1px solid rgba(255,255,255,0.05);
+                    padding: 10px 14px;
+                    border-radius: 8px;
+                    margin-bottom: 8px;
+                }
+                .hub-player-row:hover {
+                    background: rgba(255,255,255,0.06);
+                    border-color: rgba(0,243,255,0.15);
+                }
+                .hub-content {
+                    flex: 1;
+                    overflow-y: auto;
+                    padding: 16px;
+                }
+            </style>
+
             <div id="lobby-map-container" style="width: 100%; height: 100%; position: relative; cursor: crosshair; overflow: hidden; background: #000;">
                 <div class="lobby-map" id="lobby-map">
                     <video id="lobby-video-bg" autoplay loop muted playsinline 
@@ -122,6 +206,45 @@ window.LobbyNeon = {
                         onerror="this.style.display='none'">
                         <source src="assets/lobby_bg.mp4" type="video/mp4">
                     </video>
+                </div>
+
+                <!-- Game Hub Toggle Button -->
+                <button onclick="LobbyNeon.toggleGameHub()" class="lobby-hub-toggle" title="Mở Đấu Trường Trực Tuyến" onmouseover="this.style.transform='scale(1.1)';" onmouseout="this.style.transform='scale(1)';">
+                    <i class="fa-solid fa-gamepad" style="color: #fff; font-size: 20px;"></i>
+                </button>
+
+                <!-- Game Hub sliding side panel -->
+                <div id="lobby-game-hub" class="lobby-game-hub">
+                    <div class="hub-header" style="background: rgba(0,243,255,0.08); padding: 16px; border-bottom: 1.5px solid rgba(0,243,255,0.2); display: flex; justify-content: space-between; align-items: center;">
+                        <h3 style="margin: 0; font-size: 14px; font-weight: 800; color: #00f3ff; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px;">
+                            🎮 ĐẤU TRƯỜNG TRỰC TUYẾN
+                        </h3>
+                        <span id="hub-online-count" style="font-size: 10px; background: rgba(16,185,129,0.15); color: #10b981; padding: 2px 8px; border-radius: 10px; font-weight: bold;">
+                            ⏳ ĐANG TẢI...
+                        </span>
+                    </div>
+                    
+                    <!-- Hub Tabs -->
+                    <div style="display: flex; background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.06);">
+                        <button onclick="LobbyNeon.switchHubTab('players')" id="hub-tab-players" class="hub-tab active">
+                            👥 ĐỒNG NGHIỆP
+                        </button>
+                        <button onclick="LobbyNeon.switchHubTab('monopoly')" id="hub-tab-monopoly" class="hub-tab">
+                            🎲 CỜ TỶ PHÚ
+                        </button>
+                    </div>
+
+                    <!-- Hub Contents -->
+                    <div id="hub-content-players" class="hub-content">
+                        <div style="text-align: center; color: #64748b; font-size: 12px; padding: 40px 10px;">
+                            Đang kết nối danh sách đồng nghiệp...
+                        </div>
+                    </div>
+                    <div id="hub-content-monopoly" class="hub-content" style="display: none;">
+                        <div style="text-align: center; color: #64748b; font-size: 12px; padding: 40px 10px;">
+                            Đang kết nối sảnh cờ Tỷ Phú...
+                        </div>
+                    </div>
                 </div>
 
                 <div class="lobby-chat-overlay">
@@ -512,5 +635,87 @@ window.LobbyNeon = {
             'CHẤP NHẬN BẠI TRẬN',
             'QUAY LẠI ỨNG CHIẾN'
         );
+    },
+
+    toggleGameHub: () => {
+        const hub = document.getElementById('lobby-game-hub');
+        if (!hub) return;
+        hub.classList.toggle('collapsed');
+    },
+
+    switchHubTab: (tab) => {
+        const tabPlayers = document.getElementById('hub-tab-players');
+        const tabMonopoly = document.getElementById('hub-tab-monopoly');
+        const contentPlayers = document.getElementById('hub-content-players');
+        const contentMonopoly = document.getElementById('hub-content-monopoly');
+
+        if (!tabPlayers || !tabMonopoly || !contentPlayers || !contentMonopoly) return;
+
+        tabPlayers.classList.remove('active');
+        tabMonopoly.classList.remove('active');
+        contentPlayers.style.display = 'none';
+        contentMonopoly.style.display = 'none';
+
+        if (tab === 'players') {
+            tabPlayers.classList.add('active');
+            contentPlayers.style.display = 'block';
+        } else if (tab === 'monopoly') {
+            tabMonopoly.classList.add('active');
+            contentMonopoly.style.display = 'block';
+            GamesModule.activeTab = 'monopoly';
+            GamesModule.renderTabContent();
+        }
+    },
+
+    updateHubPlayers: (allUsers) => {
+        const container = document.getElementById('hub-content-players');
+        if (!container) return;
+
+        const now = Date.now();
+        const me = Auth.currentUser?.username;
+
+        const activeUsers = Object.entries(allUsers)
+            .filter(([username, data]) => {
+                if (username === me) return false;
+                if (data.lastSeen && data.lastSeen.toDate) {
+                    const diff = now - data.lastSeen.toDate().getTime();
+                    return diff <= 60000;
+                }
+                return true;
+            });
+
+        const countEl = document.getElementById('hub-online-count');
+        if (countEl) {
+            countEl.textContent = `🟢 ${activeUsers.length + 1} ONLINE`;
+        }
+
+        if (activeUsers.length === 0) {
+            container.innerHTML = `
+                <div style="text-align: center; color: #64748b; font-size: 12px; padding: 40px 10px;">
+                    <i class="fa-solid fa-user-clock" style="font-size: 24px; margin-bottom: 12px; display: block; color: #475569;"></i>
+                    Chưa có đồng nghiệp nào khác ở sảnh chờ. Nhắn tin rủ họ vào sảnh nhé!
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = activeUsers.map(([username, data]) => {
+            const displayName = data.chibiConfig?.fullname || username;
+            const color = data.chibiConfig?.skinColor || '#6366f1';
+            return `
+                <div class="hub-player-row">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div style="width: 10px; height: 10px; border-radius: 50%; background: ${color}; box-shadow: 0 0 6px ${color};"></div>
+                        <div style="text-align: left;">
+                            <div style="font-size: 12px; font-weight: bold; color: #fff;">@${username}</div>
+                            <div style="font-size: 10px; color: #64748b;">${displayName}</div>
+                        </div>
+                    </div>
+                    <button onclick="LobbyNeon.showUserMenu('${username}')" style="padding: 6px 12px; background: rgba(0, 243, 255, 0.1); border: 1.5px solid #00f3ff; border-radius: 6px; color: #00f3ff; font-size: 10px; cursor: pointer; font-weight: bold; transition: all 0.2s;" onmouseover="this.style.background='#00f3ff'; this.style.color='#000'" onmouseout="this.style.background='rgba(0, 243, 255, 0.1)'; this.style.color='#00f3ff';">
+                        ⚔️ THÁCH ĐẤU
+                    </button>
+                </div>
+            `;
+        }).join('');
     }
 };
