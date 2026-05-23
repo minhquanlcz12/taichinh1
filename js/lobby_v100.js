@@ -3,7 +3,7 @@
  * Manages movement, chat, and Caro PvP
  */
 
-const LobbyModule = {
+const LobbyNPS = {
     state: {
         isConnected: false,
         users: {}, // { username: { x, y, config } }
@@ -14,68 +14,89 @@ const LobbyModule = {
     },
 
     init: () => {
-        console.log("LobbyModule initialized");
+        console.log("LobbyNPS initialized");
     },
 
     enterLobby: async () => {
-        if (LobbyModule.state.isConnected) return;
+        console.log("CRITICAL_DEBUG_VER_2.0_STARTING");
+        console.log("LobbyNPS.enterLobby starting...");
+        if (LobbyNPS.state.isConnected) {
+            console.log("Lobby already connected, skipping.");
+            return;
+        }
         
         const user = Auth.currentUser;
-        if (!user) return;
+        if (!user) {
+            console.error("LobbyNPS: Auth.currentUser not found!");
+            return;
+        }
 
-        // Initial position
-        LobbyModule.state.myPos = {
-            x: Math.random() * (window.innerWidth - 100) + 50,
-            y: Math.random() * (window.innerHeight - 200) + 100
+        // Initial random position
+        LobbyNPS.state.myPos = {
+            x: Math.random() * (window.innerWidth - 300) + 150,
+            y: Math.random() * (window.innerHeight - 300) + 150
         };
+        console.log("My initial position:", LobbyNPS.state.myPos);
 
-        LobbyModule.state.inviteShown = null;
-        LobbyModule.renderLobbyBase();
-        LobbyModule.state.isConnected = true;
+        LobbyNPS.renderLobbyBase();
+        LobbyNPS.state.isConnected = true;
+        LobbyNPS.state.inviteShown = null;
         
-        // Start listening to logic
-        LobbyModule.startListening();
-        LobbyModule.listenToGames();
+        // Render current user Chibi immediately
+        console.log("Rendering my Chibi locally...");
+        LobbyNPS.renderUser('me', user.username, LobbyNPS.state.myPos.x, LobbyNPS.state.myPos.y, user.profile?.chibiConfig);
+
+        // Start real-time sync
+        LobbyNPS.startListening();
+        LobbyNPS.listenToGames();
         
-        // Send initial presence
-        await LobbyModule.syncMyPresence();
+        // Push presence to Firestore
+        await LobbyNPS.syncMyPresence();
         
-        // Add click listener for movement
-        document.getElementById('lobby-map-container').addEventListener('mousedown', LobbyModule.handleMapClick);
+        // Movement listener
+        const mapContainer = document.getElementById('lobby-map-container');
+        if (mapContainer) {
+            mapContainer.addEventListener('mousedown', LobbyNPS.handleMapClick);
+            console.log("Lobby movement listener attached.");
+        } else {
+            console.error("CRITICAL: lobby-map-container not found after rendering base.");
+        }
     },
 
     leaveLobby: () => {
-        if (LobbyModule.state.unsubscribePresence) LobbyModule.state.unsubscribePresence();
-        if (LobbyModule.state.unsubscribeChat) LobbyModule.state.unsubscribeChat();
-        
-        LobbyModule.state.isConnected = false;
-        
-        // Remove from persistent if needed or let heartbeat handle it
+        console.log("Leaving Lobby...");
+        if (LobbyNPS.state.unsubscribePresence) LobbyNPS.state.unsubscribePresence();
+        if (LobbyNPS.state.unsubscribeChat) LobbyNPS.state.unsubscribeChat();
+        LobbyNPS.state.isConnected = false;
+        LobbyNPS.state.currentGameId = null;
     },
 
     renderLobbyBase: () => {
         const container = document.getElementById('lobby-view');
-        if (!container) return;
+        if (!container) {
+            console.error("CRITICAL: lobby-view container not found.");
+            return;
+        }
 
         container.innerHTML = `
-            <div id="lobby-map-container" style="width: 100%; height: 100%; position: relative; cursor: crosshair; overflow: hidden;">
+            <div id="lobby-map-container" style="width: 100%; height: 100%; position: relative; cursor: crosshair; overflow: hidden; background-color: #0f172a;">
                 <div class="lobby-map" id="lobby-map">
-                    <!-- Global users rendered here -->
+                    <!-- Chibi characters are appended here -->
                 </div>
                 
-                <!-- Chat Overlay -->
                 <div class="lobby-chat-overlay">
                     <div class="lobby-chat-messages" id="lobby-chat-messages">
                         <div class="lobby-message">
-                            <span class="lobby-msg-text" style="color: #a855f7; font-style: italic;">Hệ thống: Chào mừng tới Sảnh Chờ Chibi! Click chuột để di chuyển.</span>
+                            <span class="lobby-msg-text" style="color: #a855f7; font-style: italic;">Hệ thống: Chào mừng tới Sảnh Chờ! Nhấn chuột vào bản đồ để di chuyển.</span>
                         </div>
                     </div>
-                    <form class="lobby-chat-input-wrap" onsubmit="LobbyModule.sendChat(event)">
-                        <input type="text" id="lobby-chat-input" class="lobby-chat-input" placeholder="Chat với mọi người..." autocomplete="off">
+                    <form class="lobby-chat-input-wrap" onsubmit="LobbyNPS.sendChat(event)">
+                        <input type="text" id="lobby-chat-input" class="lobby-chat-input" placeholder="Nhắn tin..." autocomplete="off">
                     </form>
                 </div>
             </div>
         `;
+        console.log("Lobby base rendered.");
     },
 
     handleMapClick: (e) => {
@@ -83,7 +104,7 @@ const LobbyModule = {
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
 
-        // Visual feedback
+        // Visual click feedback (Ripple)
         const ripple = document.createElement('div');
         ripple.className = 'lobby-click-ripple';
         ripple.style.left = `${x - 10}px`;
@@ -91,34 +112,39 @@ const LobbyModule = {
         e.currentTarget.appendChild(ripple);
         setTimeout(() => ripple.remove(), 600);
 
-        LobbyModule.moveTo(x, y);
+        LobbyNPS.moveTo(x, y);
     },
 
     moveTo: async (x, y) => {
-        LobbyModule.state.myPos = { x, y };
-        LobbyModule.renderUser('me', Auth.currentUser.username, x, y, Auth.currentUser.profile?.chibiConfig);
-        await LobbyModule.syncMyPresence();
+        LobbyNPS.state.myPos = { x, y };
+        LobbyNPS.renderUser('me', Auth.currentUser.username, x, y, Auth.currentUser.profile?.chibiConfig);
+        await LobbyNPS.syncMyPresence();
     },
 
     renderUser: (id, username, x, y, config) => {
+        const map = document.getElementById('lobby-map');
+        if (!map) {
+            console.error(`Cannot render user ${username}, lobby-map not found.`);
+            return;
+        }
+
         let el = document.getElementById(`user-${username}`);
         const isMe = username === Auth.currentUser.username;
         
         if (!el) {
+            console.log(`Creating new DOM element for user: ${username}`);
             el = document.createElement('div');
             el.id = `user-${username}`;
             el.className = `lobby-user-wrapper ${isMe ? 'me' : ''}`;
             
-            // Context menu on click
             if (!isMe) {
                 el.style.cursor = 'pointer';
                 el.onclick = (e) => {
                     e.stopPropagation();
-                    LobbyModule.showUserMenu(username);
+                    LobbyNPS.showUserMenu(username);
                 };
             }
-            
-            document.getElementById('lobby-map').appendChild(el);
+            map.appendChild(el);
         }
 
         const chibiSvg = ChibiModule.renderChibiSVG(config || {}, false, 0);
@@ -142,7 +168,7 @@ const LobbyModule = {
                 <div style="margin-top: 20px; font-size: 13px; color: var(--text-secondary);">Người thắng sẽ được cộng điểm cống hiến!</div>
             </div>`,
             async () => {
-                LobbyModule.inviteToCaro(targetUser);
+                LobbyNPS.inviteToCaro(targetUser);
                 return true;
             },
             'GỬI LỜI MỜI'
@@ -171,19 +197,19 @@ const LobbyModule = {
                     const gameId = change.doc.id;
 
                     if (game.player2 === me && !game.p2Accepted) {
-                        LobbyModule.showIncomingInvite(gameId, game.player1);
-                    } else if (LobbyModule.state.currentGameId === gameId) {
-                        LobbyModule.onGameUpdate(game);
+                        LobbyNPS.showIncomingInvite(gameId, game.player1);
+                    } else if (LobbyNPS.state.currentGameId === gameId) {
+                        LobbyNPS.onGameUpdate(game);
                     } else if ((game.player1 === me || game.player2 === me) && game.p2Accepted) {
-                        LobbyModule.openCaroBoard(gameId, game);
+                        LobbyNPS.openCaroBoard(gameId, game);
                     }
                 });
             });
     },
 
     showIncomingInvite: (gameId, fromUser) => {
-        if (LobbyModule.state.inviteShown === gameId) return;
-        LobbyModule.state.inviteShown = gameId;
+        if (LobbyNPS.state.inviteShown === gameId) return;
+        LobbyNPS.state.inviteShown = gameId;
 
         Utils.showModal(
             `🎮 LỜI MỜI THÁCH ĐẤU`,
@@ -204,8 +230,8 @@ const LobbyModule = {
     },
 
     openCaroBoard: (gameId, game) => {
-        if (LobbyModule.state.currentGameId === gameId) return;
-        LobbyModule.state.currentGameId = gameId;
+        if (LobbyNPS.state.currentGameId === gameId) return;
+        LobbyNPS.state.currentGameId = gameId;
 
         const container = document.getElementById('lobby-view');
         const boardOverlay = document.createElement('div');
@@ -218,21 +244,21 @@ const LobbyModule = {
                         <span id="caro-p1" style="font-weight: bold;">${game.player1} (X)</span> vs 
                         <span id="caro-p2" style="font-weight: bold;">${game.player2} (O)</span>
                     </div>
-                    <button class="btn btn-sm btn-danger" onclick="LobbyModule.forfeitGame()">Cầu Hòa/Bỏ cuộc</button>
+                    <button class="btn btn-sm btn-danger" onclick="LobbyNPS.forfeitGame()">Cầu Hòa/Bỏ cuộc</button>
                 </div>
                 <div id="caro-status-msg" style="color: var(--lobby-accent); font-weight: bold; margin-bottom: 10px; text-align: center;">Đang chờ lượt...</div>
                 <div class="caro-grid" id="caro-grid">
-                    ${Array(225).fill(0).map((_, i) => `<div class="caro-cell" data-index="${i}" onclick="LobbyModule.makeMove(${i})"></div>`).join('')}
+                    ${Array(225).fill(0).map((_, i) => `<div class="caro-cell" data-index="${i}" onclick="LobbyNPS.makeMove(${i})"></div>`).join('')}
                 </div>
             </div>
         `;
         container.appendChild(boardOverlay);
-        LobbyModule.onGameUpdate(game);
+        LobbyNPS.onGameUpdate(game);
     },
 
     makeMove: async (index) => {
-        const gameId = LobbyModule.state.currentGameId;
-        const game = LobbyModule.state.currentGameData;
+        const gameId = LobbyNPS.state.currentGameId;
+        const game = LobbyNPS.state.currentGameData;
         const me = Auth.currentUser.username;
 
         if (game.turn !== me) {
@@ -244,7 +270,7 @@ const LobbyModule = {
         const newBoard = [...game.board];
         newBoard[index] = (me === game.player1) ? 'X' : 'O';
         
-        const winner = LobbyModule.checkWin(newBoard, index);
+        const winner = LobbyNPS.checkWin(newBoard, index);
         const updateData = {
             board: newBoard,
             turn: (me === game.player1) ? game.player2 : game.player1
@@ -259,7 +285,7 @@ const LobbyModule = {
     },
 
     onGameUpdate: (game) => {
-        LobbyModule.state.currentGameData = game;
+        LobbyNPS.state.currentGameData = game;
         const grid = document.getElementById('caro-grid');
         if (!grid) return;
 
@@ -277,7 +303,7 @@ const LobbyModule = {
             statusMsg.textContent = game.winner === me ? "🎉 BẠN ĐÃ THẮNG!" : `💀 ${game.winner} đã thắng!`;
             setTimeout(() => {
                 document.getElementById('caro-overlay').remove();
-                LobbyModule.state.currentGameId = null;
+                LobbyNPS.state.currentGameId = null;
             }, 5000);
         } else {
             statusMsg.textContent = game.turn === me ? "🟢 TỚI LƯỢT CỦA BẠN" : `⏳ Chờ ${game.turn} đi quân...`;
@@ -320,8 +346,8 @@ const LobbyModule = {
 
     forfeitGame: async () => {
         if (!confirm("Bạn muốn bỏ cuộc?")) return;
-        const gameId = LobbyModule.state.currentGameId;
-        const game = LobbyModule.state.currentGameData;
+        const gameId = LobbyNPS.state.currentGameId;
+        const game = LobbyNPS.state.currentGameData;
         const me = Auth.currentUser.username;
         const opponent = (me === game.player1) ? game.player2 : game.player1;
 

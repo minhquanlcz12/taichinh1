@@ -30,7 +30,7 @@ const app = {
         if (typeof ChatbotModule !== 'undefined') ChatbotModule.init();
         if (typeof RewardsModule !== 'undefined') RewardsModule.init();
         if (typeof ClaudeModule !== 'undefined') ClaudeModule.init();
-        if (typeof LobbyModule !== 'undefined') LobbyModule.init();
+        if (typeof LobbyNPS !== 'undefined') LobbyNPS.init();
 
         // Bật vòng lặp kiểm tra các sự kiện theo thời gian (nhắc telegram, v.v)
         setTimeout(() => {
@@ -243,7 +243,7 @@ const app = {
             const rewardsNav = document.querySelector('.nav-item[data-target="rewards-view"]');
             if (rewardsNav) rewardsNav.classList.add('active');
         } else if (viewId === 'lobby-view') {
-            if (typeof LobbyModule !== 'undefined') LobbyModule.enterLobby();
+            if (typeof LobbyNPS !== 'undefined') LobbyNPS.enterLobby();
             document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
             const lobbyNav = document.querySelector('.nav-item[data-target="lobby-view"]');
             if (lobbyNav) lobbyNav.classList.add('active');
@@ -251,7 +251,7 @@ const app = {
         
         // Handle leaving lobby logic (custom hook)
         if (app.state.currentView === 'lobby-view' && viewId !== 'lobby-view') {
-            if (typeof LobbyModule !== 'undefined') LobbyModule.leaveLobby();
+            if (typeof LobbyNPS !== 'undefined') LobbyNPS.leaveLobby();
         }
     },
 
