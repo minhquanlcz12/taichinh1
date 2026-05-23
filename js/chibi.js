@@ -400,55 +400,8 @@ const ChibiModule = {
             `;
         }
 
-        // 9. Back Accessories Layer
+        // 9. Back Accessories Layer - Cleaned (legacy removed, weapons now in gear slot, wings in wing slot)
         let backAccessoryHtml = '';
-        if (c.accessory === 11) { // Đại Đao Lửa (Epic Guan Dao)
-            backAccessoryHtml = `
-                <g class="${isD ? 'chibi-tail-dance' : ''}" style="filter: drop-shadow(0 0 12px #ff4500) drop-shadow(0 0 25px #ff8c00);">
-                    <g transform="rotate(-32 70 85)">
-                        <rect x="68" y="-10" width="6" height="180" rx="3" fill="#1e2937" stroke="#fbbf24" stroke-width="1.2" />
-                        <path d="M 60 25 L 82 25 L 86 42 L 56 42 Z" fill="#fbbf24" stroke="#78350f" stroke-width="1.5" />
-                        <circle cx="71" cy="33" r="3" fill="#ef4444" />
-                        <path d="M 46 25 C 32 -30 15 -70 35 -85 C 60 -55 58 5 71 25 Z" fill="url(#bladeFlame)" stroke="#991b1b" stroke-width="2.5" />
-                        <circle cx="71" cy="172" r="6" fill="#fbbf24" />
-                    </g>
-                </g>
-                <defs>
-                    <linearGradient id="bladeFlame" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stop-color="#ffffff" /><stop offset="55%" stop-color="#f97316" /><stop offset="100%" stop-color="#7f1d1d" />
-                    </linearGradient>
-                </defs>
-            `;
-        } else if (c.accessory === 13) { // Cyber Laser Greatsword
-            backAccessoryHtml = `
-                <g class="${isD ? 'chibi-tail-dance' : ''}" style="filter: drop-shadow(0 0 12px #00f3ff) drop-shadow(0 0 25px #a855f7);">
-                    <g transform="rotate(32 70 85)">
-                        <rect x="61" y="-35" width="20" height="155" rx="8" fill="#00f3ff" opacity="0.4" />
-                        <rect x="63" y="-32" width="16" height="150" rx="6" fill="#00f3ff" opacity="0.9" stroke="#fff" stroke-width="1.8" />
-                        <rect x="67" y="-28" width="8" height="142" rx="3" fill="#ffffff" />
-                        <rect x="67" y="128" width="8" height="42" rx="3" fill="#1e2937" stroke="#8b5cf6" stroke-width="1.5" />
-                    </g>
-                </g>
-            `;
-        } else if (c.accessory === 17) { // Wings (Back)
-            backAccessoryHtml = `
-                <g class="${isD ? 'chibi-tail-dance' : ''}" style="filter: drop-shadow(0 0 12px #fbbf24);">
-                    <path d="M 100 110 C 60 70 30 50 15 75 C 5 95 20 120 45 125 C 25 125 15 135 25 150 C 35 160 55 155 75 145 C 55 150 45 162 55 172 C 65 180 85 165 100 145 Z" fill="#fbbf24" stroke="#d97706" stroke-width="2" />
-                    <g transform="translate(100, 110) scale(-1, 1) translate(-100, -110)">
-                        <path d="M 100 110 C 60 70 30 50 15 75 C 5 95 20 120 45 125 C 25 125 15 135 25 150 C 35 160 55 155 75 145 C 55 150 45 162 55 172 C 65 180 85 165 100 145 Z" fill="#fbbf24" stroke="#d97706" stroke-width="2" />
-                    </g>
-                </g>
-            `;
-        } else if (c.accessory === 18) { // Devil Wings (Back)
-            backAccessoryHtml = `
-                <g class="${isD ? 'chibi-tail-dance' : ''}" style="filter: drop-shadow(0 0 12px #ef4444);">
-                    <path d="M 100 110 C 80 80 50 60 20 70 C 25 90 35 110 20 120 C 35 125 45 135 35 155 C 80 140 100 110 100 110" fill="#111" stroke="#ef4444" stroke-width="2" />
-                    <g transform="translate(100, 110) scale(-1, 1) translate(-100, -110)">
-                         <path d="M 100 110 C 80 80 50 60 20 70 C 25 90 35 110 20 120 C 35 125 45 135 35 155 C 80 140 100 110 100 110" fill="#111" stroke="#ef4444" stroke-width="2" />
-                    </g>
-                </g>
-            `;
-        }
 
         // 10. Gear Layer (Weapons held in hand)
         let gearHtml = '';
@@ -750,6 +703,14 @@ const ChibiModule = {
             tempConfig.shoeColor = color || '#1f2937';
         } else if (type === 'accessory') {
             tempConfig.accessory = index;
+        } else if (type === 'gear') {
+            tempConfig.gear = index;
+        } else if (type === 'wing') {
+            tempConfig.wing = index;
+        } else if (type === 'mount') {
+            tempConfig.mount = index;
+        } else if (type === 'dragon') {
+            tempConfig.dragon = index;
         }
 
         const svgStr = ChibiModule.renderChibiSVG(tempConfig, false, 0);
@@ -1048,7 +1009,7 @@ const ChibiModule = {
             <div class="chibi-item-grid">
                 ${options.map(i => {
                     const activeClass = ChibiModule.currentConfig[property] === i ? 'active' : '';
-                    const miniSvg = ChibiModule.renderMiniOption(property === 'accessory' ? 'accessory' : (property === 'gear' ? 'accessory' : property), i);
+                    const miniSvg = ChibiModule.renderMiniOption(property, i);
                     return `
                         <div class="chibi-item-card ${activeClass}" onclick="ChibiModule.selectItem('${property}', ${i})">
                             <div class="chibi-item-preview-wrap" style="transform: scale(${scale});">
