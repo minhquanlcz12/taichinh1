@@ -113,7 +113,7 @@ window.LobbyNeon = {
         const container = document.getElementById('lobby-view');
         if (!container) return;
 
-        console.log("Rendering Lobby Base v100.0...");
+        console.log("Rendering Final Stable Lobby Video...");
         container.innerHTML = `
             <div id="lobby-map-container" style="width: 100%; height: 100%; position: relative; cursor: crosshair; overflow: hidden; background: #000;">
                 <div class="lobby-map" id="lobby-map">
@@ -123,14 +123,6 @@ window.LobbyNeon = {
                         <source src="assets/lobby_bg.mp4" type="video/mp4">
                     </video>
                 </div>
-
-                <!-- Music Control Center -->
-                <div id="lobby-music-hub" class="lobby-music-toggle" title="Phát nhạc Dòng máu Lạc Hồng">
-                    <i id="music-icon" class="fas fa-play"></i>
-                    <span class="music-tip">Click để nghe nhạc!</span>
-                </div>
-                
-                <div id="music-player-container" style="position:absolute; width:1px; height:1px; opacity:0; pointer-events:none;"></div>
 
                 <div class="lobby-chat-overlay">
                     <div class="lobby-chat-messages" id="lobby-chat-messages">
@@ -144,77 +136,6 @@ window.LobbyNeon = {
                 </div>
             </div>
         `;
-        
-        // Setup listener
-        const btn = document.getElementById('lobby-music-hub');
-        if (btn) btn.addEventListener('click', () => {
-            console.log("HUB clicked");
-            LobbyNeon.toggleMusic();
-        });
-
-        LobbyNeon.initMusic();
-    },
-
-    initMusic: () => {
-        // Load YouTube IFrame API
-        if (!window.YT) {
-            const tag = document.createElement('script');
-            tag.src = "https://www.youtube.com/iframe_api";
-            const firstScriptTag = document.getElementsByTagName('script')[0];
-            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-        }
-
-        window.onYouTubeIframeAPIReady = () => {
-            LobbyNeon.state.player = new YT.Player('music-player-container', {
-                height: '0',
-                width: '0',
-                videoId: 'R9K1Wf3992o', // Dòng Máu Lạc Hồng
-                playerVars: {
-                    'autoplay': 1,
-                    'controls': 0,
-                    'loop': 1,
-                    'playlist': 'R9K1Wf3992o',
-                    'mute': 0
-                },
-                events: {
-                    'onReady': (event) => {
-                        console.log("YT Player Ready");
-                    },
-                    'onStateChange': (event) => {
-                        const icon = document.getElementById('music-icon');
-                        if (!icon) return;
-                        if (event.data === 1) icon.className = 'fas fa-pause';
-                        else icon.className = 'fas fa-play';
-                    }
-                }
-            });
-        };
-        
-        if (window.YT && window.YT.Player) window.onYouTubeIframeAPIReady();
-    },
-
-    toggleMusic: () => {
-        const player = LobbyNeon.state.player;
-        if (!player || typeof player.getPlayerState !== 'function') {
-            // If API not ready yet, try to init again
-            LobbyNeon.initMusic();
-            return;
-        }
-
-        const state = player.getPlayerState();
-        if (state === 1) {
-            player.pauseVideo();
-        } else {
-            player.playVideo();
-            // Try to un-mute if needed
-            if (player.isMuted()) player.unMute();
-            player.setVolume(70);
-        }
-    },
-    
-    // Legacy setMusicState not needed for YT logic, but keep stub for compatibility
-    setMusicState: (play) => {
-        LobbyNeon.toggleMusic();
     },
 
     renderUser: (username, x, y, config) => {
