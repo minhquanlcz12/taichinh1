@@ -44,13 +44,17 @@ const ChibiModule = {
     // Style Count configuration (0 index to Max-1)
     counts: {
         skin: 8,
-        hair: 12, // Style 0 is bald, 1-11 are hair styles
+        hair: 12,
         eyes: 8,
         mouth: 6,
-        top: 10,  // Style 0 is naked, 1-9 are top styles
-        bottom: 8, // Style 0 is underwear, 1-7 are bottoms
-        shoe: 8,   // Style 0 is barefoot, 1-7 are shoe styles
-        accessory: 19 // Style 0 is none, 1-18 are accessory styles
+        top: 10,
+        bottom: 8,
+        shoe: 8,
+        accessory: 14, // Head/Glasses (0-13)
+        gear: 20,     // Weapons (0-19)
+        wing: 5,      // Wings (0-4)
+        mount: 5,     // Vehicles (0-4)
+        dragon: 4     // Dragon Spirits (0-3)
     },
 
     // State
@@ -58,14 +62,49 @@ const ChibiModule = {
     activeTab: 'skin',
 
     gearRequirements: {
-        11: { label: "Đại Đao Lửa", count: 10 },
-        12: { label: "Súng Vô Cực", count: 12 },
-        13: { label: "Kiếm Cyber Laser", count: 15 },
-        14: { label: "Cưỡi Ô Tô Siêu Cấp", count: 20 },
-        15: { label: "Cưỡi Xe Máy Cực Ngầu", count: 18 },
-        16: { label: "Đeo Phao Hồng Hạc", count: 8 },
-        17: { label: "Cánh Thiên Thần VVIP", count: 22 },
-        18: { label: "Cánh Ác Quỷ VVIP", count: 25 }
+        gear: {
+            1: { label: "Đại Đao Lửa", count: 10 },
+            2: { label: "Súng Vô Cực", count: 12 },
+            3: { label: "Kiếm Cyber Laser", count: 15 },
+            4: { label: "Thương Heo Tộc", count: 5 },
+            5: { label: "Dép Tổ Ong Vàng", count: 3 },
+            6: { label: "Chổi Tre Âm Dương", count: 7 },
+            7: { label: "Muỗng Mì Hảo Hạng", count: 6 },
+            8: { label: "Gậy Selfie Cánh Vàng", count: 20 },
+            9: { label: "Cờ Lê Tia Chớp", count: 14 },
+            10: { label: "Cây Lau Nhà Ma Thuật", count: 8 },
+            11: { label: "Nón Lá Phi Tiêu", count: 18 },
+            12: { label: "Vợt Muỗi Điện", count: 12 },
+            13: { label: "Ghế Đỏ Quyền Lực", count: 25 },
+            14: { label: "Quạt Trúc Thanh Lương", count: 10 },
+            15: { label: "Lồng Đèn Hội An", count: 12 },
+            16: { label: "Gánh Hàng Rong", count: 15 },
+            17: { label: "Bánh Mì Sài Gòn", count: 5 },
+            18: { label: "Cà Phê Phin", count: 8 },
+            19: { label: "Dép Tổ Ong Huyền Thoại", count: 4 }
+        },
+        mount: {
+            1: { label: "Ô Tô Siêu Cấp", count: 20 },
+            2: { label: "Xe Máy Cực Ngầu", count: 18 },
+            3: { label: "Phao Hồng Hạc", count: 8 },
+            4: { label: "Xe Máy Dream Neon", count: 22 }
+        },
+        wing: {
+            1: { label: "Cánh Thiên Thần", count: 22 },
+            2: { label: "Cánh Ác Quỷ", count: 25 },
+            3: { label: "Cánh Thiên Thần VIP", count: 30 },
+            4: { label: "Cánh Bướm Pha Lê", count: 35 }
+        },
+        dragon: {
+            1: { label: "Lam Long Thần", count: 30 },
+            2: { label: "Xích Long Thần", count: 35 },
+            3: { label: "Hoàng Long Thần", count: 50 }
+        },
+        accessory: {
+            11: { label: "Mũ Cối Kháng Chiến", count: 10 },
+            12: { label: "Nón Lá Truyền Thống", count: 12 },
+            13: { label: "Khăn Rằn Nam Bộ", count: 8 }
+        }
     },
 
     getCompletedTasksCount: function() {
@@ -143,7 +182,11 @@ const ChibiModule = {
             bottomColor: '#007bff',
             shoeStyle: 1,
             shoeColor: '#1f2937',
-            accessory: 0
+            accessory: 0,
+            gear: 0,
+            wing: 0,
+            mount: 0,
+            dragon: 0
         };
 
         const isD = isDancing !== undefined ? isDancing : true;
@@ -157,24 +200,97 @@ const ChibiModule = {
         const shoeStyle = c.shoeStyle !== undefined ? c.shoeStyle : 1;
         const shoeColor = c.shoeColor || '#1f2937';
 
-        // Dynamic camera zoom-out / viewBox
+        // 0. Dynamic ViewBox & Scaling
         let viewBox = "0 0 200 200";
-        if (c.accessory >= 11 && c.accessory <= 18) {
-            viewBox = "-45 -45 290 290";
+        // Expand if any large item is equipped
+        if (c.gear > 0 || c.wing > 0 || c.mount > 0 || c.dragon > 0 || (c.accessory >= 11 && c.accessory <= 18)) {
+            viewBox = "-55 -55 310 310";
         }
 
-        // Rider transformation body wrappers
-        let bodyWrapperStart = "";
-        let bodyWrapperEnd = "";
-        if (c.accessory === 14) {
-            bodyWrapperStart = '<g class="rider-car-transform" transform="translate(0, 16)">';
-            bodyWrapperEnd = '</g>';
-        } else if (c.accessory === 15) {
-            bodyWrapperStart = '<g class="rider-moto-transform" transform="translate(-12, 10) rotate(8, 100, 180)">';
-            bodyWrapperEnd = '</g>';
+        // 1. Dragon Spirit Layer (Far Back)
+        let dragonHtml = '';
+        if (c.dragon === 1) { // Blue Dragon (Lam Long)
+            dragonHtml = `
+                <g class="dragon-wrap" style="filter: drop-shadow(0 0 15px #00f3ff) drop-shadow(0 0 30px #3b82f6);">
+                    <!-- Majestic Blue Dragon Spiraling around -->
+                    <path d="M 50 150 Q 0 100 50 50 Q 100 0 150 50 Q 200 100 150 150 Q 100 200 50 150" fill="none" stroke="url(#blueDragonGrad)" stroke-width="12" stroke-linecap="round" stroke-dasharray="10,5" style="animation: dragonFloat 4s infinite linear;" />
+                    <g style="animation: dragonFloat 4s infinite linear;">
+                         <circle cx="50" cy="150" r="10" fill="#00f3ff" />
+                         <path d="M 45 150 L 35 140 L 40 160 Z" fill="#00f3ff" />
+                    </g>
+                </g>
+                <defs>
+                    <linearGradient id="blueDragonGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#00f3ff" /><stop offset="100%" stop-color="#3b82f6" />
+                    </linearGradient>
+                </defs>
+            `;
+        } else if (c.dragon === 2) { // Red Dragon (Xích Long)
+            dragonHtml = `
+                <g class="dragon-wrap" style="filter: drop-shadow(0 0 15px #ef4444) drop-shadow(0 0 30px #7f1d1d);">
+                    <path d="M 30 170 Q 170 170 170 30 Q 30 30 30 170" fill="none" stroke="url(#redDragonGrad)" stroke-width="14" stroke-linecap="round" stroke-dasharray="15,8" style="animation: dragonFloat 3s infinite linear reverse;" />
+                    <circle cx="30" cy="170" r="12" fill="#ef4444" style="animation: dragonFloat 3s infinite linear reverse;" />
+                </g>
+                <defs>
+                    <linearGradient id="redDragonGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#ef4444" /><stop offset="100%" stop-color="#7f1d1d" />
+                    </linearGradient>
+                </defs>
+            `;
+        } else if (c.dragon === 3) { // Gold Dragon (Hoàng Long)
+            dragonHtml = `
+                <g class="dragon-wrap" style="filter: drop-shadow(0 0 20px #fbbf24) drop-shadow(0 0 40px #d97706);">
+                    <path d="M 0 100 Q 100 -20 200 100 Q 100 220 0 100" fill="none" stroke="url(#goldDragonGrad)" stroke-width="15" stroke-linecap="round" stroke-dasharray="20,10" style="animation: dragonFloat 5s infinite linear;" />
+                    <g style="animation: dragonFloat 5s infinite linear;">
+                        <circle cx="0" cy="100" r="14" fill="#fbbf24" />
+                        <path d="M -5 100 L -15 90 L -15 110 Z" fill="#fbbf24" />
+                    </g>
+                </g>
+                <defs>
+                    <linearGradient id="goldDragonGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#fff" /><stop offset="40%" stop-color="#fbbf24" /><stop offset="100%" stop-color="#d97706" />
+                    </linearGradient>
+                </defs>
+            `;
         }
 
-        // 1. Back Hair Layer
+        // 2. Wing Layer (Behind Back)
+        let wingHtml = '';
+        if (c.wing === 1) { // Angel Wings
+            wingHtml = `
+                <g class="${isD ? 'chibi-tail-dance' : ''}" style="filter: drop-shadow(0 0 15px #fbbf24);">
+                    <path d="M 100 110 C 20 70 -40 160 60 170 M 100 110 C 180 70 240 160 140 170" fill="rgba(255,255,255,0.9)" stroke="#fbbf24" stroke-width="3.5" />
+                    <path d="M 60 170 Q 100 140 140 170" fill="none" stroke="#fbbf24" stroke-width="1" opacity="0.3" />
+                </g>
+            `;
+        } else if (c.wing === 2) { // Devil Wings
+            wingHtml = `
+                <g class="${isD ? 'chibi-tail-dance' : ''}" style="filter: drop-shadow(0 0 15px #ef4444);">
+                    <path d="M 100 110 C 30 60 -10 140 50 170 M 100 110 C 170 60 210 140 150 170" fill="#111" stroke="#ef4444" stroke-width="4" />
+                    <path d="M 100 110 L 40 100 M 100 110 L 160 100" stroke="#ef4444" stroke-width="2" opacity="0.4" />
+                </g>
+            `;
+        } else if (c.wing === 3) { // Golden Angel Wings VIP
+            wingHtml = `
+                <g class="${isD ? 'chibi-tail-dance' : ''}" style="filter: drop-shadow(0 0 15px #f97316);">
+                    <path d="M 100 110 C 40 40 10 20 -10 60 C -25 90 0 130 40 135 C 10 135 0 150 15 175 C 30 195 60 185 90 165 C 60 175 45 195 65 210 Q 100 230 100 170" fill="#fbbf24" stroke="#fff" stroke-width="0.5" />
+                    <g transform="translate(100, 110) scale(-1, 1) translate(-100, -110)">
+                        <path d="M 100 110 C 40 40 10 20 -10 60 C -25 90 0 130 40 135 C 10 135 0 150 15 175 C 30 195 60 185 90 165 C 60 175 45 195 65 210 Q 100 230 100 170" fill="#fbbf24" stroke="#fff" stroke-width="0.5" />
+                    </g>
+                </g>
+            `;
+        } else if (c.wing === 4) { // Crystal Butterfly Wings
+            wingHtml = `
+                <g class="${isD ? 'chibi-tail-dance' : ''}" style="filter: drop-shadow(0 0 12px #8b5cf6);">
+                    <path d="M 100 120 C 50 50 10 30 -5 85 C -15 130 30 160 50 145 C 30 180 50 210 90 195 C 100 185 100 140 100 120" fill="#c084fc" opacity="0.8" stroke="#fff" />
+                    <g transform="translate(100, 120) scale(-1, 1) translate(-100, -120)">
+                        <path d="M 100 120 C 50 50 10 30 -5 85 C -15 130 30 160 50 145 C 30 180 50 210 90 195 C 100 185 100 140 100 120" fill="#c084fc" opacity="0.8" stroke="#fff" />
+                    </g>
+                </g>
+            `;
+        }
+
+        // 3. Back Hair Layer
         let backHairHtml = '';
         if (c.hairStyle === 2) { // Bob cut back hair
             backHairHtml = `<path d="M 60 75 Q 100 40 140 75 L 142 105 Q 100 110 58 105 Z" fill="${hairColor}" stroke="#1e1b4b" stroke-width="2.5" />`;
@@ -189,304 +305,69 @@ const ChibiModule = {
             `;
         }
 
-        // Custom Arms configuration for vehicles or normal dance pose
+        // 4. Custom Arms configuration
         let armsHtml = '';
-        if (c.accessory === 14) {
-            // Sports Car driver arms & hands in shifted space (gripping wheel)
+        if (c.mount === 1 || c.mount === 2 || c.accessory === 14 || c.accessory === 15) {
+            // Vehicle hands
             armsHtml = `
-                <!-- Left Arm & Hand on Steering Wheel -->
                 <path d="M 85 116 Q 74 125 91 116" fill="${skinColor}" stroke="#1e1b4b" stroke-width="2.5" />
                 <circle cx="91" cy="116" r="4.8" fill="${skinColor}" stroke="#1e1b4b" stroke-width="1.2" />
-                
-                <!-- Right Arm & Hand on Steering Wheel -->
                 <path d="M 115 116 Q 126 125 109 116" fill="${skinColor}" stroke="#1e1b4b" stroke-width="2.5" />
                 <circle cx="109" cy="116" r="4.8" fill="${skinColor}" stroke="#1e1b4b" stroke-width="1.2" />
             `;
-        } else if (c.accessory === 15) {
-            // Cyber Motorcycle rider arms & hands in shifted space (gripping handlebars)
-            armsHtml = `
-                <!-- Left Arm & Hand on handlebar grip -->
-                <path d="M 85 116 Q 100 108 115 112" fill="${skinColor}" stroke="#1e1b4b" stroke-width="2.5" />
-                <circle cx="115" cy="112" r="4.8" fill="${skinColor}" stroke="#1e1b4b" stroke-width="1.2" />
-                
-                <!-- Right Arm & Hand on handlebar grip -->
-                <path d="M 115 116 Q 128 112 135 110" fill="${skinColor}" stroke="#1e1b4b" stroke-width="2.5" />
-                <circle cx="135" cy="110" r="4.8" fill="${skinColor}" stroke="#1e1b4b" stroke-width="1.2" />
-            `;
         } else {
-            // Default dancing arms
             armsHtml = `
                 <path class="${isD ? 'chibi-arm-left-dance' : ''}" d="M 85 116 Q 66 128 64 140 C 63 145 69 146 72 142 L 85 125 Z" fill="${skinColor}" stroke="#1e1b4b" stroke-width="2.5" />
                 <path class="${isD ? 'chibi-arm-right-dance' : ''}" d="M 115 116 Q 134 128 136 140 C 137 145 131 146 128 142 L 115 125 Z" fill="${skinColor}" stroke="#1e1b4b" stroke-width="2.5" />
             `;
         }
 
-        // 2. Base Skin / Body Layers
+        // 5. Body Parts (Assemble in correct order)
         const bodyBaseHtml = `
-            <!-- Neck -->
             <rect x="96" y="104" width="8" height="12" fill="${skinColor}" stroke="#1e1b4b" stroke-width="2.5" />
-            
-            <!-- Legs -->
             <path d="M 86 145 Q 83 165 82 175 C 81 180 89 182 91 176 L 95 145 Z" fill="${skinColor}" stroke="#1e1b4b" stroke-width="2.5" />
             <path d="M 114 145 Q 117 165 118 175 C 119 180 111 182 109 176 L 105 145 Z" fill="${skinColor}" stroke="#1e1b4b" stroke-width="2.5" />
-            
-            <!-- Torso -->
             <path d="M 88 114 Q 100 112 112 114 L 115 145 Q 100 148 85 145 Z" fill="${skinColor}" stroke="#1e1b4b" stroke-width="2.5" />
-            
-            <!-- Arms -->
             ${armsHtml}
-            
-            <!-- Head / Face base -->
             <circle cx="62" cy="80" r="7" fill="${skinColor}" stroke="#1e1b4b" stroke-width="2.5" />
             <circle cx="138" cy="80" r="7" fill="${skinColor}" stroke="#1e1b4b" stroke-width="2.5" />
             <ellipse cx="100" cy="80" rx="36" ry="32" fill="${skinColor}" stroke="#1e1b4b" stroke-width="2.5" />
-            
-            <!-- Blushing Cheeks -->
             <ellipse cx="76" cy="86" rx="4" ry="2" fill="#f43f5e" opacity="0.45" />
             <ellipse cx="124" cy="86" rx="4" ry="2" fill="#f43f5e" opacity="0.45" />
         `;
 
-        // 3. Clothing Bottom
+        // 6. Clothing Selection
         let bottomHtml = '';
-        if (c.bottomStyle === 1) { // Jeans
-            bottomHtml = `<path d="M 84 138 L 116 138 L 118 160 L 102 160 L 100 146 L 98 160 L 82 160 Z" fill="${bottomColor}" stroke="#1e1b4b" stroke-width="2.5" />`;
-        } else if (c.bottomStyle === 2) { // Skirt
-            bottomHtml = `
-                <path d="M 85 138 L 115 138 L 122 154 Q 100 158 78 154 Z" fill="${bottomColor}" stroke="#1e1b4b" stroke-width="2.5" />
-                <line x1="92" y1="138" x2="88" y2="154" stroke="rgba(0,0,0,0.25)" stroke-width="1.5" />
-                <line x1="100" y1="138" x2="100" y2="156" stroke="rgba(0,0,0,0.25)" stroke-width="1.5" />
-                <line x1="108" y1="138" x2="112" y2="154" stroke="rgba(0,0,0,0.25)" stroke-width="1.5" />
-            `;
-        } else if (c.bottomStyle === 3) { // Shorts
-            bottomHtml = `<path d="M 84 138 L 116 138 L 117 150 L 102 150 L 100 144 L 98 150 L 83 150 Z" fill="${bottomColor}" stroke="#1e1b4b" stroke-width="2.5" />`;
-        } else if (c.bottomStyle === 4) { // Joggers
-            bottomHtml = `
-                <path d="M 84 138 L 116 138 L 118 165 L 108 165 L 106 161 L 102 161 L 100 145 L 98 161 L 94 161 L 92 165 L 82 165 Z" fill="${bottomColor}" stroke="#1e1b4b" stroke-width="2.5" />
-                <rect x="83" y="161" width="9" height="4" fill="rgba(0,0,0,0.18)" />
-                <rect x="108" y="161" width="9" height="4" fill="rgba(0,0,0,0.18)" />
-            `;
-        } else if (c.bottomStyle === 5) { // Overalls
-            bottomHtml = `
-                <path d="M 84 138 L 116 138 L 118 160 L 102 160 L 100 146 L 98 160 L 82 160 Z" fill="${bottomColor}" stroke="#1e1b4b" stroke-width="2.5" />
-                <path d="M 87 138 L 87 114 M 113 138 L 113 114" stroke="${bottomColor}" stroke-width="3" stroke-linecap="round" />
-                <rect x="88" y="128" width="24" height="10" fill="${bottomColor}" stroke="#1e1b4b" stroke-width="2" />
-            `;
-        } else if (c.bottomStyle === 6) { // Cyber tights
-            bottomHtml = `
-                <path d="M 84 138 L 116 138 L 118 160 L 102 160 L 100 146 L 98 160 L 82 160 Z" fill="${bottomColor}" stroke="#1e1b4b" stroke-width="2.5" />
-                <line x1="83" y1="145" x2="97" y2="145" stroke="#00f3ff" stroke-width="2" />
-                <line x1="103" y1="145" x2="117" y2="145" stroke="#00f3ff" stroke-width="2" />
-            `;
-        } else if (c.bottomStyle === 7) { // Ripped Jeans
-            bottomHtml = `
-                <path d="M 84 138 L 116 138 L 118 160 L 102 160 L 100 146 L 98 160 L 82 160 Z" fill="${bottomColor}" stroke="#1e1b4b" stroke-width="2.5" />
-                <rect x="86" y="145" width="8" height="3" fill="${skinColor}" />
-                <rect x="106" y="150" width="8" height="3" fill="${skinColor}" />
-            `;
-        }
+        if (c.bottomStyle === 1) bottomHtml = `<path d="M 84 138 L 116 138 L 118 160 L 102 160 L 100 146 L 98 160 L 82 160 Z" fill="${bottomColor}" stroke="#1e1b4b" stroke-width="2.5" />`;
+        else if (c.bottomStyle === 2) bottomHtml = `<path d="M 85 138 L 115 138 L 122 154 Q 100 158 78 154 Z" fill="${bottomColor}" stroke="#1e1b4b" stroke-width="2.5" />`;
+        else if (c.bottomStyle === 3) bottomHtml = `<path d="M 84 138 L 116 138 L 117 150 L 102 150 L 100 144 L 98 150 L 83 150 Z" fill="${bottomColor}" stroke="#1e1b4b" stroke-width="2.5" />`;
+        else if (c.bottomStyle === 6) bottomHtml = `<path d="M 84 138 L 116 138 L 118 160 L 102 160 L 100 146 L 98 160 L 82 160 Z" fill="${bottomColor}" stroke="#1e1b4b" stroke-width="2.5" /><line x1="83" y1="145" x2="97" y2="145" stroke="#00f3ff" stroke-width="2" />`;
 
-        // 4. Clothing Top
         let topHtml = '';
-        if (c.topStyle === 1) { // T-Shirt
-            topHtml = `
-                <path d="M 88 114 Q 100 112 112 114 L 115 138 Q 100 140 85 138 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" />
-                <path d="M 88 114 L 75 124 L 70 131 L 80 125 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" />
-                <path d="M 112 114 L 125 124 L 130 131 L 120 125 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" />
-                <path d="M 94 114 Q 100 120 106 114 Z" fill="${skinColor}" stroke="#1e1b4b" stroke-width="2" />
-            `;
-        } else if (c.topStyle === 2) { // Hoodie
-            topHtml = `
-                <path d="M 80 114 C 80 102 120 102 120 114 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" />
-                <path d="M 85 114 Q 100 112 115 114 L 116 142 Q 100 145 84 142 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" />
-                <path class="${isD ? 'chibi-arm-left-dance' : ''}" d="M 85 116 Q 66 128 64 138 C 63 141 68 141 70 139 L 84 123 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" />
-                <path class="${isD ? 'chibi-arm-right-dance' : ''}" d="M 115 116 Q 134 128 136 138 C 137 141 132 141 130 139 L 116 123 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" />
-                <path d="M 90 130 L 110 130 L 108 140 L 92 140 Z" fill="rgba(0,0,0,0.18)" stroke="#1e1b4b" stroke-width="1.8" />
-            `;
-        } else if (c.topStyle === 3) { // Striped Sweater
-            topHtml = `
-                <path d="M 88 114 Q 100 112 112 114 L 115 138 Q 100 140 85 138 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" />
-                <path d="M 88 114 L 73 126 L 68 134 L 80 125 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" />
-                <path d="M 112 114 L 127 126 L 132 134 L 120 125 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" />
-                <path d="M 94 114 Q 100 120 106 114 Z" fill="${skinColor}" stroke="#1e1b4b" stroke-width="2" />
-                <line x1="86" y1="122" x2="114" y2="122" stroke="#fff" stroke-width="3.5" />
-                <line x1="85" y1="132" x2="115" y2="132" stroke="#fff" stroke-width="3.5" />
-            `;
-        } else if (c.topStyle === 4) { // Suit & Tie
-            topHtml = `
-                <path d="M 88 114 L 112 114 L 112 138 L 88 138 Z" fill="#ffffff" stroke="#1e1b4b" stroke-width="2.5" />
-                <path d="M 88 114 L 97 122 L 95 138 L 85 138 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" />
-                <path d="M 112 114 L 103 122 L 105 138 L 115 138 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" />
-                <path d="M 98 120 L 102 120 L 103 132 L 100 136 L 97 132 Z" fill="#ef4444" />
-            `;
-        } else if (c.topStyle === 5) { // Crop Top
-            topHtml = `
-                <path d="M 88 114 Q 100 112 112 114 L 114 126 Q 100 128 86 126 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" />
-                <path d="M 88 114 L 75 124 L 70 131 L 80 125 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" />
-                <path d="M 112 114 L 125 124 L 130 131 L 120 125 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" />
-                <path d="M 94 114 Q 100 120 106 114 Z" fill="${skinColor}" stroke="#1e1b4b" stroke-width="2" />
-            `;
-        } else if (c.topStyle === 6) { // Bomber Jacket
-            topHtml = `
-                <path d="M 88 114 L 112 114 L 115 138 L 85 138 Z" fill="#24292e" />
-                <path d="M 88 114 L 96 120 L 93 138 L 84 138 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" />
-                <path d="M 112 114 L 104 120 L 107 138 L 116 138 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" />
-                <path class="${isD ? 'chibi-arm-left-dance' : ''}" d="M 85 116 Q 66 128 64 138 C 63 141 68 141 70 139 L 84 123 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" />
-                <path class="${isD ? 'chibi-arm-right-dance' : ''}" d="M 115 116 Q 134 128 136 138 C 137 141 132 141 130 139 L 116 123 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" />
-            `;
-        } else if (c.topStyle === 7) { // Off-shoulder Sweater
-            topHtml = `
-                <path d="M 80 118 Q 100 112 116 113 L 116 142 Q 100 145 84 142 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" />
-                <path class="${isD ? 'chibi-arm-left-dance' : ''}" d="M 85 116 Q 66 128 64 138 C 63 141 68 141 70 139 L 84 123 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" />
-                <path class="${isD ? 'chibi-arm-right-dance' : ''}" d="M 115 116 Q 134 128 136 138 C 137 141 132 141 130 139 L 116 123 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" />
-            `;
-        } else if (c.topStyle === 8) { // Vest
-            topHtml = `
-                <path d="M 88 114 Q 100 112 112 114 L 115 138 Q 100 142 85 138 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" />
-                <path d="M 97 114 L 100 124 L 103 114 Z" fill="${skinColor}" stroke="#1e1b4b" stroke-width="1.5" />
-                <circle cx="100" cy="126" r="1.5" fill="#fff" />
-                <circle cx="100" cy="132" r="1.5" fill="#fff" />
-            `;
-        } else if (c.topStyle === 9) { // Sci-Fi Armor
-            topHtml = `
-                <path d="M 88 114 Q 100 112 112 114 L 115 140 Q 100 142 85 140 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" />
-                <circle cx="100" cy="126" r="4.5" fill="#00f3ff" stroke="#fff" stroke-width="1" style="filter: drop-shadow(0 0 4px #00f3ff);" />
-                <path d="M 88 114 L 75 124 L 70 131 L 80 125 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" />
-                <path d="M 112 114 L 125 124 L 130 131 L 120 125 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" />
-            `;
-        }
+        if (c.topStyle === 1) topHtml = `<path d="M 88 114 Q 100 112 112 114 L 115 138 Q 100 140 85 138 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" />`;
+        else if (c.topStyle === 2) topHtml = `<path d="M 80 114 C 80 102 120 102 120 114 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" /><path d="M 85 114 Q 100 112 115 114 L 116 142 Q 100 145 84 142 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" />`;
+        else if (c.topStyle === 9) topHtml = `<path d="M 88 114 Q 100 112 112 114 L 115 140 Q 100 142 85 140 Z" fill="${topColor}" stroke="#1e1b4b" stroke-width="2.5" /><circle cx="100" cy="126" r="4.5" fill="#00f3ff" style="filter: drop-shadow(0 0 4px #00f3ff);" />`;
 
-        // 5. Eye Expressions
-        let eyesHtml = '';
-        if (c.eyeStyle === 0) { // Normal Cute
-            eyesHtml = `
-                <circle cx="84" cy="80" r="6" fill="#1e1b4b" />
-                <circle cx="82" cy="78" r="2" fill="#fff" />
-                <circle cx="85" cy="82" r="0.8" fill="#fff" />
-                
-                <circle cx="116" cy="80" r="6" fill="#1e1b4b" />
-                <circle cx="114" cy="78" r="2" fill="#fff" />
-                <circle cx="117" cy="82" r="0.8" fill="#fff" />
-            `;
-        } else if (c.eyeStyle === 1) { // Star Eyes
-            eyesHtml = `
-                <circle cx="84" cy="80" r="6" fill="#1e1b4b" />
-                <path d="M 84 75 L 85.5 78.5 L 89 79 L 86 81.5 L 87 85 L 84 83 L 81 85 L 82 81.5 L 79 79 L 82.5 78.5 Z" fill="#ffd700" />
-                
-                <circle cx="116" cy="80" r="6" fill="#1e1b4b" />
-                <path d="M 116 75 L 117.5 78.5 L 121 79 L 118 81.5 L 119 85 L 116 83 L 113 85 L 114 81.5 L 111 79 L 114.5 78.5 Z" fill="#ffd700" />
-            `;
-        } else if (c.eyeStyle === 2) { // Wink
-            eyesHtml = `
-                <circle cx="84" cy="80" r="6" fill="#1e1b4b" />
-                <circle cx="82" cy="78" r="2" fill="#fff" />
-                <path d="M 110 82 Q 116 74 122 82" stroke="#1e1b4b" stroke-width="3.5" fill="none" stroke-linecap="round" />
-            `;
-        } else if (c.eyeStyle === 3) { // Sleepy/Cool
-            eyesHtml = `
-                <path d="M 77 78 L 91 78 M 78 80 L 90 84" stroke="#1e1b4b" stroke-width="3" stroke-linecap="round" fill="none" />
-                <circle cx="84" cy="83" r="3.5" fill="#1e1b4b" />
-                
-                <path d="M 109 78 L 123 78 M 110 80 L 122 84" stroke="#1e1b4b" stroke-width="3" stroke-linecap="round" fill="none" />
-                <circle cx="116" cy="83" r="3.5" fill="#1e1b4b" />
-            `;
-        } else if (c.eyeStyle === 4) { // Cat Eyes
-            eyesHtml = `
-                <ellipse cx="84" cy="80" rx="5" ry="6" fill="#10b981" stroke="#1e1b4b" stroke-width="1.5" />
-                <ellipse cx="84" cy="80" rx="1.5" ry="4" fill="#1e1b4b" />
-                <circle cx="82" cy="77" r="1.5" fill="#fff" />
-                
-                <ellipse cx="116" cy="80" rx="5" ry="6" fill="#10b981" stroke="#1e1b4b" stroke-width="1.5" />
-                <ellipse cx="116" cy="80" rx="1.5" ry="4" fill="#1e1b4b" />
-                <circle cx="114" cy="77" r="1.5" fill="#fff" />
-            `;
-        } else if (c.eyeStyle === 5) { // Heart Eyes
-            eyesHtml = `
-                <path d="M 84 84 C 84 84 76 77 78 74 C 80 72 84 75 84 75 C 84 75 88 72 90 74 C 92 77 84 84 84 84 Z" fill="#ec4899" stroke="#1e1b4b" stroke-width="1.5" />
-                <path d="M 116 84 C 116 84 108 77 110 74 C 112 72 116 75 116 75 C 116 75 120 72 122 74 C 124 77 116 84 116 84 Z" fill="#ec4899" stroke="#1e1b4b" stroke-width="1.5" />
-            `;
-        } else if (c.eyeStyle === 6) { // Happy ^^
-            eyesHtml = `
-                <path d="M 77 82 Q 84 74 91 82" stroke="#1e1b4b" stroke-width="3.5" fill="none" stroke-linecap="round" />
-                <path d="M 109 82 Q 116 74 123 82" stroke="#1e1b4b" stroke-width="3.5" fill="none" stroke-linecap="round" />
-            `;
-        } else if (c.eyeStyle === 7) { // Visor glasses
-            eyesHtml = `
-                <path d="M 70 74 L 130 74 L 126 88 L 74 88 Z" fill="rgba(239, 68, 68, 0.4)" stroke="#ef4444" stroke-width="2.5" />
-                <rect x="78" y="79" width="44" height="2" fill="#fff" opacity="0.85" />
-            `;
-        }
+        let shoeHtml = '';
+        if (shoeStyle === 1) shoeHtml = `<path d="M 78 171 L 91 171 L 93 182 L 80 182 Z" fill="${shoeColor}" stroke="#1e1b4b" stroke-width="2" /><path d="M 122 171 L 109 171 L 107 182 L 120 182 Z" fill="${shoeColor}" stroke="#1e1b4b" stroke-width="2" />`;
 
-        // 6. Mouth Expressions
-        let mouthHtml = '';
-        if (c.mouthStyle === 0) { // Smile
-            mouthHtml = `<path d="M 96 93 Q 100 98 104 93" stroke="#1e1b4b" stroke-width="2.5" fill="none" stroke-linecap="round" />`;
-        } else if (c.mouthStyle === 1) { // Open Smile :D
-            mouthHtml = `<path d="M 95 92 Q 100 92 105 92 Q 105 102 100 102 Q 95 102 95 92 Z" fill="#ef4444" stroke="#1e1b4b" stroke-width="2" /><path d="M 97 93 Q 100 96 103 93" fill="#fff" />`;
-        } else if (c.mouthStyle === 2) { // Cat Mouth :3
-            mouthHtml = `<path d="M 94 94 Q 97 97 100 94 Q 103 97 106 94" stroke="#1e1b4b" stroke-width="2.5" fill="none" stroke-linecap="round" />`;
-        } else if (c.mouthStyle === 3) { // Shocked :o
-            mouthHtml = `<circle cx="100" cy="95" r="4.5" fill="#ef4444" stroke="#1e1b4b" stroke-width="2" />`;
-        } else if (c.mouthStyle === 4) { // Tongue Out
-            mouthHtml = `
-                <path d="M 95 92 Q 100 98 105 92" stroke="#1e1b4b" stroke-width="2.5" fill="none" stroke-linecap="round" />
-                <path d="M 98 94 Q 100 101 102 94 Z" fill="#ec4899" />
-            `;
-        } else if (c.mouthStyle === 5) { // Straight / Shy
-            mouthHtml = `<line x1="95" y1="94" x2="105" y2="94" stroke="#1e1b4b" stroke-width="2.5" stroke-linecap="round" />`;
-        }
+        // 7. Face Layer
+        let eyesHtml = `<circle cx="84" cy="80" r="6" fill="#1e1b4b" /><circle cx="116" cy="80" r="6" fill="#1e1b4b" />`;
+        if (c.eyeStyle === 1) eyesHtml = `<path d="M 84 75 L 89 79 L 87 85 L 81 85 L 79 79 Z" fill="#ffd700" /><path d="M 116 75 L 121 79 L 119 85 L 113 85 L 111 79 Z" fill="#ffd700" />`;
+        else if (c.eyeStyle === 5) eyesHtml = `<path d="M 84 84 C 84 84 76 77 78 74 C 80 72 84 75 84 75 C 84 75 88 72 90 74 C 92 77 84 84 84 84 Z" fill="#ec4899" /><path d="M 116 84 C 116 84 108 77 110 74 C 112 72 116 75 116 75 C 116 75 120 72 122 74 C 124 77 116 84 116 84 Z" fill="#ec4899" />`;
 
-        // 7. Front Hair (Bangs & Crests)
-        let frontHairHtml = '';
-        if (c.hairStyle === 1) { // Short Spiky
-            frontHairHtml = `
-                <path d="M 64 80 Q 75 60 85 64 Q 95 56 100 68 Q 110 56 120 64 Q 130 60 136 80 Q 125 78 120 74 Q 110 78 100 72 Q 90 78 80 74 Q 75 78 64 80 Z" fill="${hairColor}" stroke="#1e1b4b" stroke-width="2.5" />
-                <path d="M 64 80 C 50 60 70 45 80 40 C 85 32 95 38 100 35 C 105 38 115 32 120 40 C 130 45 150 60 136 80 C 134 76 130 74 125 74 Z" fill="${hairColor}" stroke="#1e1b4b" stroke-width="2.5" />
-            `;
-        } else if (c.hairStyle === 2) { // Bob cut bangs
-            frontHairHtml = `<path d="M 60 75 Q 100 48 140 75 C 138 78 135 80 130 80 Q 115 82 100 78 Q 85 82 70 80 C 65 80 62 78 60 75 Z" fill="${hairColor}" stroke="#1e1b4b" stroke-width="2.5" />`;
-        } else if (c.hairStyle === 3) { // Ponytail bangs
-            frontHairHtml = `<path d="M 62 76 Q 100 45 138 76 Q 138 82 125 80 Q 100 74 75 80 Q 62 82 62 76 Z" fill="${hairColor}" stroke="#1e1b4b" stroke-width="2.5" />`;
-        } else if (c.hairStyle === 4) { // Curly/Afro
-            frontHairHtml = `<path d="M 60 75 C 45 60 45 40 60 30 C 75 20 95 20 100 30 C 105 20 125 20 140 30 C 155 40 155 60 140 75 C 145 85 135 95 125 90 C 100 95 75 90 60 75 Z" fill="${hairColor}" stroke="#1e1b4b" stroke-width="2.5" />`;
-        } else if (c.hairStyle === 5) { // Long Wavy bangs
-            frontHairHtml = `<path d="M 60 75 Q 100 45 140 75 C 135 85 125 82 115 88 C 105 82 95 82 85 88 C 75 82 65 85 60 75 Z" fill="${hairColor}" stroke="#1e1b4b" stroke-width="2.5" />`;
-        } else if (c.hairStyle === 6) { // Mohawk
-            frontHairHtml = `
-                <path d="M 90 50 Q 80 20 100 10 Q 120 20 110 50 L 105 60 L 95 60 Z" fill="${hairColor}" stroke="#1e1b4b" stroke-width="2.5" />
-                <path d="M 62 76 Q 100 65 138 76" stroke="#1e1b4b" stroke-width="2" fill="none" stroke-dasharray="3,3" />
-            `;
-        } else if (c.hairStyle === 7) { // Twin Tails bangs
-            frontHairHtml = `<path d="M 62 76 Q 100 45 138 76 Q 138 82 125 80 Q 100 74 75 80 Q 62 82 62 76 Z" fill="${hairColor}" stroke="#1e1b4b" stroke-width="2.5" />`;
-        } else if (c.hairStyle === 8) { // Side part
-            frontHairHtml = `<path d="M 61 74 C 55 50 85 40 100 45 C 115 40 145 50 139 74 C 130 72 120 68 105 66 Q 85 64 61 74 Z" fill="${hairColor}" stroke="#1e1b4b" stroke-width="2.5" />`;
-        } else if (c.hairStyle === 9) { // Samurai knot base
-            frontHairHtml = `
-                <circle cx="100" cy="36" r="12" fill="${hairColor}" stroke="#1e1b4b" stroke-width="2.5" />
-                <ellipse cx="100" cy="46" rx="6" ry="2" fill="#ef4444" />
-                <path d="M 62 75 C 60 50 80 44 100 44 C 120 44 140 50 138 75 C 125 72 100 72 62 75 Z" fill="${hairColor}" stroke="#1e1b4b" stroke-width="2.5" />
-            `;
-        } else if (c.hairStyle === 10) { // Fluffy curtains
-            frontHairHtml = `
-                <path d="M 60 75 C 50 55 75 35 100 38 C 125 35 150 55 140 75 C 135 68 65 68 60 75 Z" fill="${hairColor}" stroke="#1e1b4b" stroke-width="2.5" />
-                <path d="M 60 75 Q 100 42 140 75 C 135 88 120 85 110 88 C 100 80 100 80 90 88 C 80 85 65 88 60 75 Z" fill="${hairColor}" stroke="#1e1b4b" stroke-width="2.5" />
-            `;
-        } else if (c.hairStyle === 11) { // Cat Ear Hair
-            frontHairHtml = `
-                <path d="M 62 70 L 68 35 L 85 55 Z" fill="${hairColor}" stroke="#1e1b4b" stroke-width="2.5" />
-                <path d="M 138 70 L 132 35 L 115 55 Z" fill="${hairColor}" stroke="#1e1b4b" stroke-width="2.5" />
-                <path d="M 62 76 Q 100 45 138 76 Q 125 82 110 78 Q 100 84 90 78 Q 75 82 62 76 Z" fill="${hairColor}" stroke="#1e1b4b" stroke-width="2.5" />
-            `;
-        }
+        let mouthHtml = `<path d="M 96 93 Q 100 98 104 93" stroke="#1e1b4b" stroke-width="2.5" fill="none" stroke-linecap="round" />`;
+        if (c.mouthStyle === 1) mouthHtml = `<path d="M 95 92 Q 100 92 105 92 Q 105 102 100 102 Q 95 102 95 92 Z" fill="#ef4444" />`;
 
-        // 8. Eyelashes Layer (For Female)
-        let eyelashesHtml = '';
-        if (gender === 'nữ') {
-            eyelashesHtml = `
-                <!-- Adorable Eyelashes -->
-                <path d="M 74 77 Q 80 72 86 76" stroke="#1e1b4b" stroke-width="2.2" fill="none" stroke-linecap="round" />
-                <path d="M 72 78 L 68 75" stroke="#1e1b4b" stroke-width="1.8" stroke-linecap="round" />
-                <path d="M 126 77 Q 120 72 114 76" stroke="#1e1b4b" stroke-width="2.2" fill="none" stroke-linecap="round" />
-                <path d="M 128 78 L 132 75" stroke="#1e1b4b" stroke-width="1.8" stroke-linecap="round" />
+        let eyelashesHtml = gender === 'nữ' ? `<path d="M 74 77 Q 80 72 86 76" stroke="#1e1b4b" stroke-width="2.2" fill="none" /><path d="M 126 77 Q 120 72 114 76" stroke="#1e1b4b" stroke-width="2.2" fill="none" />` : '';
+        let frontHairHtml = `<path d="M 64 80 Q 100 45 136 80" fill="${hairColor}" stroke="#1e1b4b" stroke-width="2.5" />`;
+
+        // 8. Tattoos / Merit Details
+        let tattooHtml = pts > 20 ? `<path d="M 94 125 Q 100 132 106 125" stroke="#ef4444" stroke-width="1.5" fill="none" opacity="0.6" />` : '';
+        if (c.accessory === 10) { // Xăm Kín Người
+            tattooHtml += `
+                <path d="M 96 106 Q 100 110 104 106 L 105 118 Q 100 125 95 118 Z" fill="#2d3748" opacity="0.8" />
+                <path d="M 88 114 Q 100 118 112 114 L 110 128 Q 100 135 90 128 Z" fill="#1a202c" opacity="0.75" />
             `;
         }
 
@@ -494,507 +375,234 @@ const ChibiModule = {
         let backAccessoryHtml = '';
         if (c.accessory === 11) { // Đại Đao Lửa (Epic Guan Dao)
             backAccessoryHtml = `
-                <!-- Huge Epic Flame Guan Dao behind back -->
                 <g class="${isD ? 'chibi-tail-dance' : ''}" style="filter: drop-shadow(0 0 12px #ff4500) drop-shadow(0 0 25px #ff8c00);">
                     <g transform="rotate(-32 70 85)">
-                        <!-- Pole/Shaft -->
                         <rect x="68" y="-10" width="6" height="180" rx="3" fill="#1e2937" stroke="#fbbf24" stroke-width="1.2" />
-                        
-                        <!-- Gold fittings & Dragon Guard -->
                         <path d="M 60 25 L 82 25 L 86 42 L 56 42 Z" fill="#fbbf24" stroke="#78350f" stroke-width="1.5" />
                         <circle cx="71" cy="33" r="3" fill="#ef4444" />
-                        
-                        <!-- Giant Flame Blade -->
                         <path d="M 46 25 C 32 -30 15 -70 35 -85 C 60 -55 58 5 71 25 Z" fill="url(#bladeFlame)" stroke="#991b1b" stroke-width="2.5" />
-                        
-                        <!-- Inner Glowing Edge -->
-                        <path d="M 42 15 C 33 -25 22 -55 35 -75" stroke="#fff" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.9" />
-                        
-                        <!-- Tassel on the hilt -->
-                        <g transform="translate(71, 170)">
-                            <circle cx="0" cy="0" r="4.5" fill="#d97706" stroke="#111" stroke-width="1" />
-                            <path d="M 0 0 C -5 10 -8 25 -5 32 C -2 35 4 35 5 32 C 8 25 5 10 0 0" fill="#ef4444" stroke="#991b1b" stroke-width="1" />
-                            <path d="M -3 12 L -3 28 M 3 12 L 3 28" stroke="#fbbf24" stroke-width="0.8" />
-                        </g>
+                        <circle cx="71" cy="172" r="6" fill="#fbbf24" />
                     </g>
-                    <!-- Floating Sparks & Fire Aura Particles -->
-                    <circle cx="35" cy="20" r="3.5" fill="#fbbf24" style="animation: floatSparkle 1.2s infinite ease-in-out;" />
-                    <circle cx="50" cy="5" r="2.5" fill="#f97316" style="animation: floatSparkle 1.5s infinite 0.3s;" />
-                    <circle cx="20" cy="-10" r="4" fill="#ef4444" style="animation: floatSparkle 1.8s infinite 0.6s;" />
                 </g>
                 <defs>
                     <linearGradient id="bladeFlame" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stop-color="#ffffff" />
-                        <stop offset="20%" stop-color="#fef08a" />
-                        <stop offset="55%" stop-color="#f97316" />
-                        <stop offset="85%" stop-color="#ef4444" />
-                        <stop offset="100%" stop-color="#7f1d1d" />
+                        <stop offset="0%" stop-color="#ffffff" /><stop offset="55%" stop-color="#f97316" /><stop offset="100%" stop-color="#7f1d1d" />
                     </linearGradient>
                 </defs>
             `;
-        } else if (c.accessory === 13) { // Cyber Laser Greatsword (Scale up & Neon)
+        } else if (c.accessory === 13) { // Cyber Laser Greatsword
             backAccessoryHtml = `
-                <!-- Huge Laser Cyber Blade -->
                 <g class="${isD ? 'chibi-tail-dance' : ''}" style="filter: drop-shadow(0 0 12px #00f3ff) drop-shadow(0 0 25px #a855f7);">
                     <g transform="rotate(32 70 85)">
-                        <!-- Blade outer energy glow -->
                         <rect x="61" y="-35" width="20" height="155" rx="8" fill="#00f3ff" opacity="0.4" />
-                        <!-- Main Blade -->
                         <rect x="63" y="-32" width="16" height="150" rx="6" fill="#00f3ff" opacity="0.9" stroke="#fff" stroke-width="1.8" />
-                        <!-- Core -->
                         <rect x="67" y="-28" width="8" height="142" rx="3" fill="#ffffff" />
-                        
-                        <!-- Futuristic Crossguard -->
-                        <path d="M 50 118 L 92 118 L 86 128 L 56 128 Z" fill="#8b5cf6" stroke="#00f3ff" stroke-width="1.5" />
-                        <rect x="66" y="119" width="10" height="8" fill="#00f3ff" style="animation: muzzleGlow 0.8s infinite alternate;" />
-                        
-                        <!-- Hilt / Handle -->
                         <rect x="67" y="128" width="8" height="42" rx="3" fill="#1e2937" stroke="#8b5cf6" stroke-width="1.5" />
-                        <line x1="71" y1="134" x2="71" y2="164" stroke="#a855f7" stroke-width="1.5" stroke-dasharray="2,3" />
-                        
-                        <!-- Pommel glow -->
-                        <circle cx="71" cy="172" r="3.5" fill="#00f3ff" />
                     </g>
-                    <!-- Cyber Sparkles / Digitized Particles -->
-                    <circle cx="45" cy="35" r="3.5" fill="#a855f7" style="animation: floatSparkle 1.2s infinite ease-in-out;" />
-                    <circle cx="110" cy="5" r="2" fill="#00f3ff" style="animation: floatSparkle 1.5s infinite 0.3s;" />
-                    <circle cx="30" cy="-15" r="2.8" fill="#ffffff" style="animation: floatSparkle 1.7s infinite 0.5s;" />
                 </g>
             `;
-        } else if (c.accessory === 17) { // Cánh Thiên Thần (Angel Wings)
+        } else if (c.accessory === 17) { // Wings (Back)
             backAccessoryHtml = `
-                <!-- VVIP Angel Wings behind back -->
-                <g class="${isD ? 'chibi-tail-dance' : ''}" style="filter: drop-shadow(0 0 12px #fbbf24) drop-shadow(0 0 25px #f59e0b);">
-                    <!-- Left Wing -->
-                    <g>
-                        <path d="M 100 110 C 60 70 30 50 15 75 C 5 95 20 120 45 125 C 25 125 15 135 25 150 C 35 160 55 155 75 145 C 55 150 45 162 55 172 C 65 180 85 165 100 145 Z" fill="url(#angelGold)" stroke="#d97706" stroke-width="2" />
-                        <path d="M 100 110 C 70 85 50 70 35 90 C 25 105 35 125 55 130" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.8" />
-                        <path d="M 100 110 C 80 100 65 95 55 110" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" opacity="0.8" />
-                    </g>
-                    <!-- Right Wing (Flipped Horizontally across x=100) -->
+                <g class="${isD ? 'chibi-tail-dance' : ''}" style="filter: drop-shadow(0 0 12px #fbbf24);">
+                    <path d="M 100 110 C 60 70 30 50 15 75 C 5 95 20 120 45 125 C 25 125 15 135 25 150 C 35 160 55 155 75 145 C 55 150 45 162 55 172 C 65 180 85 165 100 145 Z" fill="#fbbf24" stroke="#d97706" stroke-width="2" />
                     <g transform="translate(100, 110) scale(-1, 1) translate(-100, -110)">
-                        <path d="M 100 110 C 60 70 30 50 15 75 C 5 95 20 120 45 125 C 25 125 15 135 25 150 C 35 160 55 155 75 145 C 55 150 45 162 55 172 C 65 180 85 165 100 145 Z" fill="url(#angelGold)" stroke="#d97706" stroke-width="2" />
-                        <path d="M 100 110 C 70 85 50 70 35 90 C 25 105 35 125 55 130" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.8" />
-                        <path d="M 100 110 C 80 100 65 95 55 110" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" opacity="0.8" />
+                        <path d="M 100 110 C 60 70 30 50 15 75 C 5 95 20 120 45 125 C 25 125 15 135 25 150 C 35 160 55 155 75 145 C 55 150 45 162 55 172 C 65 180 85 165 100 145 Z" fill="#fbbf24" stroke="#d97706" stroke-width="2" />
                     </g>
                 </g>
-                <defs>
-                    <linearGradient id="angelGold" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stop-color="#ffffff" />
-                        <stop offset="50%" stop-color="#fef08a" />
-                        <stop offset="100%" stop-color="#fbbf24" />
-                    </linearGradient>
-                </defs>
             `;
-        } else if (c.accessory === 18) { // Cánh Ác Quỷ (Devil Wings)
+        } else if (c.accessory === 18) { // Devil Wings (Back)
             backAccessoryHtml = `
-                <!-- VVIP Devil Wings behind back -->
-                <g class="${isD ? 'chibi-tail-dance' : ''}" style="filter: drop-shadow(0 0 12px #ef4444) drop-shadow(0 0 25px #7f1d1d);">
-                    <!-- Left Wing (Bat style) -->
-                    <g>
-                        <!-- Main bone structure -->
-                        <path d="M 100 110 C 80 80 50 60 20 70 C 15 72 10 78 12 84 L 18 100 L 22 120" fill="none" stroke="#1e1b4b" stroke-width="4.5" stroke-linecap="round" />
-                        <!-- Wing web / skin panels -->
-                        <path d="M 100 110 C 80 80 50 60 20 70 C 25 90 35 110 20 120 C 35 125 45 135 35 155 C 50 145 65 140 75 150 C 85 140 95 125 100 110 Z" fill="url(#devilDark)" stroke="#111827" stroke-width="2" />
-                        <!-- Skeleton wing fingers -->
-                        <path d="M 20 70 Q 35 100 35 155" fill="none" stroke="#1e1b4b" stroke-width="2.5" stroke-linecap="round" />
-                        <path d="M 20 70 Q 55 105 75 150" fill="none" stroke="#1e1b4b" stroke-width="2.5" stroke-linecap="round" />
-                    </g>
-                    <!-- Right Wing (Flipped Horizontally across x=100) -->
+                <g class="${isD ? 'chibi-tail-dance' : ''}" style="filter: drop-shadow(0 0 12px #ef4444);">
+                    <path d="M 100 110 C 80 80 50 60 20 70 C 25 90 35 110 20 120 C 35 125 45 135 35 155 C 80 140 100 110 100 110" fill="#111" stroke="#ef4444" stroke-width="2" />
                     <g transform="translate(100, 110) scale(-1, 1) translate(-100, -110)">
-                        <!-- Main bone structure -->
-                        <path d="M 100 110 C 80 80 50 60 20 70 C 15 72 10 78 12 84 L 18 100 L 22 120" fill="none" stroke="#1e1b4b" stroke-width="4.5" stroke-linecap="round" />
-                        <!-- Wing web / skin panels -->
-                        <path d="M 100 110 C 80 80 50 60 20 70 C 25 90 35 110 20 120 C 35 125 45 135 35 155 C 50 145 65 140 75 150 C 85 140 95 125 100 110 Z" fill="url(#devilDark)" stroke="#111827" stroke-width="2" />
-                        <!-- Skeleton wing fingers -->
-                        <path d="M 20 70 Q 35 100 35 155" fill="none" stroke="#1e1b4b" stroke-width="2.5" stroke-linecap="round" />
-                        <path d="M 20 70 Q 55 105 75 150" fill="none" stroke="#1e1b4b" stroke-width="2.5" stroke-linecap="round" />
+                         <path d="M 100 110 C 80 80 50 60 20 70 C 25 90 35 110 20 120 C 35 125 45 135 35 155 C 80 140 100 110 100 110" fill="#111" stroke="#ef4444" stroke-width="2" />
                     </g>
                 </g>
-                <defs>
-                    <linearGradient id="devilDark" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stop-color="#4c1d95" />
-                        <stop offset="50%" stop-color="#ef4444" />
-                        <stop offset="100%" stop-color="#000000" />
-                    </linearGradient>
-                </defs>
             `;
         }
 
-        // 10. Tattoo Layer (Over Body skin, under clothes)
-        let tattooHtml = '';
-        if (c.accessory === 10) { // Xăm Kín Người
-            tattooHtml = `
-                <!-- Full Body Tattoo (Chest, Neck, Arms, Legs) -->
-                <!-- Chest & Neck Tattoo -->
-                <path d="M 96 106 Q 100 110 104 106 L 105 118 Q 100 125 95 118 Z" fill="#2d3748" opacity="0.8" />
-                <path d="M 88 114 Q 100 118 112 114 L 110 128 Q 100 135 90 128 Z" fill="#1a202c" opacity="0.75" />
-                <path d="M 94 116 C 90 120 92 135 100 132 C 108 135 110 120 106 116" stroke="#2d3748" stroke-width="1.8" fill="none" opacity="0.8" />
-                
-                <!-- Left Arm Tattoo sleeve -->
-                <g class="${isD ? 'chibi-arm-left-dance' : ''}" opacity="0.8">
-                    <path d="M 85 116 Q 66 128 64 140 C 63 145 69 146 72 142 L 85 125 Z" fill="#1a202c" />
-                    <path d="M 83 118 L 68 138" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="2,2" />
-                    <path d="M 80 122 Q 72 130 70 138" stroke="#1a202c" stroke-width="2.5" fill="none" />
+        // 10. Gear Layer (Weapons held in hand)
+        let gearHtml = '';
+        if (c.gear === 1) { // Đại Đao Lửa
+            gearHtml = `
+                <g class="${isD ? 'chibi-arm-right-dance' : ''}" style="filter: drop-shadow(0 0 8px #ff4500);">
+                    <rect x="128" y="80" width="4" height="100" rx="2" fill="#4b5563" />
+                    <path d="M 120 80 Q 130 40 150 70 L 132 85 Z" fill="#ff4500" stroke="#fff" stroke-width="1.5" />
                 </g>
-                
-                <!-- Right Arm Tattoo sleeve -->
-                <g class="${isD ? 'chibi-arm-right-dance' : ''}" opacity="0.8">
-                    <path d="M 115 116 Q 134 128 136 140 C 137 145 131 146 128 142 L 115 125 Z" fill="#1a202c" />
-                    <path d="M 117 118 L 132 138" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="2,2" />
-                    <path d="M 120 122 Q 128 130 130 138" stroke="#1a202c" stroke-width="2.5" fill="none" />
+            `;
+        } else if (c.gear === 2) { // Súng Vô Cực
+            gearHtml = `
+                <g class="${isD ? 'chibi-arm-right-dance' : ''}" style="filter: drop-shadow(0 0 8px #00f3ff);">
+                    <rect x="125" y="125" width="25" height="12" rx="3" fill="#1f2937" stroke="#00f3ff" stroke-width="1.5" />
+                    <rect x="145" y="120" width="12" height="6" rx="1" fill="#00f3ff" />
                 </g>
-                
-                <!-- Legs Tattoo sleeves -->
-                <g opacity="0.8">
-                    <!-- Left Leg -->
-                    <path d="M 86 145 Q 83 165 82 175 L 89 175 L 94 145 Z" fill="#2d3748" />
-                    <path d="M 84 150 Q 88 158 83 168" stroke="#1a202c" stroke-width="2" fill="none" />
-                    <!-- Right Leg -->
-                    <path d="M 114 145 Q 117 165 118 175 L 111 175 L 106 145 Z" fill="#2d3748" />
-                    <path d="M 116 150 Q 112 158 117 168" stroke="#1a202c" stroke-width="2" fill="none" />
+            `;
+        } else if (c.gear === 3) { // Kiếm Cyber Laser
+            gearHtml = `
+                <g class="${isD ? 'chibi-arm-right-dance' : ''}" style="filter: drop-shadow(0 0 10px #8b5cf6);">
+                    <rect x="130" y="60" width="8" height="80" rx="4" fill="#a855f7" opacity="0.8" stroke="#fff" stroke-width="1.5" />
+                </g>
+            `;
+        } else if (c.gear === 4) { // Thương Heo Tộc
+            gearHtml = `
+                <g class="${isD ? 'chibi-arm-right-dance' : ''}">
+                    <rect x="130" y="50" width="5" height="110" rx="2.5" fill="#78350f" stroke="#451a03" stroke-width="1" />
+                    <circle cx="132.5" cy="55" r="12" fill="#f472b6" stroke="#db2777" stroke-width="1.5" />
+                    <ellipse cx="132.5" cy="61" rx="5" ry="3" fill="#fb923c" />
+                    <path d="M 125 45 L 132.5 25 L 140 45 Z" fill="#94a3b8" stroke="#475569" stroke-width="1.5" />
+                </g>
+            `;
+        } else if (c.gear === 5) { // Dép Tổ Ong
+            gearHtml = `
+                <g class="${isD ? 'chibi-arm-right-dance' : ''}">
+                    <path d="M 125 125 Q 135 115 150 125 L 145 145 Q 130 150 125 140 Z" fill="#fbbf24" stroke="#d97706" stroke-width="2" />
+                    <circle cx="132" cy="130" r="2" fill="#d97706" opacity="0.6" />
+                    <circle cx="138" cy="135" r="2" fill="#d97706" opacity="0.6" />
+                </g>
+            `;
+        } else if (c.gear === 6) { // Chổi Tre
+            gearHtml = `
+                <g class="${isD ? 'chibi-arm-right-dance' : ''}">
+                    <rect x="130" y="40" width="6" height="100" rx="3" fill="#65a30d" stroke="#365314" stroke-width="1.5" />
+                    <path d="M 120 140 L 146 140 L 155 170 Q 133 180 110 170 Z" fill="#fde047" stroke="#ca8a04" stroke-width="1.5" />
+                </g>
+            `;
+        } else if (c.gear === 7) { // Muỗng Mì
+            gearHtml = `
+                <g class="${isD ? 'chibi-arm-right-dance' : ''}">
+                    <rect x="130" y="90" width="6" height="60" rx="3" fill="#94a3b8" stroke="#475569" stroke-width="1.5" />
+                    <circle cx="133" cy="80" r="18" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2" />
+                    <path d="M 125 75 Q 130 85 135 75 M 132 75 Q 137 85 142 75" stroke="#fbbf24" stroke-width="2.5" fill="none" />
+                </g>
+            `;
+        } else if (c.gear === 8) { // Gậy Selfie
+            gearHtml = `
+                <g class="${isD ? 'chibi-arm-right-dance' : ''}">
+                    <rect x="131" y="40" width="4" height="110" fill="#cbd5e1" />
+                    <rect x="120" y="30" width="26" height="14" rx="2" fill="#111" stroke="#fbbf24" stroke-width="1.5" />
+                    <path d="M 133 100 C 150 90 165 110 155 125" fill="none" stroke="#fbbf24" stroke-width="2" />
+                </g>
+            `;
+        } else if (c.gear === 9) { // Cờ Lê Điện
+            gearHtml = `
+                <g class="${isD ? 'chibi-arm-right-dance' : ''}">
+                    <path d="M 125 120 L 140 120 L 145 155 L 125 155 Z" fill="#94a3b8" stroke="#334155" stroke-width="2" />
+                    <path d="M 120 110 L 150 110 L 150 125 L 120 125 Z" fill="#64748b" stroke="#334155" stroke-width="2" />
+                </g>
+            `;
+        } else if (c.gear === 10) { // Cây Lau Nhà
+            gearHtml = `
+                <g class="${isD ? 'chibi-arm-right-dance' : ''}">
+                    <rect x="131" y="50" width="5" height="100" rx="2.5" fill="#ec4899" stroke="#9d174d" stroke-width="1" />
+                    <circle cx="133.5" cy="150" r="15" fill="#fff" stroke="#3b82f6" stroke-width="1" />
+                </g>
+            `;
+        } else if (c.gear === 11) { // Nón Lá Phi Tiêu
+            gearHtml = `
+                <g class="${isD ? 'chibi-arm-right-dance' : ''}">
+                    <path d="M 120 140 L 150 140 L 135 110 Z" fill="#fde047" stroke="#ca8a04" stroke-width="2" />
+                    <ellipse cx="135" cy="140" rx="20" ry="5" fill="none" stroke="#22c55e" stroke-width="2" opacity="0.6" />
+                </g>
+            `;
+        } else if (c.gear === 12) { // Vợt Muỗi Điện
+            gearHtml = `
+                <g class="${isD ? 'chibi-arm-right-dance' : ''}">
+                    <rect x="130" y="110" width="7" height="40" rx="3.5" fill="#1e2937" stroke="#a855f7" stroke-width="1.5" />
+                    <ellipse cx="133.5" cy="95" rx="18" ry="22" fill="rgba(168, 85, 247, 0.2)" stroke="#a855f7" stroke-width="2.5" />
+                </g>
+            `;
+        } else if (c.gear === 13) { // Ghế Đỏ Quyền Lực
+            gearHtml = `
+                <g class="${isD ? 'chibi-arm-right-dance' : ''}">
+                    <rect x="131" y="110" width="6" height="50" rx="3" fill="#78350f" />
+                    <rect x="110" y="80" width="45" height="35" rx="4" fill="#ef4444" stroke="#991b1b" stroke-width="2.5" />
+                    <circle cx="132.5" cy="97.5" r="4.5" fill="#991b1b" />
+                </g>
+            `;
+        } else if (c.gear === 14) { // Quạt Trúc
+            gearHtml = `
+                <g class="${isD ? 'chibi-arm-right-dance' : ''}" style="filter: drop-shadow(0 0 6px #22c55e);">
+                    <path d="M 130 110 L 175 80 C 185 100 180 130 155 150 L 135 120 Z" fill="#166534" stroke="#fff" stroke-width="1.2" />
+                    <path d="M 130 110 L 165 145" stroke="#fef08a" stroke-width="1" />
+                    <path d="M 130 110 L 155 155" stroke="#fef08a" stroke-width="1" />
+                    <path d="M 130 110 L 140 160" stroke="#fef08a" stroke-width="1" />
+                    <circle cx="132" cy="112" r="4" fill="#facc15" />
+                </g>
+            `;
+        } else if (c.gear === 15) { // Lồng Đèn Hội An
+            gearHtml = `
+                <g class="${isD ? 'chibi-arm-right-dance' : ''}" style="filter: drop-shadow(0 0 10px #f97316);">
+                    <rect x="131" y="60" width="4" height="60" rx="2" fill="#451a03" />
+                    <ellipse cx="133" cy="130" rx="22" ry="28" fill="#f97316" stroke="#451a03" stroke-width="1.5" />
+                    <rect x="125" y="102" width="16" height="5" rx="2" fill="#451a03" />
+                    <rect x="125" y="153" width="16" height="5" rx="2" fill="#451a03" />
+                    <path d="M 133 158 L 133 180" stroke="#dc2626" stroke-width="3" stroke-dasharray="4 2" />
+                    <circle cx="133" cy="158" r="3" fill="#fbbf24" />
+                </g>
+            `;
+        } else if (c.gear === 16) { // Gánh Hàng Rong
+            gearHtml = `
+                <g style="filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));">
+                    <rect x="50" y="105" width="100" height="6" rx="3" fill="#78350f" stroke="#451a03" stroke-width="1" />
+                    <g transform="translate(45, 110)">
+                        <path d="M -20 0 L 20 0 L 15 25 L -15 25 Z" fill="#b45309" stroke="#451a03" stroke-width="1.5" />
+                        <circle cx="-5" cy="5" r="4" fill="#ef4444" /> <circle cx="5" cy="8" r="4" fill="#eab308" />
+                    </g>
+                    <g transform="translate(155, 110)">
+                        <path d="M -20 0 L 20 0 L 15 25 L -15 25 Z" fill="#b45309" stroke="#451a03" stroke-width="1.5" />
+                        <rect x="-10" y="-10" width="20" height="10" fill="#fff" stroke="#94a3b8" />
+                    </g>
+                </g>
+            `;
+        } else if (c.gear === 17) { // Bánh Mì
+            gearHtml = `
+                <g class="${isD ? 'chibi-arm-right-dance' : ''}" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
+                    <ellipse cx="138" cy="130" rx="22" ry="10" transform="rotate(-15 138 130)" fill="#f59e0b" stroke="#92400e" stroke-width="1.5" />
+                    <path d="M 125 125 L 155 125" stroke="#fff" stroke-width="2" opacity="0.4" />
+                    <path d="M 130 135 L 145 135" stroke="#10b981" stroke-width="3" />
+                </g>
+            `;
+        } else if (c.gear === 18) { // Cà Phê Phin
+            gearHtml = `
+                <g class="${isD ? 'chibi-arm-right-dance' : ''}">
+                    <rect x="125" y="115" width="20" height="25" rx="4" fill="rgba(255,255,255,0.3)" stroke="#fff" stroke-width="1" />
+                    <rect x="125" y="125" width="20" height="15" fill="#451a03" />
+                    <rect x="122" y="105" width="26" height="15" rx="2" fill="#94a3b8" stroke="#475569" stroke-width="1" />
+                    <circle cx="135" cy="115" r="8" fill="#94a3b8" />
+                </g>
+            `;
+        } else if (c.gear === 19) { // Dép Tổ Ong Huyền Thoại (Dual)
+             gearHtml = `
+                <g class="${isD ? 'chibi-arm-right-dance' : ''}">
+                    <path d="M 125 125 Q 135 115 150 125 L 145 145 Q 130 150 125 140 Z" fill="#fff" stroke="#94a3b8" stroke-width="1.5" />
+                    <path d="M 110 125 Q 120 115 135 125 L 130 145 Q 115 150 110 140 Z" fill="#fff" stroke="#94a3b8" stroke-width="1.5" />
                 </g>
             `;
         }
 
-        // 11. Shoes Layer
-        let shoeHtml = '';
-        if (shoeStyle === 1) { // Active Sneakers (Giày thể thao năng động)
-            shoeHtml = `
-                <!-- Active Sneakers -->
-                <!-- Left Shoe -->
-                <path d="M 78 171 L 91 171 L 93 182 L 80 182 Z" fill="${shoeColor}" stroke="#1e1b4b" stroke-width="2" />
-                <path d="M 80 182 L 85 182 L 84 179 L 79 179 Z" fill="#fff" />
-                <rect x="79" y="180" width="14" height="2.5" fill="#ffffff" rx="0.5" />
-                <line x1="84" y1="172" x2="88" y2="176" stroke="#ffffff" stroke-width="1.2" />
-                <line x1="88" y1="172" x2="84" y2="176" stroke="#ffffff" stroke-width="1.2" />
-
-                <!-- Right Shoe -->
-                <path d="M 122 171 L 109 171 L 107 182 L 120 182 Z" fill="${shoeColor}" stroke="#1e1b4b" stroke-width="2" />
-                <path d="M 120 182 L 115 182 L 116 179 L 121 179 Z" fill="#fff" />
-                <rect x="107" y="180" width="14" height="2.5" fill="#ffffff" rx="0.5" />
-                <line x1="116" y1="172" x2="112" y2="176" stroke="#ffffff" stroke-width="1.2" />
-                <line x1="112" y1="172" x2="116" y2="176" stroke="#ffffff" stroke-width="1.2" />
-            `;
-        } else if (shoeStyle === 2) { // Cyber Neon Boots
-            shoeHtml = `
-                <!-- Cyber Neon Boots -->
-                <!-- Left Boot -->
-                <path d="M 76 166 L 92 166 L 93 182 L 78 182 Z" fill="${shoeColor}" stroke="#1e1b4b" stroke-width="2" />
-                <path d="M 78 174 L 92 174" stroke="#00f3ff" stroke-width="2" style="filter: drop-shadow(0 0 3px #00f3ff);" />
-                <rect x="77" y="180" width="16" height="2.5" fill="#00f3ff" rx="0.5" style="filter: drop-shadow(0 0 3px #00f3ff);" />
-                
-                <!-- Right Boot -->
-                <path d="M 124 166 L 108 166 L 107 182 L 122 182 Z" fill="${shoeColor}" stroke="#1e1b4b" stroke-width="2" />
-                <path d="M 122 174 L 108 174" stroke="#00f3ff" stroke-width="2" style="filter: drop-shadow(0 0 3px #00f3ff);" />
-                <rect x="107" y="180" width="16" height="2.5" fill="#00f3ff" rx="0.5" style="filter: drop-shadow(0 0 3px #00f3ff);" />
-            `;
-        } else if (shoeStyle === 3) { // High Heels
-            shoeHtml = `
-                <!-- High Heels -->
-                <!-- Left -->
-                <path d="M 80 172 Q 86 174 91 176 L 87 183 L 81 181 Z" fill="${shoeColor}" stroke="#1e1b4b" stroke-width="1.8" />
-                <line x1="81" y1="180" x2="81" y2="184" stroke="${shoeColor}" stroke-width="2.5" stroke-linecap="round" />
-                <path d="M 82 171 Q 86 168 90 171" stroke="${shoeColor}" stroke-width="1.5" fill="none" />
-                
-                <!-- Right -->
-                <path d="M 120 172 Q 114 174 109 176 L 113 183 L 119 181 Z" fill="${shoeColor}" stroke="#1e1b4b" stroke-width="1.8" />
-                <line x1="119" y1="180" x2="119" y2="184" stroke="${shoeColor}" stroke-width="2.5" stroke-linecap="round" />
-                <path d="M 118 171 Q 114 168 110 171" stroke="${shoeColor}" stroke-width="1.5" fill="none" />
-            `;
-        } else if (shoeStyle === 4) { // Combat Boots
-            shoeHtml = `
-                <!-- Combat Boots -->
-                <!-- Left -->
-                <path d="M 76 162 L 93 162 L 94 182 L 78 182 Z" fill="${shoeColor}" stroke="#1e1b4b" stroke-width="2" />
-                <line x1="85" y1="165" x2="85" y2="178" stroke="#111" stroke-width="2" stroke-dasharray="2,2" />
-                <rect x="77" y="180" width="17" height="3" fill="#111" />
-                
-                <!-- Right -->
-                <path d="M 124 162 L 107 162 L 106 182 L 122 182 Z" fill="${shoeColor}" stroke="#1e1b4b" stroke-width="2" />
-                <line x1="115" y1="165" x2="115" y2="178" stroke="#111" stroke-width="2" stroke-dasharray="2,2" />
-                <rect x="106" y="180" width="17" height="3" fill="#111" />
-            `;
-        } else if (shoeStyle === 5) { // Panda Slippers
-            shoeHtml = `
-                <!-- Panda Slippers -->
-                <!-- Left Slipper -->
-                <ellipse cx="84" cy="178" rx="8" ry="5.5" fill="#ffffff" stroke="#1e1b4b" stroke-width="2" />
-                <circle cx="79" cy="175" r="2.5" fill="#111" />
-                <circle cx="89" cy="175" r="2.5" fill="#111" />
-                <circle cx="82" cy="178" r="1.2" fill="#111" />
-                <circle cx="86" cy="178" r="1.2" fill="#111" />
-                <path d="M 83 181 Q 84 182 85 181" stroke="#111" stroke-width="1" fill="none" />
-                
-                <!-- Right Slipper -->
-                <ellipse cx="116" cy="178" rx="8" ry="5.5" fill="#ffffff" stroke="#1e1b4b" stroke-width="2" />
-                <circle cx="111" cy="175" r="2.5" fill="#111" />
-                <circle cx="121" cy="175" r="2.5" fill="#111" />
-                <circle cx="114" cy="178" r="1.2" fill="#111" />
-                <circle cx="118" cy="178" r="1.2" fill="#111" />
-                <path d="M 115 181 Q 116 182 117 181" stroke="#111" stroke-width="1" fill="none" />
-            `;
-        } else if (shoeStyle === 6) { // Retro Converse
-            shoeHtml = `
-                <!-- Retro Converse -->
-                <!-- Left -->
-                <path d="M 77 167 L 91 167 L 93 182 L 78 182 Z" fill="${shoeColor}" stroke="#1e1b4b" stroke-width="2" />
-                <path d="M 86 182 L 93 182 L 93 175 Z" fill="#fff" stroke="#1e1b4b" stroke-width="1.5" />
-                <circle cx="82" cy="172" r="2" fill="#fff" />
-                <rect x="77" y="180" width="16" height="2.5" fill="#ffffff" rx="0.5" />
-                
-                <!-- Right -->
-                <path d="M 123 167 L 109 167 L 107 182 L 122 182 Z" fill="${shoeColor}" stroke="#1e1b4b" stroke-width="2" />
-                <path d="M 114 182 L 107 182 L 107 175 Z" fill="#fff" stroke="#1e1b4b" stroke-width="1.5" />
-                <circle cx="118" cy="172" r="2" fill="#fff" />
-                <rect x="107" y="180" width="16" height="2.5" fill="#ffffff" rx="0.5" />
-            `;
-        } else if (shoeStyle === 7) { // Rainbow Light-up Sneakers
-            shoeHtml = `
-                <!-- Rainbow Light-up Sneakers -->
-                <!-- Left -->
-                <path d="M 78 171 L 91 171 L 93 182 L 80 182 Z" fill="${shoeColor}" stroke="#1e1b4b" stroke-width="2" />
-                <rect x="79" y="180" width="14" height="2.5" fill="url(#rainbowGlow)" rx="0.5" style="filter: drop-shadow(0 0 4px #a855f7);" />
-                
-                <!-- Right -->
-                <path d="M 122 171 L 109 171 L 107 182 L 120 182 Z" fill="${shoeColor}" stroke="#1e1b4b" stroke-width="2" />
-                <rect x="107" y="180" width="14" height="2.5" fill="url(#rainbowGlow)" rx="0.5" style="filter: drop-shadow(0 0 4px #a855f7);" />
-                
-                <defs>
-                    <linearGradient id="rainbowGlow" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stop-color="#ef4444" />
-                        <stop offset="33%" stop-color="#3b82f6" />
-                        <stop offset="66%" stop-color="#10b981" />
-                        <stop offset="100%" stop-color="#eab308" />
-                    </linearGradient>
-                </defs>
-            `;
-        }
-
-        // 12. Accessories Layer
-        let accHtml = '';
-        if (c.accessory === 1) { // Sunglasses
-            accHtml = `<path d="M 72 76 Q 84 76 84 84 Q 84 90 72 90 Z M 116 76 Q 128 76 128 84 Q 128 90 116 90 Z" fill="#111" stroke="#fff" stroke-width="1.5" /><line x1="84" y1="80" x2="116" y2="80" stroke="#fff" stroke-width="2.5" />`;
-        } else if (c.accessory === 2) { // Cat headband
-            accHtml = `
-                <path d="M 64 68 A 40 40 0 0 1 136 68" stroke="#24292e" stroke-width="3.5" fill="none" />
-                <path d="M 66 62 L 56 38 L 80 50 Z" fill="#ec4899" stroke="#1e1b4b" stroke-width="2" />
-                <path d="M 70 57 L 64 43 L 78 50 Z" fill="#ffb7b2" />
-                <path d="M 134 62 L 144 38 L 120 50 Z" fill="#ec4899" stroke="#1e1b4b" stroke-width="2" />
-                <path d="M 130 57 L 136 43 L 122 50 Z" fill="#ffb7b2" />
-            `;
-        } else if (c.accessory === 3) { // Gaming headphones
-            accHtml = `
-                <path d="M 64 74 A 38 38 0 0 1 136 74" stroke="#8b5cf6" stroke-width="4.5" fill="none" />
-                <rect x="54" y="68" width="10" height="22" rx="5" fill="#8b5cf6" stroke="#1e1b4b" stroke-width="2" />
-                <circle cx="59" cy="79" r="2.5" fill="#00f3ff" />
-                <rect x="136" y="68" width="10" height="22" rx="5" fill="#8b5cf6" stroke="#1e1b4b" stroke-width="2" />
-                <circle cx="141" cy="79" r="2.5" fill="#00f3ff" />
-            `;
-        } else if (c.accessory === 4) { // Angel Halo
-            accHtml = `<ellipse cx="100" cy="30" rx="24" ry="6" fill="none" stroke="#f59e0b" stroke-width="3" style="filter: drop-shadow(0 0 6px #f59e0b);" />`;
-        } else if (c.accessory === 5) { // Golden Crown
-            accHtml = `
-                <path d="M 78 52 L 82 35 L 91 44 L 100 32 L 109 44 L 118 35 L 122 52 Z" fill="#fbbf24" stroke="#1e1b4b" stroke-width="2" />
-                <circle cx="82" cy="33" r="1.5" fill="#ef4444" />
-                <circle cx="100" cy="30" r="1.5" fill="#3b82f6" />
-                <circle cx="118" cy="33" r="1.5" fill="#ef4444" />
-            `;
-        } else if (c.accessory === 6) { // Face mask
-            accHtml = `
-                <path d="M 86 94 Q 100 88 114 94 L 110 108 Q 100 114 90 108 Z" fill="#24292e" stroke="#1e1b4b" stroke-width="2" />
-                <line x1="90" y1="102" x2="110" y2="102" stroke="#475569" stroke-width="1.5" />
-            `;
-        } else if (c.accessory === 7) { // Chef Hat
-            accHtml = `
-                <path d="M 80 50 C 70 30 130 30 120 50 Z" fill="#fff" stroke="#1e1b4b" stroke-width="2" />
-                <rect x="84" y="46" width="32" height="6" fill="#fff" stroke="#1e1b4b" stroke-width="2" />
-            `;
-        } else if (c.accessory === 8) { // Pirate Eye Patch
-            accHtml = `
-                <line x1="62" y1="74" x2="138" y2="84" stroke="#111" stroke-width="2" />
-                <circle cx="84" cy="80" r="8.5" fill="#111" stroke="#1e1b4b" stroke-width="1.5" />
-            `;
-        } else if (c.accessory === 9) { // Ribbon Bow
-            accHtml = `
-                <path d="M 85 45 Q 100 52 115 45 Q 125 35 110 38 Q 100 50 90 38 Q 75 35 85 45 Z" fill="#ef4444" stroke="#1e1b4b" stroke-width="2" />
-                <circle cx="100" cy="45" r="4.5" fill="#fbbf24" stroke="#1e1b4b" stroke-width="2" />
-            `;
-        } else if (c.accessory === 12) { // Súng Vô Cực (Sci-Fi Rifle)
-            accHtml = `
-                <!-- Glowing Infinite Sci-Fi Rifle held in front -->
-                <g class="${isD ? 'chibi-arm-right-dance' : ''}" style="filter: drop-shadow(0 0 10px #00f3ff) drop-shadow(0 0 18px #3b82f6);">
-                    <!-- Gun Stock / Body -->
-                    <rect x="52" y="116" width="88" height="18" rx="4" fill="#1e2937" stroke="#475569" stroke-width="1.8" />
-                    <!-- Carbon fiber patterns -->
-                    <line x1="60" y1="120" x2="130" y2="120" stroke="#0f172a" stroke-width="1.5" stroke-dasharray="3,3" />
-                    <line x1="60" y1="128" x2="130" y2="128" stroke="#0f172a" stroke-width="1.5" stroke-dasharray="3,3" />
-                    
-                    <!-- Gun Barrel -->
-                    <rect x="140" y="121" width="36" height="8" rx="2" fill="#334155" stroke="#111" stroke-width="1.2" />
-                    <line x1="140" y1="125" x2="176" y2="125" stroke="#00f3ff" stroke-width="2" />
-                    
-                    <!-- Scope -->
-                    <rect x="80" y="102" width="26" height="14" fill="#0f172a" stroke="#475569" stroke-width="1.5" rx="2" />
-                    <circle cx="102" cy="109" r="2.5" fill="#ef4444" style="animation: muzzleGlow 0.5s infinite alternate;" />
-                    <line x1="80" y1="109" x2="106" y2="109" stroke="#ef4444" stroke-width="1" opacity="0.7" />
-                    
-                    <!-- Laser Ammo Core -->
-                    <rect x="84" y="120" width="40" height="10" rx="3" fill="#00f3ff" style="animation: muzzleGlow 0.7s infinite alternate;" />
-                    <rect x="90" y="122" width="28" height="6" rx="1.5" fill="#fff" />
-                    
-                    <!-- Front Grip & Trigger -->
-                    <rect x="70" y="134" width="8" height="14" rx="2" fill="#0f172a" stroke="#111" stroke-width="1.2" />
-                    <rect x="115" y="134" width="8" height="12" rx="2" fill="#0f172a" stroke="#111" stroke-width="1.2" />
-                    
-                    <!-- Hands holding weapon -->
-                    <circle cx="119" cy="136" r="5" fill="${skinColor}" stroke="#1e1b4b" stroke-width="1.5" />
-                    <circle cx="74" cy="136" r="5" fill="${skinColor}" stroke="#1e1b4b" stroke-width="1.5" />
-                    
-                    <!-- Energy muzzle flash -->
-                    <polygon points="176,118 196,125 176,132 182,125" fill="#00f3ff" opacity="0.9" style="animation: muzzleGlow 0.3s infinite alternate;" />
-                    <circle cx="196" cy="125" r="2.5" fill="#fff" />
-                </g>
-                <style>
-                    @keyframes muzzleGlow {
-                        0% { opacity: 0.5; transform: scale(0.9); }
-                        100% { opacity: 1; transform: scale(1.15); }
-                    }
-                </style>
-            `;
-        } else if (c.accessory === 14) { // Cưỡi Ô Tô Siêu Cấp (Sports Car Rider)
-            accHtml = `
-                <!-- Super Sports Car Rider covering legs -->
+        // 11. Mount Layer (Vehicles covering legs)
+        let mountHtml = '';
+        if (c.mount === 1) { // Siêu Xe
+            mountHtml = `
                 <g style="filter: drop-shadow(0 6px 12px rgba(0,0,0,0.6));">
-                    <!-- Wheels -->
                     <circle cx="46" cy="178" r="16" fill="#111" stroke="#ef4444" stroke-width="2.5" />
-                    <circle cx="46" cy="178" r="7" fill="#cbd5e1" stroke="#334155" stroke-width="1" />
                     <circle cx="154" cy="178" r="16" fill="#111" stroke="#ef4444" stroke-width="2.5" />
-                    <circle cx="154" cy="178" r="7" fill="#cbd5e1" stroke="#334155" stroke-width="1" />
-                    
-                    <!-- Car Body -->
-                    <path d="M 20 176 C 20 156 35 140 60 138 L 140 138 C 165 140 180 156 180 176 C 180 188 170 192 140 192 L 60 192 C 30 192 20 188 20 176 Z" fill="url(#carRedBody)" stroke="#1e1b4b" stroke-width="2.5" />
-                    
-                    <!-- Front Grill & LED Strip -->
-                    <rect x="70" y="174" width="60" height="8" rx="2" fill="#111" stroke="#475569" stroke-width="1" />
-                    <line x1="74" y1="178" x2="126" y2="178" stroke="#00f3ff" stroke-width="2" style="filter: drop-shadow(0 0 3px #00f3ff);" />
-                    
-                    <!-- Windshield -->
-                    <path d="M 58 138 L 72 120 L 128 120 L 142 138 Z" fill="rgba(6, 182, 212, 0.45)" stroke="#06b6d4" stroke-width="2.2" />
-                    <line x1="76" y1="124" x2="124" y2="124" stroke="#fff" stroke-width="2.5" opacity="0.75" />
-                    
-                    <!-- Spoiler -->
-                    <path d="M 22 146 L 6 132 L 10 148 Z" fill="#1e2937" stroke="#111" stroke-width="1.5" />
-                    <!-- Decal sấm sét vàng -->
-                    <path d="M 75 158 L 125 152 L 105 166 Z" fill="#fbbf24" stroke="#d97706" stroke-width="1.2" />
-                    
-                    <!-- Glowing Headlights & LED Beams -->
-                    <polygon points="166,161 198,154 198,178 166,171" fill="url(#headlightBeam)" opacity="0.7" />
-                    <ellipse cx="169" cy="166" rx="4.5" ry="7" fill="#ffffff" style="filter: drop-shadow(0 0 10px #ffffff);" />
-                    <ellipse cx="31" cy="166" rx="3.5" ry="5.5" fill="#f59e0b" />
-                    
-                    <!-- Steering Wheel -->
-                    <ellipse cx="100" cy="132" rx="14" ry="5" fill="none" stroke="#1f2937" stroke-width="3" />
+                    <path d="M 20 176 C 20 156 35 140 60 138 L 140 138 C 165 140 180 156 180 176 C 180 188 170 192 140 192 L 60 192 C 30 192 20 188 20 176 Z" fill="#dc2626" stroke="#1e1b4b" stroke-width="2.5" />
                 </g>
-                <defs>
-                    <linearGradient id="carRedBody" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stop-color="#ef4444" />
-                        <stop offset="40%" stop-color="#dc2626" />
-                        <stop offset="85%" stop-color="#991b1b" />
-                        <stop offset="100%" stop-color="#450a0a" />
-                    </linearGradient>
-                    <linearGradient id="headlightBeam" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95" />
-                        <stop offset="30%" stop-color="#fef08a" stop-opacity="0.7" />
-                        <stop offset="100%" stop-color="#fbbf24" stop-opacity="0" />
-                    </linearGradient>
-                </defs>
             `;
-        } else if (c.accessory === 15) { // Cưỡi Xe Máy Cực Ngầu (Cyber Motorcycle)
-            accHtml = `
-                <!-- Cyberpunk Heavy Motorcycle -->
-                <g style="filter: drop-shadow(0 6px 12px rgba(0,0,0,0.65));">
-                    <!-- Neon wheels -->
-                    <circle cx="42" cy="176" r="19" fill="#111" stroke="#00f3ff" stroke-width="4.5" style="filter: drop-shadow(0 0 6px #00f3ff);" />
-                    <circle cx="42" cy="176" r="9" fill="#1e2937" stroke="#4b5563" stroke-width="1.5" />
-                    <circle cx="158" cy="176" r="19" fill="#111" stroke="#00f3ff" stroke-width="4.5" style="filter: drop-shadow(0 0 6px #00f3ff);" />
-                    <circle cx="158" cy="176" r="9" fill="#1e2937" stroke="#4b5563" stroke-width="1.5" />
-                    
-                    <!-- Heavy Metal Frame -->
-                    <path d="M 42 176 L 82 142 L 118 142 L 158 176 Z" stroke="#334155" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-                    <path d="M 42 176 L 82 142 L 118 142 L 158 176 Z" stroke="#00f3ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.75" />
-                    
-                    <!-- Exhaust Pipe with Flame Trail -->
-                    <g transform="rotate(-12 34 176)">
-                        <rect x="30" y="174" width="56" height="10" rx="3" fill="#475569" stroke="#111" stroke-width="1.5" />
-                        <rect x="32" y="176" width="52" height="6" fill="#1e2937" />
-                        <!-- Real Fire Exhaust Flame Effect -->
-                        <polygon points="28,179 4,172 12,179 2,186" fill="#f97316" stroke="#ef4444" stroke-width="1" />
-                        <polygon points="28,179 10,175 14,179 8,183" fill="#ffd700" />
-                    </g>
-                    
-                    <!-- Moto Body -->
-                    <path d="M 60 166 C 56 138 78 130 98 130 C 120 130 138 138 148 162 L 140 176 Z" fill="url(#motoBody)" stroke="#111" stroke-width="2.2" />
-                    <!-- Cyber energy bar on body -->
-                    <path d="M 78 146 Q 98 140 124 148" stroke="#a855f7" stroke-width="3" stroke-linecap="round" fill="none" style="filter: drop-shadow(0 0 4px #a855f7);" />
-                    
-                    <!-- Handlebars -->
-                    <line x1="104" y1="134" x2="132" y2="114" stroke="#1e2937" stroke-width="6" stroke-linecap="round" />
-                    <circle cx="132" cy="114" r="4.5" fill="#00f3ff" style="filter: drop-shadow(0 0 3px #00f3ff);" />
-                    
-                    <!-- Front visor & LED Headlight -->
-                    <path d="M 126 122 L 148 132 L 142 144 L 122 134 Z" fill="#8b5cf6" stroke="#111" stroke-width="1.8" />
-                    <polygon points="144,136 172,136 166,148 142,142" fill="url(#headlightBeam)" opacity="0.65" />
-                    <ellipse cx="143" cy="139" rx="3" ry="5" fill="#00f3ff" style="filter: drop-shadow(0 0 6px #00f3ff);" />
+        } else if (c.mount === 4) { // Xe Máy Dream Neon
+            mountHtml = `
+                <g style="filter: drop-shadow(0 8px 15px rgba(0,0,0,0.7));">
+                    <circle cx="35" cy="180" r="22" fill="#111" stroke="#facc15" stroke-width="3" />
+                    <circle cx="165" cy="180" r="22" fill="#111" stroke="#facc15" stroke-width="3" />
+                    <path d="M 30 170 L 170 170 L 160 140 L 50 140 Z" fill="#334155" stroke="#facc15" stroke-width="2" />
+                    <rect x="80" y="130" width="50" height="15" rx="5" fill="#1e2937" stroke="#fff" />
+                    <path d="M 35 140 L 35 120 L 55 120" stroke="#fff" stroke-width="3" fill="none" />
                 </g>
-                <defs>
-                    <linearGradient id="motoBody" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stop-color="#8b5cf6" />
-                        <stop offset="45%" stop-color="#3b0764" />
-                        <stop offset="85%" stop-color="#1e1b4b" />
-                        <stop offset="100%" stop-color="#090514" />
-                    </linearGradient>
-                </defs>
-            `;
-        } else if (c.accessory === 16) { // Đeo Phao Hồng Hạc (Pink Flamingo Float)
-            accHtml = `
-                <!-- Adorable Pink Flamingo Swim Float around waist -->
-                <g style="filter: drop-shadow(0 5px 8px rgba(0,0,0,0.4));">
-                    <!-- Float Ring -->
-                    <ellipse cx="100" cy="148" rx="32" ry="15" fill="#f43f5e" stroke="#1e1b4b" stroke-width="2.5" />
-                    <!-- Inner shading for 3D depth -->
-                    <ellipse cx="100" cy="146" rx="20" ry="8" fill="#be123c" opacity="0.35" />
-                    
-                    <!-- Water ripples under float -->
-                    <ellipse cx="100" cy="164" rx="42" ry="6" fill="none" stroke="#38bdf8" stroke-width="2" opacity="0.7" stroke-dasharray="10,5;5,10" style="animation: waterSpin 3s infinite linear;" />
-                    
-                    <!-- Flamingo Neck & Head -->
-                    <path d="M 118 148 C 126 148 136 142 134 122 C 132 110 123 104 126 96 C 128 90 137 90 139 96 C 141 104 137 112 137 120" fill="#f43f5e" stroke="#1e1b4b" stroke-width="2.5" stroke-linecap="round" />
-                    
-                    <!-- Beak -->
-                    <path d="M 139 94 C 143 94 148 99 146 103 C 142 104 139 100 139 94" fill="#111" />
-                    <path d="M 139 95 C 141 95 143 98 142 99" fill="#ffffff" />
-                    
-                    <!-- Flamingo Eye with long eyelashes -->
-                    <circle cx="132" cy="95" r="1.6" fill="#111" />
-                    <circle cx="131" cy="94" r="0.6" fill="#fff" />
-                    <path d="M 133 93 L 136 91" stroke="#111" stroke-width="0.8" />
-                    
-                    <!-- Cute Flamingo Wings on sides -->
-                    <path d="M 72 144 C 64 144 60 152 68 155 C 72 153 74 148 72 144 Z" fill="#fda4af" stroke="#1e1b4b" stroke-width="1.8" />
-                    <!-- Little Tail feather behind -->
-                    <path d="M 68 140 Q 60 132 64 144 Z" fill="#f43f5e" stroke="#1e1b4b" stroke-width="1.8" />
-                </g>
-                <style>
-                    @keyframes waterSpin {
-                        0% { transform: rotate(0deg); }
-                        100% { transform: rotate(360deg); }
-                    }
-                </style>
             `;
         }
 
-        // 13. Sparkle / Aura effects for high merit points
+        // 12. Sparkles / High Merit Particles
         let sparklesHtml = '';
         if (pts > 20) {
             const auraColor = pts > 50 ? '#fbbf24' : '#60a5fa';
@@ -1002,59 +610,55 @@ const ChibiModule = {
                 <g class="chibi-auras">
                     <circle cx="45" cy="50" r="3" fill="${auraColor}" style="animation: floatSparkle 2s infinite ease-in-out;" />
                     <circle cx="155" cy="60" r="2.5" fill="${auraColor}" style="animation: floatSparkle 1.8s infinite ease-in-out 0.4s;" />
-                    <path d="M 100 16 L 101.5 20 L 105 21.5 L 101.5 23 L 100 27 L 98.5 23 L 95 21.5 L 98.5 20 Z" fill="#f59e0b" style="animation: floatSparkle 2.2s infinite ease-in-out 0.8s;" />
-                    <path d="M 50 150 L 51 153 L 54 154 L 51 155 L 50 158 L 49 155 L 46 154 L 49 153 Z" fill="#f59e0b" style="animation: floatSparkle 2.5s infinite ease-in-out 0.2s;" />
-                    <path d="M 150 140 L 151 143 L 154 144 L 151 145 L 150 148 L 149 145 L 146 144 L 149 143 Z" fill="#f59e0b" style="animation: floatSparkle 1.7s infinite ease-in-out 0.6s;" />
                 </g>
-                <style>
-                    @keyframes floatSparkle {
-                        0%, 100% { transform: translateY(0) scale(0.6); opacity: 0.3; }
-                        50% { transform: translateY(-10px) scale(1.1); opacity: 1; }
-                    }
-                    .chibi-auras > * {
-                        transform-origin: center;
-                    }
-                </style>
             `;
         }
 
-        // Assemble Final Composite SVG
+        // 13. Front Accessories Layer (Hats/Face)
+        let accHtml = '';
+        if (c.accessory === 11) { // Mũ Cối
+            accHtml = `
+                <g style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));">
+                    <path d="M 55 55 Q 100 20 145 55 L 145 70 Q 100 85 55 70 Z" fill="#3f6212" stroke="#1a2e05" stroke-width="2" />
+                    <circle cx="100" cy="55" r="8" fill="#eab308" stroke="#854d0e" stroke-width="1.5" />
+                    <path d="M 96 55 L 104 55 M 100 51 L 100 59" stroke="#fff" stroke-width="1" />
+                </g>
+            `;
+        } else if (c.accessory === 12) { // Nón Lá
+            accHtml = `
+                <g style="filter: drop-shadow(0 4px 10px rgba(0,0,0,0.3));">
+                    <path d="M 40 75 L 100 20 L 160 75 Z" fill="#fef08a" stroke="#ca8a04" stroke-width="1.5" />
+                    <path d="M 60 75 Q 100 85 140 75" fill="none" stroke="#ca8a04" stroke-width="1" opacity="0.5" />
+                    <path d="M 70 75 L 70 100 M 130 75 L 130 100" stroke="#f43f5e" stroke-width="2.5" />
+                </g>
+            `;
+        } else if (c.accessory === 13) { // Khăn Rằn
+            accHtml = `
+                <g style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">
+                    <path d="M 75 110 Q 100 135 125 110 L 120 140 Q 100 150 80 140 Z" fill="#111" />
+                    <path d="M 75 110 Q 100 135 125 110 L 120 140 Q 100 150 80 140 Z" fill="url(#khanRanPattern)" opacity="0.8" />
+                    <defs>
+                        <pattern id="khanRanPattern" width="10" height="10" patternUnits="userSpaceOnUse">
+                            <rect width="5" height="5" fill="#fff" />
+                            <rect x="5" y="5" width="5" height="5" fill="#fff" />
+                        </pattern>
+                    </defs>
+                </g>
+            `;
+        }
         return `
             <svg viewBox="${viewBox}" width="100%" height="100%" class="${isD ? 'chibi-dance' : ''}" style="display: block;">
                 <style>
-                    .chibi-dance {
-                        animation: chibiBounce 1.5s infinite ease-in-out;
-                        transform-origin: bottom center;
-                    }
-                    @keyframes chibiBounce {
-                        0%, 100% { transform: scale(1) translateY(0); }
-                        50% { transform: scale(1.02, 0.98) translateY(-4px); }
-                    }
-                    .chibi-arm-left-dance {
-                        animation: chibiArmLeftWave 1.5s infinite ease-in-out;
-                        transform-origin: 85px 125px;
-                    }
-                    .chibi-arm-right-dance {
-                        animation: chibiArmRightWave 1.5s infinite ease-in-out;
-                        transform-origin: 115px 125px;
-                    }
-                    @keyframes chibiArmLeftWave {
-                        0%, 100% { transform: rotate(0deg); }
-                        50% { transform: rotate(12deg); }
-                    }
-                    @keyframes chibiArmRightWave {
-                        0%, 100% { transform: rotate(0deg); }
-                        50% { transform: rotate(-12deg); }
-                    }
-                    .chibi-tail-dance {
-                        animation: chibiTailWag 1.5s infinite ease-in-out;
-                        transform-origin: 100px 80px;
-                    }
-                    @keyframes chibiTailWag {
-                        0%, 100% { transform: rotate(-6deg); }
-                        50% { transform: rotate(6deg); }
-                    }
+                    .chibi-dance { animation: chibiBounce 1.5s infinite ease-in-out; transform-origin: bottom center; }
+                    @keyframes chibiBounce { 0%, 100% { transform: scale(1) translateY(0); } 50% { transform: scale(1.02, 0.98) translateY(-4px); } }
+                    .chibi-arm-left-dance { animation: chibiArmLeftWave 1.5s infinite ease-in-out; transform-origin: 85px 125px; }
+                    .chibi-arm-right-dance { animation: chibiArmRightWave 1.5s infinite ease-in-out; transform-origin: 115px 125px; }
+                    @keyframes chibiArmLeftWave { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(12deg); } }
+                    @keyframes chibiArmRightWave { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-12deg); } }
+                    @keyframes floatSparkle { 0%, 100% { transform: translateY(0) scale(0.6); opacity: 0.3; } 50% { transform: translateY(-10px) scale(1.1); opacity: 1; } }
                 </style>
+                ${dragonHtml || ''}
+                ${wingHtml || ''}
                 ${sparklesHtml}
                 ${bodyWrapperStart}
                 ${backAccessoryHtml}
@@ -1068,6 +672,8 @@ const ChibiModule = {
                 ${eyelashesHtml}
                 ${mouthHtml}
                 ${frontHairHtml}
+                ${gearHtml}
+                ${mountHtml}
                 ${bodyWrapperEnd}
                 ${accHtml}
             </svg>
@@ -1128,21 +734,17 @@ const ChibiModule = {
         else if (type === 'bottom') viewBox = '70 135 60 38';
         else if (type === 'shoe') viewBox = '70 160 60 25';
         else if (type === 'accessory') {
-            if (index === 14 || index === 15 || index === 16) {
-                // Ô tô, xe máy, phao: lấy vùng thân dưới rộng ra để vừa vặn
-                viewBox = '15 100 170 100';
-            } else if (index === 11 || index === 13) {
-                // Đại đao, kiếm laser: cần toàn cảnh chéo cao
-                viewBox = '20 15 160 175';
-            } else if (index === 12) {
-                // Súng vô cực: lấy vùng ngực tay cầm
-                viewBox = '45 100 120 70';
-            } else if (index === 17 || index === 18) {
-                // Cánh thiên thần, ác quỷ: lấy vùng cánh rộng
-                viewBox = '10 10 180 120';
-            } else {
-                viewBox = '50 25 100 70';
-            }
+            if (index >= 11 && index <= 12) viewBox = '40 20 120 70'; // Hats
+            else if (index === 13) viewBox = '60 90 80 60'; // Scarf
+            else viewBox = '50 25 100 70';
+        } else if (type === 'gear') {
+            if (index === 16) viewBox = '20 80 160 100'; // Vendor Pole
+            else if (index === 15) viewBox = '100 50 70 140'; // Lantern
+            else viewBox = '80 60 100 120';
+        } else if (type === 'wing') {
+            viewBox = '10 10 180 180';
+        } else if (type === 'mount') {
+            viewBox = '15 100 170 100';
         }
 
         return svgStr.replace(/<svg viewBox="[^"]*"/g, `<svg viewBox="${viewBox}"`);
@@ -1410,6 +1012,28 @@ const ChibiModule = {
     },
 
     /**
+     * Render a grid of items for a specific category
+     */
+    renderGrid: function(property, options, labels, scale = 1.15) {
+        return `
+            <div class="chibi-item-grid">
+                ${options.map(i => {
+                    const activeClass = ChibiModule.currentConfig[property] === i ? 'active' : '';
+                    const miniSvg = ChibiModule.renderMiniOption(property === 'accessory' ? 'accessory' : (property === 'gear' ? 'accessory' : property), i);
+                    return `
+                        <div class="chibi-item-card ${activeClass}" onclick="ChibiModule.selectItem('${property}', ${i})">
+                            <div class="chibi-item-preview-wrap" style="transform: scale(${scale});">
+                                ${miniSvg}
+                            </div>
+                            <span class="chibi-item-label">${labels[i] || (property + ' ' + i)}</span>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    },
+
+    /**
      * Render Navigation Tabs in builder
      */
     renderTabs: function() {
@@ -1419,7 +1043,10 @@ const ChibiModule = {
             { id: 'face', label: '😊 Khuôn Mặt' },
             { id: 'clothing', label: '👕 Quần Áo' },
             { id: 'accessory', label: '👑 Phụ Kiện' },
-            { id: 'gear', label: '🚀 Trang Bị VIP' }
+            { id: 'gear', label: '⚔️ Vũ Khí' },
+            { id: 'wing', label: '🕊️ Cánh' },
+            { id: 'mount', label: '🏎️ Cưỡi' },
+            { id: 'dragon', label: '🐉 Rồng' }
         ];
 
         const nav = document.getElementById('chibi-tabs-nav');
@@ -1671,103 +1298,29 @@ const ChibiModule = {
             `;
         } 
         else if (tabId === 'accessory') {
-            // ACCESSORIES SELECTION (Style 0 is None, 1-10 are standard accessories)
-            const options = Array.from({ length: 11 }, (_, i) => i); // 0 to 10
-            const accNames = [
-                'Trống',
-                'Kính râm',
-                'Cài tóc mèo',
-                'Tai nghe Gaming',
-                'Vòng thiên sứ',
-                'Vương miện',
-                'Khẩu trang',
-                'Mũ đầu bếp',
-                'Bịt mắt cướp biển',
-                'Nơ đỏ',
-                'Xăm Kín Người'
-            ];
-
-            contentHtml = `
-                <div>
-                    <h4 style="margin: 0 0 10px 0; font-size: 13px; color: #94a3b8; text-transform: uppercase;">Phụ Kiện Thường</h4>
-                    <div class="chibi-item-grid">
-                        ${options.map(i => {
-                            const activeClass = ChibiModule.currentConfig.accessory === i ? 'active' : '';
-                            const miniSvg = ChibiModule.renderMiniOption('accessory', i);
-                            return `
-                                <div class="chibi-item-card ${activeClass}" onclick="ChibiModule.selectItem('accessory', ${i})">
-                                    <div class="chibi-item-preview-wrap" style="transform: scale(1.15);">
-                                        ${miniSvg}
-                                    </div>
-                                    <span class="chibi-item-label">${accNames[i]}</span>
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>
-                </div>
-            `;
+            const options = Array.from({ length: ChibiModule.counts.accessory }, (_, i) => i);
+            const accNames = ['Trống', 'Kính râm', 'Mèo', 'Tai nghe', 'Vòng thiên sứ', 'Vương miện', 'Khẩu trang', 'Đầu bếp', 'Bịt mắt', 'Nơ', 'Xăm Kín', 'Mũ Cối VIP', 'Nón Lá VN', 'Khăn Rằn'];
+            contentHtml = ChibiModule.renderGrid('accessory', options, accNames, 1.15);
         }
         else if (tabId === 'gear') {
-            // VIP GEAR SELECTION (Style 0 is None, 11-18 are VIP gear)
-            const options = [0, 11, 12, 13, 14, 15, 16, 17, 18];
-            const accNames = {
-                0: 'Trống',
-                11: 'Đại Đao Lửa',
-                12: 'Súng Vô Cực',
-                13: 'Kiếm Cyber Laser',
-                14: 'Cưỡi Ô Tô Siêu Cấp',
-                15: 'Cưỡi Xe Máy Cực Ngầu',
-                16: 'Đeo Phao Hồng Hạc',
-                17: 'Cánh Thiên Thần VVIP',
-                18: 'Cánh Ác Quỷ VVIP'
-            };
-
-            const completed = ChibiModule.getCompletedTasksCount();
-
-            contentHtml = `
-                <div>
-                    <h4 style="margin: 0 0 6px 0; font-size: 13px; color: #fbbf24; text-transform: uppercase; display: flex; align-items: center; gap: 6px;">
-                        <span>🚀 TRANG BỊ VIP (ĐÃ MỞ KHÓA CHO TESTER)</span>
-                        <span style="font-size: 11px; color: #a78bfa; font-weight: normal; margin-left: auto;">Trạng thái: VIP v1.0</span>
-                    </h4>
-                    <p style="margin: 0 0 16px 0; font-size: 11px; color: #64748b; line-height: 1.4;">
-                        Tất cả trang bị cực phẩm đã được mở khóa hoàn toàn để phục vụ mục đích kiểm thử giao diện và tính năng.
-                    </p>
-                    <div class="chibi-item-grid">
-                        ${options.map(i => {
-                            const activeClass = ChibiModule.currentConfig.accessory === i ? 'active' : '';
-                            const miniSvg = ChibiModule.renderMiniOption('accessory', i);
-                            
-                            const isLocked = ChibiModule.isGearLocked(i);
-                            const req = ChibiModule.gearRequirements[i];
-                            const label = accNames[i];
-
-                            return `
-                                <div class="chibi-item-card ${activeClass} ${isLocked ? 'locked' : ''}" 
-                                     style="position: relative; overflow: hidden; cursor: pointer;"
-                                     onclick="ChibiModule.selectItem('accessory', ${i})">
-                                    <div class="chibi-item-preview-wrap" style="transform: scale(1.15); ${isLocked ? 'filter: blur(1.5px) grayscale(0.5); opacity: 0.6;' : ''}">
-                                        ${miniSvg}
-                                    </div>
-                                    <span class="chibi-item-label" style="${isLocked ? 'opacity: 0.7;' : ''}">${label}</span>
-                                    ${isLocked ? `
-                                        <!-- Lock overlay card -->
-                                        <div class="chibi-item-lock-overlay" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15,23,42,0.65); backdrop-filter: blur(4px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 4px;">
-                                            <div style="font-size: 16px; text-shadow: 0 0 10px rgba(239,68,68,0.8);">🔒</div>
-                                            <div style="font-size: 9px; font-weight: 800; color: #f87171; text-transform: uppercase; letter-spacing: 0.3px; text-align: center; line-height: 1.1;">
-                                                Đạt ${req.count} Task
-                                            </div>
-                                            <div style="font-size: 8px; color: #94a3b8; font-weight: 600; text-align: center;">
-                                                (${completed}/${req.count})
-                                            </div>
-                                        </div>
-                                    ` : ''}
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>
-                </div>
-            `;
+            const options = Array.from({ length: ChibiModule.counts.gear }, (_, i) => i);
+            const gearNames = ['Trống', 'Đại Đao Lửa', 'Súng Vô Cực', 'Kiếm Cyber', 'Thương Heo', 'Dép Tổ Ong', 'Chổi Tre', 'Muỗng Mì', 'Gậy Selfie', 'Cờ Lê Điện', 'Cây Lau Nhà', 'Nón Lá Phi Tiêu', 'Vợt Muỗi', 'Ghế Đỏ', 'Quạt Trúc', 'Lồng Đèn', 'Gánh Hàng Rong', 'Bánh Mì', 'Cà Phê Phin', 'Đôi Dép Trắng'];
+            contentHtml = ChibiModule.renderGrid('gear', options, gearNames, 1.25);
+        }
+        else if (tabId === 'wing') {
+            const options = Array.from({ length: ChibiModule.counts.wing }, (_, i) => i);
+            const wingNames = ['Trống', 'Cánh Thiên Thần', 'Cánh Ác Quỷ', 'Thiên Thần VIP', 'Cánh Bướm Pha Lê'];
+            contentHtml = ChibiModule.renderGrid('wing', options, wingNames, 1.1);
+        }
+        else if (tabId === 'mount') {
+            const options = Array.from({ length: ChibiModule.counts.mount }, (_, i) => i);
+            const mountNames = ['Trống', 'Siêu Xe', 'Xe Máy', 'Hồng Hạc', 'Xe Dream Neon'];
+            contentHtml = ChibiModule.renderGrid('mount', options, mountNames, 1.0);
+        }
+        else if (tabId === 'dragon') {
+            const options = Array.from({ length: ChibiModule.counts.dragon }, (_, i) => i);
+            const dragonNames = ['Trống', 'Lam Long', 'Xích Long', 'Hoàng Long'];
+            contentHtml = ChibiModule.renderGrid('dragon', options, dragonNames, 0.9);
         }
 
         panel.innerHTML = contentHtml;
@@ -1829,6 +1382,10 @@ const ChibiModule = {
             gender: 'nam',
             shoeStyle: 1,
             shoeColor: '#1f2937',
+            gear: 0,
+            wing: 0,
+            mount: 0,
+            dragon: 0,
             ...profile.chibiConfig
         } : {
             gender: 'nam',
@@ -1843,7 +1400,11 @@ const ChibiModule = {
             bottomColor: '#1f2937',
             shoeStyle: 1,
             shoeColor: '#1f2937',
-            accessory: 0
+            accessory: 0,
+            gear: 0,
+            wing: 0,
+            mount: 0,
+            dragon: 0
         };
 
         ChibiModule.updatePreview();
@@ -1874,17 +1435,21 @@ const ChibiModule = {
         ChibiModule.currentConfig = {
             gender: Math.random() > 0.5 ? 'nam' : 'nữ',
             skinColor: randomSkin,
-            hairStyle: randStyle(ChibiModule.counts.hair - 1) + 1, // Avoid bald (style 0) in random
+            hairStyle: randStyle(ChibiModule.counts.hair - 1) + 1,
             hairColor: randomHair,
             eyeStyle: randStyle(ChibiModule.counts.eyes),
             mouthStyle: randStyle(ChibiModule.counts.mouth),
-            topStyle: randStyle(ChibiModule.counts.top - 1) + 1, // Avoid naked (style 0) in random
+            topStyle: randStyle(ChibiModule.counts.top - 1) + 1,
             topColor: randomClothing1,
-            bottomStyle: randStyle(ChibiModule.counts.bottom - 1) + 1, // Avoid underwear in random
+            bottomStyle: randStyle(ChibiModule.counts.bottom - 1) + 1,
             bottomColor: randomClothing2,
-            shoeStyle: randStyle(ChibiModule.counts.shoe - 1) + 1, // Avoid barefoot in random
+            shoeStyle: randStyle(ChibiModule.counts.shoe - 1) + 1,
             shoeColor: randomClothing3,
-            accessory: randomAccessory
+            accessory: randomAccessory,
+            gear: randStyle(ChibiModule.counts.gear),
+            wing: randStyle(ChibiModule.counts.wing),
+            mount: randStyle(ChibiModule.counts.mount),
+            dragon: randStyle(ChibiModule.counts.dragon)
         };
 
         ChibiModule.updatePreview();
