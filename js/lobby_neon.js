@@ -113,21 +113,24 @@ window.LobbyNeon = {
         const container = document.getElementById('lobby-view');
         if (!container) return;
 
-        console.log("Rendering Lobby Base with Video & Music...");
+        console.log("Rendering Lobby Base v100.0...");
         container.innerHTML = `
             <div id="lobby-map-container" style="width: 100%; height: 100%; position: relative; cursor: crosshair; overflow: hidden; background: #000;">
                 <div class="lobby-map" id="lobby-map">
                     <video id="lobby-video-bg" autoplay loop muted playsinline 
                         oncanplay="this.style.opacity=1" 
-                        onerror="console.error('Video load error'); this.style.display='none'">
+                        onerror="this.style.display='none'">
                         <source src="assets/lobby_bg.mp4" type="video/mp4">
                     </video>
                 </div>
 
-                <div id="lobby-music-btn" class="lobby-music-toggle">
+                <!-- Music Control Center -->
+                <div id="lobby-music-hub" class="lobby-music-toggle" title="Phát nhạc Dòng máu Lạc Hồng">
                     <i id="music-icon" class="fas fa-play"></i>
+                    <span class="music-tip">Click để nghe nhạc!</span>
                 </div>
-                <div id="music-player-container" style="display:none;"></div>
+                
+                <div id="music-player-container" style="position:absolute; width:1px; height:1px; opacity:0; pointer-events:none;"></div>
 
                 <div class="lobby-chat-overlay">
                     <div class="lobby-chat-messages" id="lobby-chat-messages">
@@ -142,56 +145,76 @@ window.LobbyNeon = {
             </div>
         `;
         
-        // Use addEventListener for more reliability
-        setTimeout(() => {
-            const btn = document.getElementById('lobby-music-btn');
-            if (btn) btn.onclick = () => LobbyNeon.toggleMusic();
-        }, 100);
+        // Setup listener
+        const btn = document.getElementById('lobby-music-hub');
+        if (btn) btn.addEventListener('click', () => {
+            console.log("HUB clicked");
+            LobbyNeon.toggleMusic();
+        });
 
         LobbyNeon.initMusic();
     },
 
     initMusic: () => {
-        if (!LobbyNeon.state.audio) {
-            console.log("Initializing Audio: Dong Mau Lac Hong");
-            const audioUrl = 'https://archive.org/download/DanTruongDongMauLacHong/01%20Dong%20Mau%20Lac%20Hong.mp3';
-            LobbyNeon.state.audio = new Audio(audioUrl);
-            LobbyNeon.state.audio.loop = true;
-            LobbyNeon.state.audio.volume = 0.5;
+        // Load YouTube IFrame API
+        if (!window.YT) {
+            const tag = document.createElement('script');
+            tag.src = "https://www.youtube.com/iframe_api";
+            const firstScriptTag = document.getElementsByTagName('script')[0];
+            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
         }
+
+        window.onYouTubeIframeAPIReady = () => {
+            LobbyNeon.state.player = new YT.Player('music-player-container', {
+                height: '0',
+                width: '0',
+                videoId: 'R9K1Wf3992o', // Dòng Máu Lạc Hồng
+                playerVars: {
+                    'autoplay': 1,
+                    'controls': 0,
+                    'loop': 1,
+                    'playlist': 'R9K1Wf3992o',
+                    'mute': 0
+                },
+                events: {
+                    'onReady': (event) => {
+                        console.log("YT Player Ready");
+                    },
+                    'onStateChange': (event) => {
+                        const icon = document.getElementById('music-icon');
+                        if (!icon) return;
+                        if (event.data === 1) icon.className = 'fas fa-pause';
+                        else icon.className = 'fas fa-play';
+                    }
+                }
+            });
+        };
         
-        const isMuted = localStorage.getItem('lobby_muted') === 'true';
-        if (!isMuted) {
-            LobbyNeon.setMusicState(true);
-        }
+        if (window.YT && window.YT.Player) window.onYouTubeIframeAPIReady();
     },
 
     toggleMusic: () => {
-        console.log("Music toggle clicked");
-        const audio = LobbyNeon.state.audio;
-        if (!audio) return;
-        const isPlaying = !audio.paused;
-        LobbyNeon.setMusicState(!isPlaying);
-    },
-
-    setMusicState: (play) => {
-        const icon = document.getElementById('music-icon');
-        const audio = LobbyNeon.state.audio;
-        if (!icon || !audio) return;
-
-        if (play) {
-            audio.play().then(() => {
-                icon.className = 'fas fa-pause';
-                localStorage.setItem('lobby_muted', 'false');
-            }).catch(e => {
-                console.warn("Autoplay blocked - Click to play");
-                icon.className = 'fas fa-play';
-            });
-        } else {
-            audio.pause();
-            icon.className = 'fas fa-play';
-            localStorage.setItem('lobby_muted', 'true');
+        const player = LobbyNeon.state.player;
+        if (!player || typeof player.getPlayerState !== 'function') {
+            // If API not ready yet, try to init again
+            LobbyNeon.initMusic();
+            return;
         }
+
+        const state = player.getPlayerState();
+        if (state === 1) {
+            player.pauseVideo();
+        } else {
+            player.playVideo();
+            // Try to un-mute if needed
+            if (player.isMuted()) player.unMute();
+            player.setVolume(70);
+        }
+    },
+    
+    // Legacy setMusicState not needed for YT logic, but keep stub for compatibility
+    setMusicState: (play) => {
+        LobbyNeon.toggleMusic();
     },
 
     renderUser: (username, x, y, config) => {
