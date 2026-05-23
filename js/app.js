@@ -30,6 +30,7 @@ const app = {
         if (typeof ChatbotModule !== 'undefined') ChatbotModule.init();
         if (typeof RewardsModule !== 'undefined') RewardsModule.init();
         if (typeof ClaudeModule !== 'undefined') ClaudeModule.init();
+        if (typeof LobbyModule !== 'undefined') LobbyModule.init();
 
         // Bật vòng lặp kiểm tra các sự kiện theo thời gian (nhắc telegram, v.v)
         setTimeout(() => {
@@ -170,7 +171,8 @@ const app = {
             'chatbot-view': { title: 'Thư viện Chatbot', sub: 'Trạm lưu trữ các Cỗ máy AI đa nhiệm' },
             'settings-view': { title: 'Cài đặt', sub: 'Tùy chỉnh hệ thống' },
             'rewards-view': { title: 'Đổi Thưởng', sub: 'Dùng Công Đức đổi Đặc Quyền' },
-            'music-view': { title: '🎵 YouTube Music', sub: 'Nghe nhạc & xem MV ngay trong ứng dụng' }
+            'music-view': { title: '🎵 YouTube Music', sub: 'Nghe nhạc & xem MV ngay trong ứng dụng' },
+            'lobby-view': { title: 'Sảnh Chờ Chibi', sub: 'Giao lưu, kết bạn và thách đấu cờ Caro' }
         };
 
         const titleInfo = titles[viewId] || titles['dashboard-view'];
@@ -240,6 +242,16 @@ const app = {
             document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
             const rewardsNav = document.querySelector('.nav-item[data-target="rewards-view"]');
             if (rewardsNav) rewardsNav.classList.add('active');
+        } else if (viewId === 'lobby-view') {
+            if (typeof LobbyModule !== 'undefined') LobbyModule.enterLobby();
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            const lobbyNav = document.querySelector('.nav-item[data-target="lobby-view"]');
+            if (lobbyNav) lobbyNav.classList.add('active');
+        }
+        
+        // Handle leaving lobby logic (custom hook)
+        if (app.state.currentView === 'lobby-view' && viewId !== 'lobby-view') {
+            if (typeof LobbyModule !== 'undefined') LobbyModule.leaveLobby();
         }
     },
 

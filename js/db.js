@@ -428,5 +428,89 @@ const DB = {
         } catch (e) {
             console.error("Error clearing data:", e);
         }
+    },
+
+    // --- LOBBY & REALTIME PRESENCE ---
+    updateLobbyPresence: async (presenceData) => {
+        try {
+            // presenceData: { username, x, y, chibiConfig }
+            await db.collection("lobby_presence").doc(presenceData.username).set({
+                ...presenceData,
+                lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        } catch (e) {
+            console.error("Error updating lobby presence:", e);
+        }
+    },
+
+    listenLobbyPresence: (callback) => {
+        return db.collection("lobby_presence")
+            .onSnapshot(snapshot => {
+                const presence = {};
+                snapshot.forEach(doc => {
+                    presence[doc.id] = doc.data();
+                });
+                callback(presence);
+            }, err => console.error("Presence listener error:", err));
+    },
+
+    sendLobbyChat: async (chatData) => {
+        try {
+            // chatData: { sender, text }
+            await db.collection("lobby_chat").add({
+                ...chatData,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        } catch (e) {
+            console.error("Error sending lobby chat:", e);
+        }
+    },
+
+    listenLobbyChat: (callback) => {
+        return db.collection("lobby_chat")
+            .orderBy("timestamp", "desc")
+            .limit(50)
+            .onSnapshot(snapshot => {
+                const messages = [];
+                snapshot.forEach(doc => {
+                    messages.push({ id: doc.id, ...doc.data() });
+                });
+                callback(messages.reverse());
+            }, err => console.error("Chat listener error:", err));
+    },
+
+    // --- CARO GAME LOGIC ---
+    createLobbyGame: async (p1, p2) => {
+        try {
+            const gameData = {
+                player1: p1,
+                player2: p2,
+                board: Array(15 * 15).fill(null),
+                turn: p1,
+                status: 'playing',
+                winner: null,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            const docRef = await db.collection("lobby_games").add(gameData);
+            return docRef.id;
+        } catch (e) {
+            console.error("Error creating caro game:", e);
+            return null;
+        }
+    },
+
+    updateLobbyGame: async (gameId, updateData) => {
+        try {
+            await db.collection("lobby_games").doc(gameId).update(updateData);
+        } catch (e) {
+            console.error("Error updating lobby game:", e);
+        }
+    },
+
+    listenLobbyGame: (gameId, callback) => {
+        return db.collection("lobby_games").doc(gameId)
+            .onSnapshot(doc => {
+                if (doc.exists) callback(doc.data());
+            }, err => console.error("Game listener error:", err));
     }
 };

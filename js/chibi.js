@@ -110,6 +110,10 @@ const ChibiModule = {
     },
 
     isGearLocked: function(index) {
+        // [MODIFIED] VIP Unlock for testing - Always return false
+        return false;
+        
+        /* Original logic:
         if (index <= 10) return false;
         if (typeof Auth === 'undefined' || !Auth.currentUser) return true;
         if (Auth.currentUser.role === 'admin') return false;
@@ -119,6 +123,7 @@ const ChibiModule = {
 
         const completed = ChibiModule.getCompletedTasksCount();
         return completed < req.count;
+        */
     },
 
     /**
@@ -1722,11 +1727,11 @@ const ChibiModule = {
             contentHtml = `
                 <div>
                     <h4 style="margin: 0 0 6px 0; font-size: 13px; color: #fbbf24; text-transform: uppercase; display: flex; align-items: center; gap: 6px;">
-                        <span>🚀 TRANG BỊ VIP HÀNG THÁNG</span>
-                        <span style="font-size: 11px; color: #a78bfa; font-weight: normal; margin-left: auto;">Đã làm: ${completed} Task</span>
+                        <span>🚀 TRANG BỊ VIP (ĐÃ MỞ KHÓA CHO TESTER)</span>
+                        <span style="font-size: 11px; color: #a78bfa; font-weight: normal; margin-left: auto;">Trạng thái: VIP v1.0</span>
                     </h4>
                     <p style="margin: 0 0 16px 0; font-size: 11px; color: #64748b; line-height: 1.4;">
-                        Hoàn thành số lượng công việc trong tháng hiện tại để mở khóa trang bị VIP cực phẩm. Tự động mở khóa cho Admin.
+                        Tất cả trang bị cực phẩm đã được mở khóa hoàn toàn để phục vụ mục đích kiểm thử giao diện và tính năng.
                     </p>
                     <div class="chibi-item-grid">
                         ${options.map(i => {

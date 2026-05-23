@@ -1,0 +1,215 @@
+/* css/lobby.css - Professional Chibi Lobby Styling */
+
+:root {
+    --lobby-bg: #0f172a;
+    --lobby-floor: #1e293b;
+    --lobby-accent: #a855f7;
+}
+
+#lobby-view {
+    position: relative;
+    width: 100%;
+    height: calc(100vh - 70px);
+    background-color: var(--lobby-bg);
+    overflow: hidden;
+    user-select: none;
+}
+
+/* World Map / Canvas Grid */
+.lobby-map {
+    position: absolute;
+    width: 2000px;
+    height: 2000px;
+    background-image: 
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 50px 50px;
+    background-color: var(--lobby-bg);
+    transform-origin: 0 0;
+    transition: transform 0.1s ease-out;
+}
+
+/* User Chibi Styles */
+.lobby-user-wrapper {
+    position: absolute;
+    width: 80px;
+    height: 120px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    transition: left 0.8s linear, top 0.8s linear;
+    z-index: 10;
+}
+
+.lobby-user-wrapper.me {
+    z-index: 20;
+}
+
+.lobby-user-name {
+    position: absolute;
+    top: -25px;
+    background: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(4px);
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    border: 1px solid rgba(168, 85, 247, 0.4);
+    pointer-events: none;
+}
+
+.lobby-chibi-container {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+}
+
+/* Chat Overlay */
+.lobby-chat-overlay {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    width: 320px;
+    height: 240px;
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+
+.lobby-chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.lobby-message {
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.lobby-msg-sender {
+    font-weight: 800;
+    color: var(--lobby-accent);
+    margin-right: 6px;
+}
+
+.lobby-msg-text {
+    color: #e2e8f0;
+}
+
+.lobby-chat-input-wrap {
+    padding: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    gap: 8px;
+}
+
+.lobby-chat-input {
+    flex: 1;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    outline: none;
+}
+
+.lobby-chat-input:focus {
+    border-color: var(--lobby-accent);
+}
+
+/* Caro Modal */
+.caro-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.caro-board-container {
+    background: #1e293b;
+    border: 2px solid var(--lobby-accent);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 0 50px rgba(168, 85, 247, 0.3);
+}
+
+.caro-grid {
+    display: grid;
+    grid-template-columns: repeat(15, 30px);
+    grid-template-rows: repeat(15, 30px);
+    gap: 1px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.caro-cell {
+    width: 30px;
+    height: 30px;
+    background: #0f172a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-weight: 800;
+    font-size: 18px;
+}
+
+.caro-cell:hover {
+    background: #1e293b;
+}
+
+.caro-cell.x { color: #f87171; }
+.caro-cell.o { color: #60a5fa; }
+
+/* Polish - Status indicator */
+.lobby-user-status {
+    position: absolute;
+    bottom: -18px;
+    font-size: 9px;
+    background: rgba(168, 85, 247, 0.2);
+    color: var(--lobby-accent);
+    padding: 0 6px;
+    border-radius: 4px;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.lobby-user-wrapper:hover .lobby-user-status {
+    opacity: 1;
+}
+
+/* Map click ripple effect */
+@keyframes lobby-ripple {
+    from { transform: scale(0); opacity: 1; }
+    to { transform: scale(3); opacity: 0; }
+}
+
+.lobby-click-ripple {
+    position: absolute;
+    width: 20px;
+    height: 10px;
+    background: rgba(168, 85, 247, 0.4);
+    border-radius: 50%;
+    pointer-events: none;
+    animation: lobby-ripple 0.6s ease-out forwards;
+}
