@@ -113,10 +113,13 @@ const LobbyNeon = {
         const container = document.getElementById('lobby-view');
         if (!container) return;
 
+        console.log("Rendering Lobby Base with Video...");
         container.innerHTML = `
             <div id="lobby-map-container" style="width: 100%; height: 100%; position: relative; cursor: crosshair; overflow: hidden; background: #000;">
                 <div class="lobby-map" id="lobby-map">
-                    <video id="lobby-video-bg" autoplay loop muted playsinline>
+                    <video id="lobby-video-bg" autoplay loop muted playsinline 
+                        oncanplay="this.style.opacity=1" 
+                        onerror="console.error('Video load error'); this.style.display='none'">
                         <source src="assets/lobby_bg.mp4" type="video/mp4">
                     </video>
                 </div>
