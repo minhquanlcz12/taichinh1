@@ -114,13 +114,17 @@ const LobbyNeon = {
         if (!container) return;
 
         container.innerHTML = `
-            <div id="lobby-map-container" style="width: 100%; height: 100%; position: relative; cursor: crosshair; overflow: hidden; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);">
-                <div class="lobby-map" id="lobby-map"></div>
+            <div id="lobby-map-container" style="width: 100%; height: 100%; position: relative; cursor: crosshair; overflow: hidden; background: #000;">
+                <div class="lobby-map" id="lobby-map">
+                    <video id="lobby-video-bg" autoplay loop muted playsinline>
+                        <source src="assets/lobby_bg.mp4" type="video/mp4">
+                    </video>
+                </div>
 
                 <div class="lobby-chat-overlay">
                     <div class="lobby-chat-messages" id="lobby-chat-messages">
                         <div class="lobby-message">
-                            <span class="lobby-msg-text" style="color: #a855f7; font-style: italic; opacity: 0.8;">Hệ thống: Chào mừng tới Sảnh Chờ Neon! Click chuột để di chuyển.</span>
+                            <span class="lobby-msg-text" style="color: #a855f7; font-style: italic; opacity: 0.8;">Hệ thống: Chào mừng tới Cung Điện Neon! Click chuột để di chuyển.</span>
                         </div>
                     </div>
                     <form class="lobby-chat-input-wrap" onsubmit="LobbyNeon.sendChat(event)">
