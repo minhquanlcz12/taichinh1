@@ -679,7 +679,11 @@ const ChibiModule = {
             bottomColor: '#007bff',
             shoeStyle: 0,
             shoeColor: '#1f2937',
-            accessory: 0
+            accessory: 0,
+            gear: 0,
+            wing: 0,
+            mount: 0,
+            dragon: 0
         };
 
         // Override target property
