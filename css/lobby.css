@@ -18,11 +18,11 @@
 /* World Map / Cyber Palace Background */
 .lobby-map {
     position: absolute;
-    width: 2000px;
-    height: 2000px;
+    width: 1920px;
+    height: 1080px;
     background-color: #0f172a;
     background-image: url('../img/cyber_arena_bg.png'); /* Fallback image */
-    background-size: 100% 100%;
+    background-size: cover;
     transform-origin: 0 0;
     transition: transform 0.1s ease-out;
     overflow: hidden;
@@ -37,13 +37,14 @@
     height: 100%;
     z-index: 1; /* Video should be above the fallback but below characters */
     pointer-events: none;
-    object-fit: cover;
+    object-fit: fill; /* Use fill to match the 16:9 container perfectly without blur */
     opacity: 1;
+    image-rendering: -webkit-optimize-contrast;
 }
 
 /* Ensure characters are above video */
 .lobby-user-wrapper {
-    z-index: 10 !important;
+    z-index: 500 !important;
 }
 
 /* Fallback / Overlay if needed */
