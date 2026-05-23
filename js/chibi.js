@@ -49,7 +49,7 @@ const ChibiModule = {
         mouth: 6,
         top: 10,
         bottom: 8,
-        shoe: 8,
+        shoe: 7,
         accessory: 14, // Head/Glasses (0-13)
         gear: 20,     // Weapons (0-19)
         wing: 8,      // Wings (0-7)
@@ -441,7 +441,55 @@ const ChibiModule = {
         }
 
         let shoeHtml = '';
-        if (shoeStyle === 1) shoeHtml = `<path d="M 78 171 L 91 171 L 93 182 L 80 182 Z" fill="${shoeColor}" stroke="#1e1b4b" stroke-width="2" /><path d="M 122 171 L 109 171 L 107 182 L 120 182 Z" fill="${shoeColor}" stroke="#1e1b4b" stroke-width="2" />`;
+        const sc = shoeColor;
+        if (shoeStyle === 0) { // Basic Sneakers
+            shoeHtml = `
+                <path d="M 78 171 L 91 171 L 93 182 L 80 182 Z" fill="${sc}" stroke="#1e1b4b" stroke-width="2" />
+                <path d="M 122 171 L 109 171 L 107 182 L 120 182 Z" fill="${sc}" stroke="#1e1b4b" stroke-width="2" />
+            `;
+        } else if (shoeStyle === 1) { // Dép Tổ Ong (Legendary Honeycomb Sandals)
+            shoeHtml = `
+                <g style="filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));">
+                    <path d="M 77 172 L 92 172 L 94 184 L 76 184 Z" fill="#fef3c7" stroke="#d97706" stroke-width="1.2" />
+                    <circle cx="81" cy="176" r="1" fill="#d97706" opacity="0.5" /> <circle cx="85" cy="176" r="1" fill="#d97706" opacity="0.5" /> <circle cx="89" cy="176" r="1" fill="#d97706" opacity="0.5" />
+                    <circle cx="83" cy="179" r="1" fill="#d97706" opacity="0.5" /> <circle cx="87" cy="179" r="1" fill="#d97706" opacity="0.5" />
+                    <path d="M 123 172 L 108 172 L 106 184 L 124 184 Z" fill="#fef3c7" stroke="#d97706" stroke-width="1.2" />
+                    <circle cx="119" cy="176" r="1" fill="#d97706" opacity="0.5" /> <circle cx="115" cy="176" r="1" fill="#d97706" opacity="0.5" /> <circle cx="111" cy="176" r="1" fill="#d97706" opacity="0.5" />
+                    <circle cx="117" cy="179" r="1" fill="#d97706" opacity="0.5" /> <circle cx="113" cy="179" r="1" fill="#d97706" opacity="0.5" />
+                </g>
+            `;
+        } else if (shoeStyle === 2) { // Modern High-top
+            shoeHtml = `
+                <path d="M 76 168 L 93 168 L 94 184 Q 85 186 75 184 Z" fill="${sc}" stroke="#1e1b4b" stroke-width="2" />
+                <path d="M 124 168 L 107 168 L 106 184 Q 115 186 125 184 Z" fill="${sc}" stroke="#1e1b4b" stroke-width="2" />
+                <rect x="76" y="178" width="18" height="3" fill="#fff" opacity="0.8" /> <rect x="106" y="178" width="18" height="3" fill="#fff" opacity="0.8" />
+            `;
+        } else if (shoeStyle === 3) { // Tactical Boots
+            shoeHtml = `
+                <path d="M 76 164 L 93 164 L 95 184 L 75 184 Z" fill="${sc}" stroke="#1e1b4b" stroke-width="2.5" />
+                <path d="M 124 164 L 107 164 L 105 184 L 125 184 Z" fill="${sc}" stroke="#1e1b4b" stroke-width="2.5" />
+                <line x1="77" y1="168" x2="92" y2="168" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" />
+            `;
+        } else if (shoeStyle === 4) { // Cyber Neon Boots
+            shoeHtml = `
+                <path d="M 76 167 L 93 167 L 95 185 L 75 185 Z" fill="#000" stroke="#00f3ff" stroke-width="2.2" />
+                <path d="M 124 167 L 107 167 L 105 185 L 125 185 Z" fill="#000" stroke="#00f3ff" stroke-width="2.2" />
+                <circle cx="85" cy="176" r="3" fill="#00f3ff" opacity="0.6" style="filter: blur(2px);" />
+                <circle cx="115" cy="176" r="3" fill="#00f3ff" opacity="0.6" style="filter: blur(2px);" />
+            `;
+        } else if (shoeStyle === 5) { // Leather Loafers
+            shoeHtml = `
+                <path d="M 78 172 L 94 172 Q 95 184 75 184 Z" fill="${sc}" stroke="#1e1b4b" stroke-width="2" />
+                <path d="M 122 172 L 106 172 Q 105 184 125 184 Z" fill="${sc}" stroke="#1e1b4b" stroke-width="2" />
+            `;
+        } else if (shoeStyle === 6) { // Barefoot (Feet)
+            shoeHtml = `
+                <path d="M 78 171 Q 84 185 80 185" fill="none" stroke="${skinColor}" stroke-width="4" stroke-linecap="round" />
+                <path d="M 122 171 Q 116 185 120 185" fill="none" stroke="${skinColor}" stroke-width="4" stroke-linecap="round" />
+            `;
+        } else { // Generic
+            shoeHtml = `<path d="M 78 171 L 91 171 L 93 182 L 80 182 Z" fill="${sc}" stroke="#1e1b4b" stroke-width="2" />`;
+        }
 
         // 7. Face Layer
         let eyesHtml = `<circle cx="84" cy="80" r="6" fill="#1e1b4b" /><circle cx="116" cy="80" r="6" fill="#1e1b4b" />`;
@@ -1291,7 +1339,7 @@ const ChibiModule = {
             const topOptions = Array.from({ length: ChibiModule.counts.top }, (_, i) => i);
             const bottomOptions = Array.from({ length: ChibiModule.counts.bottom }, (_, i) => i);
             const shoeOptions = Array.from({ length: ChibiModule.counts.shoe }, (_, i) => i);
-            const shoeNames = ['Chân trần', 'Sneaker', 'Bốt Cyber', 'Cao gót', 'Bốt chiến binh', 'Dép gấu', 'Converse', 'Giày phát sáng'];
+            const shoeNames = ['Sneaker Thể Thao', 'Dép Tổ Ong (Legend)', 'Bốt Cao Cổ', 'Bốt Chiến Binh', 'Bốt Cyber Neon', 'Giày Da Công Sở', 'Chân Trần'];
 
             contentHtml = `
                 <div style="display: flex; flex-direction: column; gap: 20px;">
