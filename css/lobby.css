@@ -37,11 +37,14 @@
     content: '';
     position: absolute;
     inset: 0;
+    /* Red Carpet & Pillars */
     background-image: 
+        linear-gradient(90deg, transparent 950px, rgba(255, 71, 87, 0.2) 950px, rgba(255, 71, 87, 0.2) 1050px, transparent 1050px),
         linear-gradient(90deg, transparent 450px, rgba(168, 85, 247, 0.15) 450px, rgba(168, 85, 247, 0.15) 550px, transparent 550px),
         linear-gradient(90deg, transparent 1450px, rgba(168, 85, 247, 0.15) 1450px, rgba(168, 85, 247, 0.15) 1550px, transparent 1550px);
-    background-size: 2000px 100%;
+    background-size: 2500px 100%;
     pointer-events: none;
+    box-shadow: inset 0 0 200px rgba(0,0,0,0.5);
 }
 
 /* Cyber Pillar Decorative Elements */
