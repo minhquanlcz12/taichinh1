@@ -172,7 +172,8 @@ const app = {
             'settings-view': { title: 'Cài đặt', sub: 'Tùy chỉnh hệ thống' },
             'rewards-view': { title: 'Đổi Thưởng', sub: 'Dùng Công Đức đổi Đặc Quyền' },
             'music-view': { title: '🎵 YouTube Music', sub: 'Nghe nhạc & xem MV ngay trong ứng dụng' },
-            'lobby-view': { title: 'Sảnh Chờ Chibi', sub: 'Giao lưu, kết bạn và thách đấu cờ Caro' }
+            'lobby-view': { title: 'Sảnh Chờ Chibi', sub: 'Giao lưu, kết bạn và thách đấu cờ Caro' },
+            'games-view': { title: 'Đấu Trường Game', sub: 'Giải trí đỉnh cao - cờ Caro & cờ Tỷ Phú Văn Phòng' }
         };
 
         const titleInfo = titles[viewId] || titles['dashboard-view'];
@@ -247,11 +248,17 @@ const app = {
             document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
             const lobbyNav = document.querySelector('.nav-item[data-target="lobby-view"]');
             if (lobbyNav) lobbyNav.classList.add('active');
+        } else if (viewId === 'games-view') {
+            if (typeof GamesModule !== 'undefined') GamesModule.render();
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            const gamesNav = document.querySelector('.nav-item[data-target="games-view"]');
+            if (gamesNav) gamesNav.classList.add('active');
         }
         
         // Handle leaving lobby logic (custom hook)
         if (app.state.currentView === 'lobby-view' && viewId !== 'lobby-view') {
             if (typeof LobbyNeon !== 'undefined') LobbyNeon.leaveLobby();
+        }
         }
     },
 
@@ -1428,13 +1435,13 @@ const app = {
             let chibiPetHtml = '';
             if (acc.profile && acc.profile.chibiConfig) {
                 chibiPetHtml = `
-                    <div class="chibi-pet-standing-card" style="width: 110px; height: 150px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; position: relative; margin-bottom: 8px; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5)); transform-origin: bottom center; transition: all 0.3s;" onmouseover="this.style.transform='scale(1.08)';" onmouseout="this.style.transform='scale(1)';">
+                    <div class="chibi-pet-standing-card" style="width: 160px; height: 215px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; position: relative; margin-bottom: 8px; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5)); transform-origin: bottom center; transition: all 0.3s;" onmouseover="this.style.transform='scale(1.08)';" onmouseout="this.style.transform='scale(1)';">
                         ${ChibiModule.renderChibiSVG(acc.profile.chibiConfig, true, 45)}
                     </div>
                 `;
             } else {
                 chibiPetHtml = `
-                    <div onclick="ChibiModule.openBuilder()" class="chibi-pet-standing-card placeholder-dashed" style="width: 110px; height: 150px; flex-shrink: 0; border: 2px dashed rgba(168,85,247,0.3); border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; cursor: pointer; background: rgba(168,85,247,0.03); margin-bottom: 8px; box-sizing: border-box; transition: all 0.2s;" onmouseover="this.style.borderColor='#a855f7'; this.style.background='rgba(168,85,247,0.08)'; this.style.transform='scale(1.04)';" onmouseout="this.style.borderColor='rgba(168,85,247,0.3)'; this.style.background='rgba(168,85,247,0.03)'; this.style.transform='scale(1)';">
+                    <div onclick="ChibiModule.openBuilder()" class="chibi-pet-standing-card placeholder-dashed" style="width: 160px; height: 215px; flex-shrink: 0; border: 2px dashed rgba(168,85,247,0.3); border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; cursor: pointer; background: rgba(168,85,247,0.03); margin-bottom: 8px; box-sizing: border-box; transition: all 0.2s;" onmouseover="this.style.borderColor='#a855f7'; this.style.background='rgba(168,85,247,0.08)'; this.style.transform='scale(1.04)';" onmouseout="this.style.borderColor='rgba(168,85,247,0.3)'; this.style.background='rgba(168,85,247,0.03)'; this.style.transform='scale(1)';">
                         <i class="fa-solid fa-plus-circle" style="font-size: 24px; color: rgba(168,85,247,0.7);"></i>
                         <span style="font-size: 11px; font-weight: 800; color: rgba(168,85,247,0.8); text-align: center; text-transform: uppercase; letter-spacing: 0.5px;">+ Tạo Pet</span>
                     </div>
@@ -1442,7 +1449,7 @@ const app = {
             }
 
             return `
-                <div class="employee-performance-wrapper" style="display: flex; align-items: flex-end; gap: 16px; min-width: 390px; flex: 1 0 auto; position: relative;">
+                <div class="employee-performance-wrapper" style="display: flex; align-items: flex-end; gap: 16px; min-width: 460px; flex: 1 0 auto; position: relative;">
                     <div class="glass-card" style="flex: 1; min-width: 280px; background: linear-gradient(180deg, rgba(20,20,30,0.8) 0%, rgba(10,10,15,0.95) 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 24px; position: relative; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.3); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 8px 25px ${userColor}33';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(0,0,0,0.3)';">
                         <!-- Badge role -->
                         <div style="position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: bold; text-transform: uppercase; color: var(--text-secondary); backdrop-filter: blur(4px);">

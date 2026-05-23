@@ -275,11 +275,26 @@ const ChibiModule = {
         const shoeColor = c.shoeColor || '#1f2937';
         const hc = hairColor; // Fixed missing hc definition
 
-        // 0. Dynamic ViewBox & Scaling
+        // 0. Dynamic ViewBox & Scaling optimized per VIP accessory for maximum size
         let viewBox = "0 0 200 200";
-        // Expand if any large item is equipped
-        if (c.gear > 0 || c.wing > 0 || c.mount > 0 || c.dragon > 0 || c.aura > 0 || (c.accessory >= 11 && c.accessory <= 18)) {
-            viewBox = "-55 -55 310 310";
+        if (c.gear > 0 || c.wing > 0 || c.mount > 0 || c.dragon > 0 || c.aura > 0) {
+            viewBox = "-55 -55 310 310"; // Keep expanded for other large/VVIP categories
+        } else if (c.accessory === 11) {
+            viewBox = "-42 -42 284 284"; // Guan Dao (Epic flame weapon)
+        } else if (c.accessory === 12) {
+            viewBox = "0 0 200 200"; // Infinite Sci-Fi Rifle (Held close, fits standard, 100% scale!)
+        } else if (c.accessory === 13) {
+            viewBox = "-12 -12 224 224"; // Cyber Laser Sword (89% scale)
+        } else if (c.accessory === 14) {
+            viewBox = "-5 -5 210 210"; // Sports Car Rider (95% scale!)
+        } else if (c.accessory === 15) {
+            viewBox = "-5 -5 210 210"; // Cyber Motorcycle Rider (95% scale!)
+        } else if (c.accessory === 16) {
+            viewBox = "0 0 200 200"; // Pink Flamingo Swim Float (Standard fits perfectly, 100% scale!)
+        } else if (c.accessory === 17 || c.accessory === 18) {
+            viewBox = "-15 -15 230 230"; // VVIP Wings (Angel / Devil, 87% scale)
+        } else if (c.accessory >= 11 && c.accessory <= 18) {
+            viewBox = "-55 -55 310 310"; // Fallback for other special accessories
         }
 
         // 1.5 Aura / Magic Circle Layer (Under Feet) - NEW PREMIUM FEATURE

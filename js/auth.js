@@ -157,6 +157,7 @@ const Auth = {
         if (typeof AttendanceMusic !== 'undefined') AttendanceMusic.init();
         app.init(); // Boot the main app layout now that user is logged in
         if (typeof ChatModule !== 'undefined') ChatModule.startListening();
+        if (typeof GamesModule !== 'undefined') GamesModule.init();
     },
 
     login: async (e) => {
