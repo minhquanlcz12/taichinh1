@@ -344,9 +344,7 @@ const WorkModule = {
                 await WorkModule.save();
 
                 // --- NEW: Gửi thông báo Telegram khi import bảng kế hoạch mới ---
-                if (!app.state.settings || !app.state.settings.tgToken || !app.state.settings.tgChatId) {
-                    Utils.showToast("Cảnh báo: Chưa có Token/Chat ID Telegram, Bot sẽ không thông báo vào nhóm!", "warning");
-                } else if (importedCount > 0) {
+                if (app.state.settings && app.state.settings.tgToken && app.state.settings.tgChatId && importedCount > 0) {
                     const currentUserStr = Auth.currentUser ? Auth.currentUser.username : 'admin';
                     let urgentCount = 0;
                     

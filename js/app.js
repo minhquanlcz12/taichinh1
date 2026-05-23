@@ -259,7 +259,6 @@ const app = {
         if (app.state.currentView === 'lobby-view' && viewId !== 'lobby-view') {
             if (typeof LobbyNeon !== 'undefined') LobbyNeon.leaveLobby();
         }
-        }
     },
 
     saveTelegramSettings: async () => {
