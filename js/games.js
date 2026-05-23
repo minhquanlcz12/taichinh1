@@ -2388,8 +2388,7 @@ const GamesModule = {
 
                     if (player.jailTurns <= 0) {
                         player.isJailed = false;
-                        player.cash = Math.max(0, player.cash - 2);
-                        mState.logs.push(`🔒 <b>@${player.name}</b> đã thất bại gieo đúp sau 2 lượt và buộc phải nộp phạt 2đ Công Đức để thoát khỏi Tạm Giam.`);
+                        mState.logs.push(`🔓 Đã hết 2 lượt giam giữ. <b>@${player.name}</b> được HR thả tự do miễn phí và di chuyển tiếp!`);
                     } else {
                         mState.logs.push(`🔒 Gieo đúp thất bại! <b>@${player.name}</b> tiếp tục chịu án Phạt Đi Muộn (Còn lại ${player.jailTurns} lượt). Lượt chơi kết thúc.`);
                         await GamesModule.finishMonopolyTurn();
