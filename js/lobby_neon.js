@@ -113,7 +113,7 @@ const LobbyNeon = {
         const container = document.getElementById('lobby-view');
         if (!container) return;
 
-        console.log("Rendering Lobby Base with Video...");
+        console.log("Rendering Lobby Base with Video & Music...");
         container.innerHTML = `
             <div id="lobby-map-container" style="width: 100%; height: 100%; position: relative; cursor: crosshair; overflow: hidden; background: #000;">
                 <div class="lobby-map" id="lobby-map">
@@ -122,6 +122,10 @@ const LobbyNeon = {
                         onerror="console.error('Video load error'); this.style.display='none'">
                         <source src="assets/lobby_bg.mp4" type="video/mp4">
                     </video>
+                </div>
+
+                <div class="lobby-music-toggle" onclick="LobbyNeon.toggleMusic()">
+                    <i id="music-icon" class="fas fa-volume-mute"></i>
                 </div>
 
                 <div class="lobby-chat-overlay">
@@ -136,6 +140,37 @@ const LobbyNeon = {
                 </div>
             </div>
         `;
+        LobbyNeon.initMusic();
+    },
+
+    initMusic: () => {
+        if (!LobbyNeon.state.audio) {
+            LobbyNeon.state.audio = new Audio('https://cdn.pixabay.com/audio/2022/10/24/audio_3335c026b2.mp3'); // Epic Arena Track
+            LobbyNeon.state.audio.loop = true;
+            LobbyNeon.state.audio.volume = 0.4;
+        }
+        const isMuted = localStorage.getItem('lobby_muted') === 'true';
+        LobbyNeon.setMusicState(!isMuted);
+    },
+
+    toggleMusic: () => {
+        const isPlaying = !LobbyNeon.state.audio.paused;
+        LobbyNeon.setMusicState(!isPlaying);
+    },
+
+    setMusicState: (play) => {
+        const icon = document.getElementById('music-icon');
+        if (!icon || !LobbyNeon.state.audio) return;
+
+        if (play) {
+            LobbyNeon.state.audio.play().catch(e => console.log("Autoplay blocked"));
+            icon.className = 'fas fa-volume-up';
+            localStorage.setItem('lobby_muted', 'false');
+        } else {
+            LobbyNeon.state.audio.pause();
+            icon.className = 'fas fa-volume-mute';
+            localStorage.setItem('lobby_muted', 'true');
+        }
     },
 
     renderUser: (username, x, y, config) => {
@@ -161,7 +196,6 @@ const LobbyNeon = {
 
         let chibiSvg = '';
         try {
-            // INCREASE SCALE to 1.2 for bigger character
             chibiSvg = ChibiModule.renderChibiSVG(config || {}, false, 0);
         } catch (e) {
             chibiSvg = `<div style="font-size: 40px;">👤</div>`;
@@ -169,13 +203,20 @@ const LobbyNeon = {
 
         el.style.left = `${x}px`;
         el.style.top = `${y}px`;
-        el.innerHTML = `
-            <div class="lobby-user-name">${username}</div>
-            <div class="lobby-chibi-container" style="transform: scale(1.3);">
-                ${chibiSvg}
-            </div>
-            ${!isMe ? '<div class="lobby-user-status">⚔️ THÁCH ĐẤU</div>' : ''}
-        `;
+
+        // PARTIAL UPDATE to preserve child elements like chat bubbles
+        let nameEl = el.querySelector('.lobby-user-name');
+        if (!nameEl) {
+            el.innerHTML = `
+                <div class="lobby-user-name">${username}</div>
+                <div class="lobby-chibi-container" style="transform: scale(1.3);">${chibiSvg}</div>
+                ${!isMe ? '<div class="lobby-user-status">⚔️ THÁCH ĐẤU</div>' : ''}
+            `;
+        } else {
+            nameEl.textContent = username;
+            const container = el.querySelector('.lobby-chibi-container');
+            if (container) container.innerHTML = chibiSvg;
+        }
     },
 
     // ========== MOVEMENT ==========
