@@ -42,7 +42,7 @@ const LobbyNeon = {
         LobbyNeon.state.isConnected = true;
         
         LobbyNeon.renderUser(user.username, LobbyNeon.state.myPos.x, LobbyNeon.state.myPos.y, user.profile?.chibiConfig);
-        LobbyNeon.renderPillars();
+        // LobbyNeon.renderPillars(); // No longer needed for static BG
 
         LobbyNeon.startListening();
         LobbyNeon.listenToGames();
