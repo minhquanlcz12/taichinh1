@@ -536,9 +536,48 @@ const GamesModule = {
                 z-index: 5;
                 position: relative;
             }
+            .mono-pawn.has-chibi {
+                width: 42px;
+                height: 56px;
+                border-radius: 0;
+                border: none;
+                box-shadow: none;
+                background: transparent !important;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: flex-end;
+                position: relative;
+                animation: pawnBob 1.5s ease-in-out infinite alternate;
+                z-index: 5;
+            }
+            .mono-pawn-chibi-wrapper {
+                width: 100%;
+                height: 48px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: relative;
+                z-index: 2;
+                filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+            }
+            .mono-pawn-chibi-wrapper svg {
+                width: auto;
+                height: 100%;
+                max-width: 100%;
+            }
+            .mono-pawn-base {
+                width: 24px;
+                height: 6px;
+                border-radius: 50%;
+                margin-top: -2px;
+                border: 1px solid rgba(255,255,255,0.7);
+                z-index: 1;
+                flex-shrink: 0;
+            }
             @keyframes pawnBob {
                 0% { transform: translateY(0) scale(1); }
-                100% { transform: translateY(-2px) scale(1.05); }
+                100% { transform: translateY(-3px) scale(1.03); }
             }
 
             /* Center Panel - Premium Dashboard */
@@ -1075,7 +1114,24 @@ const GamesModule = {
 
             const tilePawns = mState.players
                 .filter(p => !p.isBankrupt && GamesModule.monopoly.visualPositions[p.name] === idx)
-                .map(p => `<div class="mono-pawn" style="background:${p.color};" title="${p.displayName}">${p.name.charAt(0).toUpperCase()}</div>`)
+                .map(p => {
+                    if (typeof ChibiModule !== 'undefined' && p.chibiConfig) {
+                        try {
+                            const chibiSvg = ChibiModule.renderChibiSVG(p.chibiConfig, true, 50);
+                            return `
+                                <div class="mono-pawn has-chibi" title="${p.displayName} (@${p.name})">
+                                    <div class="mono-pawn-chibi-wrapper">
+                                        ${chibiSvg}
+                                    </div>
+                                    <div class="mono-pawn-base" style="background: ${p.color}; box-shadow: 0 0 8px ${p.color};"></div>
+                                </div>
+                            `;
+                        } catch (e) {
+                            console.error("Error rendering pawn Chibi SVG:", e);
+                        }
+                    }
+                    return `<div class="mono-pawn" style="background:${p.color};" title="${p.displayName} (@${p.name})">${p.name.charAt(0).toUpperCase()}</div>`;
+                })
                 .join('');
             const hasPawns = mState.players.some(p => !p.isBankrupt && GamesModule.monopoly.visualPositions[p.name] === idx);
 
