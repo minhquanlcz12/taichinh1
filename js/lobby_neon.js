@@ -3,7 +3,7 @@
  * Manages: Chibi movement, Chat, Caro PvP
  */
 
-const LobbyNeon = {
+window.LobbyNeon = {
     state: {
         isConnected: false,
         users: {},
@@ -124,8 +124,8 @@ const LobbyNeon = {
                     </video>
                 </div>
 
-                <div class="lobby-music-toggle" onclick="LobbyNeon.toggleMusic()">
-                    <i id="music-icon" class="fas fa-volume-mute"></i>
+                <div id="lobby-music-btn" class="lobby-music-toggle">
+                    <i id="music-icon" class="fas fa-play"></i>
                 </div>
                 <div id="music-player-container" style="display:none;"></div>
 
@@ -141,12 +141,19 @@ const LobbyNeon = {
                 </div>
             </div>
         `;
+        
+        // Use addEventListener for more reliability
+        setTimeout(() => {
+            const btn = document.getElementById('lobby-music-btn');
+            if (btn) btn.onclick = () => LobbyNeon.toggleMusic();
+        }, 100);
+
         LobbyNeon.initMusic();
     },
 
     initMusic: () => {
         if (!LobbyNeon.state.audio) {
-            // Using a stable direct link from Archive.org
+            console.log("Initializing Audio: Dong Mau Lac Hong");
             const audioUrl = 'https://archive.org/download/DanTruongDongMauLacHong/01%20Dong%20Mau%20Lac%20Hong.mp3';
             LobbyNeon.state.audio = new Audio(audioUrl);
             LobbyNeon.state.audio.loop = true;
@@ -154,10 +161,13 @@ const LobbyNeon = {
         }
         
         const isMuted = localStorage.getItem('lobby_muted') === 'true';
-        LobbyNeon.setMusicState(!isMuted);
+        if (!isMuted) {
+            LobbyNeon.setMusicState(true);
+        }
     },
 
     toggleMusic: () => {
+        console.log("Music toggle clicked");
         const audio = LobbyNeon.state.audio;
         if (!audio) return;
         const isPlaying = !audio.paused;
@@ -170,18 +180,16 @@ const LobbyNeon = {
         if (!icon || !audio) return;
 
         if (play) {
-            audio.play().catch(e => {
-                console.log("Autoplay blocked - Waiting for user interaction");
-                icon.className = 'fas fa-volume-mute';
-                localStorage.setItem('lobby_muted', 'true');
-            });
-            if (!audio.paused) {
-                icon.className = 'fas fa-volume-up';
+            audio.play().then(() => {
+                icon.className = 'fas fa-pause';
                 localStorage.setItem('lobby_muted', 'false');
-            }
+            }).catch(e => {
+                console.warn("Autoplay blocked - Click to play");
+                icon.className = 'fas fa-play';
+            });
         } else {
             audio.pause();
-            icon.className = 'fas fa-volume-mute';
+            icon.className = 'fas fa-play';
             localStorage.setItem('lobby_muted', 'true');
         }
     },
