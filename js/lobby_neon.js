@@ -42,6 +42,7 @@ const LobbyNeon = {
         LobbyNeon.state.isConnected = true;
         
         LobbyNeon.renderUser(user.username, LobbyNeon.state.myPos.x, LobbyNeon.state.myPos.y, user.profile?.chibiConfig);
+        LobbyNeon.renderPillars();
 
         LobbyNeon.startListening();
         LobbyNeon.listenToGames();
@@ -208,12 +209,64 @@ const LobbyNeon = {
     renderChatMessages: (messages) => {
         const container = document.getElementById('lobby-chat-messages');
         if (!container) return;
-        let html = `<div class="lobby-message"><span class="lobby-msg-text" style="color: #a855f7; font-style: italic; opacity: 0.7;">Hệ thống: Chào mừng tới Sảnh Chờ Neon!</span></div>`;
+        let html = `<div class="lobby-message"><span class="lobby-msg-text" style="color: #a855f7; font-style: italic; opacity: 0.7;">Hệ thống: Chào mừng tới Cung Điện Neon!</span></div>`;
+        
+        // Show bubbles for the latest message if it's new
+        const lastMsg = messages[messages.length - 1];
+        if (lastMsg) {
+            LobbyNeon.showChatBubble(lastMsg.sender, lastMsg.text);
+        }
+
         messages.forEach(msg => {
             html += `<div class="lobby-message"><span class="lobby-msg-sender">${msg.sender}:</span><span class="lobby-msg-text">${msg.text}</span></div>`;
         });
         container.innerHTML = html;
         container.scrollTop = container.scrollHeight;
+    },
+
+    showChatBubble: (username, text) => {
+        const userWrapper = document.getElementById(`user-${username}`);
+        if (!userWrapper) return;
+
+        // Remove existing bubble if any
+        const oldBubble = userWrapper.querySelector('.lobby-chat-bubble');
+        if (oldBubble) oldBubble.remove();
+
+        const bubble = document.createElement('div');
+        bubble.className = 'lobby-chat-bubble';
+        bubble.textContent = text.length > 50 ? text.substring(0, 47) + '...' : text;
+        userWrapper.appendChild(bubble);
+
+        // Auto remove after 6s
+        setTimeout(() => {
+            bubble.classList.add('fade-out');
+            setTimeout(() => bubble.remove(), 500);
+        }, 6000);
+    },
+
+    renderPillars: () => {
+        const map = document.getElementById('lobby-map');
+        if (!map) return;
+        
+        // Clear old pillars
+        map.querySelectorAll('.cyber-pillar').forEach(p => p.remove());
+
+        // Place 10 pillars along the palace "path"
+        const pillarCoords = [
+            {x: 450, y: 200}, {x: 1450, y: 200},
+            {x: 450, y: 700}, {x: 1450, y: 700},
+            {x: 450, y: 1200}, {x: 1450, y: 1200},
+            {x: 450, y: 1700}, {x: 1450, y: 1700},
+            {x: 450, y: 2200}, {x: 1450, y: 2200}
+        ];
+
+        pillarCoords.forEach(coord => {
+            const p = document.createElement('div');
+            p.className = 'cyber-pillar';
+            p.style.left = `${coord.x}px`;
+            p.style.top = `${coord.y}px`;
+            map.appendChild(p);
+        });
     },
 
     // ========== CHALLENGE / CARO ==========
