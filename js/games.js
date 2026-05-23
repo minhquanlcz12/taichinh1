@@ -382,7 +382,7 @@ const GamesModule = {
                 border-image: linear-gradient(135deg, #8b5cf6, #a855f7, #ec4899, #06b6d4, #8b5cf6) 1;
                 padding: 3px;
                 width: 100%;
-                max-width: 740px;
+                max-width: min(920px, 80vh);
                 margin: 0 auto;
                 aspect-ratio: 1;
                 box-shadow:
@@ -762,18 +762,18 @@ const GamesModule = {
             /* Dice */
             .mono-dice-wrap {
                 display: flex;
-                gap: 14px;
-                margin: 6px 0;
-                perspective: 300px;
+                gap: 18px;
+                margin: 10px 0;
+                perspective: 400px;
                 z-index: 1;
             }
             .mono-dice {
-                width: 64px;
-                height: 64px;
+                width: 80px;
+                height: 80px;
                 background: linear-gradient(135deg, #1e1b4b 0%, #311042 100%);
-                border: 3px solid #c084fc;
-                border-radius: 14px;
-                box-shadow: 0 0 20px rgba(192, 132, 252, 0.4), inset 0 0 10px rgba(0,0,0,0.8);
+                border: 3.5px solid #c084fc;
+                border-radius: 16px;
+                box-shadow: 0 0 25px rgba(192, 132, 252, 0.5), inset 0 0 12px rgba(0,0,0,0.85);
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -795,8 +795,8 @@ const GamesModule = {
             }
             .dice-dot {
                 position: absolute;
-                width: 10px;
-                height: 10px;
+                width: 12px;
+                height: 12px;
                 background: #00ffff;
                 box-shadow: 0 0 8px #00ffff;
                 border-radius: 50%;
@@ -850,6 +850,126 @@ const GamesModule = {
             @keyframes pulse {
                 0%, 100% { opacity: 1; }
                 50% { opacity: 0.5; }
+            }
+
+            /* Monopoly Board 60-70% Grid Layout */
+            .mono-layout-wrapper {
+                display: flex;
+                gap: 24px;
+                align-items: flex-start;
+                width: 100%;
+                max-width: 1400px;
+                margin: 0 auto;
+            }
+            .mono-layout-left {
+                flex: 0 0 65%;
+                min-width: 340px;
+            }
+            .mono-layout-right {
+                flex: 0 0 32%;
+                min-width: 260px;
+                display: flex;
+                flex-direction: column;
+                gap: 14px;
+            }
+            @media (max-width: 950px) {
+                .mono-layout-wrapper {
+                    flex-direction: column;
+                    align-items: stretch;
+                }
+                .mono-layout-left, .mono-layout-right {
+                    flex: 1 1 100%;
+                    width: 100%;
+                }
+            }
+
+            /* Building models on property tiles */
+            .mono-building-container {
+                position: absolute;
+                top: 45%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                display: flex;
+                justify-content: center;
+                align-items: flex-end;
+                height: 38px;
+                width: 38px;
+                pointer-events: none;
+                z-index: 2;
+                opacity: 0.95;
+                animation: buildingRise 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            }
+            @keyframes buildingRise {
+                from { transform: translate(-50%, -20%) scale(0); opacity: 0; }
+                to { transform: translate(-50%, -50%) scale(1); opacity: 0.95; }
+            }
+            .mono-building {
+                position: relative;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: flex-end;
+                width: 24px;
+                transition: all 0.3s;
+            }
+            .building-body {
+                width: 18px;
+                height: 10px;
+                background: linear-gradient(to top, rgba(15,23,42,0.9), rgba(30,41,59,0.85));
+                border: 1.5px solid var(--owner-color);
+                box-shadow: 0 0 8px var(--owner-color);
+                border-radius: 3px;
+                margin-top: -1px;
+                position: relative;
+            }
+            .building-body::before {
+                content: '';
+                position: absolute;
+                inset: 2px;
+                background-image: radial-gradient(circle, #fff 15%, transparent 25%);
+                background-size: 4px 4px;
+                opacity: 0.8;
+            }
+            .building-roof {
+                width: 20px;
+                height: 3px;
+                background: var(--owner-color);
+                box-shadow: 0 0 6px var(--owner-color);
+                border-radius: 2px;
+                z-index: 3;
+            }
+            .mono-building.lvl-2 .building-body.body-2 {
+                width: 14px;
+                height: 9px;
+                border-color: #00f3ff;
+                box-shadow: 0 0 8px #00f3ff;
+            }
+            .mono-building.lvl-2 .building-roof {
+                background: #00f3ff;
+                box-shadow: 0 0 6px #00f3ff;
+                width: 16px;
+            }
+            .mono-building.lvl-3 .building-body.body-3 {
+                width: 11px;
+                height: 9px;
+                border-color: #fbbf24;
+                box-shadow: 0 0 10px #fbbf24;
+            }
+            .mono-building.lvl-3 .building-body.body-2 {
+                border-color: #ec4899;
+                box-shadow: 0 0 8px #ec4899;
+            }
+            .mono-building.lvl-3 .building-roof {
+                background: #fbbf24;
+                box-shadow: 0 0 8px #fbbf24;
+                width: 13px;
+            }
+            .building-spire {
+                width: 2px;
+                height: 6px;
+                background: #fbbf24;
+                box-shadow: 0 0 8px #fbbf24;
+                z-index: 4;
             }
         `;
         document.head.appendChild(style);
@@ -1296,14 +1416,43 @@ const GamesModule = {
 
             let ownerTileStyle = '';
             let ownerBadgeHtml = '';
+            let buildingHtml = '';
             if (isOwned) {
                 const oColor = tile.owner.color;
                 if (lvl === 1) {
                     ownerTileStyle = `border: 2px solid ${oColor} !important; box-shadow: inset 0 0 8px ${oColor}25, 0 0 10px ${oColor}20 !important; background: linear-gradient(135deg, ${oColor}18, rgba(16,24,48,0.92)) !important;`;
+                    buildingHtml = `
+                        <div class="mono-building-container">
+                            <div class="mono-building lvl-1" style="--owner-color: ${oColor}">
+                                <div class="building-roof"></div>
+                                <div class="building-body"></div>
+                            </div>
+                        </div>
+                    `;
                 } else if (lvl === 2) {
                     ownerTileStyle = `border: 2.2px solid #00f3ff !important; box-shadow: inset 0 0 10px ${oColor}25, 0 0 15px rgba(0, 243, 255, 0.4) !important; background: linear-gradient(135deg, ${oColor}18, rgba(16,24,48,0.92)) !important;`;
+                    buildingHtml = `
+                        <div class="mono-building-container">
+                            <div class="mono-building lvl-2" style="--owner-color: ${oColor}">
+                                <div class="building-roof"></div>
+                                <div class="building-body body-2"></div>
+                                <div class="building-body body-1"></div>
+                            </div>
+                        </div>
+                    `;
                 } else if (lvl === 3) {
                     ownerTileStyle = `border: 2.5px solid #fbbf24 !important; box-shadow: inset 0 0 12px ${oColor}25, 0 0 20px rgba(251, 191, 36, 0.5) !important; background: linear-gradient(135deg, rgba(31,10,50,0.95), ${oColor}15, rgba(15,23,42,0.95)) !important;`;
+                    buildingHtml = `
+                        <div class="mono-building-container">
+                            <div class="mono-building lvl-3" style="--owner-color: ${oColor}">
+                                <div class="building-spire"></div>
+                                <div class="building-roof"></div>
+                                <div class="building-body body-3"></div>
+                                <div class="building-body body-2"></div>
+                                <div class="building-body body-1"></div>
+                            </div>
+                        </div>
+                    `;
                 }
                 ownerBadgeHtml = `
                     <div class="mono-owner-badge" style="background: ${oColor}; box-shadow: 0 0 6px ${oColor};" title="@${tile.owner.name}">
@@ -1330,6 +1479,7 @@ const GamesModule = {
                     <div class="mono-tile-name">${tile.name}</div>
                     ${tile.type === 'property' ? `<div class="mono-tile-cost">${levelIcon}${tile.cost}đ ${stars ? `<span style="color:#fbbf24; font-weight: 900;">${stars}</span>` : ''}</div>` : ''}
                     ${isOwned ? `<div class="mono-tile-owner" style="border-left:2px solid ${tile.owner.color}">${rentValue}đ</div>` : ''}
+                    ${buildingHtml}
                     ${ownerBadgeHtml}
                     ${tilePawns ? `<div class="mono-tile-pawns">${tilePawns}</div>` : ''}
                     ${bubbleHtml}
@@ -1362,55 +1512,40 @@ const GamesModule = {
             `;
         };
 
-        let deedHtml = '';
-        if (mState.centerDeedTileId !== undefined && mState.centerDeedTileId !== null) {
-            const focusedTile = mState.tiles.find(t => t.id === mState.centerDeedTileId);
-            if (focusedTile && focusedTile.type === 'property') {
-                deedHtml = GamesModule.renderTitleDeedCardHtml(focusedTile);
-            }
-        }
-
         const centerPanelHtml = `
             <div class="mono-center-panel">
-                ${deedHtml ? deedHtml : `
-                    <div style="font-size: 16px; font-weight: 900; color: #a78bfa; letter-spacing: 2px; text-transform: uppercase; text-shadow: 0 0 20px rgba(167,139,250,0.35); position: relative; z-index: 1;">
-                        🎲 CỜ TỶ PHÚ
-                    </div>
-                    <div style="font-size: 8px; color: #64748b; text-transform: uppercase; letter-spacing: 2px; position: relative; z-index: 1; font-weight: 600; margin-bottom: 4px;">ONLINE REAL-TIME</div>
+                <div style="font-size: 18px; font-weight: 900; color: #a78bfa; letter-spacing: 2px; text-transform: uppercase; text-shadow: 0 0 20px rgba(167,139,250,0.35); position: relative; z-index: 1;">
+                    🎲 CỜ TỶ PHÚ
+                </div>
+                <div style="font-size: 9px; color: #64748b; text-transform: uppercase; letter-spacing: 2px; position: relative; z-index: 1; font-weight: 700; margin-bottom: 2px;">ONLINE REAL-TIME</div>
 
-                    <div style="display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.5); padding: 7px 14px; border-radius: 20px; border: 1.5px solid ${activePlayer.color}; box-shadow: 0 0 12px ${activePlayer.color}35; position: relative; z-index: 1; max-width: 90%;">
-                        <div style="width: 22px; height: 22px; border-radius: 50%; background: ${activePlayer.color}; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 10px; color: #fff; box-shadow: 0 0 8px ${activePlayer.color}; flex-shrink: 0;">
-                            ${activePlayer.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div style="overflow: hidden;">
-                            <div style="font-weight: 800; font-size: 11px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@${activePlayer.name}</div>
-                            <div style="font-size: 8px; color: #94a3b8;">${activePlayer.displayName} ${activePlayer.isJailed ? '🔒' : ''}</div>
-                        </div>
+                <div style="display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.5); padding: 6px 12px; border-radius: 20px; border: 1.5px solid ${activePlayer.color}; box-shadow: 0 0 12px ${activePlayer.color}35; position: relative; z-index: 1; max-width: 90%;">
+                    <div style="width: 22px; height: 22px; border-radius: 50%; background: ${activePlayer.color}; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 10px; color: #fff; box-shadow: 0 0 8px ${activePlayer.color}; flex-shrink: 0;">
+                        ${activePlayer.name.charAt(0).toUpperCase()}
                     </div>
-                `}       </div>
-                    <div style="overflow: hidden;">
+                    <div style="overflow: hidden; text-align: left;">
                         <div style="font-weight: 800; font-size: 11px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@${activePlayer.name}</div>
                         <div style="font-size: 8px; color: #94a3b8;">${activePlayer.displayName} ${activePlayer.isJailed ? '🔒' : ''}</div>
                     </div>
                 </div>
 
-                <div class="mono-dice-wrap" style="margin: 8px 0;">
+                <div class="mono-dice-wrap" style="margin: 10px 0;">
                     ${mState.diceValues.map(v => getDiceFaceHtml(v)).join('')}
                 </div>
 
                 ${mState.isRolling ? `
-                    <div style="font-size: 9px; color: #ec4899; font-weight: 800; animation: pulse 0.5s infinite alternate; z-index: 1;">
+                    <div style="font-size: 10px; color: #ec4899; font-weight: 900; animation: pulse 0.5s infinite alternate; z-index: 1;">
                         🔥 ĐANG LẮC XÚC XẮC...
                     </div>
                 ` : ''}
 
-                <div style="width: 100%; max-width: 200px; position: relative; z-index: 1; margin-top: 4px;">
+                <div style="width: 100%; max-width: 200px; position: relative; z-index: 1; margin-top: 6px;">
                     ${isMyTurn ? `
-                        <button onclick="GamesModule.rollMonopolyDice()" ${mState.isRolling ? 'disabled' : ''} style="width: 100%; padding: 11px; background: linear-gradient(135deg, #8b5cf6, #ec4899); border: none; border-radius: 12px; color: #fff; font-weight: 900; font-size: 13px; cursor: pointer; box-shadow: 0 4px 20px rgba(139,92,246,0.4); text-transform: uppercase; letter-spacing: 1px; transition: all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 25px rgba(139,92,246,0.5)'" onmouseout="this.style.transform=''; this.style.boxShadow='0 4px 20px rgba(139,92,246,0.4)'">
+                        <button onclick="GamesModule.rollMonopolyDice()" ${mState.isRolling ? 'disabled' : ''} style="width: 100%; padding: 12px; background: linear-gradient(135deg, #8b5cf6, #ec4899); border: none; border-radius: 12px; color: #fff; font-weight: 900; font-size: 14px; cursor: pointer; box-shadow: 0 4px 20px rgba(139,92,246,0.4); text-transform: uppercase; letter-spacing: 1px; transition: all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 25px rgba(139,92,246,0.5)'" onmouseout="this.style.transform=''; this.style.boxShadow='0 4px 20px rgba(139,92,246,0.4)'">
                             🎲 ĐỔ XÚC XẮC
                         </button>
                     ` : `
-                        <div style="width: 100%; padding: 11px; background: rgba(255,255,255,0.02); border: 1.5px dashed rgba(255,255,255,0.08); border-radius: 12px; color: #64748b; font-size: 10px; font-weight: 700; text-align: center;">
+                        <div style="width: 100%; padding: 12px; background: rgba(255,255,255,0.02); border: 1.5px dashed rgba(255,255,255,0.08); border-radius: 12px; color: #64748b; font-size: 11px; font-weight: 700; text-align: center;">
                             ⏳ Đợi lượt @${activePlayer.name}...
                         </div>
                     `}
@@ -1430,15 +1565,15 @@ const GamesModule = {
                     </button>
                 </div>
 
-                <div style="display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start;">
-                    <div style="flex: 1.3; min-width: 340px;">
+                <div class="mono-layout-wrapper">
+                    <div class="mono-layout-left">
                         <div class="mono-board">
                             ${tilesHtml}
                             ${centerPanelHtml}
                         </div>
                     </div>
 
-                    <div style="flex: 0.7; min-width: 260px; display: flex; flex-direction: column; gap: 14px;">
+                    <div class="mono-layout-right">
                         <div class="mono-hud-players">
                             <h4 style="margin: 0 0 12px 0; color: #a78bfa; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid rgba(139,92,246,0.15); padding-bottom: 8px; display: flex; align-items: center; gap: 6px;">
                                 👑 BẢNG XẾP HẠNG CÔNG ĐỨC
@@ -1806,9 +1941,34 @@ const GamesModule = {
     },
 
     selectCenterDeed: (tileId) => {
-        GamesModule.monopoly.centerDeedTileId = tileId !== null ? parseInt(tileId, 10) : null;
-        let container = document.getElementById('games-view') || document.getElementById('hub-content-monopoly');
-        if (container) GamesModule.renderMonopoly(container);
+        const mState = GamesModule.monopoly;
+        if (tileId === null) return;
+        const tile = mState.tiles.find(t => t.id === parseInt(tileId, 10));
+        if (tile && tile.type === 'property') {
+            GamesModule.renderMonopolyInspectDeedModal(tile);
+        }
+    },
+
+    renderMonopolyInspectDeedModal: (tile) => {
+        const overlay = document.createElement('div');
+        overlay.id = 'mono-inspect-deed-overlay';
+        overlay.className = 'chance-overlay';
+        overlay.style.zIndex = '99999';
+        overlay.onclick = (e) => {
+            if (e.target === overlay) overlay.remove();
+        };
+
+        const deedHtml = GamesModule.renderTitleDeedCardHtml(tile);
+
+        overlay.innerHTML = `
+            <div style="position: relative; animation: modalPop 0.3s ease; max-width: 280px; width: 90%;">
+                ${deedHtml}
+                <button onclick="document.getElementById('mono-inspect-deed-overlay')?.remove()" style="position: absolute; top: -10px; right: -10px; width: 28px; height: 28px; border-radius: 50%; background: #ef4444; border: 2px solid #fff; color: #fff; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 101;">
+                    ✕
+                </button>
+            </div>
+        `;
+        document.body.appendChild(overlay);
     },
 
     renderTitleDeedCardHtml: (tile) => {
@@ -1861,6 +2021,91 @@ const GamesModule = {
                 </button>
             </div>
         `;
+    },
+
+    getTileTotalSpent: (tile) => {
+        const cost = tile.cost || 5;
+        const upgradeCost = Math.round(cost * 0.8);
+        const lvl = tile.level || 1;
+        return cost + (lvl - 1) * upgradeCost;
+    },
+
+    renderMonopolyBuyoutModal: (player, tile, rent, buyoutCost) => {
+        const overlay = document.createElement('div');
+        overlay.id = 'mono-buyout-overlay';
+        overlay.className = 'chance-overlay';
+        overlay.style.zIndex = '99999';
+
+        const canAfford = player.cash >= buyoutCost;
+
+        overlay.innerHTML = `
+            <div style="background: rgba(15,23,42,0.96); border: 2px solid #ef4444; border-radius: 16px; padding: 24px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 0 30px rgba(239,68,68,0.4); color: #fff;">
+                <div style="font-size: 11px; text-transform: uppercase; color: #f87171; font-weight: bold; margin-bottom: 6px;">Cướp Quyền Sở Hữu</div>
+                <h3 style="margin: 0; color: #ef4444; font-size: 20px; font-weight: 900;">💥 MUA LẠI PHÒNG BAN</h3>
+                <p style="font-size: 13px; color: #cbd5e1; margin-top: 8px;">
+                    Bạn đã trả <strong>${rent}đ</strong> tiền thuê. Bạn có muốn bỏ thêm tiền mua đứt phòng ban <strong>${tile.name}</strong> từ <strong>@${tile.owner.name}</strong> không?
+                </p>
+
+                <div style="margin: 20px 0; background: rgba(0,0,0,0.3); padding: 14px; border-radius: 10px; text-align: left; font-size: 13px; line-height: 1.6;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom: 6px;">
+                        <span>Tổng vốn đối thủ đã xây:</span>
+                        <strong style="color: #cbd5e1;">${GamesModule.getTileTotalSpent(tile)}đ</strong>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 6px;">
+                        <span>Giá mua lại (1.4x):</span>
+                        <strong style="color: #fbbf24; font-size: 15px;">${buyoutCost}đ Công Đức</strong>
+                    </div>
+                </div>
+
+                <div style="font-size: 12px; margin-bottom: 20px; color: ${canAfford ? '#38bdf8' : '#f87171'}; font-weight: bold;">
+                    Số dư hiện tại của bạn: ${player.cash}đ Công Đức 
+                    ${canAfford ? '(Đủ điều kiện)' : '(Không đủ điểm để mua lại)'}
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="GamesModule.buyoutProperty('${tile.id}', ${buyoutCost})" ${!canAfford ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''} style="flex: 1; padding: 12px; background: linear-gradient(135deg, #ef4444, #b91c1c); border: none; border-radius: 8px; color: #fff; font-weight: bold; cursor: pointer;">
+                        💥 MUA LẠI ĐẤT
+                    </button>
+                    <button onclick="GamesModule.skipBuyoutProperty()" style="flex: 1; padding: 12px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #cbd5e1; font-weight: bold; cursor: pointer;">
+                        ❌ BỎ QUA
+                    </button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+    },
+
+    buyoutProperty: async (tileId, buyoutCost) => {
+        const mState = GamesModule.monopoly;
+        const player = mState.players[mState.currentPlayerIdx];
+        const tile = mState.tiles.find(t => t.id === parseInt(tileId, 10));
+
+        if (tile && tile.owner && player.cash >= buyoutCost) {
+            const previousOwner = tile.owner;
+            
+            // Deduct buyout cost from current player
+            player.cash = Math.round((player.cash - buyoutCost) * 10) / 10;
+            
+            // Find previous owner and add buyout cost
+            const prevOwnerObj = mState.players.find(p => p.name === previousOwner.name);
+            if (prevOwnerObj) {
+                prevOwnerObj.cash = Math.round((prevOwnerObj.cash + buyoutCost) * 10) / 10;
+            }
+
+            // Transfer ownership
+            tile.owner = player;
+            mState.logs.push(`💥 <b>@${player.name}</b> đã chiêu mộ/mua lại ô <b>${tile.name}</b> từ <b>@${previousOwner.name}</b> với giá ${buyoutCost}đ Công Đức!`);
+            GamesSynth.playWin();
+        }
+
+        document.getElementById('mono-buyout-overlay')?.remove();
+        await GamesModule.finishMonopolyTurn();
+    },
+
+    skipBuyoutProperty: async () => {
+        document.getElementById('mono-buyout-overlay')?.remove();
+        await GamesModule.finishMonopolyTurn();
     },
 
     // Sảnh Chờ Lobby Danh Sách Các Phòng Đang Mở Real-time
@@ -2456,16 +2701,32 @@ const GamesModule = {
             }
         } else {
             const rent = GamesModule.getTileRent(tile);
-            player.cash -= rent;
+            player.cash = Math.round((player.cash - rent) * 10) / 10;
             
             // Find owner in roster and add rent
             const ownerObj = mState.players.find(p => p.name === tile.owner.name);
-            if (ownerObj) ownerObj.cash += rent;
+            if (ownerObj) {
+                ownerObj.cash = Math.round((ownerObj.cash + rent) * 10) / 10;
+            }
 
             mState.logs.push(`💸 <b>@${player.name}</b> dẫm vào ô của <b>@${tile.owner.name}</b>! Trả tiền thuê <b>${rent}đ</b> Công Đức.`);
             
             GamesModule.checkBankruptcy(player);
-            GamesModule.finishMonopolyTurn();
+            if (player.isBankrupt) {
+                GamesModule.finishMonopolyTurn();
+                return;
+            }
+
+            // Buyout logic: check if the tile is below level 3 (Level 1 or 2)
+            const currentLvl = tile.level || 1;
+            if (currentLvl < 3) {
+                const totalSpent = GamesModule.getTileTotalSpent(tile);
+                const buyoutCost = Math.round(totalSpent * 1.4 * 10) / 10;
+                GamesModule.renderMonopolyBuyoutModal(player, tile, rent, buyoutCost);
+            } else {
+                mState.logs.push(`👑 Ô <b>${tile.name}</b> đã đạt cấp VVIP tối thượng, không thể mua lại!`);
+                GamesModule.finishMonopolyTurn();
+            }
         }
     },
 
