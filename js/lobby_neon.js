@@ -127,6 +127,7 @@ const LobbyNeon = {
                 <div class="lobby-music-toggle" onclick="LobbyNeon.toggleMusic()">
                     <i id="music-icon" class="fas fa-volume-mute"></i>
                 </div>
+                <div id="music-player-container" style="display:none;"></div>
 
                 <div class="lobby-chat-overlay">
                     <div class="lobby-chat-messages" id="lobby-chat-messages">
@@ -144,30 +145,58 @@ const LobbyNeon = {
     },
 
     initMusic: () => {
-        if (!LobbyNeon.state.audio) {
-            LobbyNeon.state.audio = new Audio('https://cdn.pixabay.com/audio/2022/10/24/audio_3335c026b2.mp3'); // Epic Arena Track
-            LobbyNeon.state.audio.loop = true;
-            LobbyNeon.state.audio.volume = 0.4;
+        // Load YouTube IFrame API if not already loaded
+        if (!window.YT) {
+            const tag = document.createElement('script');
+            tag.src = "https://www.youtube.com/iframe_api";
+            const firstScriptTag = document.getElementsByTagName('script')[0];
+            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
         }
-        const isMuted = localStorage.getItem('lobby_muted') === 'true';
-        LobbyNeon.setMusicState(!isMuted);
+
+        window.onYouTubeIframeAPIReady = () => {
+            LobbyNeon.state.player = new YT.Player('music-player-container', {
+                height: '0',
+                width: '0',
+                videoId: 'R9K1Wf3992o', // Dòng Máu Lạc Hồng - Đan Trường
+                playerVars: {
+                    'autoplay': 0,
+                    'controls': 0,
+                    'loop': 1,
+                    'playlist': 'R9K1Wf3992o'
+                },
+                events: {
+                    'onReady': (event) => {
+                        const isMuted = localStorage.getItem('lobby_muted') === 'true';
+                        LobbyNeon.setMusicState(!isMuted);
+                    }
+                }
+            });
+        };
+        
+        // If API already loaded (re-render), just init
+        if (window.YT && window.YT.Player) {
+            window.onYouTubeIframeAPIReady();
+        }
     },
 
     toggleMusic: () => {
-        const isPlaying = !LobbyNeon.state.audio.paused;
+        const player = LobbyNeon.state.player;
+        if (!player || typeof player.getPlayerState !== 'function') return;
+        const isPlaying = player.getPlayerState() === 1; // 1 = playing
         LobbyNeon.setMusicState(!isPlaying);
     },
 
     setMusicState: (play) => {
         const icon = document.getElementById('music-icon');
-        if (!icon || !LobbyNeon.state.audio) return;
+        const player = LobbyNeon.state.player;
+        if (!icon || !player || typeof player.playVideo !== 'function') return;
 
         if (play) {
-            LobbyNeon.state.audio.play().catch(e => console.log("Autoplay blocked"));
+            player.playVideo();
             icon.className = 'fas fa-volume-up';
             localStorage.setItem('lobby_muted', 'false');
         } else {
-            LobbyNeon.state.audio.pause();
+            player.pauseVideo();
             icon.className = 'fas fa-volume-mute';
             localStorage.setItem('lobby_muted', 'true');
         }
