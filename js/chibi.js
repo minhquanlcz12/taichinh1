@@ -110,6 +110,75 @@ const ChibiModule = {
         }
     },
 
+    // NEW: Full SET Presets
+    presets: [
+        {
+            id: 'set-cyber',
+            name: 'Siêu Chiến Binh Cyber',
+            desc: 'Phong cách tương lai cực cháy',
+            config: {
+                hairStyle: 2, hairColor: '#00f3ff',
+                eyeStyle: 1, mouthStyle: 0,
+                topStyle: 3, topColor: '#1f2937',
+                bottomStyle: 6, bottomColor: '#1f2937',
+                shoeStyle: 4, shoeColor: '#000',
+                wing: 6, gear: 2, dragon: 1, mount: 4
+            }
+        },
+        {
+            id: 'set-samurai',
+            name: 'Samurai Huyền Thoại',
+            desc: 'Thanh kiếm bảo vệ chính nghĩa',
+            config: {
+                hairStyle: 4, hairColor: '#111827',
+                eyeStyle: 0, mouthStyle: 0,
+                topStyle: 4, topColor: '#ef4444',
+                bottomStyle: 2, bottomColor: '#111827',
+                shoeStyle: 3, shoeColor: '#334155',
+                wing: 0, gear: 1, dragon: 3, mount: 0
+            }
+        },
+        {
+            id: 'set-to-ong',
+            name: 'Thần Thánh Tổ Ong',
+            desc: 'Combo huyền thoại xóm làng',
+            config: {
+                hairStyle: 1, hairColor: '#343a40',
+                eyeStyle: 0, mouthStyle: 0,
+                topStyle: 1, topColor: '#ffffff',
+                bottomStyle: 1, bottomColor: '#3b82f6',
+                shoeStyle: 1, shoeColor: '#fef3c7',
+                wing: 1, gear: 19, dragon: 0, mount: 4
+            }
+        },
+        {
+            id: 'set-reaper',
+            name: 'Sát Thủ Bóng Đêm',
+            desc: 'Nổi sợ hãi từ vực thẳm',
+            config: {
+                hairStyle: 3, hairColor: '#000',
+                eyeStyle: 1, mouthStyle: 1,
+                topStyle: 5, topColor: '#1f2937',
+                bottomStyle: 1, bottomColor: '#000',
+                shoeStyle: 3, shoeColor: '#000',
+                wing: 6, gear: 13, dragon: 2, mount: 0
+            }
+        },
+        {
+            id: 'set-angel',
+            name: 'Thiên Thần Ánh Sáng',
+            desc: 'Sức mạnh thuần khiết',
+            config: {
+                hairStyle: 5, hairColor: '#f3f4f6',
+                eyeStyle: 0, mouthStyle: 1,
+                topStyle: 2, topColor: '#ffffff',
+                bottomStyle: 2, bottomColor: '#ffffff',
+                shoeStyle: 5, shoeColor: '#ffffff',
+                wing: 3, gear: 15, dragon: 3, mount: 3
+            }
+        }
+    ],
+
     getCompletedTasksCount: function() {
         if (typeof Auth === 'undefined' || !Auth.currentUser) return 0;
         if (typeof WorkModule === 'undefined' || !WorkModule.data || !WorkModule.data.tasks) return 0;
@@ -1185,7 +1254,8 @@ const ChibiModule = {
             { id: 'gear', label: '⚔️ Vũ Khí' },
             { id: 'wing', label: '🕊️ Cánh' },
             { id: 'mount', label: '🏎️ Cưỡi' },
-            { id: 'dragon', label: '🐉 Rồng' }
+            { id: 'dragon', label: '🐉 Rồng' },
+            { id: 'presets', label: '⭐ Full SET' }
         ];
 
         const nav = document.getElementById('chibi-tabs-nav');
@@ -1461,8 +1531,70 @@ const ChibiModule = {
             const dragonNames = ['Trống', 'Lam Long', 'Xích Long', 'Hoàng Long'];
             contentHtml = ChibiModule.renderGrid('dragon', options, dragonNames, 0.9);
         }
+        else if (tabId === 'presets') {
+            // FULL SET PRESETS
+            contentHtml = `
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <div style="background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.2); padding: 12px; border-radius: 10px; margin-bottom: 5px;">
+                        <span style="color: #fbbf24; font-size: 13px; font-weight: bold; display: flex; align-items: center; gap: 8px;">
+                            <i class="fa-solid fa-star"></i> CHỌN TRANG PHỤC THEO BỘ
+                        </span>
+                        <p style="margin: 5px 0 0 0; font-size: 11px; color: #94a3b8;">Trang bị đồng bộ toàn bộ từ Tóc, Quần Áo đến Rồng và Vũ Khí.</p>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        ${ChibiModule.presets.map(set => `
+                            <div class="chibi-preset-card" onclick="ChibiModule.applyPreset('${set.id}')"
+                                 style="background: rgba(255,255,255,0.03); border: 1.5px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 12px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 15px;">
+                                <div style="width: 40px; height: 40px; background: rgba(139, 92, 246, 0.2); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                                    ${set.id.includes('cyber') ? '🤖' : set.id.includes('samurai') ? '⚔️' : set.id.includes('to-ong') ? '🍯' : set.id.includes('reaper') ? '💀' : '😇'}
+                                </div>
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 900; font-size: 14px; color: #fff;">${set.name}</div>
+                                    <div style="font-size: 11px; color: #94a3b8;">${set.desc}</div>
+                                </div>
+                                <i class="fa-solid fa-chevron-right" style="color: #475569;"></i>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <style>
+                        .chibi-preset-card:hover {
+                            background: rgba(139, 92, 246, 0.1) !important;
+                            border-color: #8b5cf6 !important;
+                            transform: translateX(5px);
+                        }
+                    </style>
+                </div>
+            `;
+        }
 
         panel.innerHTML = contentHtml;
+    },
+
+    /**
+     * Apply a Full SET Preset
+     */
+    applyPreset: function(presetId) {
+        const preset = ChibiModule.presets.find(p => p.id === presetId);
+        if (!preset) return;
+
+        // Apply all config values
+        Object.keys(preset.config).forEach(key => {
+            ChibiModule.currentConfig[key] = preset.config[key];
+        });
+
+        // Effect for feedback
+        const preview = document.getElementById('chibi-preview-container');
+        if (preview) {
+            preview.style.transition = 'none';
+            preview.style.filter = 'brightness(2) contrast(1.2)';
+            setTimeout(() => {
+                preview.style.transition = 'filter 0.5s ease';
+                preview.style.filter = 'none';
+            }, 50);
+        }
+
+        ChibiModule.updatePreview();
+        ChibiModule.switchTab('presets'); // Refresh to keep the highlight/state
     },
 
     /**
