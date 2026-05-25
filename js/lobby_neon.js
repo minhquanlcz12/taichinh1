@@ -477,12 +477,16 @@ window.LobbyNeon = {
         boardOverlay.innerHTML = `
             <div class="caro-board-container">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 20px; align-items: center;">
-                    <div style="color: #fff; font-size: 16px;">
-                        <span style="color: #ff4757; font-weight: 900; text-shadow: 0 0 5px #ff4757;">${game.player1} (X)</span> 
-                        <span style="margin: 0 10px; opacity: 0.5;">VS</span> 
-                        <span style="color: #2ed573; font-weight: 900; text-shadow: 0 0 5px #2ed573;">${game.player2} (O)</span>
+                    <div style="color: #fff; font-size: 14px; flex: 1;">
+                        <div id="caro-p1-label" style="color: #ff4757; font-weight: 900; text-shadow: 0 0 5px #ff4757; margin-bottom: 4px;">${game.player1} (X)</div>
+                        <div id="caro-p1-stats" style="font-size: 10px; color: #94a3b8; font-weight: bold;">Đang tải...</div>
                     </div>
-                    <button class="btn-neon-danger" id="caro-btn-quit" onclick="LobbyNeon.forfeitGame()">Rút lui</button>
+                    <div style="margin: 0 15px; opacity: 0.5; color: #fff; font-weight: 900;">VS</div>
+                    <div style="color: #fff; font-size: 14px; flex: 1; text-align: right;">
+                        <div id="caro-p2-label" style="color: #2ed573; font-weight: 900; text-shadow: 0 0 5px #2ed573; margin-bottom: 4px;">${game.player2} (O)</div>
+                        <div id="caro-p2-stats" style="font-size: 10px; color: #94a3b8; font-weight: bold;">Đang tải...</div>
+                    </div>
+                    <button class="btn-neon-danger" id="caro-btn-quit" onclick="LobbyNeon.forfeitGame()" style="margin-left: 15px; font-size: 11px; padding: 6px 12px;">Rút lui</button>
                 </div>
                 <div id="caro-status-msg" style="color: #fff; font-weight: 800; font-size: 14px; margin-bottom: 15px; text-align: center; background: rgba(168, 85, 247, 0.2); padding: 5px; border-radius: 8px;">Đang chuẩn bị...</div>
                 <div class="caro-grid" id="caro-grid">
@@ -532,6 +536,16 @@ window.LobbyNeon = {
 
         try {
             await DB.updateLobbyGame(gameId, updateData);
+            
+            if (winner) {
+                // Update stats
+                const loser = (me === game.player1) ? game.player2 : game.player1;
+                await DB.incrementUserStats(me, 'caroWins');
+                await DB.incrementUserStats(loser, 'caroLosses');
+                GamesSynth.playWin();
+            } else {
+                GamesSynth.playMove();
+            }
         } catch (e) {
             console.error("makeMove error:", e);
         } finally {
@@ -539,7 +553,7 @@ window.LobbyNeon = {
         }
     },
 
-    onGameUpdate: (game) => {
+    onGameUpdate: async (game) => {
         LobbyNeon.state.currentGameData = game;
         const grid = document.getElementById('caro-grid');
         if (!grid) return;
@@ -548,35 +562,58 @@ window.LobbyNeon = {
         game.board.forEach((val, i) => {
             if (val && !cells[i].classList.contains(val.toLowerCase())) {
                 cells[i].textContent = val;
-                cells[i].className = `caro-cell ${val.toLowerCase()}`;
+                cells[i].className = `caro-cell ${val.toLowerCase()} filled`;
             }
         });
+
+        // Update Stats display in header
+        LobbyNeon.updateMatchStats(game.player1, game.player2);
 
         const me = Auth.currentUser.username;
         const statusMsg = document.getElementById('caro-status-msg');
         const winnerUI = document.getElementById('caro-winner-ui');
 
         if (game.status === 'finished') {
-            winnerUI.style.display = 'flex';
-            const winnerText = winnerUI.querySelector('.winner-text');
-            if (game.winner === me) {
-                winnerText.innerHTML = "🏆 CHIẾN THẮNG!";
-                winnerText.style.color = "#2ed573";
-                winnerText.style.textShadow = "0 0 20px #2ed573";
-            } else {
-                winnerText.innerHTML = "💀 BẠI TRẬN!";
-                winnerText.style.color = "#ff4757";
-                winnerText.style.textShadow = "0 0 20px #ff4757";
+            if (winnerUI) {
+                winnerUI.style.display = 'flex';
+                const winnerText = winnerUI.querySelector('.winner-text');
+                if (game.winner === me) {
+                    winnerText.innerHTML = "🏆 CHIẾN THẮNG!";
+                    winnerText.style.color = "#2ed573";
+                    winnerText.style.textShadow = "0 0 20px #2ed573";
+                } else if (game.winner) {
+                    winnerText.innerHTML = "💀 BẠI TRẬN!";
+                    winnerText.style.color = "#ff4757";
+                    winnerText.style.textShadow = "0 0 20px #ff4757";
+                } else {
+                    winnerText.innerHTML = "🏳️ TRẬN ĐẤU KẾT THÚC";
+                    winnerText.style.color = "#94a3b8";
+                }
             }
             
             const quitBtn = document.getElementById('caro-btn-quit');
             if (quitBtn) quitBtn.style.display = 'none';
-            statusMsg.innerHTML = `<span style="color:#fff">Trận đấu đã kết thúc.</span>`;
+            statusMsg.innerHTML = `<span style="color:#fff">Trận đấu đã kết thúc. Giao diện sẽ đóng sau khi bạn chọn.</span>`;
         } else {
             statusMsg.innerHTML = game.turn === me ? 
                 `<span style="color:#2ed573">🟢 ĐẾN LƯỢT TIÊN PHONG</span>` : 
                 `<span style="color:#94a3b8">⏳ CHỜ ĐỐI THỦ HÀNH QUÂN...</span>`;
         }
+    },
+
+    updateMatchStats: async (p1, p2) => {
+        const accounts = await DB.getAccounts();
+        const u1 = accounts.find(a => a.username === p1);
+        const u2 = accounts.find(a => a.username === p2);
+
+        const s1 = u1?.stats || { caroWins: 0, caroLosses: 0 };
+        const s2 = u2?.stats || { caroWins: 0, caroLosses: 0 };
+
+        const el1 = document.getElementById('caro-p1-stats');
+        const el2 = document.getElementById('caro-p2-stats');
+
+        if (el1) el1.textContent = `Thắng: ${s1.caroWins || 0} | Thua: ${s1.caroLosses || 0}`;
+        if (el2) el2.textContent = `Thắng: ${s2.caroWins || 0} | Thua: ${s2.caroLosses || 0}`;
     },
 
     closeCaroBoard: () => {

@@ -42,6 +42,23 @@ const DB = {
         return Utils.storage.get('backup_accounts', []);
     },
 
+    incrementUserStats: async (username, statName) => {
+        try {
+            const accounts = await DB.getAccounts();
+            const index = accounts.findIndex(a => a.username === username);
+            if (index !== -1) {
+                if (!accounts[index].stats) accounts[index].stats = { caroWins: 0, caroLosses: 0 };
+                if (!accounts[index].stats[statName]) accounts[index].stats[statName] = 0;
+                accounts[index].stats[statName]++;
+                await DB.saveAccounts(accounts);
+                return true;
+            }
+        } catch (e) {
+            console.error("Error incrementing user stats:", e);
+        }
+        return false;
+    },
+
     // --- LƯU TRỮ CÀI ĐẶT HỆ THỐNG ---
     saveSettings: async (settingsObj) => {
         try {
