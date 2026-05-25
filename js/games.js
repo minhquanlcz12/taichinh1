@@ -1346,9 +1346,11 @@ const GamesModule = {
         });
 
         // Trigger hopping animation for any player whose visual position is catching up
+        if (!mState.visualAnimationRunning) mState.visualAnimationRunning = {};
+
         mState.players.forEach(p => {
             if (!p.isBankrupt && GamesModule.monopoly.visualPositions[p.name] !== p.position) {
-                if (GamesModule.monopoly.visualAnimationRunning !== p.name) {
+                if (!GamesModule.monopoly.visualAnimationRunning[p.name]) {
                     GamesModule.animateVisualPawn(p.name);
                 }
             }
@@ -1638,14 +1640,22 @@ const GamesModule = {
         const player = mState.players.find(p => p.name === playerName);
         if (!player) return;
 
-        GamesModule.monopoly.visualAnimationRunning = playerName;
+        if (!mState.visualAnimationRunning) mState.visualAnimationRunning = {};
+        mState.visualAnimationRunning[playerName] = true;
 
         const step = () => {
+            // Re-find player to get latest position
+            const p = mState.players.find(x => x.name === playerName);
+            if (!p) {
+                delete mState.visualAnimationRunning[playerName];
+                return;
+            }
+
             const visualPos = GamesModule.monopoly.visualPositions[playerName];
-            const targetPos = player.position;
+            const targetPos = p.position;
 
             if (visualPos !== targetPos) {
-                // Hop step
+                // Hop step forward (clockwise)
                 GamesModule.monopoly.visualPositions[playerName] = (visualPos + 1) % 20;
                 GamesSynth.playMove();
 
@@ -1657,7 +1667,7 @@ const GamesModule = {
 
                 setTimeout(step, 300);
             } else {
-                GamesModule.monopoly.visualAnimationRunning = null;
+                delete mState.visualAnimationRunning[playerName];
 
                 // When visual hopping completes for the active player, focus the center panel on the landed property
                 const activePlayer = mState.players[mState.currentPlayerIdx];
