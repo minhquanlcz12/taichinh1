@@ -486,7 +486,10 @@ window.LobbyNeon = {
                         <div id="caro-p2-label" style="color: #2ed573; font-weight: 900; text-shadow: 0 0 5px #2ed573; margin-bottom: 4px;">${game.player2} (O)</div>
                         <div id="caro-p2-stats" style="font-size: 10px; color: #94a3b8; font-weight: bold;">Đang tải...</div>
                     </div>
-                    <button class="btn-neon-danger" id="caro-btn-quit" onclick="LobbyNeon.forfeitGame()" style="margin-left: 15px; font-size: 11px; padding: 6px 12px;">Rút lui</button>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn-neon-danger" id="caro-btn-quit" onclick="LobbyNeon.forfeitGame()" style="font-size: 11px; padding: 6px 12px; height: 32px;">Rút lui</button>
+                        <button class="btn-neon" onclick="LobbyNeon.closeCaroBoard()" style="font-size: 11px; padding: 6px 12px; height: 32px; background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2);">✖</button>
+                    </div>
                 </div>
                 <div id="caro-status-msg" style="color: #fff; font-weight: 800; font-size: 14px; margin-bottom: 15px; text-align: center; background: rgba(168, 85, 247, 0.2); padding: 5px; border-radius: 8px;">Đang chuẩn bị...</div>
                 <div class="caro-grid" id="caro-grid">
@@ -666,7 +669,15 @@ window.LobbyNeon = {
                 const game = LobbyNeon.state.currentGameData;
                 const me = Auth.currentUser.username;
                 const opponent = (me === game.player1) ? game.player2 : game.player1;
+                
                 await DB.updateLobbyGame(gameId, { status: 'finished', winner: opponent });
+                
+                // Track loss for the forfeiter
+                await DB.incrementUserStats(me, 'caroLosses');
+                await DB.incrementUserStats(opponent, 'caroWins');
+                
+                LobbyNeon.closeCaroBoard();
+                Utils.showToast("Bạn đã rút lui khỏi trận đấu.", "info");
                 return true;
             },
             'CHẤP NHẬN BẠI TRẬN',
