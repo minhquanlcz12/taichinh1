@@ -15,7 +15,8 @@ window.LobbyNeon = {
         currentGameData: null,
         heartbeatInterval: null,
         isMakingMove: false,
-        npcPos: { x: 800, y: 300 },
+        npcPos: { x: 955, y: 340 },
+        leaderboardPos: { x: 755, y: 340 },
         marqueeInterval: null,
         unsubscribeMissions: null,
         notifiedMissionIds: new Set(),
@@ -48,9 +49,10 @@ window.LobbyNeon = {
         
         LobbyNeon.renderUser(user.username, LobbyNeon.state.myPos.x, LobbyNeon.state.myPos.y, user.profile?.chibiConfig);
         
-        // Render NPC with delay
+        // Render NPC & Monument with delay
         setTimeout(() => {
             LobbyNeon.renderQuestNPC();
+            LobbyNeon.renderLeaderboardMonument();
         }, 500);
 
         LobbyNeon.startPresenceListening();
@@ -382,7 +384,7 @@ window.LobbyNeon = {
                 <div class="lobby-chat-overlay">
                     <div class="lobby-chat-messages" id="lobby-chat-messages">
                         <div class="lobby-message">
-                            <span class="lobby-msg-text" style="color: #a855f7; font-style: italic; opacity: 0.8;">Hệ thống: Chào mừng tới Cung Điện Neon! Click chuột để di chuyển.</span>
+                            <span class="lobby-msg-text" style="color: #a855f7; font-style: italic; opacity: 0.8;">🤖 Hệ thống: Sảnh Chibi Neon đã mở cửa ngày mới! Click chuột để lướt đi như một cơn gió, chúc thí chủ ngày mới bớt khẩu nghiệp, cày cuốc hăng say!</span>
                         </div>
                     </div>
                     <form class="lobby-chat-input-wrap" onsubmit="LobbyNeon.sendChat(event)">
@@ -501,6 +503,69 @@ window.LobbyNeon = {
         console.log("NPC render complete at", tx, ty);
     },
 
+    renderLeaderboardMonument: () => {
+        console.log("LobbyNeon.renderLeaderboardMonument starting...");
+        const map = document.getElementById('lobby-map');
+        if (!map) {
+            console.error("Monument Error: lobby-map not found");
+            return;
+        }
+
+        const monumentId = 'npc-leaderboard';
+        let el = document.getElementById(monumentId);
+
+        if (!el) {
+            el = document.createElement('div');
+            el.id = monumentId;
+            el.className = 'lobby-user-wrapper npc';
+            el.style.position = 'absolute';
+            el.style.cursor = 'help';
+            el.onclick = (e) => {
+                e.stopPropagation();
+                LobbyNeon.openGeneralLeaderboard();
+            };
+            map.appendChild(el);
+            console.log("Leaderboard monument element created and appended to map");
+        }
+
+        // Tạo tượng chibi hoàng kim làm Bia Đá Vinh Danh
+        const statueConfig = {
+            gender: 'nu',
+            skinColor: '#fbbf24', // Màu vàng hoàng kim
+            hairStyle: 2,
+            hairColor: '#d97706', // Màu cam đất đậm
+            topStyle: 3,
+            topColor: '#fbbf24',  // Áo vàng
+            bottomStyle: 3,
+            bottomColor: '#d97706',
+            shoeStyle: 1,
+            shoeColor: '#b45309',
+            accessory: 4,         // Vương miện hoàng hậu
+            wing: 3,              // Cánh thiên thần
+            aura: 4,              // Golden Aura
+            gear: 0,
+            mount: 0,
+            dragon: 1             // Hỏa Long bay quanh tượng
+        };
+
+        let chibiSvg = ChibiModule.renderChibiSVG(statueConfig, true, 88);
+
+        // Position on the left side of the throne (symmetric with Quest NPC)
+        const tx = 755, ty = 340;
+        LobbyNeon.state.leaderboardPos = { x: tx, y: ty };
+
+        el.style.left = `${tx}px`;
+        el.style.top = `${ty}px`;
+
+        el.innerHTML = `
+            <div class="lobby-user-name" style="color: #00f3ff; background: rgba(0,0,0,0.8); padding: 4px 12px; border: 2px solid #00f3ff; border-radius: 20px; font-weight: 800; font-size: 14px; white-space: nowrap; box-shadow: 0 0 10px rgba(0,243,255,0.5);">🏆 BIA ĐÁ VINH DANH</div>
+            <div class="lobby-quest-icon" style="position: absolute; top: -85px; left: 50%; transform: translateX(-50%); font-size: 40px; animation: float 2.3s infinite ease-in-out; filter: drop-shadow(0 0 15px #00f3ff); z-index: 10;">🏆</div>
+            <div class="lobby-chibi-container" style="transform: scale(1.8); filter: drop-shadow(0 0 20px rgba(0,243,255,0.6)); pointer-events: none;">${chibiSvg}</div>
+            <div class="lobby-user-status" style="background: #00f3ff; border: none; color: #000; padding: 4px 16px; font-weight: 900; border-radius: 4px; font-size: 11px; margin-top: 10px; box-shadow: 0 0 15px #00f3ff;">✨ XEM BẢNG VÀNG</div>
+        `;
+        console.log("Leaderboard Monument render complete at", tx, ty);
+    },
+
     // ========== MOVEMENT ==========
     handleMapClick: (e) => {
         if (e.target.closest('.lobby-chat-overlay') || e.target.closest('.caro-modal')) return;
@@ -518,12 +583,23 @@ window.LobbyNeon = {
 
         LobbyNeon.moveTo(x, y);
 
-        // Check proximity to NPC
+        // Check proximity to Quest NPC
         const dx = x - LobbyNeon.state.npcPos.x;
         const dy = y - LobbyNeon.state.npcPos.y;
         const dist = Math.sqrt(dx*dx + dy*dy);
         if (dist < 80) {
             LobbyNeon.openQuestBoard();
+            return;
+        }
+
+        // Check proximity to Leaderboard Monument
+        if (LobbyNeon.state.leaderboardPos) {
+            const dxLd = x - LobbyNeon.state.leaderboardPos.x;
+            const dyLd = y - LobbyNeon.state.leaderboardPos.y;
+            const distLd = Math.sqrt(dxLd*dxLd + dyLd*dyLd);
+            if (distLd < 80) {
+                LobbyNeon.openGeneralLeaderboard();
+            }
         }
     },
 
@@ -547,15 +623,24 @@ window.LobbyNeon = {
     renderChatMessages: (messages) => {
         const container = document.getElementById('lobby-chat-messages');
         if (!container) return;
-        let html = `<div class="lobby-message"><span class="lobby-msg-text" style="color: #a855f7; font-style: italic; opacity: 0.7;">Hệ thống: Chào mừng tới Cung Điện Neon!</span></div>`;
+
+        // Reset chat theo ngày mới: Chỉ hiển thị các tin nhắn được gửi trong ngày hôm nay
+        const todayStr = new Date().toDateString();
+        const todayMessages = messages.filter(msg => {
+            if (!msg.timestamp) return true; // Hiển thị tin nhắn đang chờ gửi
+            const msgDate = msg.timestamp.toDate ? msg.timestamp.toDate() : new Date(msg.timestamp);
+            return msgDate.toDateString() === todayStr;
+        });
+
+        let html = `<div class="lobby-message"><span class="lobby-msg-text" style="color: #a855f7; font-style: italic; opacity: 0.8;">🤖 Hệ thống: Sảnh Chibi Neon đã mở cửa ngày mới! Click chuột để lướt đi như một cơn gió, chúc thí chủ ngày mới bớt khẩu nghiệp, cày cuốc hăng say!</span></div>`;
         
-        // Show bubbles for the latest message if it's new
-        const lastMsg = messages[messages.length - 1];
+        // Show bubbles for the latest message if it's new and of today
+        const lastMsg = todayMessages[todayMessages.length - 1];
         if (lastMsg) {
             LobbyNeon.showChatBubble(lastMsg.sender, lastMsg.text);
         }
 
-        messages.forEach(msg => {
+        todayMessages.forEach(msg => {
             html += `<div class="lobby-message"><span class="lobby-msg-sender">${msg.sender}:</span><span class="lobby-msg-text">${msg.text}</span></div>`;
         });
         container.innerHTML = html;
@@ -973,7 +1058,10 @@ window.LobbyNeon = {
             LobbyNeon.state.activeQuestTab = activeTabOverride;
         }
         
-        const activeTab = LobbyNeon.state.activeQuestTab || 'new';
+        let activeTab = LobbyNeon.state.activeQuestTab || 'new';
+        if (activeTab !== 'new' && activeTab !== 'ongoing') {
+            activeTab = 'new';
+        }
 
         // Filter missions
         const myMissions = missions.filter(m => m.status === 'active' && (!m.targetUser || m.targetUser === 'all' || m.targetUser === me));
@@ -999,47 +1087,13 @@ window.LobbyNeon = {
             <div style="display: flex; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 15px;">
                 <div onclick="LobbyNeon.openQuestBoard('new')" style="${tabStyles('new')}">NHIỆM VỤ MỚI (${newMissions.length})</div>
                 <div onclick="LobbyNeon.openQuestBoard('ongoing')" style="${tabStyles('ongoing')}">ĐANG THỰC HIỆN (${ongoingMissions.length})</div>
-                <div onclick="LobbyNeon.openQuestBoard('leaderboard')" style="${tabStyles('leaderboard')}">BXH</div>
             </div>
             
             <div style="max-height: 400px; overflow-y: auto; padding: 5px;">
-                ${activeTab === 'leaderboard' ? (() => {
-                    // Leaderboard Logic
-                    const stats = {};
-                    missions.forEach(m => {
-                        if (m.completedBy && Array.isArray(m.completedBy)) {
-                            m.completedBy.forEach(u => {
-                                stats[u] = (stats[u] || 0) + (m.reward || 0);
-                            });
-                        }
-                    });
-
-                    const sorted = Object.entries(stats)
-                        .map(([username, points]) => ({ username, points }))
-                        .sort((a, b) => b.points - a.points);
-
-                    if (sorted.length === 0) return '<div style="text-align: center; color: #64748b; padding: 40px 0;">Chưa có dữ liệu xếp hạng.</div>';
-
-                    return `
-                        <div style="background: rgba(15, 23, 42, 0.6); border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05);">
-                            ${sorted.map((u, i) => `
-                                <div style="display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid rgba(255,255,255,0.05); background: ${i < 3 ? 'rgba(251,191,36,0.05)' : 'transparent'};">
-                                    <div style="width: 30px; font-weight: 900; color: ${i === 0 ? '#fbbf24' : i === 1 ? '#cbd5e1' : i === 2 ? '#cd7f32' : '#64748b'}; font-size: 16px;">
-                                        #${i + 1}
-                                    </div>
-                                    <div style="flex: 1; display: flex; align-items: center; gap: 10px;">
-                                        <div style="width: 32px; height: 32px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px;">👤</div>
-                                        <div style="font-weight: bold; color: #fff; font-size: 13px;">${Utils.getUserDisplayName(u.username)}</div>
-                                    </div>
-                                    <div style="font-weight: 800; color: #fbbf24; font-size: 14px;">${u.points}đ</div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    `;
-                })() : (currentMissions.length === 0 ? `
+                ${currentMissions.length === 0 ? `
                     <div style="text-align: center; color: #64748b; padding: 40px 0;">
                         <div style="font-size: 40px; margin-bottom: 10px;">${activeTab === 'new' ? '🏮' : '⚔️'}</div>
-                        ${activeTab === 'new' ? 'Hiện chưa có nhiệm vụ mới từ Admin.' : 'Bạn chưa tiếp nhận nhiệm vụ nào.'}
+                        ${activeTab === 'new' ? 'Hiện chưa có nhiệm vụ mới từ Admin.' : 'Bạn đã gánh hết sạch nhiệm vụ rồi, hảo hán!'}
                     </div>
                 ` : currentMissions.map(m => {
                     const deadlineStr = m.deadline ? new Date(m.deadline).toLocaleDateString('vi-VN') : 'Không giới hạn';
@@ -1071,10 +1125,120 @@ window.LobbyNeon = {
                             </button>
                         `}
                     </div>
-                `}).join(''))}
+                `}).join('')}
             </div>`;
 
         Utils.showModal('📜 BẢNG NHIỆM VỤ HOÀNG GIA', contentHtml, null, 'ĐÓNG BẢNG');
+    },
+
+    openGeneralLeaderboard: async () => {
+        const missions = await DB.getMissions();
+        
+        // Tính điểm xếp hạng từ hoàn thành các quest
+        const stats = {};
+        missions.forEach(m => {
+            if (m.completedBy && Array.isArray(m.completedBy)) {
+                m.completedBy.forEach(u => {
+                    stats[u] = (stats[u] || 0) + (m.reward || 0);
+                });
+            }
+        });
+
+        const sorted = Object.entries(stats)
+            .map(([username, points]) => ({ username, points }))
+            .sort((a, b) => b.points - a.points);
+
+        let bodyHtml = '';
+        if (sorted.length === 0) {
+            bodyHtml = `
+                <div style="text-align: center; color: #64748b; padding: 50px 0;">
+                    <div style="font-size: 50px; margin-bottom: 15px;">💤</div>
+                    <p style="font-size: 14px; font-style: italic; color: #94a3b8; margin: 0;">Chưa có cao thủ nào khắc tên lên Bia Đá Vinh Danh!</p>
+                    <p style="font-size: 12px; color: #64748b; margin-top: 5px;">Admin đang ôm đống Công Đức chán chường chờ đợi nhân sĩ giang hồ tới cướp bóc...</p>
+                </div>
+            `;
+        } else {
+            bodyHtml = `
+                <div style="background: rgba(15, 23, 42, 0.85); border-radius: 16px; overflow: hidden; border: 1px solid rgba(0, 243, 255, 0.2); box-shadow: 0 0 20px rgba(0, 243, 255, 0.15);">
+                    <div style="padding: 15px 20px; background: rgba(0, 243, 255, 0.08); border-bottom: 1.5px solid rgba(0, 243, 255, 0.2); text-align: center;">
+                        <span style="font-size: 12px; font-weight: 800; color: #00f3ff; text-transform: uppercase; letter-spacing: 1px;">Danh sách cao thủ cày Công Đức khét tiếng nhất tháng</span>
+                    </div>
+                    <div style="max-height: 380px; overflow-y: auto; padding: 10px;">
+                        ${sorted.map((u, i) => {
+                            let title = '';
+                            let comment = '';
+                            let rankColor = '#94a3b8';
+                            let rowBg = 'transparent';
+                            let icon = '👤';
+
+                            if (i === 0) {
+                                title = '👑 Võ Lâm Minh Chủ';
+                                comment = 'Hào quang rực rỡ lấn át cả sếp Admin. Kẻ gánh team vĩ đại!';
+                                rankColor = '#fbbf24';
+                                rowBg = 'rgba(251,191,36,0.08)';
+                                icon = '🥇';
+                            } else if (i === 1) {
+                                title = '🥈 Tả Hộ Pháp';
+                                comment = 'Kẻ bám đuôi vĩ đại. Chỉ một vài nhiệm vụ nữa là lật đổ vương triều!';
+                                rankColor = '#cbd5e1';
+                                rowBg = 'rgba(203,213,225,0.05)';
+                                icon = '🥈';
+                            } else if (i === 2) {
+                                title = '🥉 Hữu Hộ Pháp';
+                                comment = 'Chiến thần cần mẫn. Một chân sẵn sàng đạp bay Top 2 lên thớt!';
+                                rankColor = '#cd7f32';
+                                rowBg = 'rgba(205,127,50,0.05)';
+                                icon = '🥉';
+                            } else if (i < 10) {
+                                title = '🔥 Giang Hồ Cao Thủ';
+                                comment = 'Cày bừa chăm chỉ, kiếp làm thuê gương mẫu vì cơm áo gạo tiền.';
+                                rankColor = '#38bdf8';
+                                icon = '🎖️';
+                            } else {
+                                title = '💤 Vô Danh Tiểu Tốt';
+                                comment = 'Đang bận dưỡng sức hoặc đang lười đột xuất chờ thời cơ đột phá.';
+                                rankColor = '#64748b';
+                                icon = '🚶';
+                            }
+
+                            const displayName = Utils.getUserDisplayName(u.username);
+                            
+                            return `
+                                <div style="display: flex; align-items: center; padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); background: ${rowBg}; border-radius: 8px; margin-bottom: 8px; border: 1px solid ${i < 3 ? 'rgba(255,255,255,0.05)' : 'transparent'};">
+                                    <!-- Hạng và Icon -->
+                                    <div style="width: 40px; font-weight: 900; color: ${rankColor}; font-size: 18px; display: flex; align-items: center; gap: 4px;">
+                                        ${icon}
+                                    </div>
+                                    
+                                    <!-- Thông tin nhân sĩ -->
+                                    <div style="flex: 1; min-width: 0; padding-right: 10px;">
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <span style="font-weight: 800; color: #fff; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                                ${displayName}
+                                            </span>
+                                            <span style="font-size: 10px; font-weight: 900; color: ${rankColor}; text-transform: uppercase; background: rgba(0,0,0,0.3); padding: 1px 6px; border-radius: 4px; border: 1px solid ${rankColor}33;">
+                                                ${title}
+                                            </span>
+                                        </div>
+                                        <div style="font-size: 11px; color: #64748b; margin-top: 4px; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${comment}">
+                                            👉 ${comment}
+                                        </div>
+                                    </div>
+
+                                    <!-- Điểm số -->
+                                    <div style="text-align: right;">
+                                        <div style="font-weight: 900; color: #fbbf24; font-size: 16px; text-shadow: 0 0 10px rgba(251,191,36,0.3);">${u.points}đ</div>
+                                        <div style="font-size: 9px; color: #64748b; text-transform: uppercase; font-weight: bold;">Công Đức</div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        Utils.showModal('🏆 BẢNG VÀNG LẬP CÔNG - SẢNH CHIBI', bodyHtml, null, 'CÚT LUI');
     },
 
     acceptMission: async (missionId) => {
@@ -1124,7 +1288,7 @@ window.LobbyNeon = {
                 if (overlay) overlay.classList.remove('active');
                 
                 // Optional: Send a chat notification to Admin
-                await DB.sendLobbyChat({ sender: "Hệ Thống", text: `🚩 Nhân viên @${me} vừa báo cáo hoàn thành nhiệm vụ: "${mission.title}"!` });
+                await DB.sendLobbyChat({ sender: "Hệ Thống", text: `🎉 ĐẠI HỶ! Kỳ tài @${me} vừa phi thân ném thẳng báo cáo hoàn thành nhiệm vụ "${mission.title}" vào mặt sếp và nhận công đức! Thật là bất khả chiến bại!` });
             }
         } catch (e) {
             console.error("Submit mission error:", e);
@@ -1239,7 +1403,7 @@ window.LobbyNeon = {
             
             // Send a system message to chat
             const targetText = targetUser === 'all' ? "tất cả mọi người" : `@${targetUser}`;
-            await DB.sendLobbyChat({ sender: "Hệ Thống", text: `📜 Admin vừa ban hành nhiệm vụ mới dành cho ${targetText}: "${title}"!` });
+            await DB.sendLobbyChat({ sender: "Hệ Thống", text: `⚡ THÁNH CHỈ BAN XUỐNG: Sếp Admin vừa hạ chỉ, ép buộc con dân ${targetText} phải gánh vác sứ mệnh: "${title}". Chậm trễ là bị phạt quét dọn sảnh chờ!` });
             
             // Trigger marquee for everyone
             LobbyNeon.updateMarquee();
