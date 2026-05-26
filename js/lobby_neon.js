@@ -337,24 +337,38 @@ window.LobbyNeon = {
         }
 
         const npcConfig = {
+            gender: 'nam',
             skinColor: '#ffe4e6',
-            hairId: 'hair-royal-gold',
-            outfitId: 'suit-admin-neon',
-            wingId: 'wing-monarch-gold',
-            auraId: 'aura-sun-divine',
-            mountId: 'none'
+            hairStyle: 5,
+            hairColor: '#fbbf24',
+            topStyle: 5,
+            topColor: '#ffffff',
+            bottomStyle: 1,
+            bottomColor: '#1e293b',
+            shoeStyle: 1,
+            shoeColor: '#1e293b',
+            accessory: 5, // Vương miện
+            wing: 3,      // Thiên Thần VIP
+            aura: 5,      // Zen Circle
+            gear: 0,
+            mount: 0,
+            dragon: 3     // Hoàng Long
         };
 
-        let chibiSvg = ChibiModule.renderChibiSVG(npcConfig, false, 0);
+        let chibiSvg = ChibiModule.renderChibiSVG(npcConfig, true, 88);
 
-        el.style.left = `${LobbyNeon.state.npcPos.x}px`;
-        el.style.top = `${LobbyNeon.state.npcPos.y}px`;
+        // Adjust NPC position to be near the throne
+        const tx = 955, ty = 360;
+        LobbyNeon.state.npcPos = { x: tx, y: ty };
+
+        el.style.left = `${tx}px`;
+        el.style.top = `${ty}px`;
 
         el.innerHTML = `
-            <div class="lobby-user-name" style="color: #fbbf24; background: rgba(0,0,0,0.6); padding: 2px 8px; border-radius: 10px; font-weight: 800;">ADMIN NPC</div>
-            <div class="lobby-quest-icon" style="position: absolute; top: -50px; left: 50%; transform: translateX(-50%); font-size: 24px; animation: float 2s infinite ease-in-out;">📜</div>
-            <div class="lobby-chibi-container" style="transform: scale(1.4); filter: drop-shadow(0 0 10px rgba(251,191,36,0.3));">${chibiSvg}</div>
-            <div class="lobby-user-status" style="background: rgba(251,191,36,0.2); border-color: #fbbf24; color: #fbbf24;">✨ NHẬN NHIỆM VỤ</div>
+            <div class="lobby-user-name" style="color: #fbbf24; background: rgba(0,0,0,0.6); padding: 2px 10px; border: 1px solid #fbbf24; border-radius: 20px; font-weight: 800; font-size: 13px;">QUEST MASTER ADMIN</div>
+            <div class="lobby-quest-icon" style="position: absolute; top: -75px; left: 50%; transform: translateX(-50%); font-size: 32px; animation: float 2s infinite ease-in-out; filter: drop-shadow(0 0 10px #fbbf24);">📜</div>
+            <div class="lobby-chibi-container" style="transform: scale(1.6); filter: drop-shadow(0 0 15px rgba(251,191,36,0.5));">${chibiSvg}</div>
+            <div class="lobby-user-status" style="background: rgba(0,0,0,0.7); border: 2px solid #fbbf24; color: #fbbf24; padding: 4px 12px; font-weight: 900; animation: pulse-neon 2s infinite;">✨ NHẬN CÔNG VIỆC</div>
         `;
     },
 
