@@ -961,7 +961,14 @@ window.LobbyNeon = {
             </div>
         `;
         container.appendChild(boardOverlay);
-        LobbyNeon.onGameUpdate(game);
+        
+        // Lắng nghe real-time game hiện tại (nhận cả status finished để đồng bộ hoàn hảo)
+        LobbyNeon.state.unsubscribeCurrentGame = db.collection("lobby_games").doc(gameId).onSnapshot(doc => {
+            if (doc.exists) {
+                const gameData = doc.data();
+                LobbyNeon.onGameUpdate(gameData);
+            }
+        });
     },
 
     makeMove: async (index) => {
