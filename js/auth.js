@@ -830,6 +830,9 @@ const Auth = {
         { level: 15, title: '👑 Bố Già Marketing',      color: '#ff6b6b', glow: true,  bubbleColor: 'linear-gradient(135deg, #ff6b6b, #fbbf24, #a855f7)', bubbleGlow: '0 0 15px #ff6b6b, 0 0 30px #fbbf2440' },
         // Danh hiệu đặc biệt - mở khóa qua thành tích
         { level: 0, achievement: 'top1_monthly', title: '🏅 Quán Quân Bảng Vàng', color: '#00f3ff', glow: true, bubbleColor: 'linear-gradient(135deg, #00f3ff, #fbbf24)', bubbleGlow: '0 0 15px #00f3ff, 0 0 25px #fbbf2440' },
+        { level: 0, achievement: 'caro_5_wins', title: '🎲 Thần Đồng Bàn Cờ', color: '#a855f7', glow: true, bubbleColor: 'linear-gradient(135deg, #a855f7, #38bdf8)', bubbleGlow: '0 0 10px #a855f790' },
+        { level: 0, achievement: 'caro_15_wins', title: '⚔️ Độc Cô Cầu Bại Caro', color: '#fbbf24', glow: true, bubbleColor: 'linear-gradient(135deg, #fbbf24, #ff4757)', bubbleGlow: '0 0 15px #fbbf2490' },
+        { level: 0, achievement: 'caro_30_wins', title: '👑 Kỳ Thánh Caro Cơ Quan', color: '#ff4757', glow: true, bubbleColor: 'linear-gradient(135deg, #ff4757, #fbbf24, #00f3ff)', bubbleGlow: '0 0 20px #ff4757, 0 0 35px #00f3ff60' },
     ],
 
     getLevelTitle: (level) => {
@@ -911,6 +914,61 @@ const Auth = {
         if (typeof LobbyNeon !== 'undefined' && LobbyNeon.state?.myPos) {
             const user = Auth.currentUser;
             LobbyNeon.renderUser(user.username, LobbyNeon.state.myPos.x, LobbyNeon.state.myPos.y, user.profile?.chibiConfig, true);
+        }
+    },
+
+    checkAndUnlockCaroAchievements: async (username) => {
+        try {
+            const accounts = await Auth.getAccounts();
+            const acc = accounts.find(a => a.username === username);
+            if (!acc) return;
+
+            if (!acc.achievements) acc.achievements = [];
+            const caroWins = acc.stats?.caroWins || 0;
+            
+            let unlockedNew = false;
+            let lastNewTitle = '';
+
+            const checkUnlock = (threshold, key, title) => {
+                if (caroWins >= threshold && !acc.achievements.includes(key)) {
+                    acc.achievements.push(key);
+                    unlockedNew = true;
+                    lastNewTitle = title;
+                    return true;
+                }
+                return false;
+            };
+
+            checkUnlock(5, 'caro_5_wins', '🎲 Thần Đồng Bàn Cờ');
+            checkUnlock(15, 'caro_15_wins', '⚔️ Độc Cô Cầu Bại Caro');
+            checkUnlock(30, 'caro_30_wins', '👑 Kỳ Thánh Caro Cơ Quan');
+
+            if (unlockedNew) {
+                await Auth.saveAccounts(accounts);
+                
+                // Cập nhật session user hiện tại của người đang đăng nhập
+                if (Auth.currentUser && Auth.currentUser.username === username) {
+                    Auth.currentUser.achievements = acc.achievements;
+                    Utils.storage.set(Auth.currentUserKey, Auth.currentUser);
+                }
+
+                // Hiện thông báo mở khóa cực hoành tráng
+                Utils.showModal(
+                    '✨ MỞ KHÓA DANH HIỆU THỜI THƯỢNG!',
+                    `<div style="text-align: center; padding: 15px;">
+                        <div style="font-size: 80px; margin-bottom: 15px; animation: float 2s infinite ease-in-out;">🏆</div>
+                        <p style="color: #94a3b8; font-size: 15px;">Sếp vừa mở khóa danh hiệu Caro độc quyền nhờ thành tích xuất sắc:</p>
+                        <h2 style="color: #fbbf24; font-size: 26px; margin: 15px 0; text-shadow: 0 0 15px rgba(251, 191, 36, 0.6); font-weight: 900;">
+                            ${lastNewTitle}
+                        </h2>
+                        <p style="color: #64748b; font-size: 13px; font-style: italic;">(Sếp có thể vào phần Cài đặt Chibi để đổi danh hiệu hiển thị bất cứ lúc nào!)</p>
+                    </div>`,
+                    null,
+                    'PHONG ẤN ĐI NGAY'
+                );
+            }
+        } catch (e) {
+            console.error("Error checking caro achievements:", e);
         }
     },
 

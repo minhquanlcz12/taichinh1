@@ -51,6 +51,12 @@ const DB = {
                 if (!accounts[index].stats[statName]) accounts[index].stats[statName] = 0;
                 accounts[index].stats[statName]++;
                 await DB.saveAccounts(accounts);
+
+                // Nếu là thắng Caro -> Tự động kiểm tra và mở khóa danh hiệu Caro
+                if (statName === 'caroWins' && typeof Auth !== 'undefined' && typeof Auth.checkAndUnlockCaroAchievements === 'function') {
+                    await Auth.checkAndUnlockCaroAchievements(username);
+                }
+
                 return true;
             }
         } catch (e) {
