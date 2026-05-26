@@ -215,7 +215,7 @@ window.LobbyNeon = {
                         style="width: 2000px; height: 1200px; object-fit: cover; opacity: 0.8; filter: brightness(0.7) contrast(1.2);"
                         oncanplay="this.style.opacity=1" 
                         onerror="this.style.display='none'">
-                        <source src="https://v0.dev/api/api/proxy/file?fileId=DLoK4S0X4Yf9jR" type="video/mp4">
+                        <source src="assets/lobby_bg.mp4" type="video/mp4">
                     </video>
                     <div class="lobby-click-ripple-layer"></div>
                 </div>
