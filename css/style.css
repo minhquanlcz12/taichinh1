@@ -1127,7 +1127,7 @@ body.dark-theme .form-control option {
     background: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-    z-index: 999;
+    z-index: 2000;
     display: none;
     justify-content: center;
     align-items: center;
@@ -1577,7 +1577,7 @@ body.dark-theme .folder-header:hover {
     bottom: 0;
     background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(4px);
-    z-index: 100;
+    z-index: 2000;
     display: none;
     align-items: center;
     justify-content: center;

@@ -127,7 +127,7 @@ const Utils = {
     },
 
     // Modal Builder
-    showModal: (title, contentHtml, onConfirm = null, confirmText = 'Xác nhận') => {
+    showModal: (title, contentHtml, onConfirm = null, confirmText = 'Xác nhận', cancelText = 'Hủy') => {
         const overlay = document.getElementById('modal-overlay');
 
         // Remove existing modal if any
@@ -143,7 +143,7 @@ const Utils = {
                     ${contentHtml}
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-text" id="modal-cancel">Hủy</button>
+                    <button class="btn btn-text" id="modal-cancel">${cancelText}</button>
                     ${onConfirm ? `<button class="btn btn-primary" id="modal-confirm">${confirmText}</button>` : ''}
                 </div>
             </div>

@@ -6,6 +6,7 @@ const MusicPlayer = {
     _rendered: false,
     _catalog: {
         '❤️ Yêu Thích': [
+            { id: 'wDZEGbQRtRc', title: 'THU CUỐI - BẢN MỚI NHẤT || Deep House (AI Cover)', channel: 'Thu Cuối Chill' },
             { id: 'gIcrlDzgMIw', title: 'Ocean Drop (Official Lyric Video)', channel: '大飆飆' },
         ],
         '🇻🇳 Nam Em': [
