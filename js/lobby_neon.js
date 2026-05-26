@@ -230,28 +230,32 @@ window.LobbyNeon = {
                 .lobby-marquee-bar {
                     width: 100%;
                     height: 100%;
-                    background: rgba(251, 191, 36, 0.05);
-                    border: 1px solid rgba(251, 191, 36, 0.2);
+                    background: rgba(251, 191, 36, 0.08); /* Increase visibility slightly */
+                    border: 1px solid rgba(251, 191, 36, 0.3);
                     border-radius: 8px;
                     display: flex;
                     align-items: center;
                     overflow: hidden;
                     position: relative;
                 }
-                .marquee-text {
+                .marquee-text-wrapper {
+                    display: flex;
                     white-space: nowrap;
+                    animation: marquee_seamless 40s linear infinite;
+                }
+                .marquee-text-content {
+                    padding-right: 100px; /* Gap between repetitions */
                     font-size: 14px;
                     font-weight: 800;
                     color: #fbbf24;
-                    animation: marquee_anim 20s linear infinite;
-                    padding-left: 100%;
+                    text-transform: uppercase;
                     display: flex;
                     align-items: center;
-                    gap: 10px;
+                    gap: 15px;
                 }
-                @keyframes marquee_anim {
+                @keyframes marquee_seamless {
                     0% { transform: translateX(0); }
-                    100% { transform: translateX(-150%); }
+                    100% { transform: translateX(-50%); }
                 }
             </style>
 
@@ -863,23 +867,34 @@ window.LobbyNeon = {
     updateMarquee: async (missionsData) => {
         const missions = missionsData || await DB.getMissions();
         const me = Auth.currentUser?.username;
-        const unaccepted = missions.filter(m => 
-            m.status === 'active' && 
-            (m.targetUser === 'all' || m.targetUser === me) &&
-            (!m.acceptedBy || !m.acceptedBy.includes(me))
-        );
+        if (!me) return;
+
+        // Collect all active missions that are unaccepted by their specific targets
+        const pendingMissions = missions.filter(m => {
+            if (m.status !== 'active') return false;
+            if (m.targetUser === 'all') {
+                return !m.acceptedBy || !m.acceptedBy.includes(me);
+            } else {
+                return !m.acceptedBy || !m.acceptedBy.includes(m.targetUser);
+            }
+        });
 
         const container = document.getElementById('global-marquee-container');
         if (!container) return;
 
-        if (unaccepted.length > 0) {
-            const list = unaccepted.map(m => `THÁNH CHỈ MỚI: ${m.title}`).join(" | ");
+        if (pendingMissions.length > 0) {
+            const texts = pendingMissions.map(m => {
+                const target = m.targetUser === 'all' ? 'TẤT CẢ' : `@${m.targetUser}`;
+                return `[${m.title}] CHỜ ${target} TIẾP NHẬN`;
+            });
+            const fullText = `📢 QUAN TRỌNG: ${texts.join(" | ")} — HÃY TỚI GẶP QUEST MASTER ADMIN NGAY! 📜`;
+            
+            // Seamless loop by doubling content
             container.innerHTML = `
                 <div class="lobby-marquee-bar">
-                    <div class="marquee-text">
-                        <span style="font-size: 20px;">📢</span> 
-                        <span style="text-transform: uppercase;">Nhân viên ${me} có nhiệm vụ mới:</span> 
-                        ${list} - Hãy tới gặp QUEST MASTER ADMIN ngay! 📜
+                    <div class="marquee-text-wrapper">
+                        <div class="marquee-text-content">${fullText}</div>
+                        <div class="marquee-text-content">${fullText}</div>
                     </div>
                 </div>
             `;
