@@ -586,7 +586,7 @@ const app = {
         const accounts = await Auth.getAccounts();
         const users = {};
         accounts.forEach(acc => {
-            users[acc.username] = { total: 0, done: 0, expired: 0, displayName: Utils.getUserDisplayName(acc.username) || acc.username, profile: acc.profile };
+            users[acc.username] = { total: 0, done: 0, expired: 0, displayName: Utils.getUserDisplayName(acc.username) || acc.username, profile: acc.profile, level: acc.level || 1, selectedTitleLevel: acc.selectedTitleLevel ?? null };
         });
 
         // Bảng vàng chỉ nên hiện các task đã hoàn thành TRONG THÁNG NÀY
@@ -633,6 +633,8 @@ const app = {
                 expired: userData.expired,
                 avatarHtml: avatarHtml,
                 profile: userData.profile,
+                level: userData.level,
+                selectedTitleLevel: userData.selectedTitleLevel,
                 rate: userData.total > 0 ? (userData.done / userData.total * 100) : 0
             }
         })
@@ -914,6 +916,8 @@ const app = {
                     : '<i class="fa-solid fa-medal" style="color: #cd7f32; font-size: 18px;"></i>');
 
             const scoreText = u.placeholder ? 'Chưa hoạt động' : `${u.done} nhiệm vụ`;
+            const userTitleInfo = u.placeholder ? { title: '', color: '#475569' } : Auth.getDisplayTitle({ level: u.level, selectedTitleLevel: u.selectedTitleLevel });
+            const userLevel = u.level || 1;
 
             return `
                 <div class="podium-col rank-${rank}">
@@ -923,6 +927,12 @@ const app = {
                         ${getChibiSvg(u)}
                     </div>
                     <div class="podium-name">${u.displayName}</div>
+                    ${!u.placeholder ? `
+                        <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 2px; z-index: 3;">
+                            <span style="font-size: 9px; font-weight: 900; color: #fbbf24; background: rgba(0,0,0,0.5); padding: 1px 6px; border-radius: 8px;">Lv.${userLevel}</span>
+                        </div>
+                        <div style="font-size: 9px; font-weight: 800; color: ${userTitleInfo.color}; text-shadow: 0 1px 3px rgba(0,0,0,0.8); margin-bottom: 3px; z-index: 3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 95%;">${userTitleInfo.title}</div>
+                    ` : ''}
                     <div class="podium-score">${scoreText}</div>
                     <div class="podium-block">
                         <div class="podium-number">${rank}</div>
@@ -944,6 +954,8 @@ const app = {
         // Render the remaining users (Rank 4 and below) in the standard list format below
         const restUsersHtml = rankedUsers.slice(3).map((u, idx) => {
             const actualRank = idx + 4;
+            const restTitleInfo = Auth.getDisplayTitle({ level: u.level, selectedTitleLevel: u.selectedTitleLevel });
+            const restLevel = u.level || 1;
             return `
                 <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.02); padding: 8px 12px; border-radius: 8px; position: relative; border: 1px solid rgba(255,255,255,0.03);">
                     <div style="display: flex; align-items: center; gap: 12px;">
@@ -952,7 +964,11 @@ const app = {
                             ${u.avatarHtml}
                         </div>
                         <div>
-                            <div style="font-weight: 600; font-size: 13px; color: #fff;">${u.displayName}</div>
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <span style="font-weight: 600; font-size: 13px; color: #fff;">${u.displayName}</span>
+                                <span style="font-size: 9px; font-weight: 900; color: #fbbf24; background: rgba(0,0,0,0.4); padding: 1px 5px; border-radius: 6px;">Lv.${restLevel}</span>
+                            </div>
+                            <div style="font-size: 10px; color: ${restTitleInfo.color}; font-weight: 700;">${restTitleInfo.title}</div>
                             <div style="font-size: 11px; color: var(--text-secondary);">${u.done} nhiệm vụ hoàn thành</div>
                         </div>
                     </div>
