@@ -395,7 +395,7 @@ window.LobbyNeon = {
         `;
     },
 
-    renderUser: (username, x, y, config) => {
+    renderUser: (username, x, y, config, forceRefresh) => {
         const map = document.getElementById('lobby-map');
         if (!map) return;
 
@@ -428,17 +428,23 @@ window.LobbyNeon = {
 
         // PARTIAL UPDATE to preserve child elements like chat bubbles
         let nameEl = el.querySelector('.lobby-user-name');
-        if (!nameEl) {
+        if (!nameEl || forceRefresh) {
             const userLevel = Auth.currentUser?.level || 1;
-            const titleInfo = Auth.getLevelTitle(userLevel);
+            const titleInfo = isMe ? Auth.getDisplayTitle(Auth.currentUser) : Auth.getLevelTitle(1);
+            // Preserve chat bubbles during force refresh
+            const existingBubble = el.querySelector('.lobby-chat-bubble');
             el.innerHTML = `
-                <div class="lobby-user-name">${username} <span style="font-size: 9px; color: ${titleInfo.color}; font-weight: 900; opacity: 0.9;">${titleInfo.title}</span></div>
+                <div class="lobby-user-name" ${isMe ? 'onclick="event.stopPropagation(); Auth.openTitleSelector();" style="cursor: pointer;"' : ''}>
+                    ${username}
+                    <span style="font-size: 8px; color: #fbbf24; font-weight: 900; background: rgba(0,0,0,0.4); padding: 1px 5px; border-radius: 8px; margin-left: 3px;">Lv.${userLevel}</span>
+                    <br><span style="font-size: 9px; color: ${titleInfo.color}; font-weight: 900; opacity: 0.9;">${titleInfo.title}</span>
+                </div>
                 ${isMe && typeof Auth !== 'undefined' ? Auth.renderExpBar(Auth.currentUser?.exp || 0, userLevel, true) : ''}
                 <div class="lobby-chibi-container" style="transform: scale(1.3);${titleInfo.glow ? ' filter: drop-shadow(0 0 8px ' + titleInfo.color + '60);' : ''}">${chibiSvg}</div>
-                ${!isMe ? '<div class="lobby-user-status">⚔️ THÁCH ĐẤU</div>' : ''}
+                ${!isMe ? '<div class="lobby-user-status">⚔️ THÁCH ĐẤU</div>' : '<div class="lobby-user-status" onclick="event.stopPropagation(); Auth.openTitleSelector();" style="cursor: pointer;">🏷️ ĐỔI DANH HIỆU</div>'}
             `;
+            if (existingBubble) el.appendChild(existingBubble);
         } else {
-            nameEl.textContent = username;
             const container = el.querySelector('.lobby-chibi-container');
             if (container) container.innerHTML = chibiSvg;
         }

@@ -170,7 +170,7 @@ const Auth = {
         const found = accounts.find(a => a.username === userIn && a.password === passIn);
 
         if (found) {
-            Auth.currentUser = { username: found.username, role: found.role, profile: found.profile || {}, balance: found.balance || 0, purchasedBots: found.purchasedBots || [], exp: found.exp || 0, level: found.level || 1 };
+            Auth.currentUser = { username: found.username, role: found.role, profile: found.profile || {}, balance: found.balance || 0, purchasedBots: found.purchasedBots || [], exp: found.exp || 0, level: found.level || 1, selectedTitleLevel: found.selectedTitleLevel ?? null };
             Utils.storage.set(Auth.currentUserKey, Auth.currentUser); // Keep current user locally for session
             Utils.showToast('Đăng nhập thành công!', 'success');
             Auth.showApp();
@@ -819,26 +819,124 @@ const Auth = {
         return total;
     },
 
+    // Danh sách tất cả danh hiệu - key = requiredLevel
+    TITLE_LIST: [
+        { level: 1,  title: '🌱 Lính Mới Vào Nghề',    color: '#94a3b8', glow: false, bubbleColor: 'rgba(255,255,255,0.95)', bubbleGlow: 'none' },
+        { level: 3,  title: '📋 Dân Agency Chính Hiệu', color: '#38bdf8', glow: false, bubbleColor: '#38bdf8', bubbleGlow: 'none' },
+        { level: 5,  title: '⚡ Sát Thủ Deadline',      color: '#10b981', glow: false, bubbleColor: 'linear-gradient(135deg, #10b981, #059669)', bubbleGlow: '0 0 8px #10b98160' },
+        { level: 7,  title: '🔥 Thánh Cày Overtime',    color: '#a855f7', glow: false, bubbleColor: 'linear-gradient(135deg, #a855f7, #6366f1)', bubbleGlow: '0 0 10px #a855f780' },
+        { level: 10, title: '💎 Trùm Agency Ngầm',      color: '#fbbf24', glow: true,  bubbleColor: 'linear-gradient(135deg, #fbbf24, #f59e0b)', bubbleGlow: '0 0 12px #fbbf2480' },
+        { level: 12, title: '🏆 Huyền Thoại Cháy KPI',  color: '#f59e0b', glow: true,  bubbleColor: 'linear-gradient(135deg, #f59e0b, #fbbf24)', bubbleGlow: '0 0 12px #f59e0b80' },
+        { level: 15, title: '👑 Bố Già Marketing',      color: '#ff6b6b', glow: true,  bubbleColor: 'linear-gradient(135deg, #ff6b6b, #fbbf24, #a855f7)', bubbleGlow: '0 0 15px #ff6b6b, 0 0 30px #fbbf2440' },
+    ],
+
     getLevelTitle: (level) => {
-        if (level >= 15) return { title: '👑 Marketing God Đệ Nhất', color: '#ff6b6b', glow: true, bubbleColor: 'linear-gradient(135deg, #ff6b6b, #fbbf24, #a855f7)', bubbleGlow: '0 0 15px #ff6b6b, 0 0 30px #fbbf2440' };
-        if (level >= 12) return { title: '🏆 Huyền Thoại Cháy KPI', color: '#f59e0b', glow: true, bubbleColor: 'linear-gradient(135deg, #f59e0b, #fbbf24)', bubbleGlow: '0 0 12px #f59e0b80' };
-        if (level >= 10) return { title: '💎 Trùm Agency Ngầm', color: '#fbbf24', glow: true, bubbleColor: 'linear-gradient(135deg, #fbbf24, #f59e0b)', bubbleGlow: '0 0 12px #fbbf2480' };
-        if (level >= 7) return { title: '🔥 Thánh Cày Overtime', color: '#a855f7', glow: false, bubbleColor: 'linear-gradient(135deg, #a855f7, #6366f1)', bubbleGlow: '0 0 10px #a855f780' };
-        if (level >= 5) return { title: '⚡ Sát Thủ Deadline', color: '#10b981', glow: false, bubbleColor: 'linear-gradient(135deg, #10b981, #059669)', bubbleGlow: '0 0 8px #10b98160' };
-        if (level >= 3) return { title: '📋 Chiến Binh Brief', color: '#38bdf8', glow: false, bubbleColor: '#38bdf8', bubbleGlow: 'none' };
-        return { title: '🌱 Lính Mới Vào Nghề', color: '#94a3b8', glow: false, bubbleColor: 'rgba(255,255,255,0.95)', bubbleGlow: 'none' };
+        // Trả về danh hiệu MẶC ĐỊNH cao nhất cho level này
+        const list = Auth.TITLE_LIST;
+        for (let i = list.length - 1; i >= 0; i--) {
+            if (level >= list[i].level) return { ...list[i] };
+        }
+        return { ...list[0] };
+    },
+
+    getAllUnlockedTitles: (level) => {
+        // Trả về tất cả danh hiệu mà user đã mở khóa
+        return Auth.TITLE_LIST.filter(t => level >= t.level);
+    },
+
+    getDisplayTitle: (user) => {
+        // Trả về danh hiệu user ĐANG CHỌN hiển thị (hoặc mặc định cao nhất)
+        const userLevel = user?.level || 1;
+        const selectedLevel = user?.selectedTitleLevel;
+        if (selectedLevel != null) {
+            const selected = Auth.TITLE_LIST.find(t => t.level === selectedLevel);
+            if (selected && userLevel >= selected.level) return { ...selected };
+        }
+        return Auth.getLevelTitle(userLevel);
+    },
+
+    setSelectedTitle: async (titleLevel) => {
+        if (!Auth.currentUser) return;
+        const userLevel = Auth.currentUser.level || 1;
+        const titleEntry = Auth.TITLE_LIST.find(t => t.level === titleLevel);
+        if (!titleEntry || userLevel < titleEntry.level) {
+            Utils.showToast('Bạn chưa đủ cấp để dùng danh hiệu này!', 'error');
+            return;
+        }
+
+        Auth.currentUser.selectedTitleLevel = titleLevel;
+        Utils.storage.set(Auth.currentUserKey, Auth.currentUser);
+
+        // Lưu vào database
+        const accounts = await Auth.getAccounts();
+        const acc = accounts.find(a => a.username === Auth.currentUser.username);
+        if (acc) {
+            acc.selectedTitleLevel = titleLevel;
+            await Auth.saveAccounts(accounts);
+        }
+
+        Utils.showToast(`Đã đổi danh hiệu thành "${titleEntry.title}"! Ngầu quá trời! 😎`, 'success');
+
+        // Re-render chibi trong sảnh nếu đang ở lobby
+        if (typeof LobbyNeon !== 'undefined' && LobbyNeon.state?.myPos) {
+            const user = Auth.currentUser;
+            LobbyNeon.renderUser(user.username, LobbyNeon.state.myPos.x, LobbyNeon.state.myPos.y, user.profile?.chibiConfig, true);
+        }
+    },
+
+    openTitleSelector: () => {
+        if (!Auth.currentUser) return;
+        const userLevel = Auth.currentUser.level || 1;
+        const allTitles = Auth.TITLE_LIST;
+        const currentSelected = Auth.currentUser.selectedTitleLevel ?? Auth.getLevelTitle(userLevel).level;
+
+        let html = `
+            <div style="max-height: 400px; overflow-y: auto; padding: 5px;">
+                <p style="font-size: 12px; color: #94a3b8; text-align: center; margin-bottom: 15px; font-style: italic;">
+                    Chọn danh hiệu yêu thích! Cấp hiện tại: <span style="color: #fbbf24; font-weight: 900;">Lv.${userLevel}</span>
+                </p>
+                ${allTitles.map(t => {
+                    const unlocked = userLevel >= t.level;
+                    const isSelected = t.level === currentSelected;
+                    return `
+                        <div onclick="${unlocked ? `Auth.setSelectedTitle(${t.level}); document.getElementById('modal-overlay').classList.remove('active');` : ''}"
+                            style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; margin-bottom: 8px;
+                            background: ${isSelected ? 'rgba(' + (t.color === '#ff6b6b' ? '255,107,107' : t.color === '#f59e0b' ? '245,158,11' : t.color === '#fbbf24' ? '251,191,36' : t.color === '#a855f7' ? '168,85,247' : t.color === '#10b981' ? '16,185,129' : t.color === '#38bdf8' ? '56,189,248' : '148,163,184') + ',0.15)' : 'rgba(15,23,42,0.6)'};
+                            border: 2px solid ${isSelected ? t.color : unlocked ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.03)'};
+                            border-radius: 12px; cursor: ${unlocked ? 'pointer' : 'not-allowed'}; opacity: ${unlocked ? '1' : '0.4'};
+                            transition: all 0.2s; ${unlocked ? '' : 'filter: grayscale(0.8);'}"
+                            ${unlocked ? 'onmouseover="this.style.transform=\'scale(1.02)\'" onmouseout="this.style.transform=\'scale(1)\'"' : ''}>
+                            <div>
+                                <div style="font-size: 15px; font-weight: 900; color: ${t.color}; margin-bottom: 3px;">
+                                    ${t.title}
+                                </div>
+                                <div style="font-size: 10px; color: #64748b;">
+                                    ${unlocked ? '✅ Đã mở khóa' : '🔒 Yêu cầu Cấp ' + t.level}
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 11px; font-weight: 800; color: ${unlocked ? t.color : '#475569'};">Cấp ${t.level}+</div>
+                                ${isSelected ? '<div style="font-size: 9px; color: #10b981; font-weight: 900; margin-top: 2px;">✨ ĐANG DÙNG</div>' : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+
+        Utils.showModal('🏷️ CHỌN DANH HIỆU CỦA BẠN', html, null, 'ĐÓNG');
     },
 
     getLevelPerks: (level) => {
         const perks = [];
         if (level >= 1) perks.push('🌱 Trang phục cơ bản + Danh hiệu "Lính Mới Vào Nghề"');
         if (level >= 2) perks.push('🗡️ Mở thêm vũ khí mới');
-        if (level >= 3) perks.push('🎩 Phụ kiện đặc biệt + Danh hiệu "Chiến Binh Brief"');
+        if (level >= 3) perks.push('🎩 Phụ kiện đặc biệt + Danh hiệu "Dân Agency Chính Hiệu"');
         if (level >= 5) perks.push('🦅 Cánh + Thú cưỡi + Bong bóng chat xanh lá + Dấu chân ✧');
         if (level >= 7) perks.push('🐉 Rồng + Aura + Bong bóng chat tím + Danh hiệu "Thánh Cày Overtime"');
         if (level >= 10) perks.push('🌟 Mở TOÀN BỘ trang phục + Bong bóng vàng kim');
-        if (level >= 12) perks.push('🔥 Dấu chân lửa khi di chuyển + Danh hiệu "Huyền Thoại Cháy KPI"');
-        if (level >= 15) perks.push('🌈 Bong bóng cầu vồng + Dấu chân vàng + Danh hiệu "Marketing God Đệ Nhất"');
+        if (level >= 12) perks.push('🔥 Dấu chân lửa + Danh hiệu "Huyền Thoại Cháy KPI"');
+        if (level >= 15) perks.push('🌈 Bong bóng cầu vồng + Dấu chân vàng + Danh hiệu "Bố Già Marketing"');
         return perks;
     },
 
