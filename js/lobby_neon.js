@@ -16,7 +16,8 @@ window.LobbyNeon = {
         heartbeatInterval: null,
         isMakingMove: false,
         npcPos: { x: 800, y: 300 },
-        marqueeInterval: null
+        marqueeInterval: null,
+        unsubscribeMissions: null
     },
 
     init: () => {
@@ -68,6 +69,7 @@ window.LobbyNeon = {
     leaveLobby: () => {
         if (LobbyNeon.state.unsubscribePresence) LobbyNeon.state.unsubscribePresence();
         if (LobbyNeon.state.unsubscribeChat) LobbyNeon.state.unsubscribeChat();
+        if (LobbyNeon.state.unsubscribeMissions) LobbyNeon.state.unsubscribeMissions();
         if (LobbyNeon.state.heartbeatInterval) clearInterval(LobbyNeon.state.heartbeatInterval);
         LobbyNeon.state.isConnected = false;
         LobbyNeon.state.currentGameId = null;
@@ -114,6 +116,15 @@ window.LobbyNeon = {
 
         LobbyNeon.state.unsubscribeChat = DB.listenLobbyChat((messages) => {
             LobbyNeon.renderChatMessages(messages);
+        });
+
+        // Real-time Mission listener for Marquee and Board updates
+        LobbyNeon.state.unsubscribeMissions = DB.listenMissions((missions) => {
+            LobbyNeon.updateMarquee(missions);
+            // If admin board is open, refresh it? Optional but good.
+            if (document.getElementById('hub-content-quests')) {
+                LobbyNeon.renderAdminQuestManager();
+            }
         });
     },
 
@@ -842,8 +853,8 @@ window.LobbyNeon = {
     },
 
     // ========== QUEST SYSTEM ==========
-    updateMarquee: async () => {
-        const missions = await DB.getMissions();
+    updateMarquee: async (missionsData) => {
+        const missions = missionsData || await DB.getMissions();
         const me = Auth.currentUser?.username;
         const unaccepted = missions.filter(m => 
             m.status === 'active' && 
@@ -855,7 +866,7 @@ window.LobbyNeon = {
         if (!container) return;
 
         if (unaccepted.length > 0) {
-            const list = unaccepted.map(m => `Nhiệm vụ mới của ${m.targetUser === 'all' ? 'bạn' : '@'+m.targetUser}: ${m.title}`).join(" | ");
+            const list = unaccepted.map(m => `Nhiệm vụ: ${m.title}`).join(" | ");
             container.innerHTML = `
                 <div class="lobby-marquee-bar">
                     <div class="marquee-text">👑 THÁNH CHỈ MỚI: ${list} - Hãy tới gặp QUEST MASTER ADMIN ngay! 📜</div>

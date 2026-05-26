@@ -578,5 +578,14 @@ const DB = {
             console.error("Error deleting mission:", e);
             return false;
         }
+    },
+
+    listenMissions: (callback) => {
+        return db.collection("missions").orderBy("createdAt", "desc")
+            .onSnapshot(snapshot => {
+                const missions = [];
+                snapshot.forEach(doc => missions.push({ id: doc.id, ...doc.data() }));
+                callback(missions);
+            }, err => console.error("Missions listener error:", err));
     }
 };
