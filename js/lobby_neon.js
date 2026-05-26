@@ -17,7 +17,9 @@ window.LobbyNeon = {
         isMakingMove: false,
         npcPos: { x: 800, y: 300 },
         marqueeInterval: null,
-        unsubscribeMissions: null
+        unsubscribeMissions: null,
+        notifiedMissionIds: new Set(),
+        activeQuestTab: 'new'
     },
 
     init: () => {
@@ -124,11 +126,70 @@ window.LobbyNeon = {
     startGlobalMissionListening: () => {
         if (LobbyNeon.state.unsubscribeMissions) return; // Already listening
 
+        // Track which missions we've already shown a popup for
+        if (!LobbyNeon.state.notifiedMissionIds) {
+            LobbyNeon.state.notifiedMissionIds = new Set();
+        }
+
         LobbyNeon.state.unsubscribeMissions = DB.listenMissions((missions) => {
             LobbyNeon.updateMarquee(missions);
             // If admin board is open, refresh it
             if (document.getElementById('hub-content-quests')) {
                 LobbyNeon.renderAdminQuestManager();
+            }
+
+            // === MISSION ARRIVAL POPUP ===
+            const me = Auth.currentUser?.username;
+            if (!me) return;
+
+            // Find new missions that target this user and are unaccepted
+            const myPending = missions.filter(m =>
+                m.status === 'active' &&
+                (m.targetUser === 'all' || m.targetUser === me) &&
+                (!m.acceptedBy || !m.acceptedBy.includes(me)) &&
+                !LobbyNeon.state.notifiedMissionIds.has(m.id)
+            );
+
+            if (myPending.length > 0) {
+                // Mark as notified so we don't show again
+                myPending.forEach(m => LobbyNeon.state.notifiedMissionIds.add(m.id));
+
+                const missionList = myPending.map(m =>
+                    `<div style="background: rgba(251,191,36,0.1); border: 1px solid #fbbf24; border-radius: 8px; padding: 12px; margin-bottom: 8px; text-align: left;">
+                        <div style="font-weight: 900; color: #fbbf24; font-size: 14px;">📜 ${m.title}</div>
+                        <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">${m.description || ''}</div>
+                        <div style="font-size: 11px; color: #10b981; margin-top: 6px;">💰 Thưởng: +${m.reward}đ Công Đức</div>
+                    </div>`
+                ).join('');
+
+                Utils.showModal(
+                    '⚔️ THÁNH CHỈ MỚI TỪ ADMIN!',
+                    `<div style="text-align: center; max-height: 400px; overflow-y: auto;">
+                        <div style="font-size: 60px; margin-bottom: 12px; animation: float 2s ease-in-out infinite;">📜</div>
+                        <p style="font-size: 16px; color: #fbbf24; font-weight: 800; margin-bottom: 16px; text-transform: uppercase;">
+                            Hỡi chiến binh ${me}! Ngươi có ${myPending.length} nhiệm vụ mới!
+                        </p>
+                        ${missionList}
+                        <p style="font-size: 13px; color: #94a3b8; margin-top: 12px; font-style: italic;">
+                            Nhấn nút bên dưới để tới Sảnh Chờ và tiếp nhận nhiệm vụ từ Quest Master Admin!
+                        </p>
+                    </div>`,
+                    () => {
+                        // Auto-navigate to Lobby and open Quest Board
+                        if (typeof app !== 'undefined') {
+                            app.navigateTo('lobby-view');
+                        }
+                        // Wait for lobby to render, then open quest board
+                        setTimeout(() => {
+                            if (typeof LobbyNeon !== 'undefined') {
+                                LobbyNeon.openQuestBoard();
+                            }
+                        }, 1500);
+                        return true;
+                    },
+                    'VÀO SẢNH NHẬN NHIỆM VỤ NGAY!',
+                    'ĐỂ SAU'
+                );
             }
         });
     },
@@ -903,30 +964,58 @@ window.LobbyNeon = {
         }
     },
 
-    openQuestBoard: async () => {
+    openQuestBoard: async (activeTabOverride = null) => {
         const missions = await DB.getMissions();
         const me = Auth.currentUser?.username;
-        // Filter for all users or specific me
-        const activeMissions = missions.filter(m => m.status === 'active' && (!m.targetUser || m.targetUser === 'all' || m.targetUser === me));
+        if (!me) return;
 
-        Utils.showModal(
-            '📜 BẢNG NHIỆM VỤ HOÀNG GIA',
-            `<div style="max-height: 400px; overflow-y: auto; padding: 10px;">
-                ${activeMissions.length === 0 ? `
+        if (activeTabOverride) {
+            LobbyNeon.state.activeQuestTab = activeTabOverride;
+        }
+        
+        const activeTab = LobbyNeon.state.activeQuestTab || 'new';
+
+        // Filter missions
+        const myMissions = missions.filter(m => m.status === 'active' && (!m.targetUser || m.targetUser === 'all' || m.targetUser === me));
+        
+        // Split by status: New (not accepted) vs Ongoing (accepted but not completed)
+        const newMissions = myMissions.filter(m => !m.acceptedBy || !m.acceptedBy.includes(me));
+        const ongoingMissions = myMissions.filter(m => 
+            (m.acceptedBy && m.acceptedBy.includes(me)) && 
+            (!m.completedBy || !m.completedBy.includes(me))
+        );
+
+        const currentMissions = activeTab === 'new' ? newMissions : ongoingMissions;
+
+        const tabStyles = (tab) => `
+            flex: 1; padding: 12px; text-align: center; cursor: pointer; font-size: 11px; font-weight: 900;
+            border-bottom: 2px solid ${activeTab === tab ? '#fbbf24' : 'transparent'};
+            color: ${activeTab === tab ? '#fbbf24' : '#94a3b8'};
+            background: ${activeTab === tab ? 'rgba(251,191,36,0.05)' : 'transparent'};
+            transition: 0.3s;
+        `;
+
+        const contentHtml = `
+            <div style="display: flex; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 15px;">
+                <div onclick="LobbyNeon.openQuestBoard('new')" style="${tabStyles('new')}">NHIỆM VỤ MỚI (${newMissions.length})</div>
+                <div onclick="LobbyNeon.openQuestBoard('ongoing')" style="${tabStyles('ongoing')}">ĐANG THỰC HIỆN (${ongoingMissions.length})</div>
+            </div>
+            
+            <div style="max-height: 400px; overflow-y: auto; padding: 5px;">
+                ${currentMissions.length === 0 ? `
                     <div style="text-align: center; color: #64748b; padding: 40px 0;">
-                        <div style="font-size: 40px; margin-bottom: 10px;">🏮</div>
-                        Hiện chưa có nhiệm vụ mới từ Admin NPC.<br>Hãy quay lại sau nhé!
+                        <div style="font-size: 40px; margin-bottom: 10px;">${activeTab === 'new' ? '🏮' : '⚔️'}</div>
+                        ${activeTab === 'new' ? 'Hiện chưa có nhiệm vụ mới từ Admin.' : 'Bạn chưa tiếp nhận nhiệm vụ nào.'}
                     </div>
-                ` : activeMissions.map(m => {
-                    const isAccepted = m.acceptedBy && m.acceptedBy.includes(me);
+                ` : currentMissions.map(m => {
                     const deadlineStr = m.deadline ? new Date(m.deadline).toLocaleDateString('vi-VN') : 'Không giới hạn';
                     
                     return `
-                    <div style="background: rgba(15, 23, 42, 0.95); border: 2px solid ${isAccepted ? '#10b981' : '#fbbf24'}; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); position: relative; overflow: hidden; z-index: 10;">
+                    <div style="background: rgba(15, 23, 42, 0.95); border: 2px solid ${activeTab === 'ongoing' ? '#10b981' : '#fbbf24'}; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); position: relative; overflow: hidden;">
                         <div style="position: absolute; top: -10px; right: -10px; font-size: 40px; opacity: 0.1; transform: rotate(15deg);">${m.type === 'daily' ? '📅' : '🏆'}</div>
                         
                         <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
-                            <span style="font-size: 10px; font-weight: 900; color: ${isAccepted ? '#10b981' : '#fbbf24'}; text-transform: uppercase; background: rgba(0,0,0,0.2); padding: 2px 8px; border-radius: 6px; border: 1px solid ${isAccepted ? '#10b981' : '#fbbf24'};">
+                            <span style="font-size: 10px; font-weight: 900; color: ${activeTab === 'ongoing' ? '#10b981' : '#fbbf24'}; text-transform: uppercase; background: rgba(0,0,0,0.2); padding: 2px 8px; border-radius: 6px; border: 1px solid ${activeTab === 'ongoing' ? '#10b981' : '#fbbf24'};">
                                 ${m.type === 'daily' ? 'Nhiệm vụ Ngày' : 'Thách thức Tháng'}
                             </span>
                             <span style="font-size: 11px; font-weight: 800; color: #10b981;">💰 +${m.reward}đ Công Đức</span>
@@ -938,21 +1027,20 @@ window.LobbyNeon = {
                         </div>
                         <p style="margin: 0; color: #e2e8f0; font-size: 12.5px; line-height: 1.5; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 6px;">${m.description}</p>
                         
-                        ${isAccepted ? `
-                            <div style="margin-top: 15px; text-align: center; color: #10b981; font-weight: 900; font-size: 14px; letter-spacing: 1px; padding: 10px; background: rgba(16, 185, 129, 0.1); border-radius: 8px;">
-                                ✔️ ĐÃ TIẾP NHẬN THÁNH CHỈ
-                            </div>
-                        ` : `
-                            <button onclick="LobbyNeon.acceptMission('${m.id}')" style="margin-top: 15px; width: 100%; padding: 12px; background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); border: none; border-radius: 8px; color: #000; font-weight: 900; font-size: 14px; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(251,191,36,0.4); text-transform: uppercase; letter-spacing: 1px;">
+                        ${activeTab === 'new' ? `
+                            <button onclick="LobbyNeon.acceptMission('${m.id}')" style="margin-top: 15px; width: 100%; padding: 12px; background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); border: none; border-radius: 8px; color: #000; font-weight: 900; font-size: 14px; cursor: pointer; box-shadow: 0 4px 15px rgba(251,191,36,0.4); text-transform: uppercase;">
                                 TIẾP NHẬN NHIỆM VỤ
+                            </button>
+                        ` : `
+                            <button onclick="LobbyNeon.submitMission('${m.id}')" style="margin-top: 15px; width: 100%; padding: 12px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; border-radius: 8px; color: #fff; font-weight: 900; font-size: 14px; cursor: pointer; box-shadow: 0 4px 15px rgba(16,185,129,0.4); text-transform: uppercase;">
+                                HOÀN THÀNH NHIỆM VỤ
                             </button>
                         `}
                     </div>
                 `}).join('')}
-            </div>`,
-            null,
-            'ĐÓNG BẢNG'
-        );
+            </div>`;
+
+        Utils.showModal('📜 BẢNG NHIỆM VỤ HOÀNG GIA', contentHtml, null, 'ĐÓNG BẢNG');
     },
 
     acceptMission: async (missionId) => {
@@ -969,12 +1057,44 @@ window.LobbyNeon = {
                 acceptedBy.push(me);
                 await db.collection("missions").doc(missionId).update({ acceptedBy });
                 Utils.showToast("Đã tiếp nhận thánh chỉ! Hãy cố gắng hoàn thành nhé.", "success");
-                LobbyNeon.openQuestBoard(); // Rerender board
-                LobbyNeon.updateMarquee();  // Update marquee
+                
+                // Close board automatically
+                const overlay = document.getElementById('modal-overlay');
+                if (overlay) overlay.classList.remove('active');
+                
+                LobbyNeon.updateMarquee();
             }
         } catch (e) {
             console.error("Accept mission error:", e);
             Utils.showToast("Lỗi khi nhận nhiệm vụ!", "error");
+        }
+    },
+
+    submitMission: async (missionId) => {
+        const me = Auth.currentUser?.username;
+        if (!me) return;
+        
+        try {
+            const missions = await DB.getMissions();
+            const mission = missions.find(m => m.id === missionId);
+            if (!mission) return;
+
+            const completedBy = mission.completedBy || [];
+            if (!completedBy.includes(me)) {
+                completedBy.push(me);
+                await db.collection("missions").doc(missionId).update({ completedBy });
+                Utils.showToast("Đã trả nhiệm vụ thành công! Đang chờ Admin xác nhận.", "success");
+                
+                // Close board automatically
+                const overlay = document.getElementById('modal-overlay');
+                if (overlay) overlay.classList.remove('active');
+                
+                // Optional: Send a chat notification to Admin
+                await DB.sendLobbyChat({ sender: "Hệ Thống", text: `🚩 Nhân viên @${me} vừa báo cáo hoàn thành nhiệm vụ: "${mission.title}"!` });
+            }
+        } catch (e) {
+            console.error("Submit mission error:", e);
+            Utils.showToast("Lỗi khi trả nhiệm vụ!", "error");
         }
     },
 
