@@ -17,6 +17,8 @@ window.LobbyNeon = {
         isMakingMove: false,
         npcPos: { x: 955, y: 340 },
         leaderboardPos: { x: 755, y: 340 },
+        fashionNpcPos: { x: 350, y: 420 },
+        lastFashionNpcTalkTime: 0,
         marqueeInterval: null,
         unsubscribeMissions: null,
         notifiedMissionIds: new Set(),
@@ -53,6 +55,7 @@ window.LobbyNeon = {
         setTimeout(() => {
             LobbyNeon.renderQuestNPC();
             LobbyNeon.renderLeaderboardMonument();
+            LobbyNeon.renderFashionNPC();
         }, 500);
 
         LobbyNeon.startPresenceListening();
@@ -575,6 +578,132 @@ window.LobbyNeon = {
         console.log("Leaderboard Monument render complete at", tx, ty);
     },
 
+    renderFashionNPC: () => {
+        console.log("LobbyNeon.renderFashionNPC starting...");
+        const map = document.getElementById('lobby-map');
+        if (!map) {
+            console.error("NPC Error: lobby-map not found");
+            return;
+        }
+
+        const npcId = 'npc-fashion';
+        let el = document.getElementById(npcId);
+
+        if (!el) {
+            el = document.createElement('div');
+            el.id = npcId;
+            el.className = 'lobby-user-wrapper npc';
+            el.style.position = 'absolute';
+            el.style.cursor = 'help';
+            el.onclick = (e) => {
+                e.stopPropagation();
+                ChibiModule.openBuilder();
+                LobbyNeon.triggerFashionNpcDialogue(true);
+            };
+            map.appendChild(el);
+            console.log("Fashion NPC element created and appended to map");
+        }
+
+        // Extremely stylish Chibi outfit configuration for showcase
+        const npcConfig = {
+            gender: 'nam',
+            skinColor: '#ffe4e6',
+            hairStyle: 2, // Spiky Cyber
+            hairColor: '#ec4899', // Spiky hot pink neon
+            accessory: 1, // Shades
+            topStyle: 3, // Cyber Armor
+            topColor: '#00f3ff', // Neon blue
+            bottomStyle: 6, // Cyber pants
+            bottomColor: '#1f2937',
+            shoeStyle: 4, // Cyber boots
+            shoeColor: '#00f3ff',
+            wing: 4,      // Fairy wings
+            dragon: 3,    // Golden Dragon
+            aura: 1,      // Neon Ring
+            gear: 2,      // Infinity Rifle
+            mount: 0
+        };
+
+        let chibiSvg = ChibiModule.renderChibiSVG(npcConfig, true, 99);
+
+        const tx = 350, ty = 420;
+        LobbyNeon.state.fashionNpcPos = { x: tx, y: ty };
+
+        el.style.left = `${tx}px`;
+        el.style.top = `${ty}px`;
+
+        el.innerHTML = `
+            <div class="lobby-user-name" style="color: #ff0055; background: rgba(0,0,0,0.8); padding: 4px 12px; border: 2px solid #ff0055; border-radius: 20px; font-weight: 800; font-size: 13px; white-space: nowrap; box-shadow: 0 0 10px rgba(255,0,85,0.5);">🛡️ DESIGNER THỜI TRANG</div>
+            <div class="neon-clothes-rack">
+                <span class="rack-item rack-item-1">👕</span>
+                <span class="rack-item rack-item-2">👑</span>
+                <span class="rack-item rack-item-3">🗡️</span>
+            </div>
+            <div class="lobby-chibi-container" style="transform: scale(1.6); filter: drop-shadow(0 0 15px rgba(255,0,85,0.5)); pointer-events: none;">${chibiSvg}</div>
+            <div class="lobby-user-status" style="background: linear-gradient(135deg, #ff0055, #8b5cf6); border: none; color: #fff; padding: 4px 16px; font-weight: 900; border-radius: 4px; font-size: 11px; margin-top: 10px; box-shadow: 0 0 15px rgba(255,0,85,0.6);">✨ THIẾT KẾ ĐỒ HIỆU</div>
+        `;
+        console.log("Fashion NPC render complete at", tx, ty);
+    },
+
+    triggerFashionNpcDialogue: (isDirectClick) => {
+        const now = Date.now();
+        // Prevent bubble spamming unless direct click (cooldown of 4s for proximity)
+        if (!isDirectClick && now - LobbyNeon.state.lastFashionNpcTalkTime < 4000) return;
+        LobbyNeon.state.lastFashionNpcTalkTime = now;
+
+        const npcEl = document.getElementById('npc-fashion');
+        if (!npcEl) return;
+
+        // Remove old bubble if any
+        const oldBubble = npcEl.querySelector('.lobby-chat-bubble');
+        if (oldBubble) oldBubble.remove();
+
+        const userLevel = Auth.currentUser?.level || 1;
+
+        const lowLevelQuotes = [
+            "Cấp sếp còn thấp quá, chưa đủ trình khoác lên bộ cánh VIP của tôi đâu! Mau đi cày việc đi!",
+            "Cố gắng làm thêm nhiệm vụ đi sếp ơi, cấp thấp thế này mặc đồ hiệu phí lắm!",
+            "Muốn mở khóa cánh rồng cánh phượng thì phải chăm cày EXP lên cấp đã nhé sếp!",
+            "Cấp sếp thế này thì chỉ hợp mặc dép tổ ong thôi nha! Cày lên rồi tôi mở kho VVIP cho!"
+        ];
+
+        const highLevelQuotes = [
+            "Úi dồi ôi sếp lớn! Trông bộ cánh của sếp bảnh chọe thế kia thì ai mà làm lại nữa! Lên đời tiếp nào! 👑",
+            "Thần thái ngút ngàn sếp ơi! Để tôi tư vấn thêm vài món VVIP cho xứng tầm nhé! 😎",
+            "Quá đẹp trai sếp lớn ơi! Đúng là người đẹp vì lụa, bộ cánh này chất lừ luôn! 🔥",
+            "Hôm nay sếp diện đồ bảnh tỏn quá xá! Vào đây tôi may đo thêm cho bộ cánh độc quyền nào!"
+        ];
+
+        const quote = userLevel < 5 
+            ? lowLevelQuotes[Math.floor(Math.random() * lowLevelQuotes.length)]
+            : highLevelQuotes[Math.floor(Math.random() * highLevelQuotes.length)];
+
+        const bubble = document.createElement('div');
+        bubble.className = 'lobby-chat-bubble';
+        
+        // Customized neon styling for Fashion Bubble
+        bubble.style.cssText = `
+            bottom: 175px;
+            background: rgba(15, 23, 42, 0.95);
+            color: #fff;
+            border: 2px solid #ff0055;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5), 0 0 15px rgba(255, 0, 85, 0.4);
+            font-weight: 800;
+            font-size: 12.5px;
+            padding: 10px 15px;
+            min-width: 180px;
+        `;
+        bubble.textContent = quote;
+
+        npcEl.appendChild(bubble);
+
+        // Auto remove after 5s
+        setTimeout(() => {
+            bubble.classList.add('fade-out');
+            setTimeout(() => bubble.remove(), 500);
+        }, 5000);
+    },
+
     // ========== MOVEMENT ==========
     handleMapClick: (e) => {
         if (e.target.closest('.lobby-chat-overlay') || e.target.closest('.caro-modal')) return;
@@ -608,6 +737,20 @@ window.LobbyNeon = {
             const distLd = Math.sqrt(dxLd*dxLd + dyLd*dyLd);
             if (distLd < 80) {
                 LobbyNeon.openGeneralLeaderboard();
+            }
+        }
+
+        // Check proximity to Fashion NPC
+        if (LobbyNeon.state.fashionNpcPos) {
+            const dxFs = x - LobbyNeon.state.fashionNpcPos.x;
+            const dyFs = y - LobbyNeon.state.fashionNpcPos.y;
+            const distFs = Math.sqrt(dxFs*dxFs + dyFs*dyFs);
+            if (distFs < 80) {
+                ChibiModule.openBuilder();
+                LobbyNeon.triggerFashionNpcDialogue(true);
+                return;
+            } else if (distFs < 180) {
+                LobbyNeon.triggerFashionNpcDialogue(false);
             }
         }
     },
