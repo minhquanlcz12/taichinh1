@@ -205,7 +205,7 @@ window.LobbyNeon = {
 
                 /* QUEST NPC STYLES */
                 @keyframes float { 0%, 100% { transform: translate(-50%, 0); } 50% { transform: translate(-50%, -15px); } }
-                .lobby-user-wrapper.npc { z-index: 999 !important; }
+                .lobby-user-wrapper.npc { z-index: 100 !important; }
                 .lobby-user-wrapper.npc .lobby-chibi-container svg { overflow: visible !important; }
             </style>
 
@@ -813,7 +813,9 @@ window.LobbyNeon = {
     // ========== QUEST SYSTEM ==========
     openQuestBoard: async () => {
         const missions = await DB.getMissions();
-        const activeMissions = missions.filter(m => m.status === 'active');
+        const me = Auth.currentUser?.username;
+        // Filter for all users or specific me
+        const activeMissions = missions.filter(m => m.status === 'active' && (!m.targetUser || m.targetUser === 'all' || m.targetUser === me));
 
         Utils.showModal(
             '📜 BẢNG NHIỆM VỤ HOÀNG GIA',
@@ -850,6 +852,7 @@ window.LobbyNeon = {
         if (!container) return;
 
         const missions = await DB.getMissions();
+        const accounts = await Auth.getAccounts();
 
         container.innerHTML = `
             <div style="display: flex; flex-direction: column; gap: 15px;">
@@ -857,25 +860,45 @@ window.LobbyNeon = {
                     <h4 style="margin: 0 0 10px 0; font-size: 12px; color: #fbbf24;">🆕 BAN HÀNH THÁNH CHỈ MỚI</h4>
                     <input type="text" id="quest-title" placeholder="Tên nhiệm vụ..." style="width: 100%; padding: 8px; background: rgba(0,0,0,0.3); border: 1px solid #475569; border-radius: 4px; color: #fff; font-size: 12px; margin-bottom: 8px;">
                     <textarea id="quest-desc" placeholder="Mô tả công việc..." style="width: 100%; padding: 8px; background: rgba(0,0,0,0.3); border: 1px solid #475569; border-radius: 4px; color: #fff; font-size: 12px; margin-bottom: 8px; min-height: 60px;"></textarea>
-                    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-                        <select id="quest-type" style="flex: 1; padding: 6px; background: rgba(0,0,0,0.3); border: 1px solid #475569; border-radius: 4px; color: #fff; font-size: 11px;">
-                            <option value="daily">Ngày</option>
-                            <option value="monthly">Tháng</option>
+                    
+                    <div style="margin-bottom: 8px;">
+                        <label style="display: block; font-size: 10px; color: #94a3b8; margin-bottom: 4px;">GIAO CHO:</label>
+                        <select id="quest-target" style="width: 100%; padding: 8px; background: rgba(0,0,0,0.3); border: 1px solid #475569; border-radius: 4px; color: #fff; font-size: 11px;">
+                            <option value="all">Tất cả mọi người</option>
+                            ${accounts.map(acc => `<option value="${acc.username}">${Utils.getUserDisplayName(acc.username)} (@${acc.username})</option>`).join('')}
                         </select>
-                        <input type="number" id="quest-reward" placeholder="Thưởng (đ)..." style="flex: 1; padding: 6px; background: rgba(0,0,0,0.3); border: 1px solid #475569; border-radius: 4px; color: #fff; font-size: 11px;">
                     </div>
-                    <button onclick="LobbyNeon.adminCreateMission()" class="btn-neon" style="width: 100%; font-size: 11px; padding: 8px;">BAN HÀNH</button>
+
+                    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                        <div style="flex: 1;">
+                            <label style="display: block; font-size: 10px; color: #94a3b8; margin-bottom: 4px;">LOẠI TẠP VỤ:</label>
+                            <select id="quest-type" style="width: 100%; padding: 8px; background: rgba(0,0,0,0.3); border: 1px solid #475569; border-radius: 4px; color: #fff; font-size: 11px;">
+                                <option value="daily">Ngày</option>
+                                <option value="monthly">Tháng</option>
+                            </select>
+                        </div>
+                        <div style="flex: 1;">
+                            <label style="display: block; font-size: 10px; color: #94a3b8; margin-bottom: 4px;">THƯỞNG (đ):</label>
+                            <input type="number" id="quest-reward" placeholder="Cộng điểm..." style="width: 100%; padding: 8px; background: rgba(0,0,0,0.3); border: 1px solid #475569; border-radius: 4px; color: #fff; font-size: 11px;">
+                        </div>
+                    </div>
+                    <button onclick="LobbyNeon.adminCreateMission()" class="btn-neon" style="width: 100%; font-size: 11px; padding: 10px; font-weight: 800; background: linear-gradient(135deg, #fbbf24, #d97706); border: none; color: #000; box-shadow: 0 4px 15px rgba(217,119,6,0.3);">PHÁT THÁNH CHỈ</button>
                 </div>
 
                 <div style="border-top: 1.5px solid rgba(255,255,255,0.1); padding-top: 10px;">
-                    <h4 style="margin: 0 0 10px 0; font-size: 11px; color: #94a3b8; text-transform: uppercase;">DANH SÁCH NHIỆM VỤ</h4>
+                    <h4 style="margin: 0 0 10px 0; font-size: 11px; color: #94a3b8; text-transform: uppercase; display: flex; justify-content: space-between;">
+                        <span>LỊCH SỬ THÁNH CHỈ</span>
+                        <span style="font-size: 9px; opacity: 0.6;">(Mới nhất lên đầu)</span>
+                    </h4>
                     ${missions.map(m => `
                         <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
                             <div>
                                 <div style="font-size: 11px; font-weight: bold; color: #fff;">${m.title}</div>
-                                <div style="font-size: 9px; color: ${m.type === 'daily' ? '#38bdf8' : '#fbbf24'};">${m.type === 'daily' ? 'Ngày' : 'Tháng'} | ${m.reward}đ</div>
+                                <div style="font-size: 9px; color: ${m.type === 'daily' ? '#38bdf8' : '#fbbf24'};">
+                                    ${m.type === 'daily' ? 'Ngày' : 'Tháng'} | ${m.reward}đ | ${m.targetUser === 'all' ? 'Tất cả' : '@' + m.targetUser}
+                                </div>
                             </div>
-                            <button onclick="LobbyNeon.adminDeleteMission('${m.id}')" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 12px;">🗑️</button>
+                            <button onclick="LobbyNeon.adminDeleteMission('${m.id}')" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 14px; transition: 0.2s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">🗑️</button>
                         </div>
                     `).join('')}
                 </div>
@@ -888,18 +911,21 @@ window.LobbyNeon = {
         const description = document.getElementById('quest-desc').value;
         const type = document.getElementById('quest-type').value;
         const reward = parseInt(document.getElementById('quest-reward').value);
+        const targetUser = document.getElementById('quest-target').value;
 
         if (!title || !description || isNaN(reward)) {
             Utils.showToast("Vui lòng nhập đầy đủ thông tin!", "warning");
             return;
         }
 
-        const id = await DB.createMission({ title, description, type, reward, status: 'active' });
+        const id = await DB.createMission({ title, description, type, reward, targetUser, status: 'active' });
         if (id) {
             Utils.showToast("Đã ban hành thánh chỉ mới!", "success");
             LobbyNeon.renderAdminQuestManager();
+            
             // Send a system message to chat
-            await DB.sendLobbyChat({ sender: "Hệ Thống", text: `📜 Admin NPC vừa ban hành nhiệm vụ mới: "${title}"! Hãy tới gặp NPC để nhận ngay.` });
+            const targetText = targetUser === 'all' ? "tất cả mọi người" : `@${targetUser}`;
+            await DB.sendLobbyChat({ sender: "Hệ Thống", text: `📜 Admin vừa ban hành nhiệm vụ mới dành cho ${targetText}: "${title}"!` });
         }
     },
 
