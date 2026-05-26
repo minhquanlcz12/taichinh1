@@ -43,7 +43,11 @@ window.LobbyNeon = {
         LobbyNeon.state.isConnected = true;
         
         LobbyNeon.renderUser(user.username, LobbyNeon.state.myPos.x, LobbyNeon.state.myPos.y, user.profile?.chibiConfig);
-        LobbyNeon.renderQuestNPC();
+        
+        // Render NPC with delay to ensure map is ready
+        setTimeout(() => {
+            LobbyNeon.renderQuestNPC();
+        }, 500);
 
         LobbyNeon.startListening();
         LobbyNeon.listenToGames();
@@ -198,15 +202,22 @@ window.LobbyNeon = {
                     overflow-y: auto;
                     padding: 16px;
                 }
+
+                /* QUEST NPC STYLES */
+                @keyframes float { 0%, 100% { transform: translate(-50%, 0); } 50% { transform: translate(-50%, -15px); } }
+                .lobby-user-wrapper.npc { z-index: 999 !important; }
+                .lobby-user-wrapper.npc .lobby-chibi-container svg { overflow: visible !important; }
             </style>
 
             <div id="lobby-map-container" style="width: 100%; height: 100%; position: relative; cursor: crosshair; overflow: hidden; background: #000;">
                 <div class="lobby-map" id="lobby-map">
                     <video id="lobby-video-bg" autoplay loop muted playsinline 
+                        style="width: 2000px; height: 1200px; object-fit: cover; opacity: 0.8; filter: brightness(0.7) contrast(1.2);"
                         oncanplay="this.style.opacity=1" 
                         onerror="this.style.display='none'">
-                        <source src="assets/lobby_bg.mp4" type="video/mp4">
+                        <source src="https://v0.dev/api/api/proxy/file?fileId=DLoK4S0X4Yf9jR" type="video/mp4">
                     </video>
+                    <div class="lobby-click-ripple-layer"></div>
                 </div>
 
                 <!-- Game Hub Toggle Button -->
@@ -318,8 +329,12 @@ window.LobbyNeon = {
     },
 
     renderQuestNPC: () => {
+        console.log("LobbyNeon.renderQuestNPC starting...");
         const map = document.getElementById('lobby-map');
-        if (!map) return;
+        if (!map) {
+            console.error("NPC Error: lobby-map not found");
+            return;
+        }
 
         const npcId = 'npc-admin';
         let el = document.getElementById(npcId);
@@ -328,12 +343,14 @@ window.LobbyNeon = {
             el = document.createElement('div');
             el.id = npcId;
             el.className = 'lobby-user-wrapper npc';
+            el.style.position = 'absolute';
             el.style.cursor = 'help';
             el.onclick = (e) => {
                 e.stopPropagation();
                 LobbyNeon.openQuestBoard();
             };
             map.appendChild(el);
+            console.log("NPC element created and appended to map");
         }
 
         const npcConfig = {
@@ -357,19 +374,20 @@ window.LobbyNeon = {
 
         let chibiSvg = ChibiModule.renderChibiSVG(npcConfig, true, 88);
 
-        // Adjust NPC position to be near the throne
-        const tx = 955, ty = 360;
+        // Position near the throne at the top center
+        const tx = 955, ty = 340;
         LobbyNeon.state.npcPos = { x: tx, y: ty };
 
         el.style.left = `${tx}px`;
         el.style.top = `${ty}px`;
 
         el.innerHTML = `
-            <div class="lobby-user-name" style="color: #fbbf24; background: rgba(0,0,0,0.6); padding: 2px 10px; border: 1px solid #fbbf24; border-radius: 20px; font-weight: 800; font-size: 13px;">QUEST MASTER ADMIN</div>
-            <div class="lobby-quest-icon" style="position: absolute; top: -75px; left: 50%; transform: translateX(-50%); font-size: 32px; animation: float 2s infinite ease-in-out; filter: drop-shadow(0 0 10px #fbbf24);">📜</div>
-            <div class="lobby-chibi-container" style="transform: scale(1.6); filter: drop-shadow(0 0 15px rgba(251,191,36,0.5));">${chibiSvg}</div>
-            <div class="lobby-user-status" style="background: rgba(0,0,0,0.7); border: 2px solid #fbbf24; color: #fbbf24; padding: 4px 12px; font-weight: 900; animation: pulse-neon 2s infinite;">✨ NHẬN CÔNG VIỆC</div>
+            <div class="lobby-user-name" style="color: #fbbf24; background: rgba(0,0,0,0.8); padding: 4px 12px; border: 2px solid #fbbf24; border-radius: 20px; font-weight: 800; font-size: 14px; white-space: nowrap; box-shadow: 0 0 10px rgba(251,191,36,0.5);">👑 QUEST MASTER ADMIN</div>
+            <div class="lobby-quest-icon" style="position: absolute; top: -85px; left: 50%; transform: translateX(-50%); font-size: 40px; animation: float 2s infinite ease-in-out; filter: drop-shadow(0 0 15px #fbbf24); z-index: 10;">📜</div>
+            <div class="lobby-chibi-container" style="transform: scale(1.8); filter: drop-shadow(0 0 20px rgba(251,191,36,0.6)); pointer-events: none;">${chibiSvg}</div>
+            <div class="lobby-user-status" style="background: #fbbf24; border: none; color: #000; padding: 4px 16px; font-weight: 900; border-radius: 4px; font-size: 11px; margin-top: 10px; box-shadow: 0 0 15px #fbbf24;">✨ NHẬN THÁNH CHỈ</div>
         `;
+        console.log("NPC render complete at", tx, ty);
     },
 
     // ========== MOVEMENT ==========
