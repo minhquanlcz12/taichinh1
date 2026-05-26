@@ -352,8 +352,54 @@
                         </div>
                     </div>
 
-                    <!-- New Dashboard Row for Project Tracking, Hall of Fame and Hall of Shame -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+                    <!-- BXH CHUNG - Bảng Vàng Tuyên Dương (Full-Width Nổi Bật) -->
+                    <div class="glass-card panel-glow" style="padding: 24px; margin-bottom: 24px; background: linear-gradient(145deg, rgba(20,25,35,0.97), rgba(4,9,20,0.97)); border: 1.5px solid rgba(255,215,0,0.35); position: relative; overflow: hidden; border-radius: 16px; box-shadow: 0 0 40px rgba(255,215,0,0.08), 0 8px 32px rgba(0,0,0,0.4);">
+                        <!-- Decorative Background Elements -->
+                        <div style="position: absolute; top: -30px; right: -30px; font-size: 140px; color: rgba(255,215,0,0.04); transform: rotate(15deg); pointer-events: none;"><i class="fa-solid fa-trophy"></i></div>
+                        <div style="position: absolute; bottom: -20px; left: -20px; font-size: 100px; color: rgba(255,215,0,0.03); transform: rotate(-10deg); pointer-events: none;"><i class="fa-solid fa-star"></i></div>
+                        
+                        <!-- Shimmer Animation -->
+                        <style>
+                            @keyframes bxh-shimmer {
+                                0% { background-position: -200% center; }
+                                100% { background-position: 200% center; }
+                            }
+                            .bxh-title-shimmer {
+                                background: linear-gradient(90deg, #ffd700 0%, #fff5cc 25%, #ffd700 50%, #ffaa00 75%, #ffd700 100%);
+                                background-size: 200% auto;
+                                -webkit-background-clip: text;
+                                -webkit-text-fill-color: transparent;
+                                background-clip: text;
+                                animation: bxh-shimmer 4s linear infinite;
+                            }
+                            .bxh-subtitle {
+                                color: rgba(255,215,0,0.5);
+                                font-size: 12px;
+                                font-weight: 500;
+                                letter-spacing: 2px;
+                                text-transform: uppercase;
+                            }
+                        </style>
+
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 8px; z-index: 1; position: relative;">
+                            <i class="fa-solid fa-ranking-star" style="font-size: 28px; color: #ffd700; filter: drop-shadow(0 0 8px rgba(255,215,0,0.5));"></i>
+                            <h3 class="bxh-title-shimmer" style="margin: 0; font-size: 22px; font-weight: 900; letter-spacing: 1px; text-align: center;">
+                                🏆 BẢNG VÀNG TUYÊN DƯƠNG
+                            </h3>
+                            <i class="fa-solid fa-ranking-star" style="font-size: 28px; color: #ffd700; filter: drop-shadow(0 0 8px rgba(255,215,0,0.5));"></i>
+                        </div>
+                        <div class="bxh-subtitle" style="text-align: center; margin-bottom: 16px; z-index: 1; position: relative;">
+                            Xếp hạng nhiệm vụ hoàn thành trong tháng
+                        </div>
+
+                        <div id="dash-hall-of-fame" style="display: flex; flex-direction: column; gap: 10px; z-index: 1; position: relative;">
+                            <!-- Injected by JS -->
+                            <div style="color: var(--text-secondary); font-size: 13px; text-align: center; padding: 20px 0;">Chưa có thành tích nào...</div>
+                        </div>
+                    </div>
+
+                    <!-- Dashboard Row: Tiến độ Dự án + Bảng Phong Thần (2 cột) -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
                         <div class="glass-card" style="padding: 16px; display: flex; flex-direction: column;">
                             <h3 style="margin-bottom: 12px; font-size: 16px; color: var(--text-secondary); display: flex; justify-content: space-between; align-items: center;">
                                 <span><i class="fa-solid fa-bars-progress" style="color:var(--primary); margin-right:8px;"></i>Tiến độ Dự án / Nhóm</span>
@@ -361,17 +407,6 @@
                             <div id="dash-project-progress" style="display: flex; flex-direction: column; gap: 12px; overflow-y: auto; max-height: 200px; padding-right: 4px;">
                                 <!-- Injected by JS -->
                                 <div style="color: var(--text-secondary); font-size: 13px; text-align: center; padding: 20px 0;">Đang tải dữ liệu tiến độ...</div>
-                            </div>
-                        </div>
-
-                        <div class="glass-card panel-glow" style="padding: 16px; background: linear-gradient(145deg, rgba(20,25,35,0.95), rgba(4,9,20,0.95)); border: 1px solid rgba(255,215,0,0.3); display: flex; flex-direction: column; position: relative; overflow: hidden;">
-                            <div style="position: absolute; top: -20px; right: -20px; font-size: 100px; color: rgba(255,215,0,0.05); transform: rotate(15deg); pointer-events: none;"><i class="fa-solid fa-trophy"></i></div>
-                            <h3 style="margin-bottom: 12px; font-size: 16px; color: #ffd700; text-shadow: 0 0 10px rgba(255,215,0,0.3); z-index: 1;">
-                                <i class="fa-solid fa-ranking-star" style="margin-right:8px;"></i>Bảng Vàng Tuyên Dương
-                            </h3>
-                            <div id="dash-hall-of-fame" style="display: flex; flex-direction: column; gap: 10px; overflow-y: auto; max-height: 200px; z-index: 1;">
-                                <!-- Injected by JS -->
-                                <div style="color: var(--text-secondary); font-size: 13px; text-align: center; padding: 20px 0;">Chưa có thành tích nào...</div>
                             </div>
                         </div>
 
