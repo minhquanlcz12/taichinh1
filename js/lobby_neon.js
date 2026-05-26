@@ -904,7 +904,7 @@ window.LobbyNeon = {
                     const deadlineStr = m.deadline ? new Date(m.deadline).toLocaleString('vi-VN') : 'Không giới hạn';
                     
                     return `
-                    <div style="background: rgba(251,191,36,0.05); border: 2.5px solid ${isAccepted ? '#10b981' : '#fbbf24'}; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); position: relative; overflow: hidden;">
+                    <div style="background: rgba(15, 23, 42, 0.95); border: 2px solid ${isAccepted ? '#10b981' : '#fbbf24'}; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); position: relative; overflow: hidden; z-index: 10;">
                         <div style="position: absolute; top: -10px; right: -10px; font-size: 40px; opacity: 0.1; transform: rotate(15deg);">${m.type === 'daily' ? '📅' : '🏆'}</div>
                         
                         <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
@@ -921,11 +921,11 @@ window.LobbyNeon = {
                         <p style="margin: 0; color: #e2e8f0; font-size: 12.5px; line-height: 1.5; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 6px;">${m.description}</p>
                         
                         ${isAccepted ? `
-                            <div style="margin-top: 12px; text-align: center; color: #10b981; font-weight: 900; font-size: 12px; letter-spacing: 1px;">
+                            <div style="margin-top: 15px; text-align: center; color: #10b981; font-weight: 900; font-size: 14px; letter-spacing: 1px; padding: 10px; background: rgba(16, 185, 129, 0.1); border-radius: 8px;">
                                 ✔️ ĐÃ TIẾP NHẬN THÁNH CHỈ
                             </div>
                         ` : `
-                            <button onclick="LobbyNeon.acceptMission('${m.id}')" style="margin-top: 12px; width: 100%; padding: 10px; background: #fbbf24; border: none; border-radius: 6px; color: #000; font-weight: 800; font-size: 12px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 10px rgba(251,191,36,0.3);">
+                            <button onclick="LobbyNeon.acceptMission('${m.id}')" style="margin-top: 15px; width: 100%; padding: 12px; background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); border: none; border-radius: 8px; color: #000; font-weight: 900; font-size: 14px; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(251,191,36,0.4); text-transform: uppercase; letter-spacing: 1px;">
                                 TIẾP NHẬN NHIỆM VỤ
                             </button>
                         `}
