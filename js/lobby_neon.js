@@ -824,6 +824,22 @@ window.LobbyNeon = {
     openCaroBoard: (gameId, game) => {
         if (LobbyNeon.state.currentGameId === gameId) return;
         LobbyNeon.state.currentGameId = gameId;
+        LobbyNeon.state.isMakingMove = false; // Reset lock
+
+        // Lấy chibi config cho 2 người chơi
+        const getPlayerChibi = (username) => {
+            try {
+                const accounts = JSON.parse(localStorage.getItem('accounts') || '[]');
+                const acc = accounts.find(a => a.username === username);
+                const config = acc?.profile?.chibiConfig || {};
+                return ChibiModule.renderChibiSVG(config, false, 0);
+            } catch(e) {
+                return '<div style="font-size: 40px;">👤</div>';
+            }
+        };
+
+        const p1Chibi = getPlayerChibi(game.player1);
+        const p2Chibi = getPlayerChibi(game.player2);
 
         const container = document.getElementById('lobby-view');
         const boardOverlay = document.createElement('div');
@@ -832,23 +848,32 @@ window.LobbyNeon = {
         boardOverlay.innerHTML = `
             <div class="caro-board-container">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 20px; align-items: center;">
-                    <div style="color: #fff; font-size: 14px; flex: 1;">
-                        <div id="caro-p1-label" style="color: #ff4757; font-weight: 900; text-shadow: 0 0 5px #ff4757; margin-bottom: 4px;">${game.player1} (X)</div>
-                        <div id="caro-p1-stats" style="font-size: 10px; color: #94a3b8; font-weight: bold;">Đang tải...</div>
+                    <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
+                        <div style="width: 50px; height: 50px; flex-shrink: 0; filter: drop-shadow(0 0 6px #ff475780);">${p1Chibi}</div>
+                        <div>
+                            <div id="caro-p1-label" style="color: #ff4757; font-weight: 900; text-shadow: 0 0 5px #ff4757; margin-bottom: 4px;">${game.player1} (X)</div>
+                            <div id="caro-p1-stats" style="font-size: 10px; color: #94a3b8; font-weight: bold;">Đang tải...</div>
+                        </div>
                     </div>
-                    <div style="margin: 0 15px; opacity: 0.5; color: #fff; font-weight: 900;">VS</div>
-                    <div style="color: #fff; font-size: 14px; flex: 1; text-align: right;">
-                        <div id="caro-p2-label" style="color: #2ed573; font-weight: 900; text-shadow: 0 0 5px #2ed573; margin-bottom: 4px;">${game.player2} (O)</div>
-                        <div id="caro-p2-stats" style="font-size: 10px; color: #94a3b8; font-weight: bold;">Đang tải...</div>
+                    <div style="margin: 0 15px; opacity: 0.5; color: #fff; font-weight: 900; font-size: 18px;">⚔️</div>
+                    <div style="display: flex; align-items: center; gap: 10px; flex: 1; justify-content: flex-end;">
+                        <div style="text-align: right;">
+                            <div id="caro-p2-label" style="color: #2ed573; font-weight: 900; text-shadow: 0 0 5px #2ed573; margin-bottom: 4px;">${game.player2} (O)</div>
+                            <div id="caro-p2-stats" style="font-size: 10px; color: #94a3b8; font-weight: bold;">Đang tải...</div>
+                        </div>
+                        <div style="width: 50px; height: 50px; flex-shrink: 0; filter: drop-shadow(0 0 6px #2ed57380);">${p2Chibi}</div>
                     </div>
-                    <div style="display: flex; gap: 8px;">
+                    <div style="display: flex; gap: 8px; margin-left: 12px;">
                         <button class="btn-neon-danger" id="caro-btn-quit" onclick="LobbyNeon.forfeitGame()" style="font-size: 11px; padding: 6px 12px; height: 32px;">Rút lui</button>
                         <button class="btn-neon" onclick="LobbyNeon.closeCaroBoard()" style="font-size: 11px; padding: 6px 12px; height: 32px; background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2);">✖</button>
                     </div>
                 </div>
                 <div id="caro-status-msg" style="color: #fff; font-weight: 800; font-size: 14px; margin-bottom: 15px; text-align: center; background: rgba(168, 85, 247, 0.2); padding: 5px; border-radius: 8px;">Đang chuẩn bị...</div>
-                <div class="caro-grid" id="caro-grid">
-                    ${Array(225).fill(0).map((_, i) => `<div class="caro-cell" onclick="LobbyNeon.makeMove(${i})"></div>`).join('')}
+                <div style="position: relative;">
+                    <div class="caro-grid" id="caro-grid">
+                        ${Array(225).fill(0).map((_, i) => `<div class="caro-cell" onclick="LobbyNeon.makeMove(${i})"></div>`).join('')}
+                    </div>
+                    <svg id="caro-win-line" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10;"></svg>
                 </div>
                 <div id="caro-winner-ui" class="caro-winner-overlay" style="display: none; flex-direction: column; gap: 20px;">
                     <div class="winner-text">🎉 THẮNG CUỘC!</div>
@@ -867,6 +892,7 @@ window.LobbyNeon = {
         if (LobbyNeon.state.isMakingMove) return;
         const gameId = LobbyNeon.state.currentGameId;
         const game = LobbyNeon.state.currentGameData;
+        if (!game || !gameId) return;
         const me = Auth.currentUser.username;
 
         if (game.status !== 'playing') return;
@@ -881,26 +907,36 @@ window.LobbyNeon = {
         const symbol = (me === game.player1) ? 'X' : 'O';
         newBoard[index] = symbol;
 
-        const winner = LobbyNeon.checkWin(newBoard, index);
+        // Cập nhật ô ngay lập tức trên UI (không chờ DB)
+        const cells = document.querySelectorAll('#caro-grid .caro-cell');
+        if (cells[index]) {
+            cells[index].textContent = symbol;
+            cells[index].className = `caro-cell ${symbol.toLowerCase()} filled`;
+        }
+
+        const winResult = LobbyNeon.checkWin(newBoard, index);
         const updateData = {
             board: newBoard,
             turn: (me === game.player1) ? game.player2 : game.player1
         };
 
-        if (winner) {
+        if (winResult) {
             updateData.status = 'finished';
             updateData.winner = me;
+            updateData.winCells = winResult; // Lưu các ô thắng
         }
 
         try {
             await DB.updateLobbyGame(gameId, updateData);
             
-            if (winner) {
-                // Update stats
+            if (winResult) {
                 const loser = (me === game.player1) ? game.player2 : game.player1;
                 await DB.incrementUserStats(me, 'caroWins');
                 await DB.incrementUserStats(loser, 'caroLosses');
                 GamesSynth.playWin();
+                // Vẽ đường thắng + hiện popup
+                LobbyNeon.drawWinLine(winResult);
+                LobbyNeon.showGameResult(true, me, loser);
             } else {
                 GamesSynth.playMove();
             }
@@ -909,6 +945,75 @@ window.LobbyNeon = {
         } finally {
             LobbyNeon.state.isMakingMove = false;
         }
+    },
+
+    drawWinLine: (winCells) => {
+        const svg = document.getElementById('caro-win-line');
+        const grid = document.getElementById('caro-grid');
+        if (!svg || !grid || !winCells || winCells.length < 5) return;
+
+        const cells = grid.querySelectorAll('.caro-cell');
+        // Highlight winning cells
+        winCells.forEach(idx => {
+            if (cells[idx]) {
+                cells[idx].style.background = 'rgba(46, 213, 115, 0.3)';
+                cells[idx].style.boxShadow = '0 0 15px rgba(46, 213, 115, 0.5), inset 0 0 10px rgba(46, 213, 115, 0.2)';
+                cells[idx].style.transform = 'scale(1.1)';
+                cells[idx].style.zIndex = '5';
+            }
+        });
+
+        // Vẽ đường gạch xuyên qua các ô thắng
+        const firstCell = cells[winCells[0]];
+        const lastCell = cells[winCells[winCells.length - 1]];
+        if (!firstCell || !lastCell) return;
+
+        const gridRect = grid.getBoundingClientRect();
+        const r1 = firstCell.getBoundingClientRect();
+        const r2 = lastCell.getBoundingClientRect();
+
+        const x1 = r1.left + r1.width / 2 - gridRect.left;
+        const y1 = r1.top + r1.height / 2 - gridRect.top;
+        const x2 = r2.left + r2.width / 2 - gridRect.left;
+        const y2 = r2.top + r2.height / 2 - gridRect.top;
+
+        svg.innerHTML = `
+            <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" 
+                stroke="#2ed573" stroke-width="4" stroke-linecap="round"
+                style="filter: drop-shadow(0 0 8px #2ed573); opacity: 0;"
+                id="caro-strike-line">
+                <animate attributeName="opacity" from="0" to="1" dur="0.3s" fill="freeze" />
+            </line>
+        `;
+    },
+
+    showGameResult: (isWinner, winner, loser) => {
+        const me = Auth.currentUser.username;
+        const isMeWinner = (winner === me);
+        const opponentName = isMeWinner ? loser : winner;
+
+        setTimeout(() => {
+            Utils.showModal(
+                isMeWinner ? '🏆 CHIẾN THẮNG VINH QUANG!' : '💀 THUA CUỘC RỒI!',
+                `<div style="text-align: center;">
+                    <div style="font-size: 80px; margin-bottom: 15px;">${isMeWinner ? '🏆' : '💀'}</div>
+                    <h2 style="color: ${isMeWinner ? '#2ed573' : '#ff4757'}; font-size: 28px; margin: 10px 0; text-shadow: 0 0 20px ${isMeWinner ? '#2ed573' : '#ff4757'}60;">
+                        ${isMeWinner ? 'BẠN ĐÃ THẮNG!' : 'BẠN ĐÃ THUA!'}
+                    </h2>
+                    <p style="color: #94a3b8; font-size: 14px; margin-top: 10px;">
+                        ${isMeWinner 
+                            ? `Đối thủ <b style="color:#ff4757">${opponentName}</b> đã quỳ gối trước bạn! Oai phong lẫm liệt! 😎` 
+                            : `<b style="color:#2ed573">${opponentName}</b> đã hạ gục bạn! Về luyện thêm đi sếp! 💪`
+                        }
+                    </p>
+                </div>`,
+                () => {
+                    LobbyNeon.closeCaroBoard();
+                    return true;
+                },
+                'VỀ SẢNH CHÍNH'
+            );
+        }, 1200); // Chờ 1.2s cho hiệu ứng gạch line xong
     },
 
     onGameUpdate: async (game) => {
@@ -929,29 +1034,25 @@ window.LobbyNeon = {
 
         const me = Auth.currentUser.username;
         const statusMsg = document.getElementById('caro-status-msg');
-        const winnerUI = document.getElementById('caro-winner-ui');
 
         if (game.status === 'finished') {
-            if (winnerUI) {
-                winnerUI.style.display = 'flex';
-                const winnerText = winnerUI.querySelector('.winner-text');
-                if (game.winner === me) {
-                    winnerText.innerHTML = "🏆 CHIẾN THẮNG!";
-                    winnerText.style.color = "#2ed573";
-                    winnerText.style.textShadow = "0 0 20px #2ed573";
-                } else if (game.winner) {
-                    winnerText.innerHTML = "💀 BẠI TRẬN!";
-                    winnerText.style.color = "#ff4757";
-                    winnerText.style.textShadow = "0 0 20px #ff4757";
-                } else {
-                    winnerText.innerHTML = "🏳️ TRẬN ĐẤU KẾT THÚC";
-                    winnerText.style.color = "#94a3b8";
-                }
-            }
-            
             const quitBtn = document.getElementById('caro-btn-quit');
             if (quitBtn) quitBtn.style.display = 'none';
-            statusMsg.innerHTML = `<span style="color:#fff">Trận đấu đã kết thúc. Giao diện sẽ đóng sau khi bạn chọn.</span>`;
+
+            // Nếu mình là người THUA (đối thủ vừa thắng) → vẽ line + hiện kết quả
+            if (game.winner && game.winner !== me) {
+                // Vẽ đường thắng nếu có winCells
+                if (game.winCells && game.winCells.length >= 5) {
+                    LobbyNeon.drawWinLine(game.winCells);
+                }
+                statusMsg.innerHTML = `<span style="color:#ff4757">💀 ${game.winner} đã chiến thắng!</span>`;
+                LobbyNeon.showGameResult(false, game.winner, me);
+            } else if (game.winner === me) {
+                statusMsg.innerHTML = `<span style="color:#2ed573">🏆 Bạn đã chiến thắng!</span>`;
+            } else {
+                statusMsg.innerHTML = `<span style="color:#fff">🏳️ Trận đấu kết thúc.</span>`;
+                setTimeout(() => LobbyNeon.closeCaroBoard(), 2000);
+            }
         } else {
             statusMsg.innerHTML = game.turn === me ? 
                 `<span style="color:#2ed573">🟢 ĐẾN LƯỢT TIÊN PHONG</span>` : 
@@ -995,22 +1096,31 @@ window.LobbyNeon = {
         const x = index % size;
         const y = Math.floor(index / size);
         const symbol = board[index];
+        if (!symbol) return null;
         const directions = [[1,0],[0,1],[1,1],[1,-1]];
         for (const [dx, dy] of directions) {
-            let count = 1;
-            for (let i = 1; i < 5; i++) {
+            let winCells = [index];
+            // Duyệt hướng thuận
+            for (let i = 1; i < 15; i++) {
                 const nx = x + dx * i, ny = y + dy * i;
-                if (nx >= 0 && nx < size && ny >= 0 && ny < size && board[ny * size + nx] === symbol) count++;
-                else break;
+                if (nx >= 0 && nx < size && ny >= 0 && ny < size && board[ny * size + nx] === symbol) {
+                    winCells.push(ny * size + nx);
+                } else break;
             }
-            for (let i = 1; i < 5; i++) {
+            // Duyệt hướng nghịch
+            for (let i = 1; i < 15; i++) {
                 const nx = x - dx * i, ny = y - dy * i;
-                if (nx >= 0 && nx < size && ny >= 0 && ny < size && board[ny * size + nx] === symbol) count++;
-                else break;
+                if (nx >= 0 && nx < size && ny >= 0 && ny < size && board[ny * size + nx] === symbol) {
+                    winCells.push(ny * size + nx);
+                } else break;
             }
-            if (count >= 5) return true;
+            if (winCells.length >= 5) {
+                // Sắp xếp theo thứ tự vị trí
+                winCells.sort((a, b) => a - b);
+                return winCells;
+            }
         }
-        return false;
+        return null;
     },
 
     forfeitGame: async () => {
