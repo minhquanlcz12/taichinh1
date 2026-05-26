@@ -429,10 +429,12 @@ window.LobbyNeon = {
         // PARTIAL UPDATE to preserve child elements like chat bubbles
         let nameEl = el.querySelector('.lobby-user-name');
         if (!nameEl) {
+            const userLevel = Auth.currentUser?.level || 1;
+            const titleInfo = Auth.getLevelTitle(userLevel);
             el.innerHTML = `
-                <div class="lobby-user-name">${username}</div>
-                ${isMe && typeof Auth !== 'undefined' ? Auth.renderExpBar(Auth.currentUser?.exp || 0, Auth.currentUser?.level || 1, true) : ''}
-                <div class="lobby-chibi-container" style="transform: scale(1.3);">${chibiSvg}</div>
+                <div class="lobby-user-name">${username} <span style="font-size: 9px; color: ${titleInfo.color}; font-weight: 900; opacity: 0.9;">${titleInfo.title}</span></div>
+                ${isMe && typeof Auth !== 'undefined' ? Auth.renderExpBar(Auth.currentUser?.exp || 0, userLevel, true) : ''}
+                <div class="lobby-chibi-container" style="transform: scale(1.3);${titleInfo.glow ? ' filter: drop-shadow(0 0 8px ' + titleInfo.color + '60);' : ''}">${chibiSvg}</div>
                 ${!isMe ? '<div class="lobby-user-status">⚔️ THÁCH ĐẤU</div>' : ''}
             `;
         } else {
@@ -605,9 +607,46 @@ window.LobbyNeon = {
     },
 
     moveTo: async (x, y) => {
+        const oldPos = LobbyNeon.state.myPos || { x, y };
         LobbyNeon.state.myPos = { x, y };
         const user = Auth.currentUser;
         LobbyNeon.renderUser(user.username, x, y, user.profile?.chibiConfig);
+        
+        // Hiệu ứng dấu chân khi di chuyển (từ cấp 5+)
+        const userLevel = user?.level || 1;
+        if (userLevel >= 5) {
+            const map = document.getElementById('lobby-map');
+            if (map) {
+                const titleInfo = Auth.getLevelTitle(userLevel);
+                const footprintCount = userLevel >= 12 ? 5 : 3;
+                const dx = x - oldPos.x;
+                const dy = y - oldPos.y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                if (dist > 30) {
+                    for (let i = 0; i < footprintCount; i++) {
+                        setTimeout(() => {
+                            const fp = document.createElement('div');
+                            const progress = (i + 1) / (footprintCount + 1);
+                            const fpX = oldPos.x + dx * progress + (Math.random() - 0.5) * 15;
+                            const fpY = oldPos.y + dy * progress + (Math.random() - 0.5) * 10;
+                            const isFireStep = userLevel >= 12;
+                            const isGoldStep = userLevel >= 15;
+                            fp.style.cssText = `
+                                position: absolute; left: ${fpX}px; top: ${fpY + 60}px; z-index: 5;
+                                font-size: ${isFireStep ? '16px' : '12px'};
+                                opacity: 0.8; pointer-events: none;
+                                animation: footprintFade 1.2s forwards ease-out;
+                                ${isFireStep ? 'filter: drop-shadow(0 0 6px ' + (isGoldStep ? '#fbbf24' : '#ef4444') + ');' : ''}
+                            `;
+                            fp.textContent = isGoldStep ? '✨' : isFireStep ? '🔥' : '✧';
+                            map.appendChild(fp);
+                            setTimeout(() => fp.remove(), 1200);
+                        }, i * 80);
+                    }
+                }
+            }
+        }
+        
         await LobbyNeon.syncMyPresence();
     },
 
@@ -656,8 +695,30 @@ window.LobbyNeon = {
         const oldBubble = userWrapper.querySelector('.lobby-chat-bubble');
         if (oldBubble) oldBubble.remove();
 
+        // Lấy level của user để tùy chỉnh bong bóng
+        let bubbleStyle = '';
+        if (typeof Auth !== 'undefined') {
+            // Tìm level của user này
+            let userLevel = 1;
+            if (Auth.currentUser && Auth.currentUser.username === username) {
+                userLevel = Auth.currentUser.level || 1;
+            }
+            const titleInfo = Auth.getLevelTitle(userLevel);
+            if (userLevel >= 5 && titleInfo.bubbleColor) {
+                const isGradient = titleInfo.bubbleColor.includes('gradient');
+                bubbleStyle = `
+                    ${isGradient ? 'background: ' + titleInfo.bubbleColor + ';' : 'background: ' + titleInfo.bubbleColor + ';'}
+                    color: #fff;
+                    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+                    ${titleInfo.bubbleGlow !== 'none' ? 'box-shadow: ' + titleInfo.bubbleGlow + ';' : ''}
+                    border: 1px solid rgba(255,255,255,0.2);
+                `;
+            }
+        }
+
         const bubble = document.createElement('div');
         bubble.className = 'lobby-chat-bubble';
+        if (bubbleStyle) bubble.style.cssText += bubbleStyle;
         bubble.textContent = text.length > 50 ? text.substring(0, 47) + '...' : text;
         userWrapper.appendChild(bubble);
 
@@ -1171,39 +1232,35 @@ window.LobbyNeon = {
                     </div>
                     <div style="max-height: 380px; overflow-y: auto; padding: 10px;">
                         ${sorted.map((u, i) => {
-                            let title = '';
+                            const levelTitleInfo = Auth.getLevelTitle(u.level);
                             let comment = '';
-                            let rankColor = '#94a3b8';
+                            let rankColor = levelTitleInfo.color;
                             let rowBg = 'transparent';
                             let icon = '👤';
 
                             if (i === 0) {
-                                title = '👑 Võ Lâm Minh Chủ';
-                                comment = 'Hào quang rực rỡ lấn át cả sếp Admin. Kẻ gánh team vĩ đại!';
-                                rankColor = '#fbbf24';
+                                comment = 'Top 1 Marketing! Sếp đang lo lắng vì bạn giỏi quá có khi nghỉ mất! 😰';
                                 rowBg = 'rgba(251,191,36,0.08)';
                                 icon = '🥇';
                             } else if (i === 1) {
-                                title = '🥈 Tả Hộ Pháp';
-                                comment = 'Kẻ bám đuôi vĩ đại. Chỉ một vài nhiệm vụ nữa là lật đổ vương triều!';
-                                rankColor = '#cbd5e1';
+                                comment = 'Suýt soát Top 1! Chỉ cần 1 cái Reels viral nữa là lật kèo! 📱';
                                 rowBg = 'rgba(203,213,225,0.05)';
                                 icon = '🥈';
                             } else if (i === 2) {
-                                title = '🥉 Hữu Hộ Pháp';
-                                comment = 'Chiến thần cần mẫn. Một chân sẵn sàng đạp bay Top 2 lên thớt!';
-                                rankColor = '#cd7f32';
+                                comment = 'Content ra đều đặn như đồng hồ Thụy Sĩ, chỉ khác là rẻ hơn! ⌚';
                                 rowBg = 'rgba(205,127,50,0.05)';
                                 icon = '🥉';
                             } else if (i < 10) {
-                                title = '🔥 Giang Hồ Cao Thủ';
-                                comment = 'Cày bừa chăm chỉ, kiếp làm thuê gương mẫu vì cơm áo gạo tiền.';
-                                rankColor = '#38bdf8';
+                                const midComments = [
+                                    'Cày content chăm hơn cày rank Liên Quân. Đáng khen! 🎮',
+                                    'Poster ra nhanh hơn shipper giao hàng! 🛵',
+                                    'Canva Pro sợ bạn dùng hết bandwidth! 🎨',
+                                    'Tay đánh máy nhanh hơn tay pha cà phê! ☕',
+                                ];
+                                comment = midComments[i % midComments.length];
                                 icon = '🎖️';
                             } else {
-                                title = '💤 Vô Danh Tiểu Tốt';
-                                comment = 'Đang bận dưỡng sức hoặc đang lười đột xuất chờ thời cơ đột phá.';
-                                rankColor = '#64748b';
+                                comment = 'Đang bận nghĩ content viral hoặc đang scroll TikTok "tham khảo"... 📵';
                                 icon = '🚶';
                             }
 
@@ -1223,7 +1280,7 @@ window.LobbyNeon = {
                                                 ${displayName}
                                             </span>
                                             <span style="font-size: 10px; font-weight: 900; color: ${rankColor}; text-transform: uppercase; background: rgba(0,0,0,0.3); padding: 1px 6px; border-radius: 4px; border: 1px solid ${rankColor}33;">
-                                                ${title}
+                                                ${levelTitleInfo.title}
                                             </span>
                                         </div>
                                         <div style="font-size: 11px; color: #64748b; margin-top: 4px; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${comment}">

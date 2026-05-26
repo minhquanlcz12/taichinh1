@@ -820,12 +820,26 @@ const Auth = {
     },
 
     getLevelTitle: (level) => {
-        if (level >= 15) return { title: '🌟 Võ Lâm Chí Tôn', color: '#ff6b6b', glow: true };
-        if (level >= 10) return { title: '⚔️ Chiến Thần Huyền Thoại', color: '#fbbf24', glow: true };
-        if (level >= 7) return { title: '🛡️ Hộ Pháp Cung Đình', color: '#a855f7', glow: false };
-        if (level >= 5) return { title: '💪 Chiến Binh Gánh Team', color: '#10b981', glow: false };
-        if (level >= 3) return { title: '🗡️ Kẻ Đánh Thuê', color: '#38bdf8', glow: false };
-        return { title: '🌱 Tân Binh Tập Sự', color: '#94a3b8', glow: false };
+        if (level >= 15) return { title: '👑 CMO Huyền Thoại', color: '#ff6b6b', glow: true, bubbleColor: 'linear-gradient(135deg, #ff6b6b, #fbbf24, #a855f7)', bubbleGlow: '0 0 15px #ff6b6b, 0 0 30px #fbbf2440' };
+        if (level >= 12) return { title: '🧠 Chiến Lược Gia Viral', color: '#f59e0b', glow: true, bubbleColor: 'linear-gradient(135deg, #f59e0b, #fbbf24)', bubbleGlow: '0 0 12px #f59e0b80' };
+        if (level >= 10) return { title: '🎬 Đạo Diễn Reels Triệu View', color: '#fbbf24', glow: true, bubbleColor: 'linear-gradient(135deg, #fbbf24, #f59e0b)', bubbleGlow: '0 0 12px #fbbf2480' };
+        if (level >= 7) return { title: '📸 Thánh Chụp Ảnh Sản Phẩm', color: '#a855f7', glow: false, bubbleColor: 'linear-gradient(135deg, #a855f7, #6366f1)', bubbleGlow: '0 0 10px #a855f780' };
+        if (level >= 5) return { title: '✍️ Thợ Viết Content Giang Hồ', color: '#10b981', glow: false, bubbleColor: 'linear-gradient(135deg, #10b981, #059669)', bubbleGlow: '0 0 8px #10b98160' };
+        if (level >= 3) return { title: '📝 Nhân Viên Canva Kiên Cường', color: '#38bdf8', glow: false, bubbleColor: '#38bdf8', bubbleGlow: 'none' };
+        return { title: '🌱 Intern Chạy Việc Vặt', color: '#94a3b8', glow: false, bubbleColor: 'rgba(255,255,255,0.95)', bubbleGlow: 'none' };
+    },
+
+    getLevelPerks: (level) => {
+        const perks = [];
+        if (level >= 1) perks.push('🌱 Trang phục cơ bản');
+        if (level >= 2) perks.push('🗡️ Mở thêm vũ khí mới');
+        if (level >= 3) perks.push('🎩 Phụ kiện đặc biệt + Danh hiệu "Nhân Viên Canva"');
+        if (level >= 5) perks.push('🦅 Cánh + Thú cưỡi + Bong bóng chat xanh lá');
+        if (level >= 7) perks.push('🐉 Rồng + Aura + Bong bóng chat tím lấp lánh');
+        if (level >= 10) perks.push('🌟 Mở TOÀN BỘ trang phục + Bong bóng vàng kim');
+        if (level >= 12) perks.push('🔥 Hiệu ứng dấu chân lửa khi di chuyển');
+        if (level >= 15) perks.push('🌈 Bong bóng chat cầu vồng + Dấu chân vàng + Danh hiệu "CMO Huyền Thoại"');
+        return perks;
     },
 
     addExpToUser: async (username, rewardPoints) => {
@@ -861,6 +875,17 @@ const Auth = {
         const leveled = newLevel > oldLevel;
         if (leveled) {
             const titleInfo = Auth.getLevelTitle(newLevel);
+            const perks = Auth.getLevelPerks(newLevel);
+            const latestPerk = perks[perks.length - 1] || '';
+            const funnyQuotes = [
+                'Sếp đang xem xét tăng lương cho bạn... Đùa thôi, cày tiếp đi! 😂',
+                'CV của bạn vừa dày thêm 1 trang. HR đang rình xem bạn nghỉ lúc nào! 🕵️',
+                'Đồng nghiệp đang ghen tị vì bạn lên cấp nhanh hơn deadline! 🚀',
+                'Bạn chính thức trở thành "người đáng sợ nhất phòng Marketing"! 💀',
+                'KPI tháng này coi như xong. Còn tháng sau thì... cày tiếp! 📊',
+            ];
+            const randomQuote = funnyQuotes[Math.floor(Math.random() * funnyQuotes.length)];
+            
             Utils.showModal(
                 '🎊 THĂNG CẤP! LÊN ĐỜI RỒI!',
                 `<div style="text-align: center;">
@@ -871,8 +896,12 @@ const Auth = {
                     <div style="font-size: 18px; color: ${titleInfo.color}; font-weight: 900; margin-bottom: 15px; padding: 8px 20px; background: rgba(0,0,0,0.3); border-radius: 20px; display: inline-block; border: 1px solid ${titleInfo.color}40;">
                         ${titleInfo.title}
                     </div>
-                    <p style="color: #94a3b8; font-size: 14px; margin-top: 10px; font-style: italic;">
-                        ${newLevel >= 10 ? 'Giang hồ rùng mình khi nghe danh hiệu này! Trang phục VIP đã mở khóa!' : newLevel >= 5 ? 'Uy danh vang dội! Nhiều trang phục mới đã được mở khóa!' : 'Tiếp tục cày cuốc, vinh quang đang chờ phía trước!'}
+                    ${latestPerk ? `<div style="margin: 12px auto; padding: 10px 16px; background: rgba(16,185,129,0.1); border: 1px dashed #10b981; border-radius: 10px; max-width: 280px;">
+                        <div style="font-size: 10px; color: #10b981; font-weight: 900; text-transform: uppercase; margin-bottom: 4px;">🔓 ĐÃ MỞ KHÓA</div>
+                        <div style="font-size: 13px; color: #e2e8f0; font-weight: 600;">${latestPerk}</div>
+                    </div>` : ''}
+                    <p style="color: #94a3b8; font-size: 13px; margin-top: 10px; font-style: italic;">
+                        ${randomQuote}
                     </p>
                 </div>`,
                 null,
