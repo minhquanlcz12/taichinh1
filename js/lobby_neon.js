@@ -46,13 +46,15 @@ window.LobbyNeon = {
         
         LobbyNeon.renderUser(user.username, LobbyNeon.state.myPos.x, LobbyNeon.state.myPos.y, user.profile?.chibiConfig);
         
-        // Render NPC and Marquee with delay
+        // Render NPC with delay
         setTimeout(() => {
             LobbyNeon.renderQuestNPC();
-            LobbyNeon.updateMarquee();
         }, 500);
 
-        LobbyNeon.startListening();
+        LobbyNeon.startPresenceListening();
+        
+        // Always ensure global listener is running
+        LobbyNeon.startGlobalMissionListening();
         LobbyNeon.listenToGames();
         await LobbyNeon.syncMyPresence();
 
@@ -91,7 +93,7 @@ window.LobbyNeon = {
         }
     },
 
-    startListening: () => {
+    startPresenceListening: () => {
         const me = Auth.currentUser?.username;
         if (!me) return;
 
@@ -117,11 +119,14 @@ window.LobbyNeon = {
         LobbyNeon.state.unsubscribeChat = DB.listenLobbyChat((messages) => {
             LobbyNeon.renderChatMessages(messages);
         });
+    },
 
-        // Real-time Mission listener for Marquee and Board updates
+    startGlobalMissionListening: () => {
+        if (LobbyNeon.state.unsubscribeMissions) return; // Already listening
+
         LobbyNeon.state.unsubscribeMissions = DB.listenMissions((missions) => {
             LobbyNeon.updateMarquee(missions);
-            // If admin board is open, refresh it? Optional but good.
+            // If admin board is open, refresh it
             if (document.getElementById('hub-content-quests')) {
                 LobbyNeon.renderAdminQuestManager();
             }
@@ -221,28 +226,28 @@ window.LobbyNeon = {
                 .lobby-user-wrapper.npc { z-index: 100 !important; }
                 .lobby-user-wrapper.npc .lobby-chibi-container svg { overflow: visible !important; }
 
-                /* MARQUEE STYLES */
+                /* GLOBAL MARQUEE STYLES */
                 .lobby-marquee-bar {
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    height: 30px;
-                    background: rgba(15, 23, 42, 0.9);
-                    border-bottom: 2px solid #fbbf24;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(251, 191, 36, 0.05);
+                    border: 1px solid rgba(251, 191, 36, 0.2);
+                    border-radius: 8px;
                     display: flex;
                     align-items: center;
                     overflow: hidden;
-                    z-index: 900;
-                    pointer-events: none;
+                    position: relative;
                 }
                 .marquee-text {
                     white-space: nowrap;
-                    font-size: 13px;
+                    font-size: 14px;
                     font-weight: 800;
                     color: #fbbf24;
                     animation: marquee_anim 20s linear infinite;
                     padding-left: 100%;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
                 }
                 @keyframes marquee_anim {
                     0% { transform: translateX(0); }
@@ -251,7 +256,6 @@ window.LobbyNeon = {
             </style>
 
             <div id="lobby-map-container" style="width: 100%; height: 100%; position: relative; cursor: crosshair; overflow: hidden; background: #000;">
-                <div id="lobby-marquee-container"></div>
                 <div class="lobby-map" id="lobby-map">
                     <video id="lobby-video-bg" autoplay loop muted playsinline 
                         style="width: 100%; height: 100%; object-fit: fill; image-rendering: -webkit-optimize-contrast;"
@@ -862,14 +866,18 @@ window.LobbyNeon = {
             (!m.acceptedBy || !m.acceptedBy.includes(me))
         );
 
-        const container = document.getElementById('lobby-marquee-container');
+        const container = document.getElementById('global-marquee-container');
         if (!container) return;
 
         if (unaccepted.length > 0) {
-            const list = unaccepted.map(m => `Nhiệm vụ: ${m.title}`).join(" | ");
+            const list = unaccepted.map(m => `THÁNH CHỈ MỚI: ${m.title}`).join(" | ");
             container.innerHTML = `
                 <div class="lobby-marquee-bar">
-                    <div class="marquee-text">👑 THÁNH CHỈ MỚI: ${list} - Hãy tới gặp QUEST MASTER ADMIN ngay! 📜</div>
+                    <div class="marquee-text">
+                        <span style="font-size: 20px;">📢</span> 
+                        <span style="text-transform: uppercase;">Nhân viên ${me} có nhiệm vụ mới:</span> 
+                        ${list} - Hãy tới gặp QUEST MASTER ADMIN ngay! 📜
+                    </div>
                 </div>
             `;
         } else {

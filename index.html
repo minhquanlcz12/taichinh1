@@ -251,11 +251,15 @@
                 <button class="mobile-menu-toggle" id="mobile-menu-toggle" style="display: none; background: transparent; border: none; color: var(--text-primary); font-size: 20px; cursor: pointer; margin-right: 15px;" onclick="document.getElementById('app-sidebar').classList.add('open'); document.getElementById('sidebar-overlay').classList.add('active');">
                     <i class="fa-solid fa-bars"></i>
                 </button>
-                <div class="welcome-message" style="flex: 1;">
+                <div class="welcome-message" style="width: 250px;">
                     <h2 id="view-title">Tổng quan</h2>
-                    <p id="view-subtitle">Chào mừng trở lại, hôm nay là một ngày tuyệt vời!</p>
+                    <p id="view-subtitle">Chào mừng trở lại!</p>
                 </div>
-                <div class="user-profile">
+                
+                <!-- Global Marquee Notification -->
+                <div id="global-marquee-container" style="flex: 1; margin: 0 20px; overflow: hidden; height: 40px; display: flex; align-items: center; pointer-events: none;"></div>
+
+                <div class="user-profile" style="flex-shrink: 0;">
                     <div class="avatar" onclick="Auth.showProfileModal()" style="cursor: pointer;"
                         title="Chỉnh sửa hồ sơ">Admin</div>
                 </div>

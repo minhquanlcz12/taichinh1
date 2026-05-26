@@ -158,6 +158,7 @@ const Auth = {
         app.init(); // Boot the main app layout now that user is logged in
         if (typeof ChatModule !== 'undefined') ChatModule.startListening();
         if (typeof GamesModule !== 'undefined') GamesModule.init();
+        if (typeof LobbyNeon !== 'undefined') LobbyNeon.startGlobalMissionListening();
     },
 
     login: async (e) => {
