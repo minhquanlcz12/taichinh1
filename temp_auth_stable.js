@@ -7,26 +7,14 @@ const Auth = {
     currentUser: null,
 
     init: async () => {
-        try {
-            // Verify admin account exists; if not, log a warning
-            let accounts = await DB.getAccounts();
-            if (!Array.isArray(accounts)) {
-                accounts = [];
-            }
-            const hasAdmin = accounts.some(a => a && a.role === 'admin');
-            if (!hasAdmin) {
-                console.warn('[Auth] Không tìm thấy tài khoản admin trong database. Vui lòng tạo tài khoản admin trực tiếp trong Firebase Console.');
-            }
-        } catch (e) {
-            console.error('[Auth] Lỗi trong Auth.init database check:', e);
+        // Verify admin account exists; if not, log a warning (do NOT auto-create with hardcoded credentials)
+        let accounts = await DB.getAccounts();
+        if (!accounts.find(a => a.role === 'admin')) {
+            console.warn('[Auth] Không tìm thấy tài khoản admin trong database. Vui lòng tạo tài khoản admin trực tiếp trong Firebase Console.');
         }
 
-        try {
-            Auth.checkLogin();
-            Auth.setupListeners();
-        } catch (e) {
-            console.error('[Auth] Lỗi khởi chạy Auth UI:', e);
-        }
+        Auth.checkLogin();
+        Auth.setupListeners();
     },
 
     getAccounts: async () => {
@@ -38,18 +26,11 @@ const Auth = {
     },
 
     checkLogin: () => {
-        try {
-            const user = Utils.storage.get(Auth.currentUserKey);
-            if (user) {
-                Auth.currentUser = user;
-                if (!Auth.currentUser.profile) Auth.currentUser.profile = {};
-                if (!Auth.currentUser.achievements) Auth.currentUser.achievements = [];
-                Auth.showApp();
-            } else {
-                Auth.showLogin();
-            }
-        } catch (e) {
-            console.error('[Auth] Lỗi trong checkLogin:', e);
+        const user = Utils.storage.get(Auth.currentUserKey);
+        if (user) {
+            Auth.currentUser = user;
+            Auth.showApp();
+        } else {
             Auth.showLogin();
         }
 
@@ -849,9 +830,6 @@ const Auth = {
         { level: 15, title: '👑 Bố Già Marketing',      color: '#ff6b6b', glow: true,  bubbleColor: 'linear-gradient(135deg, #ff6b6b, #fbbf24, #a855f7)', bubbleGlow: '0 0 15px #ff6b6b, 0 0 30px #fbbf2440' },
         // Danh hiệu đặc biệt - mở khóa qua thành tích
         { level: 0, achievement: 'top1_monthly', title: '🏅 Quán Quân Bảng Vàng', color: '#00f3ff', glow: true, bubbleColor: 'linear-gradient(135deg, #00f3ff, #fbbf24)', bubbleGlow: '0 0 15px #00f3ff, 0 0 25px #fbbf2440' },
-        { level: 0, achievement: 'caro_5_wins', title: '🎲 Thần Đồng Bàn Cờ', color: '#a855f7', glow: true, bubbleColor: 'linear-gradient(135deg, #a855f7, #38bdf8)', bubbleGlow: '0 0 10px #a855f790' },
-        { level: 0, achievement: 'caro_15_wins', title: '⚔️ Độc Cô Cầu Bại Caro', color: '#fbbf24', glow: true, bubbleColor: 'linear-gradient(135deg, #fbbf24, #ff4757)', bubbleGlow: '0 0 15px #fbbf2490' },
-        { level: 0, achievement: 'caro_30_wins', title: '👑 Kỳ Thánh Caro Cơ Quan', color: '#ff4757', glow: true, bubbleColor: 'linear-gradient(135deg, #ff4757, #fbbf24, #00f3ff)', bubbleGlow: '0 0 20px #ff4757, 0 0 35px #00f3ff60' },
     ],
 
     getLevelTitle: (level) => {
@@ -936,61 +914,6 @@ const Auth = {
         }
     },
 
-    checkAndUnlockCaroAchievements: async (username) => {
-        try {
-            const accounts = await Auth.getAccounts();
-            const acc = accounts.find(a => a.username === username);
-            if (!acc) return;
-
-            if (!acc.achievements) acc.achievements = [];
-            const caroWins = acc.stats?.caroWins || 0;
-            
-            let unlockedNew = false;
-            let lastNewTitle = '';
-
-            const checkUnlock = (threshold, key, title) => {
-                if (caroWins >= threshold && !acc.achievements.includes(key)) {
-                    acc.achievements.push(key);
-                    unlockedNew = true;
-                    lastNewTitle = title;
-                    return true;
-                }
-                return false;
-            };
-
-            checkUnlock(5, 'caro_5_wins', '🎲 Thần Đồng Bàn Cờ');
-            checkUnlock(15, 'caro_15_wins', '⚔️ Độc Cô Cầu Bại Caro');
-            checkUnlock(30, 'caro_30_wins', '👑 Kỳ Thánh Caro Cơ Quan');
-
-            if (unlockedNew) {
-                await Auth.saveAccounts(accounts);
-                
-                // Cập nhật session user hiện tại của người đang đăng nhập
-                if (Auth.currentUser && Auth.currentUser.username === username) {
-                    Auth.currentUser.achievements = acc.achievements;
-                    Utils.storage.set(Auth.currentUserKey, Auth.currentUser);
-                }
-
-                // Hiện thông báo mở khóa cực hoành tráng
-                Utils.showModal(
-                    '✨ MỞ KHÓA DANH HIỆU THỜI THƯỢNG!',
-                    `<div style="text-align: center; padding: 15px;">
-                        <div style="font-size: 80px; margin-bottom: 15px; animation: float 2s infinite ease-in-out;">🏆</div>
-                        <p style="color: #94a3b8; font-size: 15px;">Sếp vừa mở khóa danh hiệu Caro độc quyền nhờ thành tích xuất sắc:</p>
-                        <h2 style="color: #fbbf24; font-size: 26px; margin: 15px 0; text-shadow: 0 0 15px rgba(251, 191, 36, 0.6); font-weight: 900;">
-                            ${lastNewTitle}
-                        </h2>
-                        <p style="color: #64748b; font-size: 13px; font-style: italic;">(Sếp có thể vào phần Cài đặt Chibi để đổi danh hiệu hiển thị bất cứ lúc nào!)</p>
-                    </div>`,
-                    null,
-                    'PHONG ẤN ĐI NGAY'
-                );
-            }
-        } catch (e) {
-            console.error("Error checking caro achievements:", e);
-        }
-    },
-
     openTitleSelector: () => {
         if (!Auth.currentUser) return;
         const userLevel = Auth.currentUser.level || 1;
@@ -1013,24 +936,8 @@ const Auth = {
                     const onclickCode = isAchievement 
                         ? `Auth.setSelectedTitle(null, '${t.achievement}'); document.getElementById('modal-overlay').classList.remove('active');`
                         : `Auth.setSelectedTitle(${t.level}); document.getElementById('modal-overlay').classList.remove('active');`;
-                    
-                    let reqText = `Cấp ${t.level}+`;
-                    let lockText = '🔒 Yêu cầu Cấp ' + t.level;
-                    if (isAchievement) {
-                        if (t.achievement === 'top1_monthly') {
-                            reqText = '🏅 TOP 1 Bảng Vàng';
-                            lockText = '🔒 Đạt TOP 1 bất kỳ tháng nào';
-                        } else if (t.achievement === 'caro_5_wins') {
-                            reqText = '🎲 Thắng 5 trận Caro';
-                            lockText = '🔒 Đạt 5 trận thắng Caro';
-                        } else if (t.achievement === 'caro_15_wins') {
-                            reqText = '⚔️ Thắng 15 trận Caro';
-                            lockText = '🔒 Đạt 15 trận thắng Caro';
-                        } else if (t.achievement === 'caro_30_wins') {
-                            reqText = '👑 Thắng 30 trận Caro';
-                            lockText = '🔒 Đạt 30 trận thắng Caro';
-                        }
-                    }
+                    const reqText = isAchievement ? '🏅 TOP 1 Bảng Vàng' : `Cấp ${t.level}+`;
+                    const lockText = isAchievement ? '🔒 Đạt TOP 1 bất kỳ tháng nào' : '🔒 Yêu cầu Cấp ' + t.level;
                     return `
                         <div onclick="${unlocked ? onclickCode : ''}"
                             style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; margin-bottom: 8px;
@@ -1060,7 +967,6 @@ const Auth = {
         `;
 
         Utils.showModal('🏷️ CHỌN DANH HIỆU CỦA BẠN', html, null, 'ĐÓNG');
-    },
     grantAchievement: async (username, achievementKey) => {
         const accounts = await Auth.getAccounts();
         const acc = accounts.find(a => a.username === username);

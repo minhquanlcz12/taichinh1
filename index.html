@@ -2,6 +2,31 @@
 <html lang="vi">
 
 <head>
+    <script>
+        window.onerror = function(message, source, lineno, colno, error) {
+            const errBox = document.getElementById('critical-sys-error-hud');
+            if (errBox) return false;
+            
+            // Create a styled error HUD overlay
+            const errorDiv = document.createElement('div');
+            errorDiv.id = 'critical-sys-error-hud';
+            errorDiv.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);width:90%;max-width:600px;background:rgba(20,6,6,0.95);color:#ff4757;padding:24px;z-index:999999;font-family:monospace;border:2px solid #ff4757;border-radius:16px;box-shadow:0 0 30px rgba(255,71,87,0.5);word-break:break-all;font-size:13px;';
+            errorDiv.innerHTML = `
+                <div style="font-size:18px;font-weight:900;margin-bottom:12px;border-bottom:1px solid rgba(255,71,87,0.3);padding-bottom:8px;display:flex;align-items:center;gap:8px;">
+                    <span>🚨 CRITICAL SYSTEM ERROR DETECTED</span>
+                </div>
+                <p style="margin:6px 0;"><b>Message:</b> <span style="color:#fff;">${message}</span></p>
+                <p style="margin:6px 0;"><b>Source:</b> <span style="color:#38bdf8;">${source}</span></p>
+                <p style="margin:6px 0;"><b>Line:</b> ${lineno} | <b>Col:</b> ${colno}</p>
+                <div style="margin-top:12px;background:rgba(0,0,0,0.4);padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.05);max-height:150px;overflow-y:auto;white-space:pre-wrap;font-size:11px;color:#a855f7;">${error ? error.stack : 'No stack trace available.'}</div>
+                <div style="margin-top:15px;text-align:right;">
+                    <button onclick="this.parentElement.parentElement.remove()" style="padding:8px 16px;background:#ff4757;color:#fff;border:none;font-weight:bold;cursor:pointer;border-radius:8px;box-shadow:0 0 10px rgba(255,71,87,0.4);">ACKNOWLEDGE & CLOSE</button>
+                </div>
+            `;
+            document.body.appendChild(errorDiv);
+            return false;
+        };
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Thanh Long Work - Quản lý Gia đình & Công việc (v1.1)</title>
@@ -1042,25 +1067,25 @@
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.js"></script>
-    <script src="js/utils.js?v=156.0"></script>
-    <script src="js/db.js?v=156.0"></script>
-    <script src="js/finance.js?v=156.0"></script>
-    <script src="js/work.js?v=156.0"></script>
-    <script src="js/attendance.js?v=156.0"></script>
-    <script src="js/chibi.js?v=156.0"></script>
-    <script src="js/rewards.js?v=156.0"></script>
-    <script src="js/payroll.js?v=156.0"></script>
-    <script src="js/chat.js?v=156.0"></script>
-    <script src="js/prompt.js?v=156.0"></script>
-    <script src="js/chatbot.js?v=156.0"></script>
-    <script src="js/lobby_neon.js?v=156.0"></script>
-    <script src="js/music.js?v=156.0"></script>
-    <script src="js/attendance_music.js?v=156.0"></script>
-    <script src="js/reports.js?v=156.0"></script>
-    <script src="js/auth.js?v=156.0"></script>
-    <script src="js/claude.js?v=156.0"></script>
-    <script src="js/games.js?v=156.0"></script>
-    <script src="js/app.js?v=156.0"></script>
+    <script src="js/utils.js?v=157.0"></script>
+    <script src="js/db.js?v=157.0"></script>
+    <script src="js/finance.js?v=157.0"></script>
+    <script src="js/work.js?v=157.0"></script>
+    <script src="js/attendance.js?v=157.0"></script>
+    <script src="js/chibi.js?v=157.0"></script>
+    <script src="js/rewards.js?v=157.0"></script>
+    <script src="js/payroll.js?v=157.0"></script>
+    <script src="js/chat.js?v=157.0"></script>
+    <script src="js/prompt.js?v=157.0"></script>
+    <script src="js/chatbot.js?v=157.0"></script>
+    <script src="js/lobby_neon.js?v=157.0"></script>
+    <script src="js/music.js?v=157.0"></script>
+    <script src="js/attendance_music.js?v=157.0"></script>
+    <script src="js/reports.js?v=157.0"></script>
+    <script src="js/auth.js?v=157.0"></script>
+    <script src="js/claude.js?v=157.0"></script>
+    <script src="js/games.js?v=157.0"></script>
+    <script src="js/app.js?v=157.0"></script>
 
     <!-- Toast Notification Container -->
     <div id="toast-container" class="toast-container"></div>
