@@ -132,6 +132,7 @@ const Utils = {
 
         // Remove existing modal if any
         overlay.innerHTML = '';
+        overlay.style.zIndex = '20000'; // Make sure general alert/modal is always on top (above Chibi builder at z-index 10000)
 
         const modalHtml = `
             <div class="modal">
@@ -177,7 +178,7 @@ const Utils = {
         return new Promise((resolve) => {
             const overlay = document.createElement('div');
             overlay.className = 'modal-overlay active';
-            overlay.style.zIndex = '9999';
+            overlay.style.zIndex = '20000'; // Always on top of all layers
             overlay.style.backdropFilter = 'blur(5px)';
             overlay.innerHTML = `
                 <div class="modal glass-card" style="width: 90%; max-width: 450px; padding: 24px; animation: slideIn 0.3s ease;">
