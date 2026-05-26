@@ -529,5 +529,54 @@ const DB = {
             .onSnapshot(doc => {
                 if (doc.exists) callback(doc.data());
             }, err => console.error("Game listener error:", err));
+    },
+
+    // --- NHIỆM VỤ (QUESTS/MISSIONS) ---
+    getMissions: async () => {
+        try {
+            const snapshot = await db.collection("missions").orderBy("createdAt", "desc").get();
+            const missions = [];
+            snapshot.forEach(doc => {
+                missions.push({ id: doc.id, ...doc.data() });
+            });
+            return missions;
+        } catch (e) {
+            console.error("Error getting missions:", e);
+            return [];
+        }
+    },
+
+    createMission: async (missionData) => {
+        try {
+            // missionData: { title, description, type: 'daily'|'monthly', reward, status: 'active' }
+            const docRef = await db.collection("missions").add({
+                ...missionData,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            return docRef.id;
+        } catch (e) {
+            console.error("Error creating mission:", e);
+            return null;
+        }
+    },
+
+    updateMissionStatus: async (missionId, status) => {
+        try {
+            await db.collection("missions").doc(missionId).update({ status });
+            return true;
+        } catch (e) {
+            console.error("Error updating mission status:", e);
+            return false;
+        }
+    },
+
+    deleteMission: async (missionId) => {
+        try {
+            await db.collection("missions").doc(missionId).delete();
+            return true;
+        } catch (e) {
+            console.error("Error deleting mission:", e);
+            return false;
+        }
     }
 };

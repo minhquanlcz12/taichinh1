@@ -14,7 +14,8 @@ window.LobbyNeon = {
         currentGameId: null,
         currentGameData: null,
         heartbeatInterval: null,
-        isMakingMove: false
+        isMakingMove: false,
+        npcPos: { x: 800, y: 300 }
     },
 
     init: () => {
@@ -42,7 +43,7 @@ window.LobbyNeon = {
         LobbyNeon.state.isConnected = true;
         
         LobbyNeon.renderUser(user.username, LobbyNeon.state.myPos.x, LobbyNeon.state.myPos.y, user.profile?.chibiConfig);
-        // LobbyNeon.renderPillars(); // No longer needed for static BG
+        LobbyNeon.renderQuestNPC();
 
         LobbyNeon.startListening();
         LobbyNeon.listenToGames();
@@ -232,6 +233,10 @@ window.LobbyNeon = {
                         <button onclick="LobbyNeon.switchHubTab('monopoly')" id="hub-tab-monopoly" class="hub-tab">
                             🎲 CỜ TỶ PHÚ
                         </button>
+                        ${Auth.currentUser?.role === 'admin' ? `
+                        <button onclick="LobbyNeon.switchHubTab('quests')" id="hub-tab-quests" class="hub-tab" style="color: #fbbf24;">
+                            📜 NHIỆM VỤ
+                        </button>` : ''}
                     </div>
 
                     <!-- Hub Contents -->
@@ -243,6 +248,11 @@ window.LobbyNeon = {
                     <div id="hub-content-monopoly" class="hub-content" style="display: none;">
                         <div style="text-align: center; color: #64748b; font-size: 12px; padding: 40px 10px;">
                             Đang kết nối sảnh cờ Tỷ Phú...
+                        </div>
+                    </div>
+                    <div id="hub-content-quests" class="hub-content" style="display: none;">
+                        <div style="text-align: center; color: #64748b; font-size: 12px; padding: 20px 0;">
+                            Đang tải quản lý nhiệm vụ...
                         </div>
                     </div>
                 </div>
@@ -307,6 +317,47 @@ window.LobbyNeon = {
         }
     },
 
+    renderQuestNPC: () => {
+        const map = document.getElementById('lobby-map');
+        if (!map) return;
+
+        const npcId = 'npc-admin';
+        let el = document.getElementById(npcId);
+
+        if (!el) {
+            el = document.createElement('div');
+            el.id = npcId;
+            el.className = 'lobby-user-wrapper npc';
+            el.style.cursor = 'help';
+            el.onclick = (e) => {
+                e.stopPropagation();
+                LobbyNeon.openQuestBoard();
+            };
+            map.appendChild(el);
+        }
+
+        const npcConfig = {
+            skinColor: '#ffe4e6',
+            hairId: 'hair-royal-gold',
+            outfitId: 'suit-admin-neon',
+            wingId: 'wing-monarch-gold',
+            auraId: 'aura-sun-divine',
+            mountId: 'none'
+        };
+
+        let chibiSvg = ChibiModule.renderChibiSVG(npcConfig, false, 0);
+
+        el.style.left = `${LobbyNeon.state.npcPos.x}px`;
+        el.style.top = `${LobbyNeon.state.npcPos.y}px`;
+
+        el.innerHTML = `
+            <div class="lobby-user-name" style="color: #fbbf24; background: rgba(0,0,0,0.6); padding: 2px 8px; border-radius: 10px; font-weight: 800;">ADMIN NPC</div>
+            <div class="lobby-quest-icon" style="position: absolute; top: -50px; left: 50%; transform: translateX(-50%); font-size: 24px; animation: float 2s infinite ease-in-out;">📜</div>
+            <div class="lobby-chibi-container" style="transform: scale(1.4); filter: drop-shadow(0 0 10px rgba(251,191,36,0.3));">${chibiSvg}</div>
+            <div class="lobby-user-status" style="background: rgba(251,191,36,0.2); border-color: #fbbf24; color: #fbbf24;">✨ NHẬN NHIỆM VỤ</div>
+        `;
+    },
+
     // ========== MOVEMENT ==========
     handleMapClick: (e) => {
         if (e.target.closest('.lobby-chat-overlay') || e.target.closest('.caro-modal')) return;
@@ -323,6 +374,14 @@ window.LobbyNeon = {
         setTimeout(() => ripple.remove(), 600);
 
         LobbyNeon.moveTo(x, y);
+
+        // Check proximity to NPC
+        const dx = x - LobbyNeon.state.npcPos.x;
+        const dy = y - LobbyNeon.state.npcPos.y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist < 80) {
+            LobbyNeon.openQuestBoard();
+        }
     },
 
     moveTo: async (x, y) => {
@@ -712,6 +771,112 @@ window.LobbyNeon = {
             contentMonopoly.style.display = 'block';
             GamesModule.activeTab = 'monopoly';
             GamesModule.renderTabContent();
+        } else if (tab === 'quests') {
+            document.getElementById('hub-tab-quests')?.classList.add('active');
+            document.getElementById('hub-content-quests').style.display = 'block';
+            LobbyNeon.renderAdminQuestManager();
+        }
+    },
+
+    // ========== QUEST SYSTEM ==========
+    openQuestBoard: async () => {
+        const missions = await DB.getMissions();
+        const activeMissions = missions.filter(m => m.status === 'active');
+
+        Utils.showModal(
+            '📜 BẢNG NHIỆM VỤ HOÀNG GIA',
+            `<div style="max-height: 400px; overflow-y: auto; padding: 10px;">
+                ${activeMissions.length === 0 ? `
+                    <div style="text-align: center; color: #64748b; padding: 40px 0;">
+                        <div style="font-size: 40px; margin-bottom: 10px;">🏮</div>
+                        Hiện chưa có nhiệm vụ mới từ Admin NPC.<br>Hãy quay lại sau nhé!
+                    </div>
+                ` : activeMissions.map(m => `
+                    <div style="background: rgba(251,191,36,0.05); border: 2.5px solid #fbbf24; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); position: relative; overflow: hidden;">
+                        <div style="position: absolute; top: -10px; right: -10px; font-size: 40px; opacity: 0.1; transform: rotate(15deg);">${m.type === 'daily' ? '📅' : '🏆'}</div>
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                            <span style="font-size: 10px; font-weight: 900; color: #fbbf24; text-transform: uppercase; background: rgba(251,191,36,0.15); padding: 2px 8px; border-radius: 6px;">
+                                ${m.type === 'daily' ? 'Nhiệm vụ Ngày' : 'Thách thức Tháng'}
+                            </span>
+                            <span style="font-size: 11px; font-weight: 800; color: #10b981;">💰 +${m.reward} Công Đức</span>
+                        </div>
+                        <h4 style="margin: 0 0 6px 0; color: #fff; font-size: 16px;">${m.title}</h4>
+                        <p style="margin: 0; color: #94a3b8; font-size: 12px; line-height: 1.4;">${m.description}</p>
+                        <button onclick="Utils.showToast('Đã nhận nhiệm vụ! Hãy cố gắng hoàn thành nhé.', 'success')" style="margin-top: 12px; width: 100%; padding: 8px; background: #fbbf24; border: none; border-radius: 6px; color: #000; font-weight: 800; font-size: 11px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                            NHẬN NHIỆM VỤ
+                        </button>
+                    </div>
+                `).join('')}
+            </div>`,
+            null,
+            'ĐÓNG BẢNG'
+        );
+    },
+
+    renderAdminQuestManager: async () => {
+        const container = document.getElementById('hub-content-quests');
+        if (!container) return;
+
+        const missions = await DB.getMissions();
+
+        container.innerHTML = `
+            <div style="display: flex; flex-direction: column; gap: 15px;">
+                <div style="background: rgba(251,191,36,0.1); border: 1px dashed #fbbf24; padding: 12px; border-radius: 8px;">
+                    <h4 style="margin: 0 0 10px 0; font-size: 12px; color: #fbbf24;">🆕 BAN HÀNH THÁNH CHỈ MỚI</h4>
+                    <input type="text" id="quest-title" placeholder="Tên nhiệm vụ..." style="width: 100%; padding: 8px; background: rgba(0,0,0,0.3); border: 1px solid #475569; border-radius: 4px; color: #fff; font-size: 12px; margin-bottom: 8px;">
+                    <textarea id="quest-desc" placeholder="Mô tả công việc..." style="width: 100%; padding: 8px; background: rgba(0,0,0,0.3); border: 1px solid #475569; border-radius: 4px; color: #fff; font-size: 12px; margin-bottom: 8px; min-height: 60px;"></textarea>
+                    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                        <select id="quest-type" style="flex: 1; padding: 6px; background: rgba(0,0,0,0.3); border: 1px solid #475569; border-radius: 4px; color: #fff; font-size: 11px;">
+                            <option value="daily">Ngày</option>
+                            <option value="monthly">Tháng</option>
+                        </select>
+                        <input type="number" id="quest-reward" placeholder="Thưởng (đ)..." style="flex: 1; padding: 6px; background: rgba(0,0,0,0.3); border: 1px solid #475569; border-radius: 4px; color: #fff; font-size: 11px;">
+                    </div>
+                    <button onclick="LobbyNeon.adminCreateMission()" class="btn-neon" style="width: 100%; font-size: 11px; padding: 8px;">BAN HÀNH</button>
+                </div>
+
+                <div style="border-top: 1.5px solid rgba(255,255,255,0.1); padding-top: 10px;">
+                    <h4 style="margin: 0 0 10px 0; font-size: 11px; color: #94a3b8; text-transform: uppercase;">DANH SÁCH NHIỆM VỤ</h4>
+                    ${missions.map(m => `
+                        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-size: 11px; font-weight: bold; color: #fff;">${m.title}</div>
+                                <div style="font-size: 9px; color: ${m.type === 'daily' ? '#38bdf8' : '#fbbf24'};">${m.type === 'daily' ? 'Ngày' : 'Tháng'} | ${m.reward}đ</div>
+                            </div>
+                            <button onclick="LobbyNeon.adminDeleteMission('${m.id}')" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 12px;">🗑️</button>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    },
+
+    adminCreateMission: async () => {
+        const title = document.getElementById('quest-title').value;
+        const description = document.getElementById('quest-desc').value;
+        const type = document.getElementById('quest-type').value;
+        const reward = parseInt(document.getElementById('quest-reward').value);
+
+        if (!title || !description || isNaN(reward)) {
+            Utils.showToast("Vui lòng nhập đầy đủ thông tin!", "warning");
+            return;
+        }
+
+        const id = await DB.createMission({ title, description, type, reward, status: 'active' });
+        if (id) {
+            Utils.showToast("Đã ban hành thánh chỉ mới!", "success");
+            LobbyNeon.renderAdminQuestManager();
+            // Send a system message to chat
+            await DB.sendLobbyChat({ sender: "Hệ Thống", text: `📜 Admin NPC vừa ban hành nhiệm vụ mới: "${title}"! Hãy tới gặp NPC để nhận ngay.` });
+        }
+    },
+
+    adminDeleteMission: async (id) => {
+        if (!confirm("Bạn có chắc muốn xóa nhiệm vụ này?")) return;
+        const success = await DB.deleteMission(id);
+        if (success) {
+            Utils.showToast("Đã xóa nhiệm vụ.", "info");
+            LobbyNeon.renderAdminQuestManager();
         }
     },
 
