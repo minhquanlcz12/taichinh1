@@ -15,7 +15,8 @@ window.LobbyNeon = {
         currentGameData: null,
         heartbeatInterval: null,
         isMakingMove: false,
-        npcPos: { x: 800, y: 300 }
+        npcPos: { x: 800, y: 300 },
+        marqueeInterval: null
     },
 
     init: () => {
@@ -44,9 +45,10 @@ window.LobbyNeon = {
         
         LobbyNeon.renderUser(user.username, LobbyNeon.state.myPos.x, LobbyNeon.state.myPos.y, user.profile?.chibiConfig);
         
-        // Render NPC with delay to ensure map is ready
+        // Render NPC and Marquee with delay
         setTimeout(() => {
             LobbyNeon.renderQuestNPC();
+            LobbyNeon.updateMarquee();
         }, 500);
 
         LobbyNeon.startListening();
@@ -207,12 +209,41 @@ window.LobbyNeon = {
                 @keyframes float { 0%, 100% { transform: translate(-50%, 0); } 50% { transform: translate(-50%, -15px); } }
                 .lobby-user-wrapper.npc { z-index: 100 !important; }
                 .lobby-user-wrapper.npc .lobby-chibi-container svg { overflow: visible !important; }
+
+                /* MARQUEE STYLES */
+                .lobby-marquee-bar {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    height: 30px;
+                    background: rgba(15, 23, 42, 0.9);
+                    border-bottom: 2px solid #fbbf24;
+                    display: flex;
+                    align-items: center;
+                    overflow: hidden;
+                    z-index: 900;
+                    pointer-events: none;
+                }
+                .marquee-text {
+                    white-space: nowrap;
+                    font-size: 13px;
+                    font-weight: 800;
+                    color: #fbbf24;
+                    animation: marquee_anim 20s linear infinite;
+                    padding-left: 100%;
+                }
+                @keyframes marquee_anim {
+                    0% { transform: translateX(0); }
+                    100% { transform: translateX(-150%); }
+                }
             </style>
 
             <div id="lobby-map-container" style="width: 100%; height: 100%; position: relative; cursor: crosshair; overflow: hidden; background: #000;">
+                <div id="lobby-marquee-container"></div>
                 <div class="lobby-map" id="lobby-map">
                     <video id="lobby-video-bg" autoplay loop muted playsinline 
-                        style="width: 2000px; height: 1200px; object-fit: cover; opacity: 0.8; filter: brightness(0.7) contrast(1.2);"
+                        style="width: 100%; height: 100%; object-fit: fill; image-rendering: -webkit-optimize-contrast;"
                         oncanplay="this.style.opacity=1" 
                         onerror="this.style.display='none'">
                         <source src="assets/lobby_bg.mp4" type="video/mp4">
@@ -811,6 +842,30 @@ window.LobbyNeon = {
     },
 
     // ========== QUEST SYSTEM ==========
+    updateMarquee: async () => {
+        const missions = await DB.getMissions();
+        const me = Auth.currentUser?.username;
+        const unaccepted = missions.filter(m => 
+            m.status === 'active' && 
+            (m.targetUser === 'all' || m.targetUser === me) &&
+            (!m.acceptedBy || !m.acceptedBy.includes(me))
+        );
+
+        const container = document.getElementById('lobby-marquee-container');
+        if (!container) return;
+
+        if (unaccepted.length > 0) {
+            const list = unaccepted.map(m => `Nhiệm vụ mới của ${m.targetUser === 'all' ? 'bạn' : '@'+m.targetUser}: ${m.title}`).join(" | ");
+            container.innerHTML = `
+                <div class="lobby-marquee-bar">
+                    <div class="marquee-text">👑 THÁNH CHỈ MỚI: ${list} - Hãy tới gặp QUEST MASTER ADMIN ngay! 📜</div>
+                </div>
+            `;
+        } else {
+            container.innerHTML = '';
+        }
+    },
+
     openQuestBoard: async () => {
         const missions = await DB.getMissions();
         const me = Auth.currentUser?.username;
@@ -825,26 +880,65 @@ window.LobbyNeon = {
                         <div style="font-size: 40px; margin-bottom: 10px;">🏮</div>
                         Hiện chưa có nhiệm vụ mới từ Admin NPC.<br>Hãy quay lại sau nhé!
                     </div>
-                ` : activeMissions.map(m => `
-                    <div style="background: rgba(251,191,36,0.05); border: 2.5px solid #fbbf24; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); position: relative; overflow: hidden;">
+                ` : activeMissions.map(m => {
+                    const isAccepted = m.acceptedBy && m.acceptedBy.includes(me);
+                    const deadlineStr = m.deadline ? new Date(m.deadline).toLocaleString('vi-VN') : 'Không giới hạn';
+                    
+                    return `
+                    <div style="background: rgba(251,191,36,0.05); border: 2.5px solid ${isAccepted ? '#10b981' : '#fbbf24'}; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); position: relative; overflow: hidden;">
                         <div style="position: absolute; top: -10px; right: -10px; font-size: 40px; opacity: 0.1; transform: rotate(15deg);">${m.type === 'daily' ? '📅' : '🏆'}</div>
+                        
                         <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
-                            <span style="font-size: 10px; font-weight: 900; color: #fbbf24; text-transform: uppercase; background: rgba(251,191,36,0.15); padding: 2px 8px; border-radius: 6px;">
+                            <span style="font-size: 10px; font-weight: 900; color: ${isAccepted ? '#10b981' : '#fbbf24'}; text-transform: uppercase; background: rgba(0,0,0,0.2); padding: 2px 8px; border-radius: 6px; border: 1px solid ${isAccepted ? '#10b981' : '#fbbf24'};">
                                 ${m.type === 'daily' ? 'Nhiệm vụ Ngày' : 'Thách thức Tháng'}
                             </span>
-                            <span style="font-size: 11px; font-weight: 800; color: #10b981;">💰 +${m.reward} Công Đức</span>
+                            <span style="font-size: 11px; font-weight: 800; color: #10b981;">💰 +${m.reward}đ Công Đức</span>
                         </div>
+
                         <h4 style="margin: 0 0 6px 0; color: #fff; font-size: 16px;">${m.title}</h4>
-                        <p style="margin: 0; color: #94a3b8; font-size: 12px; line-height: 1.4;">${m.description}</p>
-                        <button onclick="Utils.showToast('Đã nhận nhiệm vụ! Hãy cố gắng hoàn thành nhé.', 'success')" style="margin-top: 12px; width: 100%; padding: 8px; background: #fbbf24; border: none; border-radius: 6px; color: #000; font-weight: 800; font-size: 11px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-                            NHẬN NHIỆM VỤ
-                        </button>
+                        <div style="font-size: 10px; color: #94a3b8; margin-bottom: 10px; font-style: italic;">
+                            ⏰ Hạn hoàn thành: <span style="color: #cbd5e1;">${deadlineStr}</span>
+                        </div>
+                        <p style="margin: 0; color: #e2e8f0; font-size: 12.5px; line-height: 1.5; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 6px;">${m.description}</p>
+                        
+                        ${isAccepted ? `
+                            <div style="margin-top: 12px; text-align: center; color: #10b981; font-weight: 900; font-size: 12px; letter-spacing: 1px;">
+                                ✔️ ĐÃ TIẾP NHẬN THÁNH CHỈ
+                            </div>
+                        ` : `
+                            <button onclick="LobbyNeon.acceptMission('${m.id}')" style="margin-top: 12px; width: 100%; padding: 10px; background: #fbbf24; border: none; border-radius: 6px; color: #000; font-weight: 800; font-size: 12px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 10px rgba(251,191,36,0.3);">
+                                TIẾP NHẬN NHIỆM VỤ
+                            </button>
+                        `}
                     </div>
-                `).join('')}
+                `}).join('')}
             </div>`,
             null,
             'ĐÓNG BẢNG'
         );
+    },
+
+    acceptMission: async (missionId) => {
+        const me = Auth.currentUser?.username;
+        if (!me) return;
+        
+        try {
+            const missions = await DB.getMissions();
+            const mission = missions.find(m => m.id === missionId);
+            if (!mission) return;
+
+            const acceptedBy = mission.acceptedBy || [];
+            if (!acceptedBy.includes(me)) {
+                acceptedBy.push(me);
+                await db.collection("missions").doc(missionId).update({ acceptedBy });
+                Utils.showToast("Đã tiếp nhận thánh chỉ! Hãy cố gắng hoàn thành nhé.", "success");
+                LobbyNeon.openQuestBoard(); // Rerender board
+                LobbyNeon.updateMarquee();  // Update marquee
+            }
+        } catch (e) {
+            console.error("Accept mission error:", e);
+            Utils.showToast("Lỗi khi nhận nhiệm vụ!", "error");
+        }
     },
 
     renderAdminQuestManager: async () => {
@@ -878,10 +972,22 @@ window.LobbyNeon = {
                             </select>
                         </div>
                         <div style="flex: 1;">
-                            <label style="display: block; font-size: 10px; color: #94a3b8; margin-bottom: 4px;">THƯỞNG (đ):</label>
-                            <input type="number" id="quest-reward" placeholder="Cộng điểm..." style="width: 100%; padding: 8px; background: rgba(0,0,0,0.3); border: 1px solid #475569; border-radius: 4px; color: #fff; font-size: 11px;">
+                            <label style="display: block; font-size: 10px; color: #94a3b8; margin-bottom: 4px;">THƯỞNG (điểm):</label>
+                            <select id="quest-reward" style="width: 100%; padding: 8px; background: rgba(0,0,0,0.3); border: 1px solid #475569; border-radius: 4px; color: #fff; font-size: 11px;">
+                                <option value="1">1 điểm</option>
+                                <option value="2">2 điểm</option>
+                                <option value="3">3 điểm</option>
+                                <option value="4">4 điểm</option>
+                                <option value="5">5 điểm VIP</option>
+                            </select>
                         </div>
                     </div>
+
+                    <div style="margin-bottom: 12px;">
+                        <label style="display: block; font-size: 10px; color: #94a3b8; margin-bottom: 4px;">THỜI HẠN (DEADLINE):</label>
+                        <input type="datetime-local" id="quest-deadline" style="width: 100%; padding: 8px; background: rgba(0,0,0,0.3); border: 1px solid #475569; border-radius: 4px; color: #fff; font-size: 11px;">
+                    </div>
+
                     <button onclick="LobbyNeon.adminCreateMission()" class="btn-neon" style="width: 100%; font-size: 11px; padding: 10px; font-weight: 800; background: linear-gradient(135deg, #fbbf24, #d97706); border: none; color: #000; box-shadow: 0 4px 15px rgba(217,119,6,0.3);">PHÁT THÁNH CHỈ</button>
                 </div>
 
@@ -912,13 +1018,24 @@ window.LobbyNeon = {
         const type = document.getElementById('quest-type').value;
         const reward = parseInt(document.getElementById('quest-reward').value);
         const targetUser = document.getElementById('quest-target').value;
+        const deadline = document.getElementById('quest-deadline').value;
 
         if (!title || !description || isNaN(reward)) {
             Utils.showToast("Vui lòng nhập đầy đủ thông tin!", "warning");
             return;
         }
 
-        const id = await DB.createMission({ title, description, type, reward, targetUser, status: 'active' });
+        const id = await DB.createMission({ 
+            title, 
+            description, 
+            type, 
+            reward, 
+            targetUser, 
+            deadline: deadline || null,
+            acceptedBy: [], // Track who accepted
+            status: 'active' 
+        });
+
         if (id) {
             Utils.showToast("Đã ban hành thánh chỉ mới!", "success");
             LobbyNeon.renderAdminQuestManager();
@@ -926,6 +1043,9 @@ window.LobbyNeon = {
             // Send a system message to chat
             const targetText = targetUser === 'all' ? "tất cả mọi người" : `@${targetUser}`;
             await DB.sendLobbyChat({ sender: "Hệ Thống", text: `📜 Admin vừa ban hành nhiệm vụ mới dành cho ${targetText}: "${title}"!` });
+            
+            // Trigger marquee for everyone
+            LobbyNeon.updateMarquee();
         }
     },
 
