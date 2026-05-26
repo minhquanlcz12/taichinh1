@@ -1195,6 +1195,29 @@ const ChibiModule = {
                     background: rgba(139, 92, 246, 0.25);
                     border-top-color: rgba(139, 92, 246, 0.4);
                 }
+                .chibi-item-locked {
+                    opacity: 0.65;
+                    border-color: rgba(251, 191, 36, 0.15) !important;
+                    cursor: not-allowed !important;
+                }
+                .chibi-item-locked:hover {
+                    border-color: rgba(251, 191, 36, 0.4) !important;
+                    background: rgba(251, 191, 36, 0.06) !important;
+                    transform: scale(1.01) !important;
+                }
+                .chibi-lock-overlay {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: calc(100% - 28px);
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 3;
+                    pointer-events: none;
+                }
                 .chibi-color-circle {
                     width: 28px;
                     height: 28px;
@@ -1309,7 +1332,25 @@ const ChibiModule = {
             <div class="chibi-item-grid">
                 ${options.map(i => {
                     const activeClass = ChibiModule.currentConfig[property] === i ? 'active' : '';
+                    const locked = ChibiModule.isGearLocked(i, property);
                     const miniSvg = ChibiModule.renderMiniOption(property, i);
+                    const reqs = ChibiModule.gearRequirements[property];
+                    const req = reqs ? reqs[i] : null;
+                    const lockInfo = locked && req ? `Cấp ${req.requiredLevel}` : '';
+                    if (locked) {
+                        return `
+                            <div class="chibi-item-card chibi-item-locked" onclick="ChibiModule.selectItem('${property}', ${i})" title="🔒 ${req ? req.label : ''} - Yêu cầu ${lockInfo}">
+                                <div class="chibi-item-preview-wrap" style="transform: scale(${scale}); filter: grayscale(0.8) brightness(0.5);">
+                                    ${miniSvg}
+                                </div>
+                                <div class="chibi-lock-overlay">
+                                    <i class="fa-solid fa-lock" style="font-size: 16px; color: #fbbf24; text-shadow: 0 0 8px rgba(251,191,36,0.6);"></i>
+                                    <span style="font-size: 9px; color: #fbbf24; font-weight: 700; margin-top: 2px;">${lockInfo}</span>
+                                </div>
+                                <span class="chibi-item-label" style="color: #475569;">${labels[i] || (property + ' ' + i)}</span>
+                            </div>
+                        `;
+                    }
                     return `
                         <div class="chibi-item-card ${activeClass}" onclick="ChibiModule.selectItem('${property}', ${i})">
                             <div class="chibi-item-preview-wrap" style="transform: scale(${scale});">
@@ -1694,6 +1735,7 @@ const ChibiModule = {
             const req = reqs ? reqs[index] : null;
             const userLevel = Auth.currentUser?.level || 1;
             Utils.showToast(`🔒 Trang bị "${req ? req.label : ''}" yêu cầu Cấp ${req ? req.requiredLevel : '?'}! (Bạn đang Cấp ${userLevel}). Cày nhiệm vụ để lên cấp nào!`, "info");
+            return; // Không cho chọn trang bị bị khóa
         }
         ChibiModule.currentConfig[property] = index;
         ChibiModule.updatePreview();
@@ -1773,7 +1815,7 @@ const ChibiModule = {
     },
 
     /**
-     * Generate cohesive beautiful random Chibi config
+     * Generate cohesive beautiful random Chibi config (chỉ chọn từ trang bị đã mở khóa)
      */
     randomizeBuilder: function() {
         // Grab a random item from array
@@ -1787,10 +1829,18 @@ const ChibiModule = {
         const randomClothing2 = randItem(ChibiModule.colors.clothing);
         const randomClothing3 = randItem(ChibiModule.colors.clothing);
 
-        // Filter unlocked accessories for randomization
-        const unlockedAccessories = Array.from({ length: ChibiModule.counts.accessory }, (_, i) => i)
-            .filter(i => !ChibiModule.isGearLocked(i, 'accessory'));
-        const randomAccessory = unlockedAccessories.length > 0 ? randItem(unlockedAccessories) : 0;
+        // Helper: lọc chỉ lấy trang bị đã mở khóa cho 1 category
+        const getUnlocked = (category, maxCount) => {
+            return Array.from({ length: maxCount }, (_, i) => i)
+                .filter(i => !ChibiModule.isGearLocked(i, category));
+        };
+
+        // Filter unlocked items for ALL lockable categories
+        const unlockedAccessories = getUnlocked('accessory', ChibiModule.counts.accessory);
+        const unlockedGear = getUnlocked('gear', ChibiModule.counts.gear);
+        const unlockedWing = getUnlocked('wing', ChibiModule.counts.wing);
+        const unlockedMount = getUnlocked('mount', ChibiModule.counts.mount);
+        const unlockedDragon = getUnlocked('dragon', ChibiModule.counts.dragon + 1);
 
         ChibiModule.currentConfig = {
             gender: Math.random() > 0.5 ? 'nam' : 'nữ',
@@ -1805,11 +1855,11 @@ const ChibiModule = {
             bottomColor: randomClothing2,
             shoeStyle: randStyle(ChibiModule.counts.shoe - 1) + 1,
             shoeColor: randomClothing3,
-            accessory: randomAccessory,
-            gear: randStyle(ChibiModule.counts.gear),
-            wing: randStyle(ChibiModule.counts.wing),
-            mount: randStyle(ChibiModule.counts.mount),
-            dragon: randStyle(ChibiModule.counts.dragon)
+            accessory: unlockedAccessories.length > 0 ? randItem(unlockedAccessories) : 0,
+            gear: unlockedGear.length > 0 ? randItem(unlockedGear) : 0,
+            wing: unlockedWing.length > 0 ? randItem(unlockedWing) : 0,
+            mount: unlockedMount.length > 0 ? randItem(unlockedMount) : 0,
+            dragon: unlockedDragon.length > 0 ? randItem(unlockedDragon) : 0
         };
 
         ChibiModule.updatePreview();
