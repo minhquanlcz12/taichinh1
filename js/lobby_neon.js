@@ -786,12 +786,11 @@ window.LobbyNeon = {
         if (!me) return;
         db.collection("lobby_games").where("status", "==", "playing").onSnapshot(snapshot => {
             snapshot.docChanges().forEach(change => {
+                if (change.type === 'removed') return; // Bỏ qua các game bị xoá hoặc đã kết thúc
                 const game = change.doc.data();
                 const gameId = change.doc.id;
                 if (game.player2 === me && !game.p2Accepted) {
                     LobbyNeon.showIncomingInvite(gameId, game.player1);
-                } else if (LobbyNeon.state.currentGameId === gameId) {
-                    LobbyNeon.onGameUpdate(game);
                 } else if ((game.player1 === me || game.player2 === me) && game.p2Accepted) {
                     LobbyNeon.openCaroBoard(gameId, game);
                 }
