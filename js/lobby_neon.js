@@ -846,22 +846,54 @@ window.LobbyNeon = {
         boardOverlay.id = 'caro-overlay';
         boardOverlay.className = 'caro-modal';
         boardOverlay.innerHTML = `
-            <div class="caro-board-container">
+            <div class="caro-board-container" style="position: relative;">
+                <style>
+                    @keyframes chibiBounce {
+                        0%, 100% { transform: scale(1.15) translateY(0); }
+                        50% { transform: scale(1.15) translateY(-8px); }
+                    }
+                    .caro-layout-wrapper {
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 30px;
+                    }
+                    .caro-chibi-container {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        width: 140px;
+                        background: rgba(0, 0, 0, 0.25);
+                        padding: 20px 10px;
+                        border-radius: 20px;
+                        border: 1px solid rgba(255, 255, 255, 0.05);
+                        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                    }
+                    @media (max-width: 900px) {
+                        .caro-layout-wrapper {
+                            flex-direction: column;
+                            gap: 15px;
+                        }
+                        .caro-chibi-container {
+                            display: none;
+                        }
+                    }
+                </style>
                 <div style="display: flex; justify-content: space-between; margin-bottom: 20px; align-items: center;">
                     <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
-                        <div style="width: 50px; height: 50px; flex-shrink: 0; filter: drop-shadow(0 0 6px #ff475780);">${p1Chibi}</div>
+                        <div style="width: 40px; height: 40px; flex-shrink: 0; filter: drop-shadow(0 0 6px #ff475780);">${p1Chibi}</div>
                         <div>
-                            <div id="caro-p1-label" style="color: #ff4757; font-weight: 900; text-shadow: 0 0 5px #ff4757; margin-bottom: 4px;">${game.player1} (X)</div>
+                            <div id="caro-p1-label" style="color: #ff4757; font-weight: 900; text-shadow: 0 0 5px #ff4757; margin-bottom: 2px; font-size: 13px;">${game.player1} (X)</div>
                             <div id="caro-p1-stats" style="font-size: 10px; color: #94a3b8; font-weight: bold;">Đang tải...</div>
                         </div>
                     </div>
                     <div style="margin: 0 15px; opacity: 0.5; color: #fff; font-weight: 900; font-size: 18px;">⚔️</div>
                     <div style="display: flex; align-items: center; gap: 10px; flex: 1; justify-content: flex-end;">
                         <div style="text-align: right;">
-                            <div id="caro-p2-label" style="color: #2ed573; font-weight: 900; text-shadow: 0 0 5px #2ed573; margin-bottom: 4px;">${game.player2} (O)</div>
+                            <div id="caro-p2-label" style="color: #2ed573; font-weight: 900; text-shadow: 0 0 5px #2ed573; margin-bottom: 2px; font-size: 13px;">${game.player2} (O)</div>
                             <div id="caro-p2-stats" style="font-size: 10px; color: #94a3b8; font-weight: bold;">Đang tải...</div>
                         </div>
-                        <div style="width: 50px; height: 50px; flex-shrink: 0; filter: drop-shadow(0 0 6px #2ed57380);">${p2Chibi}</div>
+                        <div style="width: 40px; height: 40px; flex-shrink: 0; filter: drop-shadow(0 0 6px #2ed57380);">${p2Chibi}</div>
                     </div>
                     <div style="display: flex; gap: 8px; margin-left: 12px;">
                         <button class="btn-neon-danger" id="caro-btn-quit" onclick="LobbyNeon.forfeitGame()" style="font-size: 11px; padding: 6px 12px; height: 32px;">Rút lui</button>
@@ -869,12 +901,43 @@ window.LobbyNeon = {
                     </div>
                 </div>
                 <div id="caro-status-msg" style="color: #fff; font-weight: 800; font-size: 14px; margin-bottom: 15px; text-align: center; background: rgba(168, 85, 247, 0.2); padding: 5px; border-radius: 8px;">Đang chuẩn bị...</div>
-                <div style="position: relative;">
-                    <div class="caro-grid" id="caro-grid">
-                        ${Array(225).fill(0).map((_, i) => `<div class="caro-cell" onclick="LobbyNeon.makeMove(${i})"></div>`).join('')}
+                
+                <div class="caro-layout-wrapper">
+                    <!-- Chibi Player 1 (Left) -->
+                    <div class="caro-chibi-container" id="caro-chibi-p1-wrapper">
+                        <div id="caro-chibi-p1-side" style="width: 110px; height: 110px; transition: all 0.4s; filter: drop-shadow(0 0 10px rgba(255, 71, 87, 0.5));">
+                            ${p1Chibi}
+                        </div>
+                        <div style="color: #ff4757; font-weight: 900; font-size: 13px; margin-top: 12px; text-shadow: 0 0 5px rgba(255, 71, 87, 0.5); text-align: center; word-break: break-all;">
+                            ${game.player1}
+                        </div>
+                        <div id="caro-p1-side-level" style="font-size: 10px; color: #fbbf24; font-weight: bold; margin-top: 4px; background: rgba(0,0,0,0.4); padding: 2px 8px; border-radius: 10px;">
+                            Cấp 1
+                        </div>
                     </div>
-                    <svg id="caro-win-line" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10;"></svg>
+
+                    <!-- Caro Board Grid -->
+                    <div style="position: relative;">
+                        <div class="caro-grid" id="caro-grid">
+                            ${Array(225).fill(0).map((_, i) => `<div class="caro-cell" onclick="LobbyNeon.makeMove(${i})"></div>`).join('')}
+                        </div>
+                        <svg id="caro-win-line" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10;"></svg>
+                    </div>
+
+                    <!-- Chibi Player 2 (Right) -->
+                    <div class="caro-chibi-container" id="caro-chibi-p2-wrapper">
+                        <div id="caro-chibi-p2-side" style="width: 110px; height: 110px; transition: all 0.4s; filter: drop-shadow(0 0 10px rgba(46, 213, 115, 0.5));">
+                            ${p2Chibi}
+                        </div>
+                        <div style="color: #2ed573; font-weight: 900; font-size: 13px; margin-top: 12px; text-shadow: 0 0 5px rgba(46, 213, 115, 0.5); text-align: center; word-break: break-all;">
+                            ${game.player2}
+                        </div>
+                        <div id="caro-p2-side-level" style="font-size: 10px; color: #fbbf24; font-weight: bold; margin-top: 4px; background: rgba(0,0,0,0.4); padding: 2px 8px; border-radius: 10px;">
+                            Cấp 1
+                        </div>
+                    </div>
                 </div>
+
                 <div id="caro-winner-ui" class="caro-winner-overlay" style="display: none; flex-direction: column; gap: 20px;">
                     <div class="winner-text">🎉 THẮNG CUỘC!</div>
                     <div style="display: flex; gap: 15px; z-index: 10;">
@@ -936,7 +999,7 @@ window.LobbyNeon = {
                 GamesSynth.playWin();
                 // Vẽ đường thắng + hiện popup
                 LobbyNeon.drawWinLine(winResult);
-                LobbyNeon.showGameResult(true, me, loser);
+                await LobbyNeon.showGameResult(true, me, loser);
             } else {
                 GamesSynth.playMove();
             }
@@ -987,25 +1050,68 @@ window.LobbyNeon = {
         `;
     },
 
-    showGameResult: (isWinner, winner, loser) => {
+    showGameResult: async (isWinner, winner, loser) => {
         const me = Auth.currentUser.username;
         const isMeWinner = (winner === me);
         const opponentName = isMeWinner ? loser : winner;
 
+        // Lấy số trận thắng của cả hai để hiển thị trên popup
+        const accounts = await DB.getAccounts();
+        const uWinner = accounts.find(a => a.username === winner);
+        const uLoser = accounts.find(a => a.username === loser);
+
+        const winnerWins = uWinner?.stats?.caroWins || 0;
+        const winnerLosses = uWinner?.stats?.caroLosses || 0;
+        const loserWins = uLoser?.stats?.caroWins || 0;
+        const loserLosses = uLoser?.stats?.caroLosses || 0;
+
+        const winnerFlattery = [
+            `Đỉnh chóp! Bác đúng là chiến thần caro, thiên hạ vô song, IQ vô cực! 👑`,
+            `Trí tuệ siêu việt! Chỉ bằng vài đường cơ bản sếp đã khiến đối thủ khóc thét! Quá tuyệt vời! 👏`,
+            `Gáy lên nào sếp ơi! Đúng là không ai làm lại sếp luôn, đỉnh của chóp! 🏆`,
+            `IQ 300 vũ trụ! Đối thủ chỉ biết khóc lóc van xin sự tha thứ trước đường cờ thần sầu của sếp! 😎`,
+            `Thần cờ hạ phàm! Nước đi điêu luyện thế này thì làm sao đối thủ đỡ nổi đây! Quá đỉnh sếp ơi! ✨`
+        ];
+
+        const loserSalt = [
+            `Nhìn cái gì? Thua rồi còn không chịu gỡ? Cay không? Cay thế cơ chứ! 🌶️`,
+            `Úi dồi ôi, thế mà lúc đầu gáy to lắm! Trình độ này chỉ hợp đi quét dọn thôi sếp ơi! 😂`,
+            `Cay đỏ mắt! Trận này chỉ là tai nạn, hay là do sếp... 'nhường' đấy? Làm ván nữa gỡ gạc danh dự đi nào! 😤`,
+            `Gà quá sếp ơi! Đối thủ đi có vài nước mà sếp đã 'ngửa' rồi. Có gan thì bấm tái đấu luôn và ngay đi! 🐔`,
+            `Thua sấp mặt luôn! Thần may mắn đã bỏ rơi sếp rồi, hay là tại... tay sếp chưa rửa? 🧼 Bấm gỡ ngay!`
+        ];
+
+        const randomText = isMeWinner 
+            ? winnerFlattery[Math.floor(Math.random() * winnerFlattery.length)]
+            : loserSalt[Math.floor(Math.random() * loserSalt.length)];
+
+        // Bảng vàng thành tích đối đầu cực xịn
+        const statsHtml = `
+            <div style="margin-top: 15px; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); font-size: 13px; text-align: left;">
+                <div style="font-weight: 900; color: #fbbf24; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">📊 THÀNH TÍCH ĐỐI ĐẦU</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; color: #fff; font-weight: bold; margin-bottom: 4px;">
+                    <span style="color: #ff4757;">🔴 ${winner} (X)</span>
+                    <span style="font-size: 14px; font-weight: 900; color: #ff4757; text-shadow: 0 0 5px rgba(255,71,87,0.5);">${winnerWins} Thắng - ${winnerLosses} Thua</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; color: #fff; font-weight: bold;">
+                    <span style="color: #2ed573;">🟢 ${loser} (O)</span>
+                    <span style="font-size: 14px; font-weight: 900; color: #2ed573; text-shadow: 0 0 5px rgba(46,213,115,0.5);">${loserWins} Thắng - ${loserLosses} Thua</span>
+                </div>
+            </div>
+        `;
+
         setTimeout(() => {
             Utils.showModal(
-                isMeWinner ? '🏆 CHIẾN THẮNG VINH QUANG!' : '💀 THUA CUỘC RỒI!',
+                isMeWinner ? '🏆 CHIẾN THẮNG VINH QUANG!' : '💀 CAY CHƯA SẾP ƠI!',
                 `<div style="text-align: center;">
-                    <div style="font-size: 80px; margin-bottom: 15px;">${isMeWinner ? '🏆' : '💀'}</div>
-                    <h2 style="color: ${isMeWinner ? '#2ed573' : '#ff4757'}; font-size: 28px; margin: 10px 0; text-shadow: 0 0 20px ${isMeWinner ? '#2ed573' : '#ff4757'}60;">
+                    <div style="font-size: 80px; margin-bottom: 15px; animation: float 2s infinite ease-in-out;">${isMeWinner ? '👑' : '🌶️'}</div>
+                    <h2 style="color: ${isMeWinner ? '#2ed573' : '#ff4757'}; font-size: 24px; margin: 10px 0; text-shadow: 0 0 20px ${isMeWinner ? '#2ed573' : '#ff4757'}60; font-weight: 900; text-transform: uppercase;">
                         ${isMeWinner ? 'BẠN ĐÃ THẮNG!' : 'BẠN ĐÃ THUA!'}
                     </h2>
-                    <p style="color: #94a3b8; font-size: 14px; margin-top: 10px;">
-                        ${isMeWinner 
-                            ? `Đối thủ <b style="color:#ff4757">${opponentName}</b> đã quỳ gối trước bạn! Oai phong lẫm liệt! 😎` 
-                            : `<b style="color:#2ed573">${opponentName}</b> đã hạ gục bạn! Về luyện thêm đi sếp! 💪`
-                        }
+                    <p style="color: #e2e8f0; font-size: 15px; margin-top: 12px; line-height: 1.5; font-style: italic;">
+                        "${randomText}"
                     </p>
+                    ${statsHtml}
                 </div>`,
                 () => {
                     LobbyNeon.closeCaroBoard();
@@ -1029,11 +1135,81 @@ window.LobbyNeon = {
             }
         });
 
-        // Update Stats display in header
-        LobbyNeon.updateMatchStats(game.player1, game.player2);
+        // Update Stats display in header & Chibi Cấp độ
+        await LobbyNeon.updateMatchStats(game.player1, game.player2);
 
         const me = Auth.currentUser.username;
         const statusMsg = document.getElementById('caro-status-msg');
+
+        // Cập nhật nhún nhảy và độ sáng của chibi bên cạnh bàn cờ theo lượt chơi
+        const p1ChibiContainer = document.getElementById('caro-chibi-p1-side');
+        const p2ChibiContainer = document.getElementById('caro-chibi-p2-side');
+        
+        const p1Wrapper = document.getElementById('caro-chibi-p1-wrapper');
+        const p2Wrapper = document.getElementById('caro-chibi-p2-wrapper');
+        
+        if (p1ChibiContainer && p2ChibiContainer) {
+            if (game.status === 'playing') {
+                if (game.turn === game.player1) {
+                    // Lượt player 1 (X)
+                    p1ChibiContainer.style.animation = 'chibiBounce 1.5s infinite ease-in-out';
+                    p1ChibiContainer.style.transform = 'scale(1.15)';
+                    p1ChibiContainer.style.filter = 'drop-shadow(0 0 20px rgba(255, 71, 87, 0.8)) brightness(1.2)';
+                    if (p1Wrapper) {
+                        p1Wrapper.style.borderColor = 'rgba(255, 71, 87, 0.4)';
+                        p1Wrapper.style.background = 'rgba(255, 71, 87, 0.05)';
+                        p1Wrapper.style.boxShadow = '0 0 15px rgba(255, 71, 87, 0.15)';
+                    }
+                    
+                    p2ChibiContainer.style.animation = 'none';
+                    p2ChibiContainer.style.transform = 'scale(0.95)';
+                    p2ChibiContainer.style.filter = 'drop-shadow(0 0 5px rgba(46, 213, 115, 0.2)) opacity(0.5) grayscale(0.2)';
+                    if (p2Wrapper) {
+                        p2Wrapper.style.borderColor = 'rgba(255, 255, 255, 0.05)';
+                        p2Wrapper.style.background = 'rgba(0, 0, 0, 0.25)';
+                        p2Wrapper.style.boxShadow = 'none';
+                    }
+                } else {
+                    // Lượt player 2 (O)
+                    p2ChibiContainer.style.animation = 'chibiBounce 1.5s infinite ease-in-out';
+                    p2ChibiContainer.style.transform = 'scale(1.15)';
+                    p2ChibiContainer.style.filter = 'drop-shadow(0 0 20px rgba(46, 213, 115, 0.8)) brightness(1.2)';
+                    if (p2Wrapper) {
+                        p2Wrapper.style.borderColor = 'rgba(46, 213, 115, 0.4)';
+                        p2Wrapper.style.background = 'rgba(46, 213, 115, 0.05)';
+                        p2Wrapper.style.boxShadow = '0 0 15px rgba(46, 213, 115, 0.15)';
+                    }
+                    
+                    p1ChibiContainer.style.animation = 'none';
+                    p1ChibiContainer.style.transform = 'scale(0.95)';
+                    p1ChibiContainer.style.filter = 'drop-shadow(0 0 5px rgba(255, 71, 87, 0.2)) opacity(0.5) grayscale(0.2)';
+                    if (p1Wrapper) {
+                        p1Wrapper.style.borderColor = 'rgba(255, 255, 255, 0.05)';
+                        p1Wrapper.style.background = 'rgba(0, 0, 0, 0.25)';
+                        p1Wrapper.style.boxShadow = 'none';
+                    }
+                }
+            } else {
+                p1ChibiContainer.style.animation = 'none';
+                p1ChibiContainer.style.transform = 'scale(1)';
+                p1ChibiContainer.style.filter = 'drop-shadow(0 0 10px rgba(255, 71, 87, 0.5))';
+                
+                p2ChibiContainer.style.animation = 'none';
+                p2ChibiContainer.style.transform = 'scale(1)';
+                p2ChibiContainer.style.filter = 'drop-shadow(0 0 10px rgba(46, 213, 115, 0.5))';
+                
+                if (p1Wrapper) {
+                    p1Wrapper.style.borderColor = 'rgba(255, 255, 255, 0.05)';
+                    p1Wrapper.style.background = 'rgba(0, 0, 0, 0.25)';
+                    p1Wrapper.style.boxShadow = 'none';
+                }
+                if (p2Wrapper) {
+                    p2Wrapper.style.borderColor = 'rgba(255, 255, 255, 0.05)';
+                    p2Wrapper.style.background = 'rgba(0, 0, 0, 0.25)';
+                    p2Wrapper.style.boxShadow = 'none';
+                }
+            }
+        }
 
         if (game.status === 'finished') {
             const quitBtn = document.getElementById('caro-btn-quit');
@@ -1046,7 +1222,7 @@ window.LobbyNeon = {
                     LobbyNeon.drawWinLine(game.winCells);
                 }
                 statusMsg.innerHTML = `<span style="color:#ff4757">💀 ${game.winner} đã chiến thắng!</span>`;
-                LobbyNeon.showGameResult(false, game.winner, me);
+                await LobbyNeon.showGameResult(false, game.winner, me);
             } else if (game.winner === me) {
                 statusMsg.innerHTML = `<span style="color:#2ed573">🏆 Bạn đã chiến thắng!</span>`;
             } else {
@@ -1073,6 +1249,14 @@ window.LobbyNeon = {
 
         if (el1) el1.textContent = `Thắng: ${s1.caroWins || 0} | Thua: ${s1.caroLosses || 0}`;
         if (el2) el2.textContent = `Thắng: ${s2.caroWins || 0} | Thua: ${s2.caroLosses || 0}`;
+
+        // Cập nhật Cấp độ của Chibi đứng bên cạnh bàn cờ
+        const lvl1 = u1?.level || 1;
+        const lvl2 = u2?.level || 1;
+        const sideLvl1 = document.getElementById('caro-p1-side-level');
+        const sideLvl2 = document.getElementById('caro-p2-side-level');
+        if (sideLvl1) sideLvl1.textContent = `Cấp ${lvl1}`;
+        if (sideLvl2) sideLvl2.textContent = `Cấp ${lvl2}`;
     },
 
     closeCaroBoard: () => {
