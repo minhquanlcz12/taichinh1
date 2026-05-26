@@ -4,6 +4,17 @@
 <head>
     <script>
         window.onerror = function(message, source, lineno, colno, error) {
+            // Chỉ hiển thị bảng lỗi cho tài khoản Admin để nhân viên không bị hoang mang
+            let isAdmin = false;
+            try {
+                const user = JSON.parse(localStorage.getItem('tl_current_user') || '{}');
+                if (user && user.role === 'admin') {
+                    isAdmin = true;
+                }
+            } catch (e) {}
+            
+            if (!isAdmin) return false;
+
             const errBox = document.getElementById('critical-sys-error-hud');
             if (errBox) return false;
             
@@ -39,8 +50,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-
-    <script src="js/utils.js?v=56.0"></script>
+ 
+    <script src="js/utils.js?v=158.0"></script>
 
     <!-- Firebase Compat SDKs (for vanilla JS setup easily) -->
     <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
@@ -1065,27 +1076,24 @@
     </div>
 
 
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.js"></script>
-    <script src="js/utils.js?v=157.0"></script>
-    <script src="js/db.js?v=157.0"></script>
-    <script src="js/finance.js?v=157.0"></script>
-    <script src="js/work.js?v=157.0"></script>
-    <script src="js/attendance.js?v=157.0"></script>
-    <script src="js/chibi.js?v=157.0"></script>
-    <script src="js/rewards.js?v=157.0"></script>
-    <script src="js/payroll.js?v=157.0"></script>
-    <script src="js/chat.js?v=157.0"></script>
-    <script src="js/prompt.js?v=157.0"></script>
-    <script src="js/chatbot.js?v=157.0"></script>
-    <script src="js/lobby_neon.js?v=157.0"></script>
-    <script src="js/music.js?v=157.0"></script>
-    <script src="js/attendance_music.js?v=157.0"></script>
-    <script src="js/reports.js?v=157.0"></script>
-    <script src="js/auth.js?v=157.0"></script>
-    <script src="js/claude.js?v=157.0"></script>
-    <script src="js/games.js?v=157.0"></script>
-    <script src="js/app.js?v=157.0"></script>
+    <script src="js/db.js?v=158.0"></script>
+    <script src="js/finance.js?v=158.0"></script>
+    <script src="js/work.js?v=158.0"></script>
+    <script src="js/attendance.js?v=158.0"></script>
+    <script src="js/chibi.js?v=158.0"></script>
+    <script src="js/rewards.js?v=158.0"></script>
+    <script src="js/payroll.js?v=158.0"></script>
+    <script src="js/chat.js?v=158.0"></script>
+    <script src="js/prompt.js?v=158.0"></script>
+    <script src="js/chatbot.js?v=158.0"></script>
+    <script src="js/lobby_neon.js?v=158.0"></script>
+    <script src="js/music.js?v=158.0"></script>
+    <script src="js/attendance_music.js?v=158.0"></script>
+    <script src="js/reports.js?v=158.0"></script>
+    <script src="js/auth.js?v=158.0"></script>
+    <script src="js/claude.js?v=158.0"></script>
+    <script src="js/games.js?v=158.0"></script>
+    <script src="js/app.js?v=158.0"></script>
 
     <!-- Toast Notification Container -->
     <div id="toast-container" class="toast-container"></div>
