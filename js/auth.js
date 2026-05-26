@@ -820,25 +820,25 @@ const Auth = {
     },
 
     getLevelTitle: (level) => {
-        if (level >= 15) return { title: '👑 CMO Huyền Thoại', color: '#ff6b6b', glow: true, bubbleColor: 'linear-gradient(135deg, #ff6b6b, #fbbf24, #a855f7)', bubbleGlow: '0 0 15px #ff6b6b, 0 0 30px #fbbf2440' };
-        if (level >= 12) return { title: '🧠 Chiến Lược Gia Viral', color: '#f59e0b', glow: true, bubbleColor: 'linear-gradient(135deg, #f59e0b, #fbbf24)', bubbleGlow: '0 0 12px #f59e0b80' };
-        if (level >= 10) return { title: '🎬 Đạo Diễn Reels Triệu View', color: '#fbbf24', glow: true, bubbleColor: 'linear-gradient(135deg, #fbbf24, #f59e0b)', bubbleGlow: '0 0 12px #fbbf2480' };
-        if (level >= 7) return { title: '📸 Thánh Chụp Ảnh Sản Phẩm', color: '#a855f7', glow: false, bubbleColor: 'linear-gradient(135deg, #a855f7, #6366f1)', bubbleGlow: '0 0 10px #a855f780' };
-        if (level >= 5) return { title: '✍️ Thợ Viết Content Giang Hồ', color: '#10b981', glow: false, bubbleColor: 'linear-gradient(135deg, #10b981, #059669)', bubbleGlow: '0 0 8px #10b98160' };
-        if (level >= 3) return { title: '📝 Nhân Viên Canva Kiên Cường', color: '#38bdf8', glow: false, bubbleColor: '#38bdf8', bubbleGlow: 'none' };
-        return { title: '🌱 Intern Chạy Việc Vặt', color: '#94a3b8', glow: false, bubbleColor: 'rgba(255,255,255,0.95)', bubbleGlow: 'none' };
+        if (level >= 15) return { title: '👑 Marketing God Đệ Nhất', color: '#ff6b6b', glow: true, bubbleColor: 'linear-gradient(135deg, #ff6b6b, #fbbf24, #a855f7)', bubbleGlow: '0 0 15px #ff6b6b, 0 0 30px #fbbf2440' };
+        if (level >= 12) return { title: '🏆 Huyền Thoại Cháy KPI', color: '#f59e0b', glow: true, bubbleColor: 'linear-gradient(135deg, #f59e0b, #fbbf24)', bubbleGlow: '0 0 12px #f59e0b80' };
+        if (level >= 10) return { title: '💎 Trùm Agency Ngầm', color: '#fbbf24', glow: true, bubbleColor: 'linear-gradient(135deg, #fbbf24, #f59e0b)', bubbleGlow: '0 0 12px #fbbf2480' };
+        if (level >= 7) return { title: '🔥 Thánh Cày Overtime', color: '#a855f7', glow: false, bubbleColor: 'linear-gradient(135deg, #a855f7, #6366f1)', bubbleGlow: '0 0 10px #a855f780' };
+        if (level >= 5) return { title: '⚡ Sát Thủ Deadline', color: '#10b981', glow: false, bubbleColor: 'linear-gradient(135deg, #10b981, #059669)', bubbleGlow: '0 0 8px #10b98160' };
+        if (level >= 3) return { title: '📋 Chiến Binh Brief', color: '#38bdf8', glow: false, bubbleColor: '#38bdf8', bubbleGlow: 'none' };
+        return { title: '🌱 Lính Mới Vào Nghề', color: '#94a3b8', glow: false, bubbleColor: 'rgba(255,255,255,0.95)', bubbleGlow: 'none' };
     },
 
     getLevelPerks: (level) => {
         const perks = [];
-        if (level >= 1) perks.push('🌱 Trang phục cơ bản');
+        if (level >= 1) perks.push('🌱 Trang phục cơ bản + Danh hiệu "Lính Mới Vào Nghề"');
         if (level >= 2) perks.push('🗡️ Mở thêm vũ khí mới');
-        if (level >= 3) perks.push('🎩 Phụ kiện đặc biệt + Danh hiệu "Nhân Viên Canva"');
-        if (level >= 5) perks.push('🦅 Cánh + Thú cưỡi + Bong bóng chat xanh lá');
-        if (level >= 7) perks.push('🐉 Rồng + Aura + Bong bóng chat tím lấp lánh');
+        if (level >= 3) perks.push('🎩 Phụ kiện đặc biệt + Danh hiệu "Chiến Binh Brief"');
+        if (level >= 5) perks.push('🦅 Cánh + Thú cưỡi + Bong bóng chat xanh lá + Dấu chân ✧');
+        if (level >= 7) perks.push('🐉 Rồng + Aura + Bong bóng chat tím + Danh hiệu "Thánh Cày Overtime"');
         if (level >= 10) perks.push('🌟 Mở TOÀN BỘ trang phục + Bong bóng vàng kim');
-        if (level >= 12) perks.push('🔥 Hiệu ứng dấu chân lửa khi di chuyển');
-        if (level >= 15) perks.push('🌈 Bong bóng chat cầu vồng + Dấu chân vàng + Danh hiệu "CMO Huyền Thoại"');
+        if (level >= 12) perks.push('🔥 Dấu chân lửa khi di chuyển + Danh hiệu "Huyền Thoại Cháy KPI"');
+        if (level >= 15) perks.push('🌈 Bong bóng cầu vồng + Dấu chân vàng + Danh hiệu "Marketing God Đệ Nhất"');
         return perks;
     },
 
