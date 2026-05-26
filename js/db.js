@@ -39,7 +39,8 @@ const DB = {
         } catch (e) {
             console.error("Error getting accounts from Firebase, falling back to LocalStorage:", e);
         }
-        return Utils.storage.get('backup_accounts', []);
+        const fallback = Utils.storage.get('backup_accounts', []);
+        return Array.isArray(fallback) ? fallback : [];
     },
 
     incrementUserStats: async (username, statName) => {

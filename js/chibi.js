@@ -238,7 +238,7 @@ const ChibiModule = {
      * Render complete composite Chibi SVG
      */
     renderChibiSVG: function(config, isDancing, meritPoints) {
-        const c = config || {
+        const defaults = {
             gender: 'nam',
             skinColor: '#ffd1a9',
             hairStyle: 1,
@@ -258,6 +258,7 @@ const ChibiModule = {
             dragon: 0,
             aura: 0
         };
+        const c = { ...defaults, ...config };
 
         const isD = isDancing !== undefined ? isDancing : true;
         const pts = meritPoints !== undefined ? meritPoints : 0;

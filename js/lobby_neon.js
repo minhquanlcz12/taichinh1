@@ -821,15 +821,29 @@ window.LobbyNeon = {
         );
     },
 
-    openCaroBoard: (gameId, game) => {
+    openCaroBoard: async (gameId, game) => {
         if (LobbyNeon.state.currentGameId === gameId) return;
         LobbyNeon.state.currentGameId = gameId;
         LobbyNeon.state.isMakingMove = false; // Reset lock
+        LobbyNeon.state.resultShown = false; // Reset kết quả hiển thị
 
-        // Lấy chibi config cho 2 người chơi
+        // Huỷ lắng nghe game cũ nếu có
+        if (LobbyNeon.state.unsubscribeCurrentGame) {
+            try { LobbyNeon.state.unsubscribeCurrentGame(); } catch(e) {}
+            LobbyNeon.state.unsubscribeCurrentGame = null;
+        }
+
+        // Lấy chibi config thật từ Database Firestore của cả 2 người chơi
+        let accounts = [];
+        try {
+            accounts = await DB.getAccounts();
+        } catch(e) {
+            console.error("Error fetching accounts for Caro Chibi:", e);
+        }
+        LobbyNeon.state.caroAccounts = accounts; // Lưu cache danh sách tài khoản
+
         const getPlayerChibi = (username) => {
             try {
-                const accounts = JSON.parse(localStorage.getItem('accounts') || '[]');
                 const acc = accounts.find(a => a.username === username);
                 const config = acc?.profile?.chibiConfig || {};
                 return ChibiModule.renderChibiSVG(config, false, 0);
@@ -1040,30 +1054,50 @@ window.LobbyNeon = {
         const x2 = r2.left + r2.width / 2 - gridRect.left;
         const y2 = r2.top + r2.height / 2 - gridRect.top;
 
+        const lineLength = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+
+        // Đảm bảo có keyframes động cho vẽ line chiến đấu
+        if (!document.getElementById('caro-strike-style')) {
+            const style = document.createElement('style');
+            style.id = 'caro-strike-style';
+            style.innerHTML = `
+                @keyframes drawStrikeLine {
+                    to { stroke-dashoffset: 0; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
         svg.innerHTML = `
             <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" 
-                stroke="#2ed573" stroke-width="4" stroke-linecap="round"
-                style="filter: drop-shadow(0 0 8px #2ed573); opacity: 0;"
+                stroke="#2ed573" stroke-width="8" stroke-linecap="round"
+                style="filter: drop-shadow(0 0 10px #2ed573);
+                       stroke-dasharray: ${lineLength};
+                       stroke-dashoffset: ${lineLength};
+                       animation: drawStrikeLine 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;"
                 id="caro-strike-line">
-                <animate attributeName="opacity" from="0" to="1" dur="0.3s" fill="freeze" />
             </line>
         `;
     },
 
-    showGameResult: async (isWinner, winner, loser) => {
+    showGameResult: (isWinner, winner, loser) => {
         const me = Auth.currentUser.username;
         const isMeWinner = (winner === me);
         const opponentName = isMeWinner ? loser : winner;
 
-        // Lấy số trận thắng của cả hai để hiển thị trên popup
-        const accounts = await DB.getAccounts();
+        // Sử dụng cache tài khoản để hiển thị thông tin đối đầu trên popup lập tức
+        const accounts = LobbyNeon.state.caroAccounts || [];
         const uWinner = accounts.find(a => a.username === winner);
         const uLoser = accounts.find(a => a.username === loser);
 
-        const winnerWins = uWinner?.stats?.caroWins || 0;
-        const winnerLosses = uWinner?.stats?.caroLosses || 0;
-        const loserWins = uLoser?.stats?.caroWins || 0;
-        const loserLosses = uLoser?.stats?.caroLosses || 0;
+        let winnerWins = uWinner?.stats?.caroWins || 0;
+        let winnerLosses = uWinner?.stats?.caroLosses || 0;
+        let loserWins = uLoser?.stats?.caroWins || 0;
+        let loserLosses = uLoser?.stats?.caroLosses || 0;
+
+        // Cộng ảo 1 trận thắng/thua trực quan cho popup phản ánh đúng tỉ số mới
+        winnerWins++;
+        loserLosses++;
 
         const winnerFlattery = [
             `Đỉnh chóp! Bác đúng là chiến thần caro, thiên hạ vô song, IQ vô cực! 👑`,
@@ -1215,16 +1249,26 @@ window.LobbyNeon = {
             const quitBtn = document.getElementById('caro-btn-quit');
             if (quitBtn) quitBtn.style.display = 'none';
 
-            // Nếu mình là người THUA (đối thủ vừa thắng) → vẽ line + hiện kết quả
-            if (game.winner && game.winner !== me) {
-                // Vẽ đường thắng nếu có winCells
-                if (game.winCells && game.winCells.length >= 5) {
-                    LobbyNeon.drawWinLine(game.winCells);
-                }
-                statusMsg.innerHTML = `<span style="color:#ff4757">💀 ${game.winner} đã chiến thắng!</span>`;
-                await LobbyNeon.showGameResult(false, game.winner, me);
-            } else if (game.winner === me) {
+            // Vẽ đường thắng nếu có winCells
+            if (game.winCells && game.winCells.length >= 5) {
+                LobbyNeon.drawWinLine(game.winCells);
+            }
+
+            if (game.winner === me) {
                 statusMsg.innerHTML = `<span style="color:#2ed573">🏆 Bạn đã chiến thắng!</span>`;
+                if (!LobbyNeon.state.resultShown) {
+                    LobbyNeon.state.resultShown = true;
+                    const loser = (me === game.player1) ? game.player2 : game.player1;
+                    LobbyNeon.updateMatchStats(game.player1, game.player2, true, game.winner);
+                    LobbyNeon.showGameResult(true, me, loser);
+                }
+            } else if (game.winner) {
+                statusMsg.innerHTML = `<span style="color:#ff4757">💀 ${game.winner} đã chiến thắng!</span>`;
+                if (!LobbyNeon.state.resultShown) {
+                    LobbyNeon.state.resultShown = true;
+                    LobbyNeon.updateMatchStats(game.player1, game.player2, true, game.winner);
+                    LobbyNeon.showGameResult(false, game.winner, me);
+                }
             } else {
                 statusMsg.innerHTML = `<span style="color:#fff">🏳️ Trận đấu kết thúc.</span>`;
                 setTimeout(() => LobbyNeon.closeCaroBoard(), 2000);
@@ -1233,16 +1277,30 @@ window.LobbyNeon = {
             statusMsg.innerHTML = game.turn === me ? 
                 `<span style="color:#2ed573">🟢 ĐẾN LƯỢT TIÊN PHONG</span>` : 
                 `<span style="color:#94a3b8">⏳ CHỜ ĐỐI THỦ HÀNH QUÂN...</span>`;
+            
+            // Cập nhật cấp độ và tỉ số trong quá trình chơi cờ
+            LobbyNeon.updateMatchStats(game.player1, game.player2);
         }
     },
 
-    updateMatchStats: async (p1, p2) => {
-        const accounts = await DB.getAccounts();
+    updateMatchStats: (p1, p2, isFinished, winner) => {
+        const accounts = LobbyNeon.state.caroAccounts || [];
         const u1 = accounts.find(a => a.username === p1);
         const u2 = accounts.find(a => a.username === p2);
 
-        const s1 = u1?.stats || { caroWins: 0, caroLosses: 0 };
-        const s2 = u2?.stats || { caroWins: 0, caroLosses: 0 };
+        let s1 = { ...(u1?.stats || { caroWins: 0, caroLosses: 0 }) };
+        let s2 = { ...(u2?.stats || { caroWins: 0, caroLosses: 0 }) };
+
+        // Cộng ảo 1 trận thắng/thua trực quan trên UI ngay khi trận đấu kết thúc
+        if (isFinished && winner) {
+            if (winner === p1) {
+                s1.caroWins = (s1.caroWins || 0) + 1;
+                s2.caroLosses = (s2.caroLosses || 0) + 1;
+            } else if (winner === p2) {
+                s2.caroWins = (s2.caroWins || 0) + 1;
+                s1.caroLosses = (s1.caroLosses || 0) + 1;
+            }
+        }
 
         const el1 = document.getElementById('caro-p1-stats');
         const el2 = document.getElementById('caro-p2-stats');
@@ -1263,6 +1321,12 @@ window.LobbyNeon = {
         const overlay = document.getElementById('caro-overlay');
         if (overlay) overlay.remove();
         LobbyNeon.state.currentGameId = null;
+        
+        // Huỷ lắng nghe game hiện tại khi đóng board
+        if (LobbyNeon.state.unsubscribeCurrentGame) {
+            try { LobbyNeon.state.unsubscribeCurrentGame(); } catch(e) {}
+            LobbyNeon.state.unsubscribeCurrentGame = null;
+        }
     },
 
     requestRematch: async () => {
