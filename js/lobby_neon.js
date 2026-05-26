@@ -160,7 +160,7 @@ window.LobbyNeon = {
                     `<div style="background: rgba(251,191,36,0.1); border: 1px solid #fbbf24; border-radius: 8px; padding: 12px; margin-bottom: 8px; text-align: left;">
                         <div style="font-weight: 900; color: #fbbf24; font-size: 14px;">📜 ${m.title}</div>
                         <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">${m.description || ''}</div>
-                        <div style="font-size: 11px; color: #10b981; margin-top: 6px;">💰 Thưởng: +${m.reward}đ Công Đức</div>
+                        <div style="font-size: 11px; color: #10b981; margin-top: 6px;">⚡ Thưởng: +${m.reward * 80} EXP</div>
                     </div>`
                 ).join('');
 
@@ -431,6 +431,7 @@ window.LobbyNeon = {
         if (!nameEl) {
             el.innerHTML = `
                 <div class="lobby-user-name">${username}</div>
+                ${isMe && typeof Auth !== 'undefined' ? Auth.renderExpBar(Auth.currentUser?.exp || 0, Auth.currentUser?.level || 1, true) : ''}
                 <div class="lobby-chibi-container" style="transform: scale(1.3);">${chibiSvg}</div>
                 ${!isMe ? '<div class="lobby-user-status">⚔️ THÁCH ĐẤU</div>' : ''}
             `;
@@ -1106,7 +1107,7 @@ window.LobbyNeon = {
                             <span style="font-size: 10px; font-weight: 900; color: ${activeTab === 'ongoing' ? '#10b981' : '#fbbf24'}; text-transform: uppercase; background: rgba(0,0,0,0.2); padding: 2px 8px; border-radius: 6px; border: 1px solid ${activeTab === 'ongoing' ? '#10b981' : '#fbbf24'};">
                                 ${m.type === 'daily' ? 'Nhiệm vụ Ngày' : 'Thách thức Tháng'}
                             </span>
-                            <span style="font-size: 11px; font-weight: 800; color: #10b981;">💰 +${m.reward}đ Công Đức</span>
+                            <span style="font-size: 11px; font-weight: 800; color: #10b981;">⚡ +${m.reward * 80} EXP</span>
                         </div>
 
                         <h4 style="margin: 0 0 6px 0; color: #fff; font-size: 16px;">${m.title}</h4>
@@ -1132,21 +1133,26 @@ window.LobbyNeon = {
     },
 
     openGeneralLeaderboard: async () => {
+        const accounts = await Auth.getAccounts();
         const missions = await DB.getMissions();
         
-        // Tính điểm xếp hạng từ hoàn thành các quest
+        // Tính EXP xếp hạng từ hoàn thành các quest
         const stats = {};
         missions.forEach(m => {
             if (m.completedBy && Array.isArray(m.completedBy)) {
                 m.completedBy.forEach(u => {
-                    stats[u] = (stats[u] || 0) + (m.reward || 0);
+                    stats[u] = (stats[u] || 0) + ((m.reward || 0) * 80);
                 });
             }
         });
 
+        // Merge with account level data
         const sorted = Object.entries(stats)
-            .map(([username, points]) => ({ username, points }))
-            .sort((a, b) => b.points - a.points);
+            .map(([username, totalExp]) => {
+                const acc = accounts.find(a => a.username === username);
+                return { username, totalExp, level: acc?.level || 1, exp: acc?.exp || 0 };
+            })
+            .sort((a, b) => b.exp - a.exp || b.totalExp - a.totalExp);
 
         let bodyHtml = '';
         if (sorted.length === 0) {
@@ -1161,7 +1167,7 @@ window.LobbyNeon = {
             bodyHtml = `
                 <div style="background: rgba(15, 23, 42, 0.85); border-radius: 16px; overflow: hidden; border: 1px solid rgba(0, 243, 255, 0.2); box-shadow: 0 0 20px rgba(0, 243, 255, 0.15);">
                     <div style="padding: 15px 20px; background: rgba(0, 243, 255, 0.08); border-bottom: 1.5px solid rgba(0, 243, 255, 0.2); text-align: center;">
-                        <span style="font-size: 12px; font-weight: 800; color: #00f3ff; text-transform: uppercase; letter-spacing: 1px;">Danh sách cao thủ cày Công Đức khét tiếng nhất tháng</span>
+                        <span style="font-size: 12px; font-weight: 800; color: #00f3ff; text-transform: uppercase; letter-spacing: 1px;">Danh sách cao thủ cày EXP khét tiếng nhất</span>
                     </div>
                     <div style="max-height: 380px; overflow-y: auto; padding: 10px;">
                         ${sorted.map((u, i) => {
@@ -1225,10 +1231,10 @@ window.LobbyNeon = {
                                         </div>
                                     </div>
 
-                                    <!-- Điểm số -->
+                                    <!-- Điểm số & Level -->
                                     <div style="text-align: right;">
-                                        <div style="font-weight: 900; color: #fbbf24; font-size: 16px; text-shadow: 0 0 10px rgba(251,191,36,0.3);">${u.points}đ</div>
-                                        <div style="font-size: 9px; color: #64748b; text-transform: uppercase; font-weight: bold;">Công Đức</div>
+                                        <div style="font-weight: 900; color: #fbbf24; font-size: 16px; text-shadow: 0 0 10px rgba(251,191,36,0.3);">Lv.${u.level}</div>
+                                        <div style="font-size: 9px; color: #64748b; text-transform: uppercase; font-weight: bold;">⚡ ${u.exp.toLocaleString()} EXP</div>
                                     </div>
                                 </div>
                             `;
@@ -1281,14 +1287,18 @@ window.LobbyNeon = {
             if (!completedBy.includes(me)) {
                 completedBy.push(me);
                 await db.collection("missions").doc(missionId).update({ completedBy });
-                Utils.showToast("Đã trả nhiệm vụ thành công! Đang chờ Admin xác nhận.", "success");
+                
+                // Cộng EXP cho user
+                const expResult = await Auth.addExpToUser(me, mission.reward);
+                
+                Utils.showToast(`Hoàn thành! +${expResult.expGained} EXP${expResult.leveled ? ' 🎉 THĂNG CẤP lên ' + expResult.newLevel + '!' : ''}`, "success");
                 
                 // Close board automatically
                 const overlay = document.getElementById('modal-overlay');
                 if (overlay) overlay.classList.remove('active');
                 
-                // Optional: Send a chat notification to Admin
-                await DB.sendLobbyChat({ sender: "Hệ Thống", text: `🎉 ĐẠI HỶ! Kỳ tài @${me} vừa phi thân ném thẳng báo cáo hoàn thành nhiệm vụ "${mission.title}" vào mặt sếp và nhận công đức! Thật là bất khả chiến bại!` });
+                // Chat notification with EXP
+                await DB.sendLobbyChat({ sender: "Hệ Thống", text: `🎉 ĐẠI HỶ! Kỳ tài @${me} vừa phi thân ném thẳng báo cáo hoàn thành nhiệm vụ "${mission.title}" và ẵm gọn +${expResult.expGained} EXP!${expResult.leveled ? ' 🆙 THĂNG CẤP lên Cấp ' + expResult.newLevel + '! Giang hồ rúng động!' : ' Thật là bất khả chiến bại!'}` });
             }
         } catch (e) {
             console.error("Submit mission error:", e);
@@ -1327,13 +1337,13 @@ window.LobbyNeon = {
                             </select>
                         </div>
                         <div style="flex: 1;">
-                            <label style="display: block; font-size: 10px; color: #94a3b8; margin-bottom: 4px;">THƯỞNG (điểm):</label>
+                            <label style="display: block; font-size: 10px; color: #94a3b8; margin-bottom: 4px;">THƯỞNG EXP:</label>
                             <select id="quest-reward" style="width: 100%; padding: 8px; background: rgba(0,0,0,0.3); border: 1px solid #475569; border-radius: 4px; color: #fff; font-size: 11px;">
-                                <option value="1">1 điểm</option>
-                                <option value="2">2 điểm</option>
-                                <option value="3">3 điểm</option>
-                                <option value="4">4 điểm</option>
-                                <option value="5">5 điểm VIP</option>
+                                <option value="1">⚡ 80 EXP (Đơn giản)</option>
+                                <option value="2">⚡ 160 EXP (Vừa)</option>
+                                <option value="3">⚡ 240 EXP (Khó)</option>
+                                <option value="4">⚡ 320 EXP (Cao cấp)</option>
+                                <option value="5">⚡ 400 EXP VIP (Siêu khó)</option>
                             </select>
                         </div>
                     </div>
@@ -1362,7 +1372,7 @@ window.LobbyNeon = {
                             <div>
                                 <div style="font-size: 11px; font-weight: bold; color: #fff;">${m.title}</div>
                                 <div style="font-size: 9px; color: ${m.type === 'daily' ? '#38bdf8' : '#fbbf24'};">
-                                    ${m.type === 'daily' ? 'Ngày' : 'Tháng'} | ${m.reward}đ | ${m.deadline ? new Date(m.deadline).toLocaleDateString('vi-VN') : 'ko'} | ${m.targetUser === 'all' ? 'Tất cả' : '@' + m.targetUser}
+                                    ${m.type === 'daily' ? 'Ngày' : 'Tháng'} | ⚡${m.reward * 80} EXP | ${m.deadline ? new Date(m.deadline).toLocaleDateString('vi-VN') : 'ko'} | ${m.targetUser === 'all' ? 'Tất cả' : '@' + m.targetUser}
                                 </div>
                             </div>
                             <button onclick="LobbyNeon.adminDeleteMission('${m.id}')" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 14px; transition: 0.2s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">🗑️</button>

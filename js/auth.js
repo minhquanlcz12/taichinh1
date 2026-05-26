@@ -170,7 +170,7 @@ const Auth = {
         const found = accounts.find(a => a.username === userIn && a.password === passIn);
 
         if (found) {
-            Auth.currentUser = { username: found.username, role: found.role, profile: found.profile || {}, balance: found.balance || 0, purchasedBots: found.purchasedBots || [] };
+            Auth.currentUser = { username: found.username, role: found.role, profile: found.profile || {}, balance: found.balance || 0, purchasedBots: found.purchasedBots || [], exp: found.exp || 0, level: found.level || 1 };
             Utils.storage.set(Auth.currentUserKey, Auth.currentUser); // Keep current user locally for session
             Utils.showToast('Đăng nhập thành công!', 'success');
             Auth.showApp();
@@ -198,7 +198,7 @@ const Auth = {
             return;
         }
 
-        accounts.push({ username: userIn, password: passIn, role: 'user', profile: {}, balance: 0, purchasedBots: [] });
+        accounts.push({ username: userIn, password: passIn, role: 'user', profile: {}, balance: 0, purchasedBots: [], exp: 0, level: 1 });
         await Auth.saveAccounts(accounts);
 
         // --- NEW: Lời chào Telegram khi có nhân viên mới ---
@@ -804,6 +804,122 @@ const Auth = {
             await Auth.saveAccounts(accounts);
             Utils.showToast(`Đã lưu Lương cơ bản của ${username}: ${Utils.formatCurrency(newSalary)}`, 'success');
         }
+    },
+
+    // ========== HỆ THỐNG EXP & CẤP ĐỘ ==========
+    EXP_MULTIPLIER: 80, // 1 reward point = 80 EXP
+
+    getExpForLevel: (level) => {
+        // EXP cần để lên từ cấp (N-1) sang cấp N = 60 × N
+        // Tổng EXP tích lũy để đạt cấp N = sum(60×2 + 60×3 + ... + 60×N)
+        // ~3 tháng để đạt cấp 15 (max) với ~2400 EXP/tháng
+        if (level <= 1) return 0;
+        let total = 0;
+        for (let i = 2; i <= level; i++) total += 60 * i;
+        return total;
+    },
+
+    getLevelTitle: (level) => {
+        if (level >= 15) return { title: '🌟 Võ Lâm Chí Tôn', color: '#ff6b6b', glow: true };
+        if (level >= 10) return { title: '⚔️ Chiến Thần Huyền Thoại', color: '#fbbf24', glow: true };
+        if (level >= 7) return { title: '🛡️ Hộ Pháp Cung Đình', color: '#a855f7', glow: false };
+        if (level >= 5) return { title: '💪 Chiến Binh Gánh Team', color: '#10b981', glow: false };
+        if (level >= 3) return { title: '🗡️ Kẻ Đánh Thuê', color: '#38bdf8', glow: false };
+        return { title: '🌱 Tân Binh Tập Sự', color: '#94a3b8', glow: false };
+    },
+
+    addExpToUser: async (username, rewardPoints) => {
+        const expGained = rewardPoints * Auth.EXP_MULTIPLIER;
+        const accounts = await Auth.getAccounts();
+        const acc = accounts.find(a => a.username === username);
+        if (!acc) return { leveled: false, expGained: 0 };
+
+        const oldLevel = acc.level || 1;
+        acc.exp = (acc.exp || 0) + expGained;
+
+        // Kiểm tra lên cấp
+        let newLevel = oldLevel;
+        while (true) {
+            const nextLevelExp = Auth.getExpForLevel(newLevel + 1);
+            if (acc.exp >= nextLevelExp) {
+                newLevel++;
+            } else {
+                break;
+            }
+        }
+
+        acc.level = newLevel;
+        await Auth.saveAccounts(accounts);
+
+        // Cập nhật session hiện tại nếu là user đang đăng nhập
+        if (Auth.currentUser && Auth.currentUser.username === username) {
+            Auth.currentUser.exp = acc.exp;
+            Auth.currentUser.level = newLevel;
+            Utils.storage.set(Auth.currentUserKey, Auth.currentUser);
+        }
+
+        const leveled = newLevel > oldLevel;
+        if (leveled) {
+            const titleInfo = Auth.getLevelTitle(newLevel);
+            Utils.showModal(
+                '🎊 THĂNG CẤP! LÊN ĐỜI RỒI!',
+                `<div style="text-align: center;">
+                    <div style="font-size: 80px; margin-bottom: 15px; animation: float 2s infinite ease-in-out;">⬆️</div>
+                    <h2 style="color: ${titleInfo.color}; font-size: 28px; margin: 10px 0; text-shadow: 0 0 20px ${titleInfo.color}60;">
+                        CẤP ${newLevel}
+                    </h2>
+                    <div style="font-size: 18px; color: ${titleInfo.color}; font-weight: 900; margin-bottom: 15px; padding: 8px 20px; background: rgba(0,0,0,0.3); border-radius: 20px; display: inline-block; border: 1px solid ${titleInfo.color}40;">
+                        ${titleInfo.title}
+                    </div>
+                    <p style="color: #94a3b8; font-size: 14px; margin-top: 10px; font-style: italic;">
+                        ${newLevel >= 10 ? 'Giang hồ rùng mình khi nghe danh hiệu này! Trang phục VIP đã mở khóa!' : newLevel >= 5 ? 'Uy danh vang dội! Nhiều trang phục mới đã được mở khóa!' : 'Tiếp tục cày cuốc, vinh quang đang chờ phía trước!'}
+                    </p>
+                </div>`,
+                null,
+                'PHONG ẤN ĐI NGAY'
+            );
+        }
+
+        return { leveled, expGained, newLevel, oldLevel };
+    },
+
+    renderExpBar: (exp, level, compact = false) => {
+        const currentLevelExp = Auth.getExpForLevel(level);
+        const nextLevelExp = Auth.getExpForLevel(level + 1);
+        const expInLevel = exp - currentLevelExp;
+        const expNeeded = nextLevelExp - currentLevelExp;
+        const progress = expNeeded > 0 ? Math.min((expInLevel / expNeeded) * 100, 100) : 100;
+        const titleInfo = Auth.getLevelTitle(level);
+
+        if (compact) {
+            return `
+                <div style="width: 100%; max-width: 120px; margin: 2px auto 0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                        <span style="font-size: 9px; font-weight: 900; color: ${titleInfo.color};">Lv.${level}</span>
+                        <span style="font-size: 8px; color: #64748b;">${expInLevel}/${expNeeded}</span>
+                    </div>
+                    <div style="width: 100%; height: 4px; background: rgba(0,0,0,0.4); border-radius: 2px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);">
+                        <div style="width: ${progress}%; height: 100%; background: linear-gradient(90deg, ${titleInfo.color}, ${titleInfo.color}cc); border-radius: 2px; transition: width 0.5s ease; ${titleInfo.glow ? 'box-shadow: 0 0 8px ' + titleInfo.color + '80;' : ''}"></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        return `
+            <div style="width: 100%; max-width: 300px; margin: 8px auto;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <span style="font-size: 11px; font-weight: 900; color: ${titleInfo.color};">${titleInfo.title}</span>
+                    <span style="font-size: 10px; color: #94a3b8; font-weight: bold;">Cấp ${level}</span>
+                </div>
+                <div style="width: 100%; height: 8px; background: rgba(0,0,0,0.4); border-radius: 4px; overflow: hidden; border: 1px solid rgba(255,255,255,0.15);">
+                    <div style="width: ${progress}%; height: 100%; background: linear-gradient(90deg, ${titleInfo.color}, ${titleInfo.color}aa); border-radius: 4px; transition: width 0.8s ease; ${titleInfo.glow ? 'box-shadow: 0 0 12px ' + titleInfo.color + '80;' : ''}"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 3px;">
+                    <span style="font-size: 9px; color: #64748b;">⚡ ${expInLevel.toLocaleString()} / ${expNeeded.toLocaleString()} EXP</span>
+                    <span style="font-size: 9px; color: #64748b;">Tổng: ${exp.toLocaleString()} EXP</span>
+                </div>
+            </div>
+        `;
     }
 };
 

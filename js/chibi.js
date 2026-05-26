@@ -64,50 +64,50 @@ const ChibiModule = {
 
     gearRequirements: {
         gear: {
-            1: { label: "Đại Đao Lửa", count: 10 },
-            2: { label: "Súng Vô Cực", count: 12 },
-            3: { label: "Kiếm Cyber Laser", count: 15 },
-            4: { label: "Thương Heo Tộc", count: 5 },
-            5: { label: "Dép Tổ Ong Vàng", count: 3 },
-            6: { label: "Chổi Tre Âm Dương", count: 7 },
-            7: { label: "Muỗng Mì Hảo Hạng", count: 6 },
-            8: { label: "Gậy Selfie Cánh Vàng", count: 20 },
-            9: { label: "Cờ Lê Tia Chớp", count: 14 },
-            10: { label: "Cây Lau Nhà Ma Thuật", count: 8 },
-            11: { label: "Nón Lá Phi Tiêu", count: 18 },
-            12: { label: "Vợt Muỗi Điện", count: 12 },
-            13: { label: "Ghế Đỏ Quyền Lực", count: 25 },
-            14: { label: "Quạt Trúc Thanh Lương", count: 10 },
-            15: { label: "Lồng Đèn Hội An", count: 12 },
-            16: { label: "Gánh Hàng Rong", count: 15 },
-            17: { label: "Bánh Mì Sài Gòn", count: 5 },
-            18: { label: "Cà Phê Phin", count: 8 },
-            19: { label: "Dép Tổ Ong Huyền Thoại", count: 4 }
+            1: { label: "Đại Đao Lửa", requiredLevel: 2 },
+            2: { label: "Súng Vô Cực", requiredLevel: 2 },
+            3: { label: "Kiếm Cyber Laser", requiredLevel: 3 },
+            4: { label: "Thương Heo Tộc", requiredLevel: 1 },
+            5: { label: "Dép Tổ Ong Vàng", requiredLevel: 1 },
+            6: { label: "Chổi Tre Âm Dương", requiredLevel: 2 },
+            7: { label: "Muỗng Mì Hảo Hạng", requiredLevel: 1 },
+            8: { label: "Gậy Selfie Cánh Vàng", requiredLevel: 4 },
+            9: { label: "Cờ Lê Tia Chớp", requiredLevel: 3 },
+            10: { label: "Cây Lau Nhà Ma Thuật", requiredLevel: 2 },
+            11: { label: "Nón Lá Phi Tiêu", requiredLevel: 4 },
+            12: { label: "Vợt Muỗi Điện", requiredLevel: 3 },
+            13: { label: "Ghế Đỏ Quyền Lực", requiredLevel: 5 },
+            14: { label: "Quạt Trúc Thanh Lương", requiredLevel: 2 },
+            15: { label: "Lồng Đèn Hội An", requiredLevel: 3 },
+            16: { label: "Gánh Hàng Rong", requiredLevel: 3 },
+            17: { label: "Bánh Mì Sài Gòn", requiredLevel: 1 },
+            18: { label: "Cà Phê Phin", requiredLevel: 2 },
+            19: { label: "Dép Tổ Ong Huyền Thoại", requiredLevel: 1 }
         },
         mount: {
-            1: { label: "Ô Tô Siêu Cấp", count: 20 },
-            2: { label: "Xe Máy Cực Ngầu", count: 18 },
-            3: { label: "Phao Hồng Hạc", count: 8 },
-            4: { label: "Xe Máy Dream Neon", count: 22 }
+            1: { label: "Ô Tô Siêu Cấp", requiredLevel: 7 },
+            2: { label: "Xe Máy Cực Ngầu", requiredLevel: 5 },
+            3: { label: "Phao Hồng Hạc", requiredLevel: 5 },
+            4: { label: "Xe Máy Dream Neon", requiredLevel: 8 }
         },
         wing: {
-            1: { label: "Cánh Thiên Thần", count: 22 },
-            2: { label: "Cánh Ác Quỷ", count: 25 },
-            3: { label: "Cánh Thiên Thần VIP", count: 30 },
-            4: { label: "Cánh Bướm Pha Lê", count: 35 },
-            5: { label: "Cánh Phượng Hoàng Lửa", count: 40 },
-            6: { label: "Cánh Dơi Hắc Ám", count: 45 },
-            7: { label: "Cánh Băng Tuyết VIP", count: 50 }
+            1: { label: "Cánh Thiên Thần", requiredLevel: 5 },
+            2: { label: "Cánh Ác Quỷ", requiredLevel: 6 },
+            3: { label: "Cánh Thiên Thần VIP", requiredLevel: 7 },
+            4: { label: "Cánh Bướm Pha Lê", requiredLevel: 8 },
+            5: { label: "Cánh Phượng Hoàng Lửa", requiredLevel: 9 },
+            6: { label: "Cánh Dơi Hắc Ám", requiredLevel: 10 },
+            7: { label: "Cánh Băng Tuyết VIP", requiredLevel: 12 }
         },
         dragon: {
-            1: { label: "Lam Long Thần", count: 30 },
-            2: { label: "Xích Long Thần", count: 35 },
-            3: { label: "Hoàng Long Thần", count: 50 }
+            1: { label: "Lam Long Thần", requiredLevel: 7 },
+            2: { label: "Xích Long Thần", requiredLevel: 9 },
+            3: { label: "Hoàng Long Thần", requiredLevel: 12 }
         },
         accessory: {
-            11: { label: "Mũ Cối Kháng Chiến", count: 10 },
-            12: { label: "Nón Lá Truyền Thống", count: 12 },
-            13: { label: "Khăn Rằn Nam Bộ", count: 8 }
+            11: { label: "Mũ Cối Kháng Chiến", requiredLevel: 3 },
+            12: { label: "Nón Lá Truyền Thống", requiredLevel: 3 },
+            13: { label: "Khăn Rằn Nam Bộ", requiredLevel: 2 }
         }
     },
 
@@ -221,21 +221,17 @@ const ChibiModule = {
         return count;
     },
 
-    isGearLocked: function(index) {
-        // [MODIFIED] VIP Unlock for testing - Always return false
-        return false;
-        
-        /* Original logic:
-        if (index <= 10) return false;
+    isGearLocked: function(index, category) {
+        // Kiểm tra trang bị có bị khóa theo Level không
         if (typeof Auth === 'undefined' || !Auth.currentUser) return true;
         if (Auth.currentUser.role === 'admin') return false;
 
-        const req = ChibiModule.gearRequirements[index];
-        if (!req) return false;
+        const userLevel = Auth.currentUser.level || 1;
+        const cat = category || ChibiModule.activeTab || 'gear';
+        const reqs = ChibiModule.gearRequirements[cat];
+        if (!reqs || !reqs[index]) return false; // Không có yêu cầu = luôn mở
 
-        const completed = ChibiModule.getCompletedTasksCount();
-        return completed < req.count;
-        */
+        return userLevel < reqs[index].requiredLevel;
     },
 
     /**
@@ -1689,10 +1685,11 @@ const ChibiModule = {
      * Choose an item style
      */
     selectItem: function(property, index) {
-        if (property === 'accessory' && ChibiModule.isGearLocked(index)) {
-            const req = ChibiModule.gearRequirements[index];
-            const completed = ChibiModule.getCompletedTasksCount();
-            Utils.showToast(`✨ Đang mặc thử: "${req ? req.label : ''}". Đạt đủ ${req ? req.count : 0} Task trong tháng để lưu chính thức! (Hiện tại: ${completed}/${req ? req.count : 0})`, "info");
+        if (ChibiModule.isGearLocked(index, property)) {
+            const reqs = ChibiModule.gearRequirements[property];
+            const req = reqs ? reqs[index] : null;
+            const userLevel = Auth.currentUser?.level || 1;
+            Utils.showToast(`🔒 Trang bị "${req ? req.label : ''}" yêu cầu Cấp ${req ? req.requiredLevel : '?'}! (Bạn đang Cấp ${userLevel}). Cày nhiệm vụ để lên cấp nào!`, "info");
         }
         ChibiModule.currentConfig[property] = index;
         ChibiModule.updatePreview();
@@ -1788,7 +1785,7 @@ const ChibiModule = {
 
         // Filter unlocked accessories for randomization
         const unlockedAccessories = Array.from({ length: ChibiModule.counts.accessory }, (_, i) => i)
-            .filter(i => !ChibiModule.isGearLocked(i));
+            .filter(i => !ChibiModule.isGearLocked(i, 'accessory'));
         const randomAccessory = unlockedAccessories.length > 0 ? randItem(unlockedAccessories) : 0;
 
         ChibiModule.currentConfig = {
@@ -1837,11 +1834,17 @@ const ChibiModule = {
         const user = Auth.currentUser;
         if (!user) return;
 
-        if (ChibiModule.isGearLocked(ChibiModule.currentConfig.accessory)) {
-            const req = ChibiModule.gearRequirements[ChibiModule.currentConfig.accessory];
-            const completed = ChibiModule.getCompletedTasksCount();
-            Utils.showToast(`🔒 Bạn không thể lưu vì trang bị "${req ? req.label : ''}" đang khóa! (Hiện tại: ${completed}/${req ? req.count : 0})`, "error");
-            return;
+        // Kiểm tra tất cả trang bị đang mặc có bị khóa không
+        const lockCategories = ['gear', 'mount', 'wing', 'dragon', 'accessory'];
+        for (const cat of lockCategories) {
+            const itemIndex = ChibiModule.currentConfig[cat];
+            if (itemIndex && ChibiModule.isGearLocked(itemIndex, cat)) {
+                const reqs = ChibiModule.gearRequirements[cat];
+                const req = reqs ? reqs[itemIndex] : null;
+                const userLevel = Auth.currentUser?.level || 1;
+                Utils.showToast(`🔒 Không thể lưu! Trang bị "${req ? req.label : ''}" yêu cầu Cấp ${req ? req.requiredLevel : '?'}! (Bạn đang Cấp ${userLevel})`, "error");
+                return;
+            }
         }
 
         const profile = user.profile || {};
