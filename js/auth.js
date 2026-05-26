@@ -994,8 +994,24 @@ const Auth = {
                     const onclickCode = isAchievement 
                         ? `Auth.setSelectedTitle(null, '${t.achievement}'); document.getElementById('modal-overlay').classList.remove('active');`
                         : `Auth.setSelectedTitle(${t.level}); document.getElementById('modal-overlay').classList.remove('active');`;
-                    const reqText = isAchievement ? '🏅 TOP 1 Bảng Vàng' : `Cấp ${t.level}+`;
-                    const lockText = isAchievement ? '🔒 Đạt TOP 1 bất kỳ tháng nào' : '🔒 Yêu cầu Cấp ' + t.level;
+                    
+                    let reqText = `Cấp ${t.level}+`;
+                    let lockText = '🔒 Yêu cầu Cấp ' + t.level;
+                    if (isAchievement) {
+                        if (t.achievement === 'top1_monthly') {
+                            reqText = '🏅 TOP 1 Bảng Vàng';
+                            lockText = '🔒 Đạt TOP 1 bất kỳ tháng nào';
+                        } else if (t.achievement === 'caro_5_wins') {
+                            reqText = '🎲 Thắng 5 trận Caro';
+                            lockText = '🔒 Đạt 5 trận thắng Caro';
+                        } else if (t.achievement === 'caro_15_wins') {
+                            reqText = '⚔️ Thắng 15 trận Caro';
+                            lockText = '🔒 Đạt 15 trận thắng Caro';
+                        } else if (t.achievement === 'caro_30_wins') {
+                            reqText = '👑 Thắng 30 trận Caro';
+                            lockText = '🔒 Đạt 30 trận thắng Caro';
+                        }
+                    }
                     return `
                         <div onclick="${unlocked ? onclickCode : ''}"
                             style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; margin-bottom: 8px;
@@ -1025,6 +1041,7 @@ const Auth = {
         `;
 
         Utils.showModal('🏷️ CHỌN DANH HIỆU CỦA BẠN', html, null, 'ĐÓNG');
+    },
     grantAchievement: async (username, achievementKey) => {
         const accounts = await Auth.getAccounts();
         const acc = accounts.find(a => a.username === username);
