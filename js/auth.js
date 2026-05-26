@@ -170,7 +170,7 @@ const Auth = {
         const found = accounts.find(a => a.username === userIn && a.password === passIn);
 
         if (found) {
-            Auth.currentUser = { username: found.username, role: found.role, profile: found.profile || {}, balance: found.balance || 0, purchasedBots: found.purchasedBots || [], exp: found.exp || 0, level: found.level || 1, selectedTitleLevel: found.selectedTitleLevel ?? null };
+            Auth.currentUser = { username: found.username, role: found.role, profile: found.profile || {}, balance: found.balance || 0, purchasedBots: found.purchasedBots || [], exp: found.exp || 0, level: found.level || 1, selectedTitleLevel: found.selectedTitleLevel ?? null, selectedTitleKey: found.selectedTitleKey ?? null, achievements: found.achievements || [] };
             Utils.storage.set(Auth.currentUserKey, Auth.currentUser); // Keep current user locally for session
             Utils.showToast('Đăng nhập thành công!', 'success');
             Auth.showApp();
@@ -819,7 +819,7 @@ const Auth = {
         return total;
     },
 
-    // Danh sách tất cả danh hiệu - key = requiredLevel
+    // Danh sách tất cả danh hiệu
     TITLE_LIST: [
         { level: 1,  title: '🌱 Lính Mới Vào Nghề',    color: '#94a3b8', glow: false, bubbleColor: 'rgba(255,255,255,0.95)', bubbleGlow: 'none' },
         { level: 3,  title: '📋 Dân Agency Chính Hiệu', color: '#38bdf8', glow: false, bubbleColor: '#38bdf8', bubbleGlow: 'none' },
@@ -828,6 +828,8 @@ const Auth = {
         { level: 10, title: '💎 Trùm Agency Ngầm',      color: '#fbbf24', glow: true,  bubbleColor: 'linear-gradient(135deg, #fbbf24, #f59e0b)', bubbleGlow: '0 0 12px #fbbf2480' },
         { level: 12, title: '🏆 Huyền Thoại Cháy KPI',  color: '#f59e0b', glow: true,  bubbleColor: 'linear-gradient(135deg, #f59e0b, #fbbf24)', bubbleGlow: '0 0 12px #f59e0b80' },
         { level: 15, title: '👑 Bố Già Marketing',      color: '#ff6b6b', glow: true,  bubbleColor: 'linear-gradient(135deg, #ff6b6b, #fbbf24, #a855f7)', bubbleGlow: '0 0 15px #ff6b6b, 0 0 30px #fbbf2440' },
+        // Danh hiệu đặc biệt - mở khóa qua thành tích
+        { level: 0, achievement: 'top1_monthly', title: '🏅 Quán Quân Bảng Vàng', color: '#00f3ff', glow: true, bubbleColor: 'linear-gradient(135deg, #00f3ff, #fbbf24)', bubbleGlow: '0 0 15px #00f3ff, 0 0 25px #fbbf2440' },
     ],
 
     getLevelTitle: (level) => {
@@ -839,39 +841,67 @@ const Auth = {
         return { ...list[0] };
     },
 
-    getAllUnlockedTitles: (level) => {
-        // Trả về tất cả danh hiệu mà user đã mở khóa
-        return Auth.TITLE_LIST.filter(t => level >= t.level);
+    getAllUnlockedTitles: (level, achievements) => {
+        // Trả về tất cả danh hiệu mà user đã mở khóa (cả level và achievement)
+        const userAchievements = achievements || [];
+        return Auth.TITLE_LIST.filter(t => {
+            if (t.achievement) return userAchievements.includes(t.achievement);
+            return level >= t.level;
+        });
     },
 
     getDisplayTitle: (user) => {
         // Trả về danh hiệu user ĐANG CHỌN hiển thị (hoặc mặc định cao nhất)
         const userLevel = user?.level || 1;
+        const selectedKey = user?.selectedTitleKey;
         const selectedLevel = user?.selectedTitleLevel;
+        const achievements = user?.achievements || [];
+        
+        // Ưu tiên selectedTitleKey (dành cho achievement titles)
+        if (selectedKey) {
+            const selected = Auth.TITLE_LIST.find(t => t.achievement === selectedKey);
+            if (selected && achievements.includes(selectedKey)) return { ...selected };
+        }
+        // Fall back to selectedTitleLevel
         if (selectedLevel != null) {
-            const selected = Auth.TITLE_LIST.find(t => t.level === selectedLevel);
+            const selected = Auth.TITLE_LIST.find(t => !t.achievement && t.level === selectedLevel);
             if (selected && userLevel >= selected.level) return { ...selected };
         }
         return Auth.getLevelTitle(userLevel);
     },
 
-    setSelectedTitle: async (titleLevel) => {
+    setSelectedTitle: async (titleLevel, achievementKey) => {
         if (!Auth.currentUser) return;
         const userLevel = Auth.currentUser.level || 1;
-        const titleEntry = Auth.TITLE_LIST.find(t => t.level === titleLevel);
-        if (!titleEntry || userLevel < titleEntry.level) {
-            Utils.showToast('Bạn chưa đủ cấp để dùng danh hiệu này!', 'error');
-            return;
+        const achievements = Auth.currentUser.achievements || [];
+        let titleEntry;
+
+        if (achievementKey) {
+            titleEntry = Auth.TITLE_LIST.find(t => t.achievement === achievementKey);
+            if (!titleEntry || !achievements.includes(achievementKey)) {
+                Utils.showToast('Bạn chưa mở khóa danh hiệu này!', 'error');
+                return;
+            }
+            Auth.currentUser.selectedTitleKey = achievementKey;
+            Auth.currentUser.selectedTitleLevel = null;
+        } else {
+            titleEntry = Auth.TITLE_LIST.find(t => !t.achievement && t.level === titleLevel);
+            if (!titleEntry || userLevel < titleEntry.level) {
+                Utils.showToast('Bạn chưa đủ cấp để dùng danh hiệu này!', 'error');
+                return;
+            }
+            Auth.currentUser.selectedTitleLevel = titleLevel;
+            Auth.currentUser.selectedTitleKey = null;
         }
 
-        Auth.currentUser.selectedTitleLevel = titleLevel;
         Utils.storage.set(Auth.currentUserKey, Auth.currentUser);
 
         // Lưu vào database
         const accounts = await Auth.getAccounts();
         const acc = accounts.find(a => a.username === Auth.currentUser.username);
         if (acc) {
-            acc.selectedTitleLevel = titleLevel;
+            acc.selectedTitleLevel = Auth.currentUser.selectedTitleLevel;
+            acc.selectedTitleKey = Auth.currentUser.selectedTitleKey;
             await Auth.saveAccounts(accounts);
         }
 
@@ -887,8 +917,10 @@ const Auth = {
     openTitleSelector: () => {
         if (!Auth.currentUser) return;
         const userLevel = Auth.currentUser.level || 1;
+        const achievements = Auth.currentUser.achievements || [];
         const allTitles = Auth.TITLE_LIST;
-        const currentSelected = Auth.currentUser.selectedTitleLevel ?? Auth.getLevelTitle(userLevel).level;
+        const currentSelectedLevel = Auth.currentUser.selectedTitleLevel;
+        const currentSelectedKey = Auth.currentUser.selectedTitleKey;
 
         let html = `
             <div style="max-height: 400px; overflow-y: auto; padding: 5px;">
@@ -896,26 +928,36 @@ const Auth = {
                     Chọn danh hiệu yêu thích! Cấp hiện tại: <span style="color: #fbbf24; font-weight: 900;">Lv.${userLevel}</span>
                 </p>
                 ${allTitles.map(t => {
-                    const unlocked = userLevel >= t.level;
-                    const isSelected = t.level === currentSelected;
+                    const isAchievement = !!t.achievement;
+                    const unlocked = isAchievement ? achievements.includes(t.achievement) : userLevel >= t.level;
+                    const isSelected = isAchievement 
+                        ? (currentSelectedKey === t.achievement) 
+                        : (!currentSelectedKey && t.level === (currentSelectedLevel ?? Auth.getLevelTitle(userLevel).level));
+                    const onclickCode = isAchievement 
+                        ? `Auth.setSelectedTitle(null, '${t.achievement}'); document.getElementById('modal-overlay').classList.remove('active');`
+                        : `Auth.setSelectedTitle(${t.level}); document.getElementById('modal-overlay').classList.remove('active');`;
+                    const reqText = isAchievement ? '🏅 TOP 1 Bảng Vàng' : `Cấp ${t.level}+`;
+                    const lockText = isAchievement ? '🔒 Đạt TOP 1 bất kỳ tháng nào' : '🔒 Yêu cầu Cấp ' + t.level;
                     return `
-                        <div onclick="${unlocked ? `Auth.setSelectedTitle(${t.level}); document.getElementById('modal-overlay').classList.remove('active');` : ''}"
+                        <div onclick="${unlocked ? onclickCode : ''}"
                             style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; margin-bottom: 8px;
-                            background: ${isSelected ? 'rgba(' + (t.color === '#ff6b6b' ? '255,107,107' : t.color === '#f59e0b' ? '245,158,11' : t.color === '#fbbf24' ? '251,191,36' : t.color === '#a855f7' ? '168,85,247' : t.color === '#10b981' ? '16,185,129' : t.color === '#38bdf8' ? '56,189,248' : '148,163,184') + ',0.15)' : 'rgba(15,23,42,0.6)'};
+                            background: ${isSelected ? 'rgba(0,243,255,0.1)' : isAchievement && unlocked ? 'rgba(0,243,255,0.05)' : 'rgba(15,23,42,0.6)'};
                             border: 2px solid ${isSelected ? t.color : unlocked ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.03)'};
                             border-radius: 12px; cursor: ${unlocked ? 'pointer' : 'not-allowed'}; opacity: ${unlocked ? '1' : '0.4'};
-                            transition: all 0.2s; ${unlocked ? '' : 'filter: grayscale(0.8);'}"
+                            transition: all 0.2s; ${unlocked ? '' : 'filter: grayscale(0.8);'}
+                            ${isAchievement && unlocked ? 'box-shadow: 0 0 12px rgba(0,243,255,0.15);' : ''}"
                             ${unlocked ? 'onmouseover="this.style.transform=\'scale(1.02)\'" onmouseout="this.style.transform=\'scale(1)\'"' : ''}>
                             <div>
                                 <div style="font-size: 15px; font-weight: 900; color: ${t.color}; margin-bottom: 3px;">
                                     ${t.title}
+                                    ${isAchievement ? '<span style="font-size: 9px; background: rgba(0,243,255,0.2); color: #00f3ff; padding: 1px 6px; border-radius: 6px; margin-left: 6px;">THÀNH TÍCH</span>' : ''}
                                 </div>
                                 <div style="font-size: 10px; color: #64748b;">
-                                    ${unlocked ? '✅ Đã mở khóa' : '🔒 Yêu cầu Cấp ' + t.level}
+                                    ${unlocked ? '✅ Đã mở khóa' : lockText}
                                 </div>
                             </div>
                             <div style="text-align: right;">
-                                <div style="font-size: 11px; font-weight: 800; color: ${unlocked ? t.color : '#475569'};">Cấp ${t.level}+</div>
+                                <div style="font-size: 11px; font-weight: 800; color: ${unlocked ? t.color : '#475569'};">${reqText}</div>
                                 ${isSelected ? '<div style="font-size: 9px; color: #10b981; font-weight: 900; margin-top: 2px;">✨ ĐANG DÙNG</div>' : ''}
                             </div>
                         </div>
@@ -925,6 +967,46 @@ const Auth = {
         `;
 
         Utils.showModal('🏷️ CHỌN DANH HIỆU CỦA BẠN', html, null, 'ĐÓNG');
+    grantAchievement: async (username, achievementKey) => {
+        const accounts = await Auth.getAccounts();
+        const acc = accounts.find(a => a.username === username);
+        if (!acc) return false;
+
+        if (!acc.achievements) acc.achievements = [];
+        if (acc.achievements.includes(achievementKey)) return false; // Đã có rồi
+
+        acc.achievements.push(achievementKey);
+        await Auth.saveAccounts(accounts);
+
+        // Cập nhật session nếu là user đang đăng nhập
+        if (Auth.currentUser && Auth.currentUser.username === username) {
+            Auth.currentUser.achievements = acc.achievements;
+            Utils.storage.set(Auth.currentUserKey, Auth.currentUser);
+        }
+
+        // Tìm danh hiệu tương ứng
+        const titleEntry = Auth.TITLE_LIST.find(t => t.achievement === achievementKey);
+        if (titleEntry) {
+            Utils.showModal(
+                '🏅 DANH HIỆU ĐẶC BIỆT MỚI KHÓA!',
+                `<div style="text-align: center;">
+                    <div style="font-size: 80px; margin-bottom: 15px; animation: float 2s infinite ease-in-out;">🏅</div>
+                    <h2 style="color: ${titleEntry.color}; font-size: 24px; margin: 10px 0; text-shadow: 0 0 20px ${titleEntry.color}60;">
+                        ${titleEntry.title}
+                    </h2>
+                    <div style="margin: 12px auto; padding: 10px 16px; background: rgba(0,243,255,0.1); border: 1px dashed #00f3ff; border-radius: 10px; max-width: 280px;">
+                        <div style="font-size: 10px; color: #00f3ff; font-weight: 900; text-transform: uppercase; margin-bottom: 4px;">🏆 THÀNH TÍCH</div>
+                        <div style="font-size: 13px; color: #e2e8f0; font-weight: 600;">Bạn đã đạt TOP 1 Bảng Vàng Tuyên Dương!</div>
+                    </div>
+                    <p style="color: #94a3b8; font-size: 13px; margin-top: 10px; font-style: italic;">
+                        Cả công ty đang ngước nhìn bạn! Vào chọn danh hiệu để khoe ngay! 😎
+                    </p>
+                </div>`,
+                null,
+                'KHOE NGAY THÔI'
+            );
+        }
+        return true;
     },
 
     getLevelPerks: (level) => {

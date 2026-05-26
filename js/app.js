@@ -586,7 +586,7 @@ const app = {
         const accounts = await Auth.getAccounts();
         const users = {};
         accounts.forEach(acc => {
-            users[acc.username] = { total: 0, done: 0, expired: 0, displayName: Utils.getUserDisplayName(acc.username) || acc.username, profile: acc.profile, level: acc.level || 1, selectedTitleLevel: acc.selectedTitleLevel ?? null };
+            users[acc.username] = { total: 0, done: 0, expired: 0, displayName: Utils.getUserDisplayName(acc.username) || acc.username, profile: acc.profile, level: acc.level || 1, selectedTitleLevel: acc.selectedTitleLevel ?? null, selectedTitleKey: acc.selectedTitleKey ?? null, achievements: acc.achievements || [] };
         });
 
         // Bảng vàng chỉ nên hiện các task đã hoàn thành TRONG THÁNG NÀY
@@ -635,6 +635,8 @@ const app = {
                 profile: userData.profile,
                 level: userData.level,
                 selectedTitleLevel: userData.selectedTitleLevel,
+                selectedTitleKey: userData.selectedTitleKey,
+                achievements: userData.achievements,
                 rate: userData.total > 0 ? (userData.done / userData.total * 100) : 0
             }
         })
@@ -690,6 +692,11 @@ const app = {
         const u1 = rankedUsers[0] || makePlaceholder(1);
         const u2 = rankedUsers[1] || makePlaceholder(2);
         const u3 = rankedUsers[2] || makePlaceholder(3);
+
+        // Tự động cấp danh hiệu đặc biệt cho TOP 1
+        if (u1 && !u1.placeholder && u1.username) {
+            Auth.grantAchievement(u1.username, 'top1_monthly');
+        }
 
         const getChibiSvg = (u) => {
             const config = (u.profile && u.profile.chibiConfig) ? u.profile.chibiConfig : (u.placeholder ? placeholderChibi : defaultChibi);
