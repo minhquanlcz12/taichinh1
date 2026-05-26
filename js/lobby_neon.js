@@ -831,15 +831,16 @@ window.LobbyNeon = {
     switchHubTab: (tab) => {
         const tabPlayers = document.getElementById('hub-tab-players');
         const tabMonopoly = document.getElementById('hub-tab-monopoly');
+        const tabQuests = document.getElementById('hub-tab-quests');
         const contentPlayers = document.getElementById('hub-content-players');
         const contentMonopoly = document.getElementById('hub-content-monopoly');
+        const contentQuests = document.getElementById('hub-content-quests');
 
         if (!tabPlayers || !tabMonopoly || !contentPlayers || !contentMonopoly) return;
 
-        tabPlayers.classList.remove('active');
-        tabMonopoly.classList.remove('active');
-        contentPlayers.style.display = 'none';
-        contentMonopoly.style.display = 'none';
+        // Reset all
+        [tabPlayers, tabMonopoly, tabQuests].forEach(t => t?.classList.remove('active'));
+        [contentPlayers, contentMonopoly, contentQuests].forEach(c => { if(c) c.style.display = 'none'; });
 
         if (tab === 'players') {
             tabPlayers.classList.add('active');
@@ -850,9 +851,11 @@ window.LobbyNeon = {
             GamesModule.activeTab = 'monopoly';
             GamesModule.renderTabContent();
         } else if (tab === 'quests') {
-            document.getElementById('hub-tab-quests')?.classList.add('active');
-            document.getElementById('hub-content-quests').style.display = 'block';
-            LobbyNeon.renderAdminQuestManager();
+            tabQuests?.classList.add('active');
+            if (contentQuests) {
+                contentQuests.style.display = 'block';
+                LobbyNeon.renderAdminQuestManager();
+            }
         }
     },
 
@@ -1004,7 +1007,7 @@ window.LobbyNeon = {
 
                     <div style="margin-bottom: 12px;">
                         <label style="display: block; font-size: 10px; color: #94a3b8; margin-bottom: 4px;">THỜI HẠN (DEADLINE):</label>
-                        <input type="date" id="quest-deadline" value="${new Date().toISOString().split('T')[0]}" style="width: 100%; padding: 8px; background: rgba(0,0,0,0.3); border: 1px solid #475569; border-radius: 4px; color: #fff; font-size: 11px;">
+                        <input type="date" id="admin-quest-deadline-input" value="${new Date().toISOString().split('T')[0]}" style="width: 100%; padding: 8px; background: rgba(0,0,0,0.3); border: 1px solid #475569; border-radius: 4px; color: #fff; font-size: 11px;">
                     </div>
 
                     <button onclick="LobbyNeon.adminCreateMission()" class="btn-neon" style="width: 100%; font-size: 11px; padding: 10px; font-weight: 800; background: linear-gradient(135deg, #fbbf24, #d97706); border: none; color: #000; box-shadow: 0 4px 15px rgba(217,119,6,0.3);">PHÁT THÁNH CHỈ</button>
@@ -1037,7 +1040,7 @@ window.LobbyNeon = {
         const type = document.getElementById('quest-type').value;
         const reward = parseInt(document.getElementById('quest-reward').value);
         const targetUser = document.getElementById('quest-target').value;
-        const deadline = document.getElementById('quest-deadline').value;
+        const deadline = document.getElementById('admin-quest-deadline-input').value;
 
         if (!title || !description || isNaN(reward)) {
             Utils.showToast("Vui lòng nhập đầy đủ thông tin!", "warning");
