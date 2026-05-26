@@ -901,7 +901,7 @@ window.LobbyNeon = {
                     </div>
                 ` : activeMissions.map(m => {
                     const isAccepted = m.acceptedBy && m.acceptedBy.includes(me);
-                    const deadlineStr = m.deadline ? new Date(m.deadline).toLocaleString('vi-VN') : 'Không giới hạn';
+                    const deadlineStr = m.deadline ? new Date(m.deadline).toLocaleDateString('vi-VN') : 'Không giới hạn';
                     
                     return `
                     <div style="background: rgba(15, 23, 42, 0.95); border: 2px solid ${isAccepted ? '#10b981' : '#fbbf24'}; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); position: relative; overflow: hidden; z-index: 10;">
@@ -1004,7 +1004,7 @@ window.LobbyNeon = {
 
                     <div style="margin-bottom: 12px;">
                         <label style="display: block; font-size: 10px; color: #94a3b8; margin-bottom: 4px;">THỜI HẠN (DEADLINE):</label>
-                        <input type="datetime-local" id="quest-deadline" style="width: 100%; padding: 8px; background: rgba(0,0,0,0.3); border: 1px solid #475569; border-radius: 4px; color: #fff; font-size: 11px;">
+                        <input type="date" id="quest-deadline" value="${new Date().toISOString().split('T')[0]}" style="width: 100%; padding: 8px; background: rgba(0,0,0,0.3); border: 1px solid #475569; border-radius: 4px; color: #fff; font-size: 11px;">
                     </div>
 
                     <button onclick="LobbyNeon.adminCreateMission()" class="btn-neon" style="width: 100%; font-size: 11px; padding: 10px; font-weight: 800; background: linear-gradient(135deg, #fbbf24, #d97706); border: none; color: #000; box-shadow: 0 4px 15px rgba(217,119,6,0.3);">PHÁT THÁNH CHỈ</button>
@@ -1020,7 +1020,7 @@ window.LobbyNeon = {
                             <div>
                                 <div style="font-size: 11px; font-weight: bold; color: #fff;">${m.title}</div>
                                 <div style="font-size: 9px; color: ${m.type === 'daily' ? '#38bdf8' : '#fbbf24'};">
-                                    ${m.type === 'daily' ? 'Ngày' : 'Tháng'} | ${m.reward}đ | ${m.targetUser === 'all' ? 'Tất cả' : '@' + m.targetUser}
+                                    ${m.type === 'daily' ? 'Ngày' : 'Tháng'} | ${m.reward}đ | ${m.deadline ? new Date(m.deadline).toLocaleDateString('vi-VN') : 'ko'} | ${m.targetUser === 'all' ? 'Tất cả' : '@' + m.targetUser}
                                 </div>
                             </div>
                             <button onclick="LobbyNeon.adminDeleteMission('${m.id}')" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 14px; transition: 0.2s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">🗑️</button>
