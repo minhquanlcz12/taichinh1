@@ -999,10 +999,44 @@ window.LobbyNeon = {
             <div style="display: flex; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 15px;">
                 <div onclick="LobbyNeon.openQuestBoard('new')" style="${tabStyles('new')}">NHIỆM VỤ MỚI (${newMissions.length})</div>
                 <div onclick="LobbyNeon.openQuestBoard('ongoing')" style="${tabStyles('ongoing')}">ĐANG THỰC HIỆN (${ongoingMissions.length})</div>
+                <div onclick="LobbyNeon.openQuestBoard('leaderboard')" style="${tabStyles('leaderboard')}">BXH</div>
             </div>
             
             <div style="max-height: 400px; overflow-y: auto; padding: 5px;">
-                ${currentMissions.length === 0 ? `
+                ${activeTab === 'leaderboard' ? (() => {
+                    // Leaderboard Logic
+                    const stats = {};
+                    missions.forEach(m => {
+                        if (m.completedBy && Array.isArray(m.completedBy)) {
+                            m.completedBy.forEach(u => {
+                                stats[u] = (stats[u] || 0) + (m.reward || 0);
+                            });
+                        }
+                    });
+
+                    const sorted = Object.entries(stats)
+                        .map(([username, points]) => ({ username, points }))
+                        .sort((a, b) => b.points - a.points);
+
+                    if (sorted.length === 0) return '<div style="text-align: center; color: #64748b; padding: 40px 0;">Chưa có dữ liệu xếp hạng.</div>';
+
+                    return `
+                        <div style="background: rgba(15, 23, 42, 0.6); border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05);">
+                            ${sorted.map((u, i) => `
+                                <div style="display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid rgba(255,255,255,0.05); background: ${i < 3 ? 'rgba(251,191,36,0.05)' : 'transparent'};">
+                                    <div style="width: 30px; font-weight: 900; color: ${i === 0 ? '#fbbf24' : i === 1 ? '#cbd5e1' : i === 2 ? '#cd7f32' : '#64748b'}; font-size: 16px;">
+                                        #${i + 1}
+                                    </div>
+                                    <div style="flex: 1; display: flex; align-items: center; gap: 10px;">
+                                        <div style="width: 32px; height: 32px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px;">👤</div>
+                                        <div style="font-weight: bold; color: #fff; font-size: 13px;">${Utils.getUserDisplayName(u.username)}</div>
+                                    </div>
+                                    <div style="font-weight: 800; color: #fbbf24; font-size: 14px;">${u.points}đ</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                })() : (currentMissions.length === 0 ? `
                     <div style="text-align: center; color: #64748b; padding: 40px 0;">
                         <div style="font-size: 40px; margin-bottom: 10px;">${activeTab === 'new' ? '🏮' : '⚔️'}</div>
                         ${activeTab === 'new' ? 'Hiện chưa có nhiệm vụ mới từ Admin.' : 'Bạn chưa tiếp nhận nhiệm vụ nào.'}
@@ -1037,7 +1071,7 @@ window.LobbyNeon = {
                             </button>
                         `}
                     </div>
-                `}).join('')}
+                `}).join(''))}
             </div>`;
 
         Utils.showModal('📜 BẢNG NHIỆM VỤ HOÀNG GIA', contentHtml, null, 'ĐÓNG BẢNG');
