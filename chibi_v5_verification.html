@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chibi V5 Premium Verification</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #0f172a;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .header {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        h1 {
+            margin: 0;
+            background: linear-gradient(135deg, #ec4899, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 32px;
+        }
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        .demo-card {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.3s ease;
+        }
+        .demo-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.2);
+        }
+        .chibi-wrapper {
+            width: 200px;
+            height: 240px;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, rgba(0,0,0,0.5) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(139, 92, 246, 0.2);
+        }
+        .btn-main {
+            background: linear-gradient(135deg, #ec4899, #8b5cf6);
+            border: none;
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 15px rgba(236, 72, 153, 0.4);
+        }
+        .btn-main:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(236, 72, 153, 0.6);
+        }
+        #chibi-builder-modal-overlay {
+            z-index: 99999 !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Premium Chibi V5 Overhaul</h1>
+            <p style="color: #94a3b8;">Hệ thống SVG chuẩn High-End & Đậm chất Việt Nam</p>
+        </div>
+
+        <div class="demo-grid">
+            <!-- Divine Angel V5 -->
+            <div class="demo-card">
+                <h3 style="margin:0; color:#fff;">👼 Divine Angel V5</h3>
+                <div class="chibi-wrapper" id="preview-angel"></div>
+                <p style="font-size: 13px; color: #94a3b8; text-align:center;">Lông vũ đa tầng, Hạt lấp lánh, Gradient tím nhạt.</p>
+            </div>
+
+            <!-- Phoenix Inferno V5 -->
+            <div class="demo-card">
+                <h3 style="margin:0; color:#f97316;">🔥 Phoenix Inferno V5</h3>
+                <div class="chibi-wrapper" id="preview-phoenix"></div>
+                <p style="font-size: 13px; color: #94a3b8; text-align:center;">Lửa bập bùng, Tàn lửa bay, Aura hỏa long.</p>
+            </div>
+
+            <!-- Frost Sovereign V5 -->
+            <div class="demo-card">
+                <h3 style="margin:0; color:#0ea5e9;">❄️ Frost Sovereign V5</h3>
+                <div class="chibi-wrapper" id="preview-frost"></div>
+                <p style="font-size: 13px; color: #94a3b8; text-align:center;">Cấu trúc băng tinh, Tuyết rơi, Phản chiếu trắng.</p>
+            </div>
+
+            <!-- Harbinger Void V5 -->
+            <div class="demo-card">
+                <h3 style="margin:0; color:#a855f7;">🧿 Harbinger Void V5</h3>
+                <div class="chibi-wrapper" id="preview-void"></div>
+                <p style="font-size: 13px; color: #94a3b8; text-align:center;">Mảnh vỡ hư không, Mắt quỷ nhấp nháy, Glow tím đậm.</p>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px;">
+            <button class="btn-main" onclick="ChibiModule.openBuilder()">
+                <i class="fa-solid fa-palette"></i> MỞ TRÌNH TẠO CHIBI V5
+            </button>
+        </div>
+    </div>
+
+    <!-- Mock Auth & Utils for testing -->
+    <script>
+        const Auth = {
+            currentUser: { username: 'admin', profile: {} },
+            currentUserKey: 'current_user'
+        };
+        const Utils = {
+            showToast: (msg) => console.log('TOAST:', msg),
+            storage: { set: (k, v) => console.log('STORAGE SAVE:', k, v) }
+        };
+    </script>
+    
+    <script src="js/chibi.js"></script>
+    
+    <script>
+        window.addEventListener('load', () => {
+            // Divine Angel
+            document.getElementById('preview-angel').innerHTML = ChibiModule.renderChibiSVG({
+                gender: 'nữ', skinColor: '#ffe0bd', hairStyle: 3, hairColor: '#7c3aed',
+                topStyle: 4, topColor: '#4c1d95', bottomStyle: 2, bottomColor: '#1e1b4b',
+                shoeStyle: 2, wing: 1, aura: 2
+            }, true, 100);
+
+            // Phoenix Inferno
+            document.getElementById('preview-phoenix').innerHTML = ChibiModule.renderChibiSVG({
+                gender: 'nam', skinColor: '#ffcd94', hairStyle: 2, hairColor: '#f97316',
+                topStyle: 3, topColor: '#1e2937', bottomStyle: 6, bottomColor: '#1f2937',
+                shoeStyle: 3, gear: 1, wing: 5, aura: 3
+            }, true, 100);
+
+            // Frost Sovereign
+            document.getElementById('preview-frost').innerHTML = ChibiModule.renderChibiSVG({
+                gender: 'nữ', skinColor: '#ffe0bd', hairStyle: 5, hairColor: '#cbd5e1',
+                topStyle: 1, topColor: '#e0f2fe', bottomStyle: 2, bottomColor: '#ffffff',
+                shoeStyle: 4, wing: 7, aura: 1
+            }, true, 100);
+
+            // Harbinger Void
+            document.getElementById('preview-void').innerHTML = ChibiModule.renderChibiSVG({
+                gender: 'nam', skinColor: '#ffcd94', hairStyle: 6, hairColor: '#1e1b4b',
+                topStyle: 5, topColor: '#2d3748', bottomStyle: 6, bottomColor: '#1a202c',
+                shoeStyle: 5, wing: 6, aura: 4
+            }, true, 100);
+        });
+    </script>
+</body>
+</html>

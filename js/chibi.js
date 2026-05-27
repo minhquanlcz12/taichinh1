@@ -47,15 +47,15 @@ const ChibiModule = {
         hair: 12,
         eyes: 8,
         mouth: 6,
-        top: 10,
+        top: 11,      // Added Ao Dai (index 10)
         bottom: 8,
-        shoe: 7,
-        accessory: 14, // Head/Glasses (0-13)
-        gear: 20,     // Weapons (0-19)
-        wing: 8,      // Wings (0-7)
-        mount: 5,     // Vehicles (0-4)
-        dragon: 4,    // Dragon Spirits (0-3)
-        aura: 5       // Aura/Magic Circles (NEW)
+        shoe: 8,       // Added Guốc Mộc (index 7)
+        accessory: 15, // Added Khăn Đóng (index 14)
+        gear: 20,
+        wing: 8,
+        mount: 5,
+        dragon: 4,
+        aura: 6        // Added V5 Magic Circles
     },
 
     // State
@@ -114,68 +114,65 @@ const ChibiModule = {
     // NEW: Full SET Presets
     presets: [
         {
-            id: 'set-cyber',
-            name: 'Siêu Chiến Binh Cyber',
-            desc: 'Phong cách tương lai cực cháy',
+            id: 'set-vietnam-male',
+            name: '🇻🇳 Áo Dài Truyền Thống (Nam)',
+            desc: 'Vẻ đẹp văn hóa Việt bản Premium',
             config: {
-                hairStyle: 2, hairColor: '#00f3ff',
-                eyeStyle: 1, mouthStyle: 0,
-                topStyle: 3, topColor: '#1f2937',
-                bottomStyle: 6, bottomColor: '#1f2937',
-                shoeStyle: 4, shoeColor: '#000',
-                wing: 6, gear: 2, dragon: 1, mount: 4
+                gender: 'nam', skinColor: '#ffcd94',
+                hairStyle: 4, hairColor: '#111827',
+                topStyle: 7, topColor: '#1e40af',
+                bottomStyle: 1, bottomColor: '#ffffff',
+                shoeStyle: 7, accessory: 13,
+                gear: 0, aura: 5
             }
         },
         {
-            id: 'set-samurai',
-            name: 'Samurai Huyền Thoại',
-            desc: 'Thanh kiếm bảo vệ chính nghĩa',
+            id: 'set-vietnam-female',
+            name: '🇻🇳 Áo Dài Duyênt Dáng (Nữ)',
+            desc: 'Nét đẹp dịu dàng thiếu nữ Việt',
             config: {
-                hairStyle: 4, hairColor: '#111827',
-                eyeStyle: 0, mouthStyle: 0,
-                topStyle: 4, topColor: '#ef4444',
-                bottomStyle: 2, bottomColor: '#111827',
-                shoeStyle: 3, shoeColor: '#334155',
-                wing: 0, gear: 1, dragon: 3, mount: 0
+                gender: 'nữ', skinColor: '#ffe0bd',
+                hairStyle: 5, hairColor: '#111827',
+                topStyle: 7, topColor: '#ec4899',
+                bottomStyle: 1, bottomColor: '#ffffff',
+                shoeStyle: 7, accessory: 12,
+                gear: 0, aura: 2
+            }
+        },
+        {
+            id: 'set-cyber-v5',
+            name: '⚡ Cyber Warrior V5',
+            desc: 'Chiến binh tương lai bản Premium',
+            config: {
+                gender: 'nam', skinColor: '#ffcd94',
+                hairStyle: 2, hairColor: '#00f3ff',
+                topStyle: 3, topColor: '#1e2937',
+                bottomStyle: 6, bottomColor: '#1f2937',
+                shoeStyle: 4, gear: 1, aura: 1, wing: 6, dragon: 1
+            }
+        },
+        {
+            id: 'set-royal-mage',
+            name: '🔮 Royal Mage V5',
+            desc: 'Pháp sư hoàng gia huyền bí',
+            config: {
+                gender: 'nữ', skinColor: '#ffe0bd',
+                hairStyle: 3, hairColor: '#7c3aed',
+                topStyle: 4, topColor: '#4c1d95',
+                bottomStyle: 2, bottomColor: '#1e1b4b',
+                shoeStyle: 2, gear: 3, aura: 2, wing: 4, dragon: 3
             }
         },
         {
             id: 'set-to-ong',
-            name: 'Thần Thánh Tổ Ong',
+            name: '🐝 Thần Thánh Tổ Ong V5',
             desc: 'Combo huyền thoại xóm làng',
             config: {
+                gender: 'nam', skinColor: '#ffcd94',
                 hairStyle: 1, hairColor: '#343a40',
-                eyeStyle: 0, mouthStyle: 0,
                 topStyle: 1, topColor: '#ffffff',
                 bottomStyle: 1, bottomColor: '#3b82f6',
-                shoeStyle: 1, shoeColor: '#fef3c7',
-                wing: 1, gear: 19, dragon: 0, mount: 4
-            }
-        },
-        {
-            id: 'set-reaper',
-            name: 'Sát Thủ Bóng Đêm',
-            desc: 'Nổi sợ hãi từ vực thẳm',
-            config: {
-                hairStyle: 3, hairColor: '#000',
-                eyeStyle: 1, mouthStyle: 1,
-                topStyle: 5, topColor: '#1f2937',
-                bottomStyle: 1, bottomColor: '#000',
-                shoeStyle: 3, shoeColor: '#000',
-                wing: 6, gear: 13, dragon: 2, mount: 0
-            }
-        },
-        {
-            id: 'set-angel',
-            name: 'Thiên Thần Ánh Sáng',
-            desc: 'Sức mạnh thuần khiết',
-            config: {
-                hairStyle: 5, hairColor: '#f3f4f6',
-                eyeStyle: 0, mouthStyle: 1,
-                topStyle: 2, topColor: '#ffffff',
-                bottomStyle: 2, bottomColor: '#ffffff',
-                shoeStyle: 5, shoeColor: '#ffffff',
-                wing: 3, gear: 15, dragon: 3, mount: 3
+                shoeStyle: 1, gear: 19, accessory: 11, aura: 1
             }
         }
     ],
@@ -235,6 +232,18 @@ const ChibiModule = {
     },
 
     /**
+     * Helper to lighten/darken a color (hex)
+     */
+    adjustColor: function(color, percent) {
+        const num = parseInt(color.replace("#",""), 16),
+            amt = Math.round(2.55 * percent),
+            R = (num >> 16) + amt,
+            G = (num >> 8 & 0x00FF) + amt,
+            B = (num & 0x0000FF) + amt;
+        return "#" + (0x1000000 + (R<255?R<0?0:R:255)*0x10000 + (G<255?G<0?0:G:255)*0x100 + (B<255?B<0?0:B:255)).toString(16).slice(1);
+    },
+
+    /**
      * Render complete composite Chibi SVG
      */
     renderChibiSVG: function(config, isDancing, meritPoints) {
@@ -264,13 +273,13 @@ const ChibiModule = {
         const pts = meritPoints !== undefined ? meritPoints : 0;
 
         const gender = c.gender || 'nam';
-        const skinColor = c.skinColor || '#ffd1a9';
+        const skinColor = c.skinColor || (gender === 'nam' ? '#ffd1a9' : '#fff0e6');
         const hairColor = c.hairColor || '#343a40';
         const topColor = c.topColor || '#e83e8c';
         const bottomColor = c.bottomColor || '#007bff';
         const shoeStyle = c.shoeStyle !== undefined ? c.shoeStyle : 1;
         const shoeColor = c.shoeColor || '#1f2937';
-        const hc = hairColor; // Fixed missing hc definition
+        const hc = hairColor;
 
         // 0. Dynamic ViewBox & Scaling optimized per VIP accessory for maximum size
         let viewBox = "0 0 200 200";
@@ -294,32 +303,49 @@ const ChibiModule = {
             viewBox = "-55 -55 310 310"; // Fallback for other special accessories
         }
 
-        // 1.5 Aura / Magic Circle Layer (Under Feet) - NEW PREMIUM FEATURE
+        // 1.5 Aura / Magic Circle Layer (Under Feet) - UPGRADED V5 PREMIUM
         let auraHtml = '';
-        if (c.aura >= 1) {
-            const auraColors = {
-                1: { main: '#00f3ff', glow: 'rgba(0, 243, 255, 0.4)', name: 'Neon Ring' },
-                2: { main: '#a78bfa', glow: 'rgba(167, 139, 250, 0.4)', name: 'Magic Rune' },
-                3: { main: '#fbbf24', glow: 'rgba(251, 191, 36, 0.4)', name: 'Fire Aura' },
-                4: { main: '#ef4444', glow: 'rgba(239, 68, 68, 0.4)', name: 'Blood Ritual' },
-                5: { main: '#10b981', glow: 'rgba(16, 185, 129, 0.4)', name: 'Zen Circle' }
-            };
-            const aCol = auraColors[c.aura] || auraColors[1];
-            
-            let auraSVG = '';
-            if (c.aura === 1) {
-                auraSVG = `<g transform="translate(100, 180)"><ellipse rx="50" ry="15" fill="none" stroke="${aCol.main}" stroke-width="3" opacity="0.8" style="animation: auraPulse 2s infinite ease-in-out;"><animateTransform attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="8s" repeatCount="indefinite" /></ellipse><ellipse rx="42" ry="12" fill="none" stroke="${aCol.main}" stroke-width="1.5" opacity="0.4" /><ellipse rx="55" ry="18" fill="none" stroke="${aCol.main}" stroke-width="1" opacity="0.2" style="filter: blur(4px);" /></g>`;
-            } else if (c.aura === 2) {
-                auraSVG = `<g transform="translate(100, 180)"><ellipse rx="55" ry="20" fill="none" stroke="${aCol.main}" stroke-width="2" stroke-dasharray="10 5" style="animation: auraRotate 10s infinite linear;" /><ellipse rx="48" ry="16" fill="none" stroke="${aCol.main}" stroke-width="0.8" opacity="0.6" style="animation: auraRotateRev 15s infinite linear;" /><g style="animation: auraPulse 3s infinite ease-in-out;"><path d="M -30 -5 L -20 -5 M 20 -5 L 30 -5 M 0 -10 L 0 -15" stroke="${aCol.main}" stroke-width="2" stroke-linecap="round" /></g></g>`;
-            } else if (c.aura === 3) {
-                auraSVG = `<g transform="translate(100, 180)"><ellipse rx="50" ry="15" fill="none" stroke="${aCol.main}" stroke-width="2.5" style="filter: drop-shadow(0 0 8px ${aCol.main});" /><g style="animation: auraPulse 1s infinite alternate;"><path d="M -40 0 Q -35 -20 -30 0 T -20 -20 T -10 0 T 0 -20 T 10 0 T 20 -20 T 30 0 T 40 -20" fill="none" stroke="${aCol.main}" stroke-width="2" opacity="0.5" /></g></g>`;
-            } else if (c.aura === 4) {
-                auraSVG = `<g transform="translate(100, 180)"><ellipse rx="60" ry="22" fill="none" stroke="${aCol.main}" stroke-width="1.5" stroke-dasharray="1 4" style="animation: auraRotate 5s infinite linear;" /><path d="M -40 -5 L 40 -5 M 0 -25 L 0 15" stroke="${aCol.main}" stroke-width="1" opacity="0.4" transform="rotate(45)" /><ellipse rx="45" ry="15" fill="none" stroke="${aCol.main}" stroke-width="3" opacity="0.7" /></g>`;
-            } else {
-                auraSVG = `<g transform="translate(100, 180)"><ellipse rx="50" ry="15" fill="none" stroke="${aCol.main}" stroke-width="3" stroke-linecap="round" stroke-dasharray="80 200" style="animation: auraRotate 4s infinite linear;" /><ellipse rx="50" ry="15" fill="none" stroke="${aCol.main}" stroke-width="1.5" opacity="0.3" /></g>`;
+        if (pts > 0 || c.aura >= 1) { // Merit now automatically gives a basic aura
+            const auraIdx = c.aura || (pts > 50 ? 3 : (pts > 20 ? 1 : 0));
+            if (auraIdx > 0) {
+                const auraColors = {
+                    1: { name: 'Cyber Neon', main: '#00f3ff', alt: '#3b82f6' },
+                    2: { name: 'Royal Magic', main: '#c084fc', alt: '#7c3aed' },
+                    3: { name: 'Inferno', main: '#facc15', alt: '#ef4444' },
+                    4: { name: 'Void Blood', main: '#ef4444', alt: '#7f1d1d' },
+                    5: { name: 'Zen Forest', main: '#22c55e', alt: '#166534' }
+                };
+                const aCol = auraColors[auraIdx] || auraColors[1];
+                
+                // Detailed 3-layer V5 Magic Circle
+                auraHtml = `
+                    <g transform="translate(100, 185)" filter="url(#glowStrong)">
+                        <!-- Ground Glow -->
+                        <ellipse rx="55" ry="18" fill="${aCol.main}" opacity="0.1" />
+                        <!-- Outer Ring (Slow spin) -->
+                        <g style="animation: runeRotate 15s linear infinite;">
+                            <ellipse rx="52" ry="16" fill="none" stroke="${aCol.main}" stroke-width="2.2" stroke-dasharray="10 4" opacity="0.8"/>
+                            <ellipse rx="48" ry="14" fill="none" stroke="${aCol.main}" stroke-width="0.8" opacity="0.4"/>
+                            <line x1="-50" y1="0" x2="-44" y2="0" stroke="${aCol.main}" stroke-width="2" stroke-linecap="round"/>
+                            <line x1="44" y1="0" x2="50" y2="0" stroke="${aCol.main}" stroke-width="2" stroke-linecap="round"/>
+                            <line x1="0" y1="-15" x2="0" y2="-11" stroke="${aCol.main}" stroke-width="2" stroke-linecap="round"/>
+                            <line x1="0" y1="11" x2="0" y2="15" stroke="${aCol.main}" stroke-width="2" stroke-linecap="round"/>
+                        </g>
+                        <!-- Middle Ring (Reverse spin) -->
+                        <g style="animation: runeRotateRev 20s linear infinite;">
+                            <ellipse rx="38" ry="11" fill="none" stroke="${aCol.alt}" stroke-width="1.8" stroke-dasharray="6 8" opacity="0.7"/>
+                            <path d="M -32 -6 L 32 6 M 32 -6 L -32 6" fill="none" stroke="${aCol.alt}" stroke-width="0.6" opacity="0.5"/>
+                        </g>
+                        <!-- Inner Core (Pulsing) -->
+                        <g style="animation: runeRotate 6s linear infinite;">
+                            <ellipse rx="12" ry="4" fill="none" stroke="${aCol.main}" stroke-width="1.2" opacity="0.8"/>
+                        </g>
+                        <ellipse rx="5" ry="2" fill="${aCol.main}" opacity="0.6" style="animation: glowPulse 2s ease-in-out infinite;">
+                            <animate attributeName="rx" values="4;7;4" dur="2s" repeatCount="indefinite"/>
+                        </ellipse>
+                    </g>
+                `;
             }
-            
-            auraHtml = auraSVG + `<style>@keyframes auraRotate { from { transform: translate(100px, 180px) rotate(0deg); } to { transform: translate(100px, 180px) rotate(360deg); } } @keyframes auraRotateRev { from { transform: translate(100px, 180px) rotate(360deg); } to { transform: translate(100px, 180px) rotate(0deg); } } @keyframes auraPulse { 0%, 100% { transform: translate(100px, 180px) scale(1); opacity: 0.8; } 50% { transform: translate(100px, 180px) scale(1.1); opacity: 1; } }</style>`;
         }
 
         // 1. Dragon Spirit Layer (Majestic Spirits V2 - PREMIUM)
@@ -366,104 +392,163 @@ const ChibiModule = {
             `;
         }
 
-        // 2. Wing Layer (Premium Reskin with Layers & Effects)
+        // 2. Wing Layer (Premium Reskin V5 - High-Fidelity)
         let wingHtml = '';
-        if (c.wing === 1) { // Crystal Angel Wings
+        if (c.wing === 1) { // 🕊️ Divine Angel Wings (Premium V5)
             wingHtml = `
-                <g class="${isD ? 'chibi-wing-flap' : ''}" style="filter: drop-shadow(0 0 10px rgba(255,255,255,0.9));">
+                <g class="${isD ? 'chibi-wing-flap' : ''}" filter="url(#glowStrong)">
                     <defs>
-                        <linearGradient id="wingGrad-angel" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stop-color="#fff" /><stop offset="100%" stop-color="#cbd5e1" />
+                        <linearGradient id="wingGrad-angelV5" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#ffffff" />
+                            <stop offset="60%" stop-color="#cbd5e1" />
+                            <stop offset="100%" stop-color="#d8b4fe" />
                         </linearGradient>
                     </defs>
                     <g>
-                        <path d="M 100 110 C 10 50 -60 160 50 190 Q 70 195 100 130" fill="url(#wingGrad-angel)" stroke="#fff" stroke-width="0.8" />
-                        <path d="M 30 100 L 60 115 M 25 125 L 65 135 M 35 150 L 70 155" stroke="rgba(255,255,255,0.6)" stroke-width="1.5" stroke-linecap="round" />
+                        <!-- Main Feather Layer -->
+                        <path d="M 100 110 C 20 50 -80 160 50 200 Q 75 210 100 130" fill="url(#wingGrad-angelV5)" stroke="#fff" stroke-width="0.8" />
+                        <!-- Inner Feather Layer -->
+                        <path d="M 100 115 C 50 80 -20 150 70 180 Q 85 190 100 135" fill="rgba(255,255,255,0.4)" stroke="#fff" stroke-width="0.5" />
+                        <!-- Feather Detail Lines -->
+                        <path d="M 35 105 L 65 120 M 20 135 L 70 145 M 30 165 L 80 170" stroke="rgba(255,255,255,0.8)" stroke-width="1.8" stroke-linecap="round" />
+                        <!-- Sparkling Particles -->
+                        <circle cx="40" cy="140" r="1.5" fill="#fff" style="animation: floatSparkle 1.5s infinite;" />
+                        <circle cx="60" cy="160" r="1" fill="#fff" style="animation: floatSparkle 2s infinite 0.5s;" />
                     </g>
                     <g transform="translate(100, 110) scale(-1, 1) translate(-100, -110)">
-                        <path d="M 100 110 C 10 50 -60 160 50 190 Q 70 195 100 130" fill="url(#wingGrad-angel)" stroke="#fff" stroke-width="0.8" />
-                        <path d="M 30 100 L 60 115 M 25 125 L 65 135 M 35 150 L 70 155" stroke="rgba(255,255,255,0.6)" stroke-width="1.5" stroke-linecap="round" />
+                        <path d="M 100 110 C 20 50 -80 160 50 200 Q 75 210 100 130" fill="url(#wingGrad-angelV5)" stroke="#fff" stroke-width="0.8" />
+                        <path d="M 100 115 C 50 80 -20 150 70 180 Q 85 190 100 135" fill="rgba(255,255,255,0.4)" stroke="#fff" stroke-width="0.5" />
+                        <path d="M 35 105 L 65 120 M 20 135 L 70 145 M 30 165 L 80 170" stroke="rgba(255,255,255,0.8)" stroke-width="1.8" stroke-linecap="round" />
+                        <circle cx="40" cy="140" r="1.5" fill="#fff" style="animation: floatSparkle 1.5s infinite;" />
                     </g>
                 </g>
             `;
-        } else if (c.wing === 2) { // Demon Wings Premium
+        } else if (c.wing === 2) { // 🦇 Dread Bat Wings (Premium V5)
             wingHtml = `
-                <g class="${isD ? 'chibi-wing-flap' : ''}" style="filter: drop-shadow(0 0 8px #ef4444);">
+                <g class="${isD ? 'chibi-wing-flap' : ''}" style="filter: drop-shadow(0 0 10px #ef4444);">
                     <g>
-                        <path d="M 100 110 L 20 60 L 50 110 L 10 150 L 60 150 L 50 200 L 100 140" fill="#221111" stroke="#ef4444" stroke-width="3" />
-                        <path d="M 100 110 L 40 90 M 100 110 L 50 130" stroke="#7f1d1d" stroke-width="1.5" />
+                        <!-- Wing Membrane -->
+                        <path d="M 100 110 L 10 50 L 50 110 L 5 160 L 65 160 L 45 220 L 100 140" fill="rgba(34, 17, 17, 0.9)" stroke="#ef4444" stroke-width="1.5" />
+                        <!-- Bone Structure -->
+                        <path d="M 100 110 L 12 52 M 100 110 L 52 112 M 100 110 L 7 162" stroke="#450a0a" stroke-width="3" stroke-linecap="round" />
+                        <path d="M 12 52 L 5 45 Q 10 35 20 45" fill="#450a0a" /> <!-- Bone claw tip -->
                     </g>
                     <g transform="translate(100, 110) scale(-1, 1) translate(-100, -110)">
-                        <path d="M 100 110 L 20 60 L 50 110 L 10 150 L 60 150 L 50 200 L 100 140" fill="#221111" stroke="#ef4444" stroke-width="3" />
-                        <path d="M 100 110 L 40 90 M 100 110 L 50 130" stroke="#7f1d1d" stroke-width="1.5" />
+                        <path d="M 100 110 L 10 50 L 50 110 L 5 160 L 65 160 L 45 220 L 100 140" fill="rgba(34, 17, 17, 0.9)" stroke="#ef4444" stroke-width="1.5" />
+                        <path d="M 100 110 L 12 52 M 100 110 L 52 112 M 100 110 L 7 162" stroke="#450a0a" stroke-width="3" stroke-linecap="round" />
+                        <path d="M 12 52 L 5 45 Q 10 35 20 45" fill="#450a0a" />
                     </g>
                 </g>
             `;
-        } else if (c.wing === 3) { // Royal Gold Wings VVIP
+        } else if (c.wing === 3) { // 👑 Imperial Gold Wings (Premium V5)
             wingHtml = `
-                <g class="${isD ? 'chibi-wing-flap' : ''}" style="filter: drop-shadow(0 0 25px #facc15);">
+                <g class="${isD ? 'chibi-wing-flap' : ''}" style="filter: drop-shadow(0 0 15px #facc15);">
                     <defs>
-                        <linearGradient id="goldWingGradV2" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#fff" /><stop offset="50%" stop-color="#facc15" /><stop offset="100%" stop-color="#d97706" />
+                        <linearGradient id="goldWingV5" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#fff" /><stop offset="30%" stop-color="#fef08a" /><stop offset="70%" stop-color="#facc15" /><stop offset="100%" stop-color="#854d0e" />
                         </linearGradient>
                     </defs>
                     <g>
-                        <path d="M 100 110 C 0 30 -120 180 60 210 L 100 130" fill="url(#goldWingGradV2)" stroke="#fff" stroke-width="1" />
-                        <path d="M 15 100 Q 50 110 90 115" stroke="rgba(255,255,255,0.7)" stroke-width="3" fill="none" />
-                        <path d="M 10 140 Q 50 145 95 140" stroke="rgba(255,255,255,0.5)" stroke-width="2" fill="none" />
+                        <!-- Metallic Feather Layers -->
+                        <path d="M 100 110 C -10 20 -130 180 70 215 L 100 135" fill="url(#goldWingV5)" stroke="#854d0e" stroke-width="0.5" />
+                        <path d="M 90 115 C 20 50 -50 160 85 185" fill="rgba(255,255,255,0.3)" />
+                        <!-- Holy Rays -->
+                        <line x1="10" y1="80" x2="60" y2="120" stroke="#fff" stroke-width="4" opacity="0.3" stroke-linecap="round" style="animation: glowPulse 2s infinite;" />
+                        <line x1="5" y1="120" x2="65" y2="140" stroke="#fff" stroke-width="3" opacity="0.2" stroke-linecap="round" />
                     </g>
                     <g transform="translate(100, 110) scale(-1, 1) translate(-100, -110)">
-                        <path d="M 100 110 C 0 30 -120 180 60 210 L 100 130" fill="url(#goldWingGradV2)" stroke="#fff" stroke-width="1" />
-                        <path d="M 15 100 Q 50 110 90 115" stroke="rgba(255,255,255,0.7)" stroke-width="3" fill="none" />
-                        <path d="M 10 140 Q 50 145 95 140" stroke="rgba(255,255,255,0.5)" stroke-width="2" fill="none" />
+                        <path d="M 100 110 C -10 20 -130 180 70 215 L 100 135" fill="url(#goldWingV5)" stroke="#854d0e" stroke-width="0.5" />
+                        <path d="M 90 115 C 20 50 -50 160 85 185" fill="rgba(255,255,255,0.3)" />
+                        <line x1="10" y1="80" x2="60" y2="120" stroke="#fff" stroke-width="4" opacity="0.3" stroke-linecap="round" style="animation: glowPulse 2s infinite;" />
                     </g>
                 </g>
             `;
-        } else if (c.wing === 4) { // Crystal Fairy Wings
+        } else if (c.wing === 4) { // 💠 Crystal Shard Wings (Premium V5)
             wingHtml = `
-                <g class="${isD ? 'chibi-wing-flap' : ''}" style="filter: drop-shadow(0 0 20px #06b6d4);">
-                    <path d="M 100 120 L 10 40 L 50 120 L 10 200 L 100 150" fill="rgba(6, 182, 212, 0.45)" stroke="#fff" stroke-width="2" />
-                    <path d="M 100 120 L 30 70 M 100 120 L 30 160" stroke="#fff" stroke-width="1" opacity="0.6" />
+                <g class="${isD ? 'chibi-wing-flap' : ''}" style="filter: drop-shadow(0 0 15px #22d3ee);">
+                    <g>
+                        <!-- Main Crystal Shards -->
+                        <path d="M 100 120 L -10 30 L 50 110 L -20 200 L 100 150" fill="rgba(34, 211, 238, 0.4)" stroke="#fff" stroke-width="1.5" />
+                        <path d="M 100 120 L 20 60 L 60 115 L 15 170 L 100 145" fill="rgba(255, 255, 255, 0.3)" />
+                        <!-- Core Core -->
+                        <path d="M 100 120 L 50 115 L 100 125" fill="#fff" />
+                        <!-- Neon Pulse -->
+                        <path d="M -10 30 L 50 110 L -20 200" fill="none" stroke="#22d3ee" stroke-width="1" opacity="0.8" style="animation: glowPulse 1.5s infinite;" />
+                    </g>
                     <g transform="translate(100, 120) scale(-1, 1) translate(-100, -120)">
-                        <path d="M 100 120 L 10 40 L 50 120 L 10 200 L 100 150" fill="rgba(6, 182, 212, 0.45)" stroke="#fff" stroke-width="2" />
-                        <path d="M 100 120 L 30 70 M 100 120 L 30 160" stroke="#fff" stroke-width="1" opacity="0.6" />
+                        <path d="M 100 120 L -10 30 L 50 110 L -20 200 L 100 150" fill="rgba(34, 211, 238, 0.4)" stroke="#fff" stroke-width="1.5" />
+                        <path d="M 100 120 L 20 60 L 60 115 L 15 170 L 100 145" fill="rgba(255, 255, 255, 0.3)" />
                     </g>
                 </g>
             `;
-        } else if (c.wing === 5) { // Flaming Phoenix Wings
+        } else if (c.wing === 5) { // 🔥 Phoenix Inferno Wings (Premium V5)
             wingHtml = `
-                <g class="${isD ? 'chibi-wing-flap' : ''}" style="filter: drop-shadow(0 0 30px #f97316);">
+                <g class="${isD ? 'chibi-wing-flap' : ''}" style="filter: drop-shadow(0 0 20px #f97316);">
+                    <defs>
+                        <linearGradient id="fireWingV5Grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#fef08a" />
+                            <stop offset="40%" stop-color="#f97316" />
+                            <stop offset="100%" stop-color="#7c2d12" />
+                        </linearGradient>
+                    </defs>
                     <g>
-                        <path d="M 100 110 C -20 10 -150 130 50 220 L 100 130" fill="url(#fireWingGrad)" />
-                        <path d="M 20 100 L 60 110 M 15 130 L 70 135" stroke="#fef08a" stroke-width="2" stroke-linecap="round" />
+                        <!-- Fire Layers -->
+                        <path d="M 100 110 C -30 20 -160 150 40 230 L 100 130" fill="url(#fireWingV5Grad)" />
+                        <path d="M 95 115 C 20 60 -80 140 70 200" fill="rgba(251, 191, 36, 0.5)" style="animation: fireDance 0.8s infinite;" />
+                        <!-- Embers -->
+                        <circle cx="10" cy="120" r="2" fill="#facc15" style="animation: floatSparkle 1.2s infinite;" />
+                        <circle cx="30" cy="180" r="1.5" fill="#facc15" style="animation: floatSparkle 1.5s infinite 0.3s;" />
+                        <circle cx="0" cy="80" r="1" fill="#fff" style="animation: floatSparkle 2s infinite 0.7s;" />
                     </g>
                     <g transform="translate(100, 110) scale(-1, 1) translate(-100, -110)">
-                        <path d="M 100 110 C -20 10 -150 130 50 220 L 100 130" fill="url(#fireWingGrad)" />
-                        <path d="M 20 100 L 60 110 M 15 130 L 70 135" stroke="#fef08a" stroke-width="2" stroke-linecap="round" />
+                        <path d="M 100 110 C -30 20 -160 150 40 230 L 100 130" fill="url(#fireWingV5Grad)" />
+                        <path d="M 95 115 C 20 60 -80 140 70 200" fill="rgba(251, 191, 36, 0.5)" style="animation: fireDance 0.8s infinite;" />
                     </g>
                 </g>
             `;
-        } else if (c.wing === 6) { // Harbinger Void Wings VVIP
+        } else if (c.wing === 6) { // 🧿 Harbinger Void Wings (Premium V5)
             wingHtml = `
-                <g class="${isD ? 'chibi-wing-flap' : ''}" style="filter: drop-shadow(0 0 25px #7e22ce);">
+                <g class="${isD ? 'chibi-wing-flap' : ''}" style="filter: drop-shadow(0 0 15px #a855f7);">
                     <g>
-                        <path d="M 100 110 L 0 40 L 50 120 L -10 170 L 70 170 L 40 230 L 100 140" fill="#1e1b4b" stroke="#a855f7" stroke-width="3" />
-                        <path d="M 100 110 L 25 85 M 100 110 L 35 140" stroke="#4c1d95" stroke-width="2" />
-                        <circle cx="20" cy="65" r="4" fill="#a855f7" style="animation: eyeGlow 1s infinite alternate;" />
+                        <!-- Jagged Void Shards -->
+                        <path d="M 100 110 L -20 20 L 40 120 L -30 180 L 60 180 L 20 250 L 100 145" fill="#1e1b4b" stroke="#7e22ce" stroke-width="2.5" />
+                        <!-- Core Void Pulse -->
+                        <path d="M 100 110 L 10 70 L 50 125 L 10 160 L 100 140" fill="rgba(168, 85, 247, 0.3)" style="animation: glowPulse 2s infinite;" />
+                        <!-- Pulsing Void Eyes -->
+                        <g transform="translate(-5, 60) scale(0.6)">
+                            <ellipse rx="8" ry="10" fill="#fff" />
+                            <circle r="4" fill="#a855f7" style="animation: eyeGlow 0.8s infinite alternate;" />
+                        </g>
+                        <g transform="translate(-15, 140) scale(0.5)">
+                            <ellipse rx="8" ry="10" fill="#fff" />
+                            <circle r="4" fill="#a855f7" style="animation: eyeGlow 1.2s infinite alternate;" />
+                        </g>
                     </g>
                     <g transform="translate(100, 110) scale(-1, 1) translate(-100, -110)">
-                        <path d="M 100 110 L 0 40 L 50 120 L -10 170 L 70 170 L 40 230 L 100 140" fill="#1e1b4b" stroke="#a855f7" stroke-width="3" />
-                        <path d="M 100 110 L 25 85 M 100 110 L 35 140" stroke="#4c1d95" stroke-width="2" />
-                        <circle cx="20" cy="65" r="4" fill="#a855f7" style="animation: eyeGlow 1s infinite alternate;" />
+                        <path d="M 100 110 L -20 20 L 40 120 L -30 180 L 60 180 L 20 250 L 100 145" fill="#1e1b4b" stroke="#7e22ce" stroke-width="2.5" />
+                        <g transform="translate(-5, 60) scale(0.6)">
+                            <ellipse rx="8" ry="10" fill="#fff" />
+                            <circle r="4" fill="#a855f7" style="animation: eyeGlow 0.8s infinite alternate;" />
+                        </g>
                     </g>
                 </g>
             `;
-        } else if (c.wing === 7) { // Frost Sovereign Wings
+        } else if (c.wing === 7) { // ❄️ Frost Crystalline Wings (Premium V5)
             wingHtml = `
-                <g class="${isD ? 'chibi-wing-flap' : ''}" style="filter: drop-shadow(0 0 20px #22d3ee);">
-                    <path d="M 100 110 L 10 20 L 70 110 L 0 160 L 80 160 L 50 250 L 100 140" fill="rgba(165, 243, 252, 0.55)" stroke="#fff" stroke-width="2" />
+                <g class="${isD ? 'chibi-wing-flap' : ''}" style="filter: drop-shadow(0 0 12px #e0f2fe);">
+                    <g>
+                        <!-- Ice Form -->
+                        <path d="M 100 110 L 0 10 L 60 110 L -10 160 L 80 160 L 40 240 L 100 140" fill="rgba(186, 230, 253, 0.5)" stroke="#fff" stroke-width="1.5" />
+                        <!-- Refractive Highlight -->
+                        <path d="M 100 110 L 25 35 L 55 105 L 15 150 L 100 135" fill="rgba(255,255,255,0.4)" stroke="#fff" stroke-width="0.5" />
+                        <!-- Snow Particles -->
+                        <circle cx="20" cy="60" r="1.2" fill="#fff" opacity="0.8" style="animation: floatSparkle 3s infinite;" />
+                        <circle cx="45" cy="130" r="1" fill="#fff" opacity="0.6" style="animation: floatSparkle 2.5s infinite 1s;" />
+                        <circle cx="5" cy="180" r="1.5" fill="#fff" opacity="0.7" style="animation: floatSparkle 4s infinite 0.5s;" />
+                    </g>
                     <g transform="translate(100, 110) scale(-1, 1) translate(-100, -110)">
-                        <path d="M 100 110 L 10 20 L 70 110 L 0 160 L 80 160 L 50 250 L 100 140" fill="rgba(165, 243, 252, 0.55)" stroke="#fff" stroke-width="2" />
+                        <path d="M 100 110 L 0 10 L 60 110 L -10 160 L 80 160 L 40 240 L 100 140" fill="rgba(186, 230, 253, 0.5)" stroke="#fff" stroke-width="1.5" />
+                        <circle cx="20" cy="60" r="1.2" fill="#fff" opacity="0.8" style="animation: floatSparkle 3s infinite;" />
                     </g>
                 </g>
             `;
@@ -532,19 +617,47 @@ const ChibiModule = {
             `;
         }
 
-        // 5. Body Parts (Assemble in correct order)
-        const bodyBaseHtml = `
-            <rect x="96" y="104" width="8" height="12" fill="${skinColor}" stroke="#1e1b4b" stroke-width="2.5" />
-            <path d="M 86 145 Q 83 165 82 175 C 81 180 89 182 91 176 L 95 145 Z" fill="${skinColor}" stroke="#1e1b4b" stroke-width="2.5" />
-            <path d="M 114 145 Q 117 165 118 175 C 119 180 111 182 109 176 L 105 145 Z" fill="${skinColor}" stroke="#1e1b4b" stroke-width="2.5" />
-            <path d="M 88 114 Q 100 112 112 114 L 115 145 Q 100 148 85 145 Z" fill="${skinColor}" stroke="#1e1b4b" stroke-width="2.5" />
-            ${armsHtml}
-            <circle cx="62" cy="80" r="7" fill="${skinColor}" stroke="#1e1b4b" stroke-width="2.5" />
-            <circle cx="138" cy="80" r="7" fill="${skinColor}" stroke="#1e1b4b" stroke-width="2.5" />
-            <ellipse cx="100" cy="80" rx="36" ry="32" fill="${skinColor}" stroke="#1e1b4b" stroke-width="2.5" />
-            <ellipse cx="76" cy="86" rx="4" ry="2" fill="#f43f5e" opacity="0.45" />
-            <ellipse cx="124" cy="86" rx="4" ry="2" fill="#f43f5e" opacity="0.45" />
-        `;
+        // 5. Body Parts (V5 Premium - Gender Specific)
+        let bodyBaseHtml = '';
+        if (gender === 'nam') {
+            bodyBaseHtml = `
+                <g class="chibi-breathe">
+                    <!-- Neck -->
+                    <rect x="95" y="104" width="10" height="14" rx="3" fill="url(#skinGradV5)" stroke="${this.adjustColor(skinColor, -30)}" stroke-width="1.5"/>
+                    <!-- Legs -->
+                    <path d="M 87 148 Q 84 168 82 178 C 81 183 89 184 91 179 L 95 148 Z" fill="url(#skinGradV5)" stroke="${this.adjustColor(skinColor, -30)}" stroke-width="1.5"/>
+                    <path d="M 113 148 Q 116 168 118 178 C 119 183 111 184 109 179 L 105 148 Z" fill="url(#skinGradV5)" stroke="${this.adjustColor(skinColor, -30)}" stroke-width="1.5"/>
+                    <!-- Torso -->
+                    <path d="M 86 114 Q 100 110 114 114 L 117 148 Q 100 152 83 148 Z" fill="url(#skinGradV5)" stroke="${this.adjustColor(skinColor, -30)}" stroke-width="1.5"/>
+                    ${armsHtml}
+                    <!-- Head Base -->
+                    <ellipse cx="63" cy="82" rx="7" ry="8" fill="url(#skinGradV5)" stroke="${this.adjustColor(skinColor, -25)}" stroke-width="1.5"/>
+                    <ellipse cx="137" cy="82" rx="7" ry="8" fill="url(#skinGradV5)" stroke="${this.adjustColor(skinColor, -25)}" stroke-width="1.5"/>
+                    <ellipse cx="100" cy="80" rx="38" ry="34" fill="url(#skinGradV5)" stroke="${this.adjustColor(skinColor, -25)}" stroke-width="2"/>
+                    <ellipse cx="76" cy="88" rx="6" ry="3" fill="#f43f5e" opacity="0.25"/>
+                    <ellipse cx="124" cy="88" rx="6" ry="3" fill="#f43f5e" opacity="0.25"/>
+                </g>
+            `;
+        } else { // Nữ - Slender & Elegant
+            bodyBaseHtml = `
+                <g class="chibi-breathe">
+                    <!-- Neck (slender) -->
+                    <rect x="96" y="106" width="8" height="12" rx="3" fill="url(#skinGradV5)" stroke="${this.adjustColor(skinColor, -30)}" stroke-width="1.2"/>
+                    <!-- Legs (slender) -->
+                    <path d="M 90 155 Q 88 172 87 180 C 86 184 92 184 93 180 L 95 155 Z" fill="url(#skinGradV5)" stroke="${this.adjustColor(skinColor, -30)}" stroke-width="1.2"/>
+                    <path d="M 110 155 Q 112 172 113 180 C 114 184 108 184 107 180 L 105 155 Z" fill="url(#skinGradV5)" stroke="${this.adjustColor(skinColor, -30)}" stroke-width="1.2"/>
+                    <!-- Torso (slender) -->
+                    <path d="M 88 116 Q 100 114 112 116 L 114 150 Q 100 155 86 150 Z" fill="url(#skinGradV5)" stroke="${this.adjustColor(skinColor, -30)}" stroke-width="1.2"/>
+                    ${armsHtml}
+                    <!-- Head Base -->
+                    <ellipse cx="63" cy="82" rx="6" ry="7" fill="url(#skinGradV5)" stroke="${this.adjustColor(skinColor, -25)}" stroke-width="1.2"/>
+                    <ellipse cx="137" cy="82" rx="6" ry="7" fill="url(#skinGradV5)" stroke="${this.adjustColor(skinColor, -25)}" stroke-width="1.2"/>
+                    <ellipse cx="100" cy="80" rx="36" ry="33" fill="url(#skinGradV5)" stroke="${this.adjustColor(skinColor, -25)}" stroke-width="1.8"/>
+                    <ellipse cx="78" cy="88" rx="7" ry="3.5" fill="#f43f5e" opacity="0.2"/>
+                    <ellipse cx="122" cy="88" rx="7" ry="3.5" fill="#f43f5e" opacity="0.2"/>
+                </g>
+            `;
+        }
 
         // 6. Clothing Selection
         let bottomHtml = '';
@@ -589,15 +702,34 @@ const ChibiModule = {
                 <path d="M 78 171 L 91 171 L 93 182 L 80 182 Z" fill="${sc}" stroke="#1e1b4b" stroke-width="2" />
                 <path d="M 122 171 L 109 171 L 107 182 L 120 182 Z" fill="${sc}" stroke="#1e1b4b" stroke-width="2" />
             `;
-        } else if (shoeStyle === 1) { // Dép Tổ Ong (Legendary Honeycomb Sandals)
+        } else if (shoeStyle === 1) { // 🇻🇳 Dép Tổ Ong V5 (Legendary)
             shoeHtml = `
-                <g style="filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));">
-                    <path d="M 77 172 L 92 172 L 94 184 L 76 184 Z" fill="#fef3c7" stroke="#d97706" stroke-width="1.2" />
-                    <circle cx="81" cy="176" r="1" fill="#d97706" opacity="0.5" /> <circle cx="85" cy="176" r="1" fill="#d97706" opacity="0.5" /> <circle cx="89" cy="176" r="1" fill="#d97706" opacity="0.5" />
-                    <circle cx="83" cy="179" r="1" fill="#d97706" opacity="0.5" /> <circle cx="87" cy="179" r="1" fill="#d97706" opacity="0.5" />
-                    <path d="M 123 172 L 108 172 L 106 184 L 124 184 Z" fill="#fef3c7" stroke="#d97706" stroke-width="1.2" />
-                    <circle cx="119" cy="176" r="1" fill="#d97706" opacity="0.5" /> <circle cx="115" cy="176" r="1" fill="#d97706" opacity="0.5" /> <circle cx="111" cy="176" r="1" fill="#d97706" opacity="0.5" />
-                    <circle cx="117" cy="179" r="1" fill="#d97706" opacity="0.5" /> <circle cx="113" cy="179" r="1" fill="#d97706" opacity="0.5" />
+                <g filter="url(#glowStrong)">
+                    <path d="M 77 172 L 92 172 L 94 184 L 76 184 Z" fill="#fef3c7" stroke="#d97706" stroke-width="1.5" />
+                    <!-- Honeycomb Holes -->
+                    <circle cx="81" cy="176" r="1.2" fill="#d97706" opacity="0.6" />
+                    <circle cx="85" cy="176" r="1.2" fill="#d97706" opacity="0.6" />
+                    <circle cx="89" cy="176" r="1.2" fill="#d97706" opacity="0.6" />
+                    <circle cx="83" cy="180" r="1.2" fill="#d97706" opacity="0.6" />
+                    <circle cx="87" cy="180" r="1.2" fill="#d97706" opacity="0.6" />
+                    
+                    <path d="M 123 172 L 108 172 L 106 184 L 124 184 Z" fill="#fef3c7" stroke="#d97706" stroke-width="1.5" />
+                    <circle cx="119" cy="176" r="1.2" fill="#d97706" opacity="0.6" />
+                    <circle cx="115" cy="176" r="1.2" fill="#d97706" opacity="0.6" />
+                    <circle cx="111" cy="176" r="1.2" fill="#d97706" opacity="0.6" />
+                    <circle cx="117" cy="180" r="1.2" fill="#d97706" opacity="0.6" />
+                    <circle cx="113" cy="180" r="1.2" fill="#d97706" opacity="0.6" />
+                </g>
+            `;
+        } else if (shoeStyle === 7) { // 🇻🇳 Guốc Mộc (Traditional Wooden Clogs)
+            shoeHtml = `
+                <g>
+                    <!-- Wood Base -->
+                    <path d="M 76 178 L 94 178 L 94 186 L 76 186 Z" fill="#78350f" stroke="#451a03" stroke-width="1" />
+                    <path d="M 124 178 L 106 178 L 106 186 L 124 186 Z" fill="#78350f" stroke="#451a03" stroke-width="1" />
+                    <!-- Strap -->
+                    <path d="M 76 178 Q 85 174 94 178" fill="none" stroke="#111" stroke-width="3" />
+                    <path d="M 106 178 Q 115 174 124 178" fill="none" stroke="#111" stroke-width="3" />
                 </g>
             `;
         } else if (shoeStyle === 2) { // Modern High-top
@@ -633,16 +765,74 @@ const ChibiModule = {
             shoeHtml = `<path d="M 78 171 L 91 171 L 93 182 L 80 182 Z" fill="${sc}" stroke="#1e1b4b" stroke-width="2" />`;
         }
 
-        // 7. Face Layer
-        let eyesHtml = `<circle cx="84" cy="80" r="6" fill="#1e1b4b" /><circle cx="116" cy="80" r="6" fill="#1e1b4b" />`;
-        if (c.eyeStyle === 1) eyesHtml = `<path d="M 84 75 L 89 79 L 87 85 L 81 85 L 79 79 Z" fill="#ffd700" /><path d="M 116 75 L 121 79 L 119 85 L 113 85 L 111 79 Z" fill="#ffd700" />`;
-        else if (c.eyeStyle === 5) eyesHtml = `<path d="M 84 84 C 84 84 76 77 78 74 C 80 72 84 75 84 75 C 84 75 88 72 90 74 C 92 77 84 84 84 84 Z" fill="#ec4899" /><path d="M 116 84 C 116 84 108 77 110 74 C 112 72 116 75 116 75 C 116 75 120 72 122 74 C 124 77 116 84 116 84 Z" fill="#ec4899" />`;
+        // 7. Face Layer (Premium Anime V5)
+        let eyesHtml = '';
+        if (gender === 'nam') {
+            eyesHtml = `
+                <g transform="translate(84, 78)">
+                    <ellipse rx="8" ry="9" fill="#fff" stroke="#1e1b4b" stroke-width="1.5"/>
+                    <ellipse rx="6" ry="7" fill="#1e40af" cy="1"/>
+                    <ellipse rx="4" ry="5" fill="#1e1b4b" cy="1"/>
+                    <circle cx="3" cy="-2" r="2.5" fill="#fff"/>
+                    <path d="M -8 -5 Q -6 -9 -2 -9 Q 2 -9 6 -7 Q 8 -5 8 -3" fill="none" stroke="#1e1b4b" stroke-width="2.5" stroke-linecap="round"/>
+                </g>
+                <g transform="translate(116, 78)">
+                    <ellipse rx="8" ry="9" fill="#fff" stroke="#1e1b4b" stroke-width="1.5"/>
+                    <ellipse rx="6" ry="7" fill="#1e40af" cy="1"/>
+                    <ellipse rx="4" ry="5" fill="#1e1b4b" cy="1"/>
+                    <circle cx="-3" cy="-2" r="2.5" fill="#fff"/>
+                    <path d="M -8 -3 Q -8 -5 -6 -7 Q -2 -9 2 -9 Q 6 -9 8 -5" fill="none" stroke="#1e1b4b" stroke-width="2.5" stroke-linecap="round"/>
+                </g>
+            `;
+        } else { // Nữ - Elegant Anime Eyes
+            eyesHtml = `
+                <g transform="translate(84, 78)">
+                    <ellipse rx="9" ry="10" fill="#fff" stroke="#1e1b4b" stroke-width="1.2"/>
+                    <ellipse rx="7" ry="8" fill="#7c3aed" cy="1"/>
+                    <ellipse rx="5" ry="6" fill="#4c1d95" cy="1"/>
+                    <circle cx="3" cy="-3" r="3" fill="#fff"/>
+                    <path d="M -9 -5 Q -7 -11 0 -11 Q 7 -11 9 -5" fill="none" stroke="#1e1b4b" stroke-width="2.5" stroke-linecap="round"/>
+                    <path d="M -10 -6 L -12 -10 M -6 -9 L -8 -13 M 6 -9 L 8 -13 M 10 -6 L 12 -10" stroke="#1e1b4b" stroke-width="1.5" stroke-linecap="round"/>
+                </g>
+                <g transform="translate(116, 78)">
+                    <ellipse rx="9" ry="10" fill="#fff" stroke="#1e1b4b" stroke-width="1.2"/>
+                    <ellipse rx="7" ry="8" fill="#7c3aed" cy="1"/>
+                    <ellipse rx="5" ry="6" fill="#4c1d95" cy="1"/>
+                    <circle cx="-3" cy="-3" r="3" fill="#fff"/>
+                    <path d="M -9 -5 Q -7 -11 0 -11 Q 7 -11 9 -5" fill="none" stroke="#1e1b4b" stroke-width="2.5" stroke-linecap="round"/>
+                    <path d="M -10 -6 L -12 -10 M -6 -9 L -8 -13 M 6 -9 L -8 -13 M 10 -6 L 12 -10" stroke="#1e1b4b" stroke-width="1.5" stroke-linecap="round"/>
+                </g>
+            `;
+        }
 
-        let mouthHtml = `<path d="M 96 93 Q 100 98 104 93" stroke="#1e1b4b" stroke-width="2.5" fill="none" stroke-linecap="round" />`;
-        if (c.mouthStyle === 1) mouthHtml = `<path d="M 95 92 Q 100 92 105 92 Q 105 102 100 102 Q 95 102 95 92 Z" fill="#ef4444" />`;
+        let mouthHtml = '';
+        if (gender === 'nam') {
+            mouthHtml = `<path d="M 94 96 Q 100 101 106 96" stroke="#1e1b4b" stroke-width="2" fill="none" stroke-linecap="round"/>`;
+        } else {
+            mouthHtml = `
+                <path d="M 95 96 Q 100 100 105 96" stroke="#ec4899" stroke-width="2" fill="none" stroke-linecap="round"/>
+                <path d="M 96 97 Q 100 93 104 97" stroke="#f9a8d4" stroke-width="1" fill="none" opacity="0.5"/>
+            `;
+        }
 
-        let eyelashesHtml = gender === 'nữ' ? `<path d="M 74 77 Q 80 72 86 76" stroke="#1e1b4b" stroke-width="2.2" fill="none" /><path d="M 126 77 Q 120 72 114 76" stroke="#1e1b4b" stroke-width="2.2" fill="none" />` : '';
-        let frontHairHtml = `<path d="M 64 80 Q 100 45 136 80" fill="${hairColor}" stroke="#1e1b4b" stroke-width="2.5" />`;
+        let eyelashesHtml = ''; // Integrated into eyesHtml for V5
+        let frontHairHtml = `<path d="M 64 82 Q 64 48 100 42 Q 136 48 136 82 L 133 72 Q 100 60 67 72 Z" fill="url(#hairGradV5)" stroke="${this.adjustColor(hc, -40)}" stroke-width="1.5" />`;
+        
+        // 8. Clothing & Vietnamese Theme (V5)
+        if (c.topStyle === 7) { // 🇻🇳 Áo Dài Việt Nam (Premium V5)
+            const aoDaiCol = topColor;
+            topHtml = `
+                <g filter="url(#glowNeon)">
+                    <path d="M 85 110 L 115 110 L 125 180 Q 100 185 75 180 Z" fill="${aoDaiCol}" stroke="${this.adjustColor(aoDaiCol, -20)}" stroke-width="1.5" />
+                    <!-- Neck collar -->
+                    <path d="M 92 106 Q 100 103 108 106 L 110 110 Q 100 108 90 110 Z" fill="${aoDaiCol}" stroke="${this.adjustColor(aoDaiCol, -20)}" stroke-width="1.2" />
+                    <!-- Chest pattern -->
+                    <circle cx="102" cy="115" r="2" fill="#fbbf24" opacity="0.8" />
+                    <circle cx="102" cy="122" r="2" fill="#fbbf24" opacity="0.8" />
+                </g>
+            `;
+            bottomHtml = `<path d="M 88 140 L 112 140 L 115 180 Q 100 185 85 180 Z" fill="#fff" stroke="#ccc" stroke-width="1" />`;
+        }
 
         // 8. Tattoos / Merit Details
         let tattooHtml = pts > 20 ? `<path d="M 94 125 Q 100 132 106 125" stroke="#ef4444" stroke-width="1.5" fill="none" opacity="0.6" />` : '';
@@ -656,14 +846,35 @@ const ChibiModule = {
         // 9. Back Accessories Layer - Cleaned (legacy removed, weapons now in gear slot, wings in wing slot)
         let backAccessoryHtml = '';
 
-        // 10. Gear Layer (Weapons held in hand)
+        // 10. Gear Layer (Weapons held in hand - UPGRADED V5)
         let gearHtml = '';
-        if (c.gear === 1) { // Đại Đao Lửa
+        if (c.gear === 1) { // ⚔️ Đại Đao Lửa (Premium V5)
             gearHtml = `
-                <g class="${isD ? 'chibi-arm-right-dance' : ''}" style="filter: drop-shadow(0 0 8px #ff4500);">
-                    <rect x="128" y="80" width="4" height="100" rx="2" fill="#4b5563" />
-                    <path d="M 120 80 Q 130 40 150 70 L 132 85 Z" fill="#ff4500" stroke="#fff" stroke-width="1.5" />
+                <g class="${isD ? 'chibi-arm-right-dance' : ''}" style="filter: drop-shadow(0 0 12px #ef4444);">
+                    <g transform="translate(132, 110) rotate(15)">
+                        <!-- Blade -->
+                        <path d="M -5 -65 L 5 -65 L 8 -5 L -8 -5 Z" fill="url(#bladeSteel)" stroke="#475569" stroke-width="1.2"/>
+                        <!-- Animated Fire -->
+                        <g style="animation: fireDance 0.6s ease-in-out infinite;">
+                            <path d="M -8 -60 Q -22 -80 -10 -45 Q -18 -55 -6 -30" fill="none" stroke="url(#fireGradV5)" stroke-width="4" stroke-linecap="round" opacity="0.9"/>
+                            <path d="M 8 -60 Q 22 -80 10 -45 Q 18 -55 6 -30" fill="none" stroke="url(#fireGradV5)" stroke-width="4" stroke-linecap="round" opacity="0.9"/>
+                        </g>
+                        <!-- Guard -->
+                        <rect x="-12" y="-5" width="24" height="6" rx="3" fill="#475569" stroke="#94a3b8" stroke-width="1"/>
+                        <!-- Handle -->
+                        <rect x="-4" y="1" width="8" height="25" rx="3" fill="#1e293b" stroke="#475569" stroke-width="1.2"/>
+                        <!-- Pommel -->
+                        <circle cx="0" cy="28" r="4" fill="#ef4444" style="filter: blur(1px);"/>
+                    </g>
                 </g>
+                <defs>
+                    <linearGradient id="fireGradV5" x1="0%" y1="100%" x2="0%" y2="0%">
+                        <stop offset="0%" stop-color="#f59e0b"/><stop offset="50%" stop-color="#ef4444"/><stop offset="100%" stop-color="#fbbf24"/>
+                    </linearGradient>
+                    <linearGradient id="bladeSteel" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#94a3b8"/><stop offset="50%" stop-color="#e2e8f0"/><stop offset="100%" stop-color="#94a3b8"/>
+                    </linearGradient>
+                </defs>
             `;
         } else if (c.gear === 2) { // Súng Vô Cực
             gearHtml = `
@@ -881,53 +1092,71 @@ const ChibiModule = {
             `;
         }
 
-        // 13. Front Accessories Layer (Hats/Face)
+        // 13. Front Accessories Layer (Hats/V5 PREMIUM)
         let accHtml = '';
-        if (c.accessory === 11) { // Mũ Cối
+        if (c.accessory === 11) { // 🇻🇳 Mũ Cối V5
             accHtml = `
-                <g style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));">
-                    <path d="M 55 55 Q 100 20 145 55 L 145 70 Q 100 85 55 70 Z" fill="#3f6212" stroke="#1a2e05" stroke-width="2" />
-                    <circle cx="100" cy="55" r="8" fill="#eab308" stroke="#854d0e" stroke-width="1.5" />
+                <g filter="url(#glowStrong)">
+                    <path d="M 50 60 Q 100 20 150 60 L 150 75 Q 100 95 50 75 Z" fill="#365314" stroke="#1a2e05" stroke-width="2" />
+                    <circle cx="100" cy="55" r="9" fill="#eab308" stroke="#854d0e" stroke-width="1.5" />
                     <path d="M 96 55 L 104 55 M 100 51 L 100 59" stroke="#fff" stroke-width="1" />
+                    <!-- Shine -->
+                    <path d="M 70 50 Q 100 35 130 50" stroke="#fff" stroke-width="2" opacity="0.2" fill="none" />
                 </g>
             `;
-        } else if (c.accessory === 12) { // Nón Lá
+        } else if (c.accessory === 12) { // 🇻🇳 Nón Lá V5 (Premium)
             accHtml = `
-                <g style="filter: drop-shadow(0 4px 10px rgba(0,0,0,0.3));">
-                    <path d="M 40 75 L 100 20 L 160 75 Z" fill="#fef08a" stroke="#ca8a04" stroke-width="1.5" />
-                    <path d="M 60 75 Q 100 85 140 75" fill="none" stroke="#ca8a04" stroke-width="1" opacity="0.5" />
-                    <path d="M 70 75 L 70 100 M 130 75 L 130 100" stroke="#f43f5e" stroke-width="2.5" />
+                <g filter="url(#glowStrong)">
+                    <path d="M 35 80 L 100 15 L 165 80 Z" fill="#fef08a" stroke="#ca8a04" stroke-width="2" />
+                    <path d="M 50 80 Q 100 95 150 80" fill="none" stroke="#ca8a04" stroke-width="1" opacity="0.6" />
+                    <!-- Ribbon -->
+                    <path d="M 65 80 Q 65 110 75 110 M 135 80 Q 135 110 125 110" fill="none" stroke="#f43f5e" stroke-width="3" stroke-linecap="round" />
+                    <!-- Texture -->
+                    <path d="M 68 55 L 132 55 M 80 40 L 120 40" stroke="#ca8a04" stroke-width="0.5" opacity="0.4" />
                 </g>
             `;
-        } else if (c.accessory === 13) { // Khăn Rằn
+        } else if (c.accessory === 13) { // 🇻🇳 Khăn Đóng / Khăn Xếp (V5)
             accHtml = `
-                <g style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">
-                    <path d="M 75 110 Q 100 135 125 110 L 120 140 Q 100 150 80 140 Z" fill="#111" />
-                    <path d="M 75 110 Q 100 135 125 110 L 120 140 Q 100 150 80 140 Z" fill="url(#khanRanPattern)" opacity="0.8" />
-                    <defs>
-                        <pattern id="khanRanPattern" width="10" height="10" patternUnits="userSpaceOnUse">
-                            <rect width="5" height="5" fill="#fff" />
-                            <rect x="5" y="5" width="5" height="5" fill="#fff" />
-                        </pattern>
-                    </defs>
+                <g filter="url(#glowStrong)">
+                    <path d="M 62 65 Q 100 55 138 65 L 140 85 Q 100 75 60 85 Z" fill="#1e1b4b" stroke="#312e81" stroke-width="2.5" />
+                    <!-- Folding lines -->
+                    <path d="M 65 72 Q 100 62 135 72 M 68 78 Q 100 68 132 78" stroke="#4338ca" stroke-width="1" opacity="0.6" fill="none" />
+                    <!-- Gem -->
+                    <circle cx="100" cy="72" r="4" fill="#ef4444" stroke="#fff" stroke-width="0.8" />
                 </g>
             `;
         }
         return `
             <svg viewBox="${viewBox}" width="100%" height="100%" class="${isD ? 'chibi-dance' : ''}" style="display: block;">
                 <style>
-                    .chibi-dance { animation: chibiBounce 1.5s infinite ease-in-out; transform-origin: bottom center; }
+                    .chibi-dance { animation: chibiBounce 2s infinite ease-in-out; transform-origin: bottom center; }
                     @keyframes chibiBounce { 0%, 100% { transform: scale(1) translateY(0); } 50% { transform: scale(1.02, 0.98) translateY(-4px); } }
-                    .chibi-arm-left-dance { animation: chibiArmLeftWave 1.5s infinite ease-in-out; transform-origin: 85px 125px; }
-                    .chibi-arm-right-dance { animation: chibiArmRightWave 1.5s infinite ease-in-out; transform-origin: 115px 125px; }
+                    .chibi-breathe { animation: chibiBreathe 3s infinite ease-in-out; transform-origin: center; }
+                    @keyframes chibiBreathe { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+                    .chibi-arm-left-dance { animation: chibiArmLeftWave 2s infinite ease-in-out; transform-origin: 85px 125px; }
+                    .chibi-arm-right-dance { animation: chibiArmRightWave 2s infinite ease-in-out; transform-origin: 115px 125px; }
                     @keyframes chibiArmLeftWave { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(12deg); } }
                     @keyframes chibiArmRightWave { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-12deg); } }
                     @keyframes floatSparkle { 0%, 100% { transform: translateY(0) scale(0.6); opacity: 0.3; } 50% { transform: translateY(-10px) scale(1.1); opacity: 1; } }
-                    .chibi-wing-flap { animation: wingFlap 2s infinite ease-in-out; transform-origin: 100px 110px; }
+                    .chibi-wing-flap { animation: wingFlap 2.5s infinite ease-in-out; transform-origin: 100px 110px; }
                     @keyframes wingFlap { 0%, 100% { transform: scaleX(1); } 50% { transform: scaleX(0.85); } }
-                    .chibi-tail-dance { animation: tailWag 2s infinite ease-in-out; transform-origin: 100px 110px; }
-                    @keyframes tailWag { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg); } }
+                    .chibi-tail-dance { animation: tailWag 3s infinite ease-in-out; transform-origin: 100px 110px; }
+                    @keyframes tailWag { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
+                    @keyframes runeRotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+                    @keyframes runeRotateRev { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
+                    @keyframes glowPulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+                    @keyframes fireDance { 0%, 100% { transform: scaleY(1) translateY(0); } 50% { transform: scaleY(1.1) translateY(-2px); } }
                 </style>
+                <defs>
+                    <linearGradient id="skinGradV5" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="${skinColor}" /><stop offset="100%" stop-color="${this.adjustColor(skinColor, -15)}" />
+                    </linearGradient>
+                    <linearGradient id="hairGradV5" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="${hc}" /><stop offset="100%" stop-color="${this.adjustColor(hc, -30)}" />
+                    </linearGradient>
+                    <filter id="glowStrong"><feGaussianBlur stdDeviation="3.5" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter>
+                    <filter id="glowNeon"><feGaussianBlur stdDeviation="2" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter>
+                </defs>
                 ${dragonHtml || ''}
                 ${auraHtml || ''}
                 ${wingHtml || ''}
@@ -1267,6 +1496,20 @@ const ChibiModule = {
                     <!-- Left: Preview -->
                     <div style="flex: 1; min-width: 260px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; background: rgba(0,0,0,0.25); border-radius: 16px; padding: 20px; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
                         
+                        <!-- Gender Selection (NEW V5) -->
+                        <div style="display: flex; gap: 8px; width: 100%; margin-bottom: 5px;">
+                            <button onclick="ChibiModule.currentConfig.gender='nam'; ChibiModule.updatePreview(); this.parentNode.querySelectorAll('button').forEach(b=>b.classList.remove('active')); this.classList.add('active');" 
+                                    class="chibi-btn-outline ${ChibiModule.currentConfig.gender==='nam'?'active':''}" 
+                                    style="flex: 1; padding: 8px; font-weight: 800; border-radius: 8px;">
+                                <i class="fa-solid fa-mars"></i> NAM
+                            </button>
+                            <button onclick="ChibiModule.currentConfig.gender='nữ'; ChibiModule.updatePreview(); this.parentNode.querySelectorAll('button').forEach(b=>b.classList.remove('active')); this.classList.add('active');" 
+                                    class="chibi-btn-outline ${ChibiModule.currentConfig.gender==='nữ'?'active':''}" 
+                                    style="flex: 1; padding: 8px; font-weight: 800; border-radius: 8px;">
+                                <i class="fa-solid fa-venus"></i> NỮ
+                            </button>
+                        </div>
+
                         <div id="chibi-preview-container" style="width: 200px; height: 240px; background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, rgba(0,0,0,0.6) 100%); border-radius: 12px; border: 2px solid rgba(139, 92, 246, 0.4); display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; box-shadow: inset 0 0 20px rgba(0,0,0,0.85);">
                             <!-- Chibi composite SVG injected here -->
                         </div>
@@ -1274,7 +1517,7 @@ const ChibiModule = {
                         <!-- Bounce dancing toggle -->
                         <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: #cbd5e1; font-weight: bold; background: rgba(255,255,255,0.05); padding: 8px 16px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.08); user-select: none;">
                             <input type="checkbox" id="chibi-dance-toggle" checked onchange="ChibiModule.updatePreview()" style="cursor: pointer; accent-color: #8b5cf6;">
-                            <span>💃 Chibi nhún nhảy cực chất</span>
+                            <span>💃 Hiệu ứng Animation VIP</span>
                         </label>
                         
                         <!-- Mini controls -->
@@ -1293,7 +1536,18 @@ const ChibiModule = {
                         
                         <!-- Tabs -->
                         <div style="display: flex; flex-wrap: wrap; gap: 6px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 10px;" id="chibi-tabs-nav">
-                            <!-- Injected by JS -->
+                            <button onclick="ChibiModule.switchTab('presets')" class="chibi-tab-btn" id="tab-presets"><i class="fa-solid fa-star"></i> SETs</button>
+                            <button onclick="ChibiModule.switchTab('skin')" class="chibi-tab-btn active" id="tab-skin">Da</button>
+                            <button onclick="ChibiModule.switchTab('hair')" class="chibi-tab-btn" id="tab-hair">Tóc</button>
+                            <button onclick="ChibiModule.switchTab('eyes')" class="chibi-tab-btn" id="tab-eyes">Mắt</button>
+                            <button onclick="ChibiModule.switchTab('top')" class="chibi-tab-btn" id="tab-top">Áo</button>
+                            <button onclick="ChibiModule.switchTab('bottom')" class="chibi-tab-btn" id="tab-bottom">Quần</button>
+                            <button onclick="ChibiModule.switchTab('shoe')" class="chibi-tab-btn" id="tab-shoe">Giày</button>
+                            <button onclick="ChibiModule.switchTab('accessory')" class="chibi-tab-btn" id="tab-accessory">Nón/Kính</button>
+                            <button onclick="ChibiModule.switchTab('gear')" class="chibi-tab-btn" id="tab-gear">Vũ Khí</button>
+                            <button onclick="ChibiModule.switchTab('aura')" class="chibi-tab-btn" id="tab-aura">Vòng Sáng</button>
+                            <button onclick="ChibiModule.switchTab('wing')" class="chibi-tab-btn" id="tab-wing">Cánh</button>
+                            <button onclick="ChibiModule.switchTab('dragon')" class="chibi-tab-btn" id="tab-dragon">Linh Thú</button>
                         </div>
 
                         <!-- Tab Content -->
@@ -1752,7 +2006,7 @@ const ChibiModule = {
     },
 
     /**
-     * Choose gender (nam/nữ) and update eyelashes
+     * Choose gender (nam/nữ)
      */
     selectGender: function(gender) {
         ChibiModule.currentConfig.gender = gender;
@@ -1882,7 +2136,7 @@ const ChibiModule = {
     },
 
     /**
-     * Save completed chibi design back to user profile and database
+     * Save completed chibi design
      */
     saveBuilder: async function() {
         const user = Auth.currentUser;
@@ -1905,10 +2159,8 @@ const ChibiModule = {
         profile.chibiConfig = { ...ChibiModule.currentConfig };
         user.profile = profile;
 
-        // Save back to Auth.currentUser
         Utils.storage.set(Auth.currentUserKey, user);
 
-        // Update in Accounts database
         try {
             const accounts = await Auth.getAccounts();
             const accIdx = accounts.findIndex(a => a.username === user.username);
@@ -1917,20 +2169,11 @@ const ChibiModule = {
                 await Auth.saveAccounts(accounts);
             }
             
-            Utils.showToast("🎉 Thiết kế Chibi đã được lưu thành công!", "success");
-            
-            // Close builder
+            Utils.showToast("🎉 Thiết kế Chibi V5 đã được lưu thành công!", "success");
             ChibiModule.closeBuilder();
-
-            // Re-render core apps
             Auth.showApp();
-            
-            // Also re-render rewards cards if page is active
-            if (typeof RewardsModule !== 'undefined' && document.getElementById('rewards-view') && document.getElementById('rewards-view').style.display !== 'none') {
-                RewardsModule.render();
-            }
         } catch (e) {
-            console.error("Error saving chibi profile:", e);
+            console.error("Error saving chibi:", e);
             Utils.showToast("Có lỗi xảy ra khi lưu Chibi!", "error");
         }
     }
