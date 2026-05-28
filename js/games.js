@@ -2361,6 +2361,7 @@ const GamesModule = {
                 }
 
                 const room = doc.data();
+                const mState = GamesModule.monopoly;
 
                 // Track cash changes to trigger floating point bubbles locally
                 if (GamesModule.monopoly.players && GamesModule.monopoly.players.length > 0) {
