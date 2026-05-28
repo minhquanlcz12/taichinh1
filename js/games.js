@@ -2370,11 +2370,35 @@ const GamesModule = {
                     });
                 }
 
-                GamesModule.monopoly.players = room.players;
-                GamesModule.monopoly.currentPlayerIdx = room.currentPlayerIdx;
-                GamesModule.monopoly.diceValues = room.diceValues;
-                GamesModule.monopoly.isRolling = room.isRolling;
-                GamesModule.monopoly.logs = room.logs;
+                // Optimistic UI / Anti-Jitter Protection:
+                // If we just updated our local position, ignore the remote state for our own character for a short duration (2s)
+                const me = Auth.currentUser?.username;
+                const now = Date.now();
+                const isRecentlyUpdated = mState.lastLocalUpdate && (now - mState.lastLocalUpdate < 2000);
+
+                if (isRecentlyUpdated && room.players) {
+                    const localPlayers = [...mState.players];
+                    room.players.forEach(remoteP => {
+                        const localIndex = localPlayers.findIndex(p => p.name === remoteP.name);
+                        if (localIndex !== -1) {
+                            if (remoteP.name === me) {
+                                // Preserve local position for self to prevent jitter
+                                const preservedPos = localPlayers[localIndex].position;
+                                localPlayers[localIndex] = { ...remoteP, position: preservedPos };
+                            } else {
+                                localPlayers[localIndex] = remoteP;
+                            }
+                        }
+                    });
+                    mState.players = localPlayers;
+                } else {
+                    mState.players = room.players;
+                }
+
+                mState.currentPlayerIdx = room.currentPlayerIdx;
+                mState.diceValues = room.diceValues;
+                mState.isRolling = room.isRolling;
+                mState.logs = room.logs;
 
                 // Sync tile ownership dynamically
                 room.tiles.forEach(rt => {
@@ -2681,6 +2705,7 @@ const GamesModule = {
         const oldPos = player.position;
         const newPos = (oldPos + roll) % 20;
         player.position = newPos;
+        mState.lastLocalUpdate = Date.now(); // Trigger anti-jitter lock
 
         if (newPos < oldPos) {
             const bonus = mState.startBonus || 5;
