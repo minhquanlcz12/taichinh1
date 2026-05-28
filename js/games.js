@@ -2370,29 +2370,29 @@ const GamesModule = {
                     });
                 }
 
-                // Optimistic UI / Anti-Jitter Protection:
-                // If we just updated our local position, ignore the remote state for our own character for a short duration (2s)
+                // --- V4 ABSOLUTE CHARACTER LOCK ---
                 const me = Auth.currentUser?.username;
                 const now = Date.now();
-                const isRecentlyUpdated = mState.lastLocalUpdate && (now - mState.lastLocalUpdate < 2000);
+                const isLocked = mState.isMovingSequentially || (mState.movementLockEndTime && now < mState.movementLockEndTime);
 
-                if (isRecentlyUpdated && room.players) {
+                if (room.players) {
                     const localPlayers = [...mState.players];
                     room.players.forEach(remoteP => {
                         const localIndex = localPlayers.findIndex(p => p.name === remoteP.name);
                         if (localIndex !== -1) {
-                            if (remoteP.name === me) {
-                                // Preserve local position for self to prevent jitter
-                                const preservedPos = localPlayers[localIndex].position;
-                                localPlayers[localIndex] = { ...remoteP, position: preservedPos };
+                            // If we are locked, DO NOT update our own position from Firestore
+                            if (isLocked && remoteP.name === me) {
+                                const localP = localPlayers[localIndex];
+                                localPlayers[localIndex] = { 
+                                    ...remoteP, 
+                                    position: localP.position // Force keep local position
+                                };
                             } else {
                                 localPlayers[localIndex] = remoteP;
                             }
                         }
                     });
                     mState.players = localPlayers;
-                } else {
-                    mState.players = room.players;
                 }
 
                 mState.currentPlayerIdx = room.currentPlayerIdx;
@@ -2702,24 +2702,45 @@ const GamesModule = {
             }
         }
 
-        const oldPos = player.position;
-        const newPos = (oldPos + roll) % 20;
-        player.position = newPos;
-        mState.lastLocalUpdate = Date.now(); // Trigger anti-jitter lock
+        // --- V4 TRUE SEQUENTIAL LOGICAL MOVEMENT ---
+        mState.isMovingSequentially = true;
+        mState.movementLockEndTime = Date.now() + (roll * 450) + 2000;
 
-        if (newPos < oldPos) {
-            const bonus = mState.startBonus || 5;
-            player.cash += bonus;
-            mState.logs.push(`🚩 <b>@${player.name}</b> đi qua ô BẮT ĐẦU, HR thưởng nóng +${bonus}đ Công Đức!`);
-        }
+        let stepsRemaining = roll;
+        const moveOneStep = async () => {
+            if (stepsRemaining <= 0) {
+                mState.isMovingSequentially = false;
+                const tile = mState.tiles[player.position];
+                mState.logs.push(`📍 <b>@${player.name}</b> đã dừng chân tại ô <b>${tile.name}</b>.`);
+                mState.awaitingAction = true;
+                await GamesModule.syncRoomToFirestore();
+                return;
+            }
 
-        const tile = mState.tiles[newPos];
-        mState.logs.push(`🎲 <b>@${player.name}</b> đang di chuyển đến ô <b>${tile.name}</b>...`);
+            // Logical Move
+            const oldPos = player.position;
+            player.position = (oldPos + 1) % 20;
 
-        // Set action flag for visual step-by-step complete trigger
-        GamesModule.monopoly.awaitingAction = true;
+            // Pass Go Bonus
+            if (player.position === 0) {
+                const bonus = mState.startBonus || 5;
+                player.cash += bonus;
+                mState.logs.push(`🚩 <b>@${player.name}</b> đi qua ô BẮT ĐẦU, HR thưởng nóng +${bonus}đ Công Đức!`);
+            }
 
-        await GamesModule.syncRoomToFirestore();
+            stepsRemaining--;
+            
+            // Sync current step to Firestore so others see the progress
+            await GamesModule.syncRoomToFirestore();
+            
+            // Re-render locally triggers animateVisualPawn for the 1-tile hop
+            GamesModule.renderTabContent();
+
+            // Recursive step with delay (slightly longer than visual hop)
+            setTimeout(moveOneStep, 450); 
+        };
+
+        moveOneStep();
     },
 
     handlePropertyTile: (player, tile) => {
