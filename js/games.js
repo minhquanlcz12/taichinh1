@@ -1611,7 +1611,7 @@ const GamesModule = {
                                     <div style="line-height: 1.4; padding: 4px 8px; border-radius: 5px; background: rgba(255,255,255,0.015); border-left: 2px solid rgba(139,92,246,0.15);">
                                         ${log}
                                     </div>
-                                `).reverse().join('')}
+                                `).join('')}
                             </div>
                         </div>
                     </div>
@@ -1620,7 +1620,12 @@ const GamesModule = {
         `;
 
         const logArea = document.getElementById('mono-log-area');
-        if (logArea) logArea.scrollTop = logArea.scrollHeight;
+        if (logArea) {
+            // Ensure visual rendering completes before scrolling
+            requestAnimationFrame(() => {
+                logArea.scrollTop = logArea.scrollHeight;
+            });
+        }
     },
 
     getTileRent: (tile) => {
