@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { 
+            background: radial-gradient(circle, #1e293b 0%, #0f172a 100%); 
+            display: flex; justify-content: center; align-items: center; 
+            height: 100vh; margin: 0; overflow: hidden;
+            color: #fff; font-family: 'Inter', sans-serif;
+        }
+        .demo { text-align: center; }
+        h2 { font-weight: 800; text-shadow: 0 0 20px rgba(0,243,255,0.5); margin-bottom: 5px; }
+        p { color: #94a3b8; font-size: 13px; margin-bottom: 15px; }
+        .stage { display: flex; gap: 60px; justify-content: center; align-items: flex-end; }
+        .chibi-card { text-align: center; }
+        .chibi-card span { display: block; margin-top: 8px; font-size: 12px; color: #94a3b8; font-weight: 600; }
+        svg.chibi { filter: drop-shadow(0 5px 15px rgba(0,0,0,0.5)); }
+
+        /* Animations */
+        @keyframes breathe { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+        @keyframes armSwing { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(-12deg); } }
+        @keyframes armSwingR { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(12deg); } }
+        @keyframes runeRotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes runeRotateRev { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
+        @keyframes glowPulse { 0%,100% { opacity: 0.6; } 50% { opacity: 1; } }
+        @keyframes fireDance { 0%,100% { transform: scaleY(1) translateY(0); } 50% { transform: scaleY(1.15) translateY(-2px); } }
+        .breathe { animation: breathe 3s ease-in-out infinite; }
+        .arm-l { transform-origin: 88px 116px; animation: armSwing 2.5s ease-in-out infinite; }
+        .arm-r { transform-origin: 112px 116px; animation: armSwingR 2.5s ease-in-out infinite; }
+    </style>
+</head>
+<body>
+<div class="demo">
+    <h2>🔮 PREMIUM SVG CHIBI V5</h2>
+    <p>Nâng cấp SVG: Gradient + Anime Eyes + Magic Circle + Animation</p>
+    
+    <div class="stage">
+
+        <!-- ============ MALE CYBER WARRIOR ============ -->
+        <div class="chibi-card">
+        <svg class="chibi" viewBox="-60 -60 320 320" width="320" height="320" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="skinM" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#ffe8d6"/><stop offset="100%" stop-color="#f0c8a0"/>
+                </linearGradient>
+                <linearGradient id="hairCyber" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#00f3ff"/><stop offset="100%" stop-color="#3b82f6"/>
+                </linearGradient>
+                <linearGradient id="armorDark" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#334155"/><stop offset="100%" stop-color="#0f172a"/>
+                </linearGradient>
+                <linearGradient id="fireGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+                    <stop offset="0%" stop-color="#f59e0b"/><stop offset="50%" stop-color="#ef4444"/><stop offset="100%" stop-color="#fbbf24"/>
+                </linearGradient>
+                <linearGradient id="bladeSteel" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#94a3b8"/><stop offset="50%" stop-color="#e2e8f0"/><stop offset="100%" stop-color="#94a3b8"/>
+                </linearGradient>
+                <linearGradient id="runeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#00f3ff"/><stop offset="50%" stop-color="#8b5cf6"/><stop offset="100%" stop-color="#06b6d4"/>
+                </linearGradient>
+                <filter id="glow"><feGaussianBlur stdDeviation="3" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter>
+                <filter id="glowStrong"><feGaussianBlur stdDeviation="5" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter>
+            </defs>
+
+            <!-- ===== MAGIC CIRCLE (Under Feet) ===== -->
+            <g transform="translate(100, 185)" filter="url(#glow)">
+                <!-- Ground glow -->
+                <ellipse rx="55" ry="18" fill="rgba(0,243,255,0.08)"/>
+                <!-- Outer ring -->
+                <g style="animation: runeRotate 10s linear infinite;">
+                    <ellipse rx="52" ry="16" fill="none" stroke="url(#runeGrad)" stroke-width="2" stroke-dasharray="10 4" opacity="0.8"/>
+                    <ellipse rx="48" ry="14" fill="none" stroke="#00f3ff" stroke-width="0.8" opacity="0.4"/>
+                    <!-- Rune marks -->
+                    <line x1="-48" y1="0" x2="-42" y2="0" stroke="#00f3ff" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="42" y1="0" x2="48" y2="0" stroke="#00f3ff" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="0" y1="-14" x2="0" y2="-10" stroke="#00f3ff" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="0" y1="10" x2="0" y2="14" stroke="#00f3ff" stroke-width="2" stroke-linecap="round"/>
+                </g>
+                <!-- Inner ring (reverse) -->
+                <g style="animation: runeRotateRev 15s linear infinite;">
+                    <ellipse rx="38" ry="11" fill="none" stroke="#a855f7" stroke-width="1.5" stroke-dasharray="5 7" opacity="0.6"/>
+                    <!-- Star pattern -->
+                    <line x1="-30" y1="-8" x2="30" y2="8" stroke="#8b5cf6" stroke-width="0.6" opacity="0.5"/>
+                    <line x1="30" y1="-8" x2="-30" y2="8" stroke="#8b5cf6" stroke-width="0.6" opacity="0.5"/>
+                    <line x1="-20" y1="-10" x2="20" y2="10" stroke="#8b5cf6" stroke-width="0.6" opacity="0.3"/>
+                </g>
+                <!-- Core -->
+                <ellipse rx="15" ry="5" fill="none" stroke="#00f3ff" stroke-width="1" style="animation: runeRotate 4s linear infinite;"/>
+                <ellipse rx="5" ry="2" fill="#00f3ff" opacity="0.5" style="animation: glowPulse 2s ease-in-out infinite;">
+                    <animate attributeName="rx" values="4;7;4" dur="2s" repeatCount="indefinite"/>
+                </ellipse>
+                <!-- Sparkles -->
+                <circle cx="-45" cy="0" r="1.5" fill="#fff"><animate attributeName="opacity" values="0;1;0" dur="1.5s" repeatCount="indefinite"/></circle>
+                <circle cx="45" cy="0" r="1.5" fill="#fff"><animate attributeName="opacity" values="0;1;0" dur="2s" repeatCount="indefinite" begin="0.5s"/></circle>
+                <circle cx="0" cy="-13" r="1.5" fill="#fff"><animate attributeName="opacity" values="0;1;0" dur="1.8s" repeatCount="indefinite" begin="1s"/></circle>
+            </g>
+
+            <!-- ===== CHARACTER BODY ===== -->
+            <g class="breathe">
+                <!-- Neck -->
+                <rect x="95" y="104" width="10" height="14" rx="3" fill="url(#skinM)" stroke="#c9a882" stroke-width="1.5"/>
+                
+                <!-- Legs -->
+                <path d="M 87 148 Q 84 168 82 178 C 81 183 89 184 91 179 L 95 148 Z" fill="url(#armorDark)" stroke="#1e1b4b" stroke-width="2"/>
+                <path d="M 113 148 Q 116 168 118 178 C 119 183 111 184 109 179 L 105 148 Z" fill="url(#armorDark)" stroke="#1e1b4b" stroke-width="2"/>
+                <!-- Neon stripes on legs -->
+                <line x1="86" y1="155" x2="90" y2="175" stroke="#00f3ff" stroke-width="1.2" opacity="0.7"/>
+                <line x1="114" y1="155" x2="110" y2="175" stroke="#00f3ff" stroke-width="1.2" opacity="0.7"/>
+                
+                <!-- Boots -->
+                <path d="M 78 176 L 93 176 L 94 188 Q 85 190 77 188 Z" fill="#111" stroke="#00f3ff" stroke-width="1.5"/>
+                <path d="M 122 176 L 107 176 L 106 188 Q 115 190 123 188 Z" fill="#111" stroke="#00f3ff" stroke-width="1.5"/>
+                <rect x="78" y="184" width="16" height="2" rx="1" fill="#00f3ff" opacity="0.6"/>
+                <rect x="106" y="184" width="16" height="2" rx="1" fill="#00f3ff" opacity="0.6"/>
+
+                <!-- Torso (Cyber Armor) -->
+                <path d="M 86 114 Q 100 110 114 114 L 117 148 Q 100 152 83 148 Z" fill="url(#armorDark)" stroke="#1e1b4b" stroke-width="2.5"/>
+                <!-- Armor plate detail -->
+                <path d="M 93 118 L 107 118 L 108 134 Q 100 136 92 134 Z" fill="rgba(0,243,255,0.08)" stroke="#00f3ff" stroke-width="0.8" rx="2"/>
+                <!-- Neon line down center -->
+                <line x1="100" y1="116" x2="100" y2="146" stroke="#00f3ff" stroke-width="1" opacity="0.5"/>
+                <!-- Shoulder plates -->
+                <path d="M 82 114 Q 75 110 72 118 Q 75 124 84 120" fill="url(#armorDark)" stroke="#00f3ff" stroke-width="1.2"/>
+                <path d="M 118 114 Q 125 110 128 118 Q 125 124 116 120" fill="url(#armorDark)" stroke="#00f3ff" stroke-width="1.2"/>
+
+                <!-- Left Arm (swinging) -->
+                <g class="arm-l">
+                    <path d="M 86 116 Q 68 130 66 145 C 65 150 71 150 73 146 L 86 128 Z" fill="url(#skinM)" stroke="#c9a882" stroke-width="2"/>
+                    <!-- Arm armor piece -->
+                    <path d="M 84 118 Q 72 126 70 136" fill="none" stroke="#00f3ff" stroke-width="1" opacity="0.5"/>
+                </g>
+
+                <!-- Right Arm (holding weapon) -->
+                <g class="arm-r">
+                    <path d="M 114 116 Q 132 130 134 145 C 135 150 129 150 127 146 L 114 128 Z" fill="url(#skinM)" stroke="#c9a882" stroke-width="2"/>
+                    <path d="M 116 118 Q 128 126 130 136" fill="none" stroke="#00f3ff" stroke-width="1" opacity="0.5"/>
+                    
+                    <!-- ===== WEAPON: Đại Đao Lửa (IN HAND!) ===== -->
+                    <g transform="translate(132, 100) rotate(25)" style="filter: drop-shadow(0 0 10px #f59e0b);">
+                        <!-- Blade -->
+                        <path d="M -3 -60 L 3 -60 L 6 -5 L -6 -5 Z" fill="url(#bladeSteel)" stroke="#475569" stroke-width="0.8"/>
+                        <!-- Blade edge highlight -->
+                        <path d="M 0 -58 L 2 -8" stroke="#fff" stroke-width="1" opacity="0.4"/>
+                        <!-- Fire effect (animated) -->
+                        <g style="animation: fireDance 0.6s ease-in-out infinite;">
+                            <path d="M -6 -55 Q -18 -70 -8 -40 Q -15 -50 -5 -25" fill="none" stroke="url(#fireGrad)" stroke-width="3" stroke-linecap="round" opacity="0.85"/>
+                            <path d="M 6 -55 Q 18 -70 8 -40 Q 15 -50 5 -25" fill="none" stroke="url(#fireGrad)" stroke-width="3" stroke-linecap="round" opacity="0.85"/>
+                        </g>
+                        <!-- Fire glow core -->
+                        <path d="M -2 -50 L 2 -50 L 3 -15 L -3 -15 Z" fill="#fbbf24" opacity="0.25" style="filter: blur(3px);"/>
+                        <!-- Guard -->
+                        <rect x="-10" y="-5" width="20" height="4" rx="2" fill="#475569" stroke="#94a3b8" stroke-width="0.8"/>
+                        <circle cx="0" cy="-3" r="2.5" fill="#ef4444" opacity="0.8"/>
+                        <!-- Handle -->
+                        <rect x="-3" y="-1" width="6" height="16" rx="2" fill="#1e293b" stroke="#475569" stroke-width="0.8"/>
+                        <!-- Pommel gem -->
+                        <circle cx="0" cy="17" r="3" fill="#475569"/><circle cx="0" cy="17" r="1.5" fill="#ef4444"/>
+                    </g>
+                </g>
+
+                <!-- ===== HEAD ===== -->
+                <g>
+                    <!-- Ears -->
+                    <ellipse cx="63" cy="82" rx="7" ry="8" fill="url(#skinM)" stroke="#c9a882" stroke-width="1.5"/>
+                    <ellipse cx="137" cy="82" rx="7" ry="8" fill="url(#skinM)" stroke="#c9a882" stroke-width="1.5"/>
+                    <!-- Inner ear -->
+                    <ellipse cx="64" cy="82" rx="4" ry="5" fill="#f0a0a0" opacity="0.3"/>
+                    <ellipse cx="136" cy="82" rx="4" ry="5" fill="#f0a0a0" opacity="0.3"/>
+
+                    <!-- Face -->
+                    <ellipse cx="100" cy="80" rx="38" ry="34" fill="url(#skinM)" stroke="#c9a882" stroke-width="2"/>
+                    <!-- Cheek blush -->
+                    <ellipse cx="76" cy="88" rx="6" ry="3" fill="#f43f5e" opacity="0.25"/>
+                    <ellipse cx="124" cy="88" rx="6" ry="3" fill="#f43f5e" opacity="0.25"/>
+
+                    <!-- EYES (Premium Anime Style) -->
+                    <!-- Left eye -->
+                    <g transform="translate(84, 78)">
+                        <ellipse rx="8" ry="9" fill="#fff" stroke="#1e1b4b" stroke-width="1.5"/>
+                        <ellipse rx="6" ry="7" fill="#1e40af" cy="1"/>
+                        <ellipse rx="4" ry="5" fill="#1e1b4b" cy="1"/>
+                        <!-- Highlight -->
+                        <circle cx="3" cy="-2" r="2.5" fill="#fff"/>
+                        <circle cx="-2" cy="2" r="1.2" fill="#fff" opacity="0.7"/>
+                        <!-- Upper lash -->
+                        <path d="M -8 -5 Q -6 -9 -2 -9 Q 2 -9 6 -7 Q 8 -5 8 -3" fill="none" stroke="#1e1b4b" stroke-width="2.5" stroke-linecap="round"/>
+                    </g>
+                    <!-- Right eye -->
+                    <g transform="translate(116, 78)">
+                        <ellipse rx="8" ry="9" fill="#fff" stroke="#1e1b4b" stroke-width="1.5"/>
+                        <ellipse rx="6" ry="7" fill="#1e40af" cy="1"/>
+                        <ellipse rx="4" ry="5" fill="#1e1b4b" cy="1"/>
+                        <circle cx="-3" cy="-2" r="2.5" fill="#fff"/>
+                        <circle cx="2" cy="2" r="1.2" fill="#fff" opacity="0.7"/>
+                        <path d="M -8 -3 Q -8 -5 -6 -7 Q -2 -9 2 -9 Q 6 -9 8 -5" fill="none" stroke="#1e1b4b" stroke-width="2.5" stroke-linecap="round"/>
+                    </g>
+
+                    <!-- Eyebrows (thick, masculine) -->
+                    <path d="M 73 66 Q 80 62 92 66" stroke="#111" stroke-width="3" fill="none" stroke-linecap="round"/>
+                    <path d="M 108 66 Q 120 62 127 66" stroke="#111" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+                    <!-- Nose -->
+                    <path d="M 99 86 L 98 90 Q 100 92 102 90 L 101 86" fill="none" stroke="#c9a882" stroke-width="1.2"/>
+
+                    <!-- Mouth (confident grin) -->
+                    <path d="M 94 96 Q 100 101 106 96" stroke="#1e1b4b" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+                    <!-- HAIR (Spiky Cyber) -->
+                    <path d="M 62 82 Q 62 48 100 42 Q 138 48 138 82 L 135 72 Q 100 62 65 72 Z" fill="url(#hairCyber)" stroke="#0e7490" stroke-width="1.5"/>
+                    <!-- Spikes -->
+                    <path d="M 68 72 L 60 38 L 82 62 L 92 28 L 100 60 L 108 28 L 118 62 L 140 38 L 132 72" 
+                          fill="url(#hairCyber)" stroke="#fff" stroke-width="0.8" opacity="0.5"/>
+                    <!-- Hair shine -->
+                    <path d="M 80 55 Q 90 50 95 55" stroke="#fff" stroke-width="1.5" fill="none" opacity="0.4"/>
+                </g>
+
+                <!-- Neck guard (armor) -->
+                <path d="M 90 108 Q 100 106 110 108 L 112 114 Q 100 112 88 114 Z" fill="url(#armorDark)" stroke="#00f3ff" stroke-width="0.8"/>
+            </g>
+        </svg>
+        <span>⚔️ NAM — Chiến Binh Cyber</span>
+        </div>
+
+        <!-- ============ FEMALE MAGE ============ -->
+        <div class="chibi-card">
+        <svg class="chibi" viewBox="-60 -60 320 320" width="320" height="320" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="skinF" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#fff0e6"/><stop offset="100%" stop-color="#ffd6b8"/>
+                </linearGradient>
+                <linearGradient id="hairPurple" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#c084fc"/><stop offset="100%" stop-color="#7c3aed"/>
+                </linearGradient>
+                <linearGradient id="dressGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#7c3aed"/><stop offset="100%" stop-color="#4c1d95"/>
+                </linearGradient>
+                <linearGradient id="runeGradF" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#c084fc"/><stop offset="50%" stop-color="#ec4899"/><stop offset="100%" stop-color="#a855f7"/>
+                </linearGradient>
+                <linearGradient id="staffGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#a855f7"/><stop offset="100%" stop-color="#4c1d95"/>
+                </linearGradient>
+            </defs>
+
+            <!-- ===== MAGIC CIRCLE (Pink/Purple) ===== -->
+            <g transform="translate(100, 190)" filter="url(#glow)">
+                <ellipse rx="50" ry="16" fill="rgba(192,132,252,0.08)"/>
+                <g style="animation: runeRotate 12s linear infinite;">
+                    <ellipse rx="48" ry="14" fill="none" stroke="url(#runeGradF)" stroke-width="2" stroke-dasharray="8 5" opacity="0.8"/>
+                    <ellipse rx="44" ry="12" fill="none" stroke="#ec4899" stroke-width="0.6" opacity="0.4"/>
+                    <line x1="-44" y1="0" x2="-38" y2="0" stroke="#c084fc" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="38" y1="0" x2="44" y2="0" stroke="#c084fc" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="0" y1="-12" x2="0" y2="-8" stroke="#c084fc" stroke-width="2" stroke-linecap="round"/>
+                </g>
+                <g style="animation: runeRotateRev 18s linear infinite;">
+                    <ellipse rx="34" ry="10" fill="none" stroke="#ec4899" stroke-width="1.2" stroke-dasharray="4 6" opacity="0.5"/>
+                    <line x1="-26" y1="-7" x2="26" y2="7" stroke="#a855f7" stroke-width="0.5" opacity="0.4"/>
+                    <line x1="26" y1="-7" x2="-26" y2="7" stroke="#a855f7" stroke-width="0.5" opacity="0.4"/>
+                </g>
+                <ellipse rx="12" ry="4" fill="none" stroke="#c084fc" stroke-width="1" style="animation: runeRotate 5s linear infinite;"/>
+                <ellipse rx="4" ry="1.5" fill="#c084fc" opacity="0.5" style="animation: glowPulse 2s ease-in-out infinite;"/>
+                <circle cx="-42" cy="0" r="1.2" fill="#fff"><animate attributeName="opacity" values="0;1;0" dur="1.6s" repeatCount="indefinite"/></circle>
+                <circle cx="42" cy="0" r="1.2" fill="#fff"><animate attributeName="opacity" values="0;1;0" dur="2.1s" repeatCount="indefinite" begin="0.7s"/></circle>
+            </g>
+
+            <!-- ===== CHARACTER BODY ===== -->
+            <g class="breathe">
+                <!-- Neck (slender) -->
+                <rect x="96" y="106" width="8" height="12" rx="3" fill="url(#skinF)" stroke="#deb897" stroke-width="1.2"/>
+
+                <!-- Legs (slender) -->
+                <path d="M 90 155 Q 88 172 87 180 C 86 184 92 184 93 180 L 95 155 Z" fill="url(#skinF)" stroke="#deb897" stroke-width="1.5"/>
+                <path d="M 110 155 Q 112 172 113 180 C 114 184 108 184 107 180 L 105 155 Z" fill="url(#skinF)" stroke="#deb897" stroke-width="1.5"/>
+
+                <!-- Heeled boots (elegant) -->
+                <path d="M 83 178 L 95 178 L 96 188 Q 88 190 82 187 Z" fill="#4c1d95" stroke="#7c3aed" stroke-width="1.2"/>
+                <path d="M 117 178 L 105 178 L 104 188 Q 112 190 118 187 Z" fill="#4c1d95" stroke="#7c3aed" stroke-width="1.2"/>
+                <!-- Heel -->
+                <rect x="83" y="185" width="3" height="4" fill="#4c1d95"/>
+                <rect x="115" y="185" width="3" height="4" fill="#4c1d95"/>
+
+                <!-- Dress (flowing skirt) -->
+                <path d="M 82 118 Q 100 114 118 118 L 125 158 Q 100 165 75 158 Z" fill="url(#dressGrad)" stroke="#3b0764" stroke-width="2"/>
+                <!-- Dress decoration -->
+                <path d="M 92 120 Q 100 118 108 120" stroke="#c084fc" stroke-width="0.8" fill="none"/>
+                <path d="M 100 120 L 100 155" stroke="#c084fc" stroke-width="0.6" opacity="0.4"/>
+                <!-- Ribbon/Belt -->
+                <path d="M 82 136 Q 100 140 118 136" fill="none" stroke="#ec4899" stroke-width="2"/>
+                <circle cx="100" cy="138" r="3" fill="#ec4899"/><circle cx="100" cy="138" r="1.5" fill="#fbbf24"/>
+                <!-- Skirt lace -->
+                <path d="M 78 155 Q 82 160 88 155 Q 92 160 97 155 Q 102 160 107 155 Q 112 160 117 155 Q 122 160 125 155" 
+                      fill="none" stroke="#c084fc" stroke-width="1" opacity="0.5"/>
+
+                <!-- Left Arm -->
+                <g class="arm-l">
+                    <path d="M 86 118 Q 68 130 66 143 C 65 147 70 147 72 144 L 86 128 Z" fill="url(#skinF)" stroke="#deb897" stroke-width="2"/>
+                </g>
+
+                <!-- Right Arm (holding staff) -->
+                <g class="arm-r">
+                    <path d="M 114 118 Q 132 130 134 143 C 135 147 130 147 128 144 L 114 128 Z" fill="url(#skinF)" stroke="#deb897" stroke-width="2"/>
+
+                    <!-- ===== WEAPON: Magic Staff (IN HAND!) ===== -->
+                    <g transform="translate(132, 80) rotate(15)" style="filter: drop-shadow(0 0 8px #a855f7);">
+                        <!-- Staff pole -->
+                        <rect x="-2.5" y="-30" width="5" height="90" rx="2.5" fill="url(#staffGrad)" stroke="#3b0764" stroke-width="0.8"/>
+                        <!-- Crystal orb -->
+                        <circle cx="0" cy="-35" r="10" fill="#7c3aed" stroke="#c084fc" stroke-width="1.5" opacity="0.9"/>
+                        <circle cx="0" cy="-35" r="6" fill="#a855f7" opacity="0.6" style="animation: glowPulse 1.5s ease-in-out infinite;"/>
+                        <circle cx="2" cy="-38" r="3" fill="#fff" opacity="0.6"/>
+                        <!-- Orb sparkles -->
+                        <circle cx="-5" cy="-30" r="1" fill="#fff"><animate attributeName="opacity" values="0;1;0" dur="1s" repeatCount="indefinite"/></circle>
+                        <circle cx="5" cy="-40" r="1" fill="#fff"><animate attributeName="opacity" values="0;1;0" dur="1.3s" repeatCount="indefinite" begin="0.5s"/></circle>
+                        <!-- Crown holder -->
+                        <path d="M -6 -26 Q 0 -22 6 -26" fill="none" stroke="#c084fc" stroke-width="1.5"/>
+                        <path d="M -8 -28 L -6 -26 M 8 -28 L 6 -26" stroke="#c084fc" stroke-width="1.5"/>
+                    </g>
+                </g>
+
+                <!-- ===== HEAD ===== -->
+                <g>
+                    <ellipse cx="63" cy="82" rx="6" ry="7" fill="url(#skinF)" stroke="#deb897" stroke-width="1.2"/>
+                    <ellipse cx="137" cy="82" rx="6" ry="7" fill="url(#skinF)" stroke="#deb897" stroke-width="1.2"/>
+                    <ellipse cx="64" cy="82" rx="3.5" ry="4" fill="#f0a0a0" opacity="0.2"/>
+                    <ellipse cx="136" cy="82" rx="3.5" ry="4" fill="#f0a0a0" opacity="0.2"/>
+                    
+                    <!-- Earrings -->
+                    <circle cx="62" cy="90" r="2" fill="#ec4899" style="filter: drop-shadow(0 0 3px #ec4899);"/>
+                    <circle cx="138" cy="90" r="2" fill="#ec4899" style="filter: drop-shadow(0 0 3px #ec4899);"/>
+
+                    <!-- Face (softer, rounder) -->
+                    <ellipse cx="100" cy="80" rx="36" ry="33" fill="url(#skinF)" stroke="#deb897" stroke-width="1.8"/>
+                    <ellipse cx="78" cy="88" rx="7" ry="3.5" fill="#f43f5e" opacity="0.2"/>
+                    <ellipse cx="122" cy="88" rx="7" ry="3.5" fill="#f43f5e" opacity="0.2"/>
+
+                    <!-- EYES (Large, feminine anime) -->
+                    <g transform="translate(84, 78)">
+                        <ellipse rx="9" ry="10" fill="#fff" stroke="#1e1b4b" stroke-width="1.2"/>
+                        <ellipse rx="7" ry="8" fill="#7c3aed" cy="1"/>
+                        <ellipse rx="5" ry="6" fill="#4c1d95" cy="1"/>
+                        <circle cx="3" cy="-3" r="3" fill="#fff"/>
+                        <circle cx="-2" cy="2" r="1.5" fill="#fff" opacity="0.6"/>
+                        <!-- Double lashes -->
+                        <path d="M -9 -5 Q -7 -11 0 -11 Q 7 -11 9 -5" fill="none" stroke="#1e1b4b" stroke-width="2.5" stroke-linecap="round"/>
+                        <path d="M -10 -6 L -12 -10 M -6 -9 L -8 -13 M 6 -9 L 8 -13 M 10 -6 L 12 -10" stroke="#1e1b4b" stroke-width="1.5" stroke-linecap="round"/>
+                    </g>
+                    <g transform="translate(116, 78)">
+                        <ellipse rx="9" ry="10" fill="#fff" stroke="#1e1b4b" stroke-width="1.2"/>
+                        <ellipse rx="7" ry="8" fill="#7c3aed" cy="1"/>
+                        <ellipse rx="5" ry="6" fill="#4c1d95" cy="1"/>
+                        <circle cx="-3" cy="-3" r="3" fill="#fff"/>
+                        <circle cx="2" cy="2" r="1.5" fill="#fff" opacity="0.6"/>
+                        <path d="M -9 -5 Q -7 -11 0 -11 Q 7 -11 9 -5" fill="none" stroke="#1e1b4b" stroke-width="2.5" stroke-linecap="round"/>
+                        <path d="M -10 -6 L -12 -10 M -6 -9 L -8 -13 M 6 -9 L 8 -13 M 10 -6 L 12 -10" stroke="#1e1b4b" stroke-width="1.5" stroke-linecap="round"/>
+                    </g>
+
+                    <!-- Feminine brows (thin, arched) -->
+                    <path d="M 73 66 Q 82 62 92 66" stroke="#6b21a8" stroke-width="2" fill="none" stroke-linecap="round"/>
+                    <path d="M 108 66 Q 118 62 127 66" stroke="#6b21a8" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+                    <!-- Small nose -->
+                    <path d="M 100 88 Q 99 91 101 91" fill="none" stroke="#deb897" stroke-width="1"/>
+
+                    <!-- Lips (fuller) -->
+                    <path d="M 95 96 Q 100 100 105 96" stroke="#ec4899" stroke-width="2" fill="none" stroke-linecap="round"/>
+                    <path d="M 96 97 Q 100 93 104 97" stroke="#f9a8d4" stroke-width="1" fill="none" opacity="0.5"/>
+
+                    <!-- HAIR (Long flowing purple) -->
+                    <!-- Back hair (long) -->
+                    <path d="M 62 78 C 55 100 50 140 58 165 C 62 170 68 168 66 155 C 64 130 66 100 66 80 Z" fill="url(#hairPurple)" stroke="#5b21b6" stroke-width="1"/>
+                    <path d="M 138 78 C 145 100 150 140 142 165 C 138 170 132 168 134 155 C 136 130 134 100 134 80 Z" fill="url(#hairPurple)" stroke="#5b21b6" stroke-width="1"/>
+                    
+                    <!-- Front hair -->
+                    <path d="M 64 82 Q 64 48 100 42 Q 136 48 136 82 L 133 72 Q 100 60 67 72 Z" fill="url(#hairPurple)" stroke="#5b21b6" stroke-width="1.5"/>
+                    <!-- Bangs -->
+                    <path d="M 70 72 Q 75 55 85 68 Q 90 52 100 66 Q 110 52 115 68 Q 120 55 130 72" fill="url(#hairPurple)" stroke="#5b21b6" stroke-width="0.8"/>
+                    <!-- Hair shine -->
+                    <path d="M 78 56 Q 88 50 95 56" stroke="#fff" stroke-width="2" fill="none" opacity="0.3"/>
+                    <path d="M 108 56 Q 115 52 122 58" stroke="#fff" stroke-width="1" fill="none" opacity="0.2"/>
+                    
+                    <!-- Hair accessories -->
+                    <circle cx="70" cy="68" r="4" fill="#ec4899" stroke="#fff" stroke-width="0.8" style="filter: drop-shadow(0 0 4px #ec4899);"/>
+                    <circle cx="130" cy="68" r="4" fill="#ec4899" stroke="#fff" stroke-width="0.8" style="filter: drop-shadow(0 0 4px #ec4899);"/>
+                </g>
+            </g>
+        </svg>
+        <span>🔮 NỮ — Pháp Sư Hoàng Gia</span>
+        </div>
+
+    </div>
+</div>
+</body>
+</html>

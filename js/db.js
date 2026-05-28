@@ -506,14 +506,18 @@ const DB = {
     // --- CARO GAME LOGIC ---
     createLobbyGame: async (p1, p2) => {
         try {
+            // Randomly pre-determine who wins the coin flip (50/50)
+            const starter = Math.random() < 0.5 ? p1 : p2;
             const gameData = {
                 player1: p1,
                 player2: p2,
                 board: Array(15 * 15).fill(null),
-                turn: p1,
+                turn: 'flipping', // Special state to trigger UI coin flip
+                starter: starter, // Who the coin actually lands on
                 status: 'playing',
                 winner: null,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                p2Accepted: false
             };
             const docRef = await db.collection("lobby_games").add(gameData);
             return docRef.id;

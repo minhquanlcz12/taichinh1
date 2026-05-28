@@ -2689,7 +2689,7 @@ const GamesModule = {
         }
 
         const tile = mState.tiles[newPos];
-        mState.logs.push(`📍 <b>@${player.name}</b> đang di chuyển đến ô <b>${tile.name}</b>...`);
+        mState.logs.push(`🎲 <b>@${player.name}</b> đang di chuyển đến ô <b>${tile.name}</b>...`);
 
         // Set action flag for visual step-by-step complete trigger
         GamesModule.monopoly.awaitingAction = true;
@@ -2873,7 +2873,23 @@ const GamesModule = {
         const mState = GamesModule.monopoly;
         if (player.cash <= 0) {
             player.isBankrupt = true;
-            mState.logs.push(`💀 <b>@${player.name}</b> đã tuyên bố Phá Sản! Toàn bộ phòng ban sở hữu được trả về ngân hàng công ty.`);
+            
+            const funnyMessages = [
+                `😂 Chia buồn cùng @${player.name}, hết tiền thì đi làm công đức tiếp đi nhé!`,
+                `👻 @${player.name} đã chính thức "ra đê"! Ai có lòng tốt cho mượn cái chiếu?`,
+                `🤡 Cố quá thành "quá cố", @${player.name} đã trắng tay!`,
+                `💸 @${player.name} phá sản rồi! Cảnh báo: Đừng ai dại dột cho người này vay tiền!`,
+                `📉 @${player.name} vừa thực hiện cú nhảy cầu tài chính ngoạn mục!`,
+                `🤣 @${player.name} đã bị đuổi khỏi văn phòng vì nợ nần chồng chất!`,
+                `🧨 BÙM! Tài khoản của @${player.name} vừa bốc hơi như chưa từng tồn tại!`
+            ];
+            const randomMsg = funnyMessages[Math.floor(Math.random() * funnyMessages.length)];
+            
+            mState.logs.push(`💀 <b>@${player.name}</b> đã tuyên bố Phá Sản!`);
+            mState.logs.push(`📢 <b>THÔNG BÁO:</b> ${randomMsg}`);
+            
+            // Public toast for maximum trolling
+            Utils.showToast(`${player.name} phá sản rồi! Haha!`, "warning");
             
             mState.tiles.forEach(t => {
                 if (t.type === 'property' && t.owner?.name === player.name) {

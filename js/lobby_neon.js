@@ -323,6 +323,69 @@ window.LobbyNeon = {
                     0% { transform: translateX(0); }
                     100% { transform: translateX(-50%); }
                 }
+
+                /* COIN FLIP ANIMATION */
+                .coin-flip-overlay {
+                    position: absolute;
+                    top: 0; left: 0; width: 100%; height: 100%;
+                    background: rgba(15, 23, 42, 0.8);
+                    z-index: 2000;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    backdrop-filter: blur(8px);
+                    border-radius: 20px;
+                }
+                .coin-container {
+                    width: 150px;
+                    height: 150px;
+                    perspective: 1000px;
+                    margin-bottom: 30px;
+                }
+                .coin {
+                    width: 100%;
+                    height: 100%;
+                    position: relative;
+                    transform-style: preserve-3d;
+                }
+                .coin-side {
+                    position: absolute;
+                    width: 100%;
+                    height: 100%;
+                    border-radius: 50%;
+                    backface-visibility: hidden;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 60px;
+                    font-weight: 900;
+                    border: 8px solid rgba(255,255,255,0.2);
+                    box-shadow: 0 0 30px rgba(0,0,0,0.5);
+                }
+                .coin-front {
+                    background: linear-gradient(135deg, #ff4757, #ff6b81);
+                    color: white;
+                    text-shadow: 0 0 10px rgba(255, 71, 87, 0.8);
+                }
+                .coin-back {
+                    background: linear-gradient(135deg, #2ed573, #7bed9f);
+                    color: white;
+                    transform: rotateY(180deg);
+                    text-shadow: 0 0 10px rgba(46, 213, 115, 0.8);
+                }
+                
+                @keyframes coin-spin-p1 {
+                    0% { transform: rotateY(0) rotateX(0); }
+                    100% { transform: rotateY(1800deg) rotateX(0); } /* Lands on Front (Red/X) */
+                }
+                @keyframes coin-spin-p2 {
+                    0% { transform: rotateY(0) rotateX(0); }
+                    100% { transform: rotateY(1980deg) rotateX(0); } /* Lands on Back (Green/O) - 1800 + 180 */
+                }
+                
+                .coin.flipping-p1 { animation: coin-spin-p1 3s forwards cubic-bezier(0.1, 0.1, 0.1, 1); }
+                .coin.flipping-p2 { animation: coin-spin-p2 3s forwards cubic-bezier(0.1, 0.1, 0.1, 1); }
             </style>
 
             <div id="lobby-map-container" style="width: 100%; height: 100%; position: relative; cursor: crosshair; overflow: hidden; background: #000;">
@@ -1110,8 +1173,80 @@ window.LobbyNeon = {
             if (doc.exists) {
                 const gameData = doc.data();
                 LobbyNeon.onGameUpdate(gameData);
+                
+                // TỰ ĐỘNG KÍCH HOẠT TUNG ĐỒNG XU NẾU LÀ TRẬN MỚI
+                if (gameData.turn === 'flipping' && !document.getElementById('caro-coin-flip')) {
+                    LobbyNeon.startCoinFlip(gameId, gameData);
+                }
             }
         });
+    },
+
+    startCoinFlip: (gameId, game) => {
+        const boardContainer = document.querySelector('.caro-board-container');
+        if (!boardContainer) return;
+
+        // Xóa flip cũ nếu còn sót
+        const oldFlip = document.getElementById('caro-coin-flip');
+        if (oldFlip) oldFlip.remove();
+
+        const overlay = document.createElement('div');
+        overlay.id = 'caro-coin-flip';
+        overlay.className = 'coin-flip-overlay';
+        
+        const isP1Starter = (game.starter === game.player1);
+        const starterName = game.starter;
+        
+        overlay.innerHTML = `
+            <div style="font-size: 18px; color: #fbbf24; font-weight: 900; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 10px rgba(251,191,36,0.5);">🎲 ĐANG CHỌN LƯỢT ĐI...</div>
+            <div class="coin-container">
+                <div class="coin" id="the-coin">
+                    <div class="coin-side coin-front">X</div>
+                    <div class="coin-side coin-back">O</div>
+                </div>
+            </div>
+            <div id="flip-result-text" style="font-size: 22px; font-weight: 900; color: #fff; height: 40px; text-shadow: 0 0 10px rgba(255,255,255,0.5); text-align: center; transition: all 0.3s;"></div>
+        `;
+        boardContainer.appendChild(overlay);
+
+        // Kích hoạt xoay sau một chút delay
+        setTimeout(() => {
+            const coin = document.getElementById('the-coin');
+            if (coin) {
+                coin.classList.add(isP1Starter ? 'flipping-p1' : 'flipping-p2');
+            }
+            if (window.GamesSynth && GamesSynth.playRoll) GamesSynth.playRoll();
+        }, 100);
+
+        // Kết thúc xoay (3s animation)
+        setTimeout(async () => {
+            const resText = document.getElementById('flip-result-text');
+            if (resText) {
+                const color = isP1Starter ? '#ff4757' : '#2ed573';
+                resText.style.color = color;
+                resText.style.textShadow = `0 0 20px ${color}`;
+                resText.innerHTML = `🌟 ${starterName} 🌟<br><span style="font-size: 14px; opacity: 0.8;">ĐƯỢC ĐI TIÊN PHONG!</span>`;
+                
+                if (window.GamesSynth && GamesSynth.playWin) GamesSynth.playWin();
+            }
+
+            // Chờ 2s hiệu ứng chiến thắng rồi mới vào game
+            setTimeout(async () => {
+                overlay.style.opacity = '0';
+                overlay.style.transition = 'opacity 0.5s ease-out';
+                
+                // Chỉ người chấp nhận (player2) cập nhật DB để tránh xung đột
+                if (game.turn === 'flipping' && Auth.currentUser.username === game.player2) {
+                    try {
+                        await DB.updateLobbyGame(gameId, { turn: game.starter });
+                    } catch(e) { console.error("Coin flip final sync error:", e); }
+                }
+                
+                setTimeout(() => {
+                    if (overlay.parentNode) overlay.remove();
+                }, 500);
+            }, 2000);
+        }, 3100);
     },
 
     makeMove: async (index) => {
@@ -1122,6 +1257,7 @@ window.LobbyNeon = {
         const me = Auth.currentUser.username;
 
         if (game.status !== 'playing') return;
+        if (game.turn === 'flipping') return; // Coin flip animation in progress
         if (game.turn !== me) {
             Utils.showToast("Chưa tới lượt của bạn!", "warning");
             return;
@@ -1332,7 +1468,7 @@ window.LobbyNeon = {
         const p2Wrapper = document.getElementById('caro-chibi-p2-wrapper');
         
         if (p1ChibiContainer && p2ChibiContainer) {
-            if (game.status === 'playing') {
+            if (game.status === 'playing' && game.turn !== 'flipping') {
                 if (game.turn === game.player1) {
                     // Lượt player 1 (X)
                     p1ChibiContainer.style.animation = 'chibiBounce 1.5s infinite ease-in-out';
@@ -1422,6 +1558,8 @@ window.LobbyNeon = {
                 statusMsg.innerHTML = `<span style="color:#fff">🏳️ Trận đấu kết thúc.</span>`;
                 setTimeout(() => LobbyNeon.closeCaroBoard(), 2000);
             }
+        } else if (game.turn === 'flipping') {
+            statusMsg.innerHTML = `<span style="color:#fbbf24">🎲 ĐANG TUNG ĐỒNG XU...</span>`;
         } else {
             statusMsg.innerHTML = game.turn === me ? 
                 `<span style="color:#2ed573">🟢 ĐẾN LƯỢT TIÊN PHONG</span>` : 
