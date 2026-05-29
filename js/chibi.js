@@ -38,6 +38,23 @@ const ChibiModule = {
             '#f97316', // Cam nhiá»‡t Ä‘á»›i
             '#1f2937', // Äen tá»‘i thÆ°á»£ng
             '#ffffff'  // Tráº¯ng tinh khÃ´i
+        ],
+        dragons: [
+            '#3b82f6', // Lam Long
+            '#ef4444', // Xich Long
+            '#fbbf24', // Hoang Long
+            '#10b981', // Luc Long
+            '#111827'  // Hac Long
+        ],
+        aura: [
+            '#00f3ff', // Neon Cyan
+            '#8b5cf6', // Magic Purple
+            '#ef4444', // Fire Red
+            '#ec4899', // Pink Aura
+            '#10b981', // Nature Green
+            '#f97316', // Orange Flame
+            '#ffffff', // Pure White
+            '#1f2937'  // Dark Void
         ]
     },
 
@@ -987,6 +1004,7 @@ const ChibiModule = {
             const topOptions = Array.from({ length: ChibiModule.counts.top }, (_, i) => i);
             const bottomOptions = Array.from({ length: ChibiModule.counts.bottom }, (_, i) => i);
             const shoeOptions = Array.from({ length: ChibiModule.counts.shoe }, (_, i) => i);
+            const shoeNames = ['Chan tran', 'Sneaker Neon', 'Giay Tay Xin', 'Ung Cyber', 'Dep To Ong', 'Sandal Dao Pho', 'Giap Chan Titan', 'Hai Co Trang'];
             const topNames = ['Máº·c Ä‘á»‹nh', 'Ão PhÃ´ng Neo', 'Vest CÃ´ng Sá»Ÿ', 'GiÃ¡p Cyber Titan', 'Ronin Kimono', 'Vest Äáº·c Nhiá»‡m', 'Hoodie Dáº¡o Phá»‘', 'Ão DÃ i HoÃ ng Gia ðŸ‡»ðŸ‡³', 'SiÃªu NhÃ¢n Hero', 'Shinobi ðŸ¥·', 'Tu SÄ© Rá»“ng', 'Phi CÃ´ng Tinh Há»‡']; 
 
             contentHtml = `
