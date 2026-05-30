@@ -518,6 +518,11 @@ window.LobbyNeon = {
 
     renderQuestNPC: () => {
         console.log("LobbyNeon.renderQuestNPC starting...");
+        if (typeof ChibiModule === 'undefined') {
+            console.warn('ChibiModule not loaded yet, retrying renderQuestNPC in 1s...');
+            setTimeout(() => LobbyNeon.renderQuestNPC(), 1000);
+            return;
+        }
         const map = document.getElementById('lobby-map');
         if (!map) {
             console.error("NPC Error: lobby-map not found");
@@ -580,6 +585,11 @@ window.LobbyNeon = {
 
     renderLeaderboardMonument: () => {
         console.log("LobbyNeon.renderLeaderboardMonument starting...");
+        if (typeof ChibiModule === 'undefined') {
+            console.warn('ChibiModule not loaded yet, retrying renderLeaderboardMonument in 1s...');
+            setTimeout(() => LobbyNeon.renderLeaderboardMonument(), 1000);
+            return;
+        }
         const map = document.getElementById('lobby-map');
         if (!map) {
             console.error("Monument Error: lobby-map not found");
@@ -643,6 +653,11 @@ window.LobbyNeon = {
 
     renderFashionNPC: () => {
         console.log("LobbyNeon.renderFashionNPC starting...");
+        if (typeof ChibiModule === 'undefined') {
+            console.warn('ChibiModule not loaded yet, retrying renderFashionNPC in 1s...');
+            setTimeout(() => LobbyNeon.renderFashionNPC(), 1000);
+            return;
+        }
         const map = document.getElementById('lobby-map');
         if (!map) {
             console.error("NPC Error: lobby-map not found");
@@ -660,7 +675,7 @@ window.LobbyNeon = {
             el.style.cursor = 'help';
             el.onclick = (e) => {
                 e.stopPropagation();
-                ChibiModule.openBuilder();
+                if (typeof ChibiModule !== 'undefined') ChibiModule.openBuilder();
                 LobbyNeon.triggerFashionNpcDialogue(true);
             };
             map.appendChild(el);
@@ -809,7 +824,7 @@ window.LobbyNeon = {
             const dyFs = y - LobbyNeon.state.fashionNpcPos.y;
             const distFs = Math.sqrt(dxFs*dxFs + dyFs*dyFs);
             if (distFs < 80) {
-                ChibiModule.openBuilder();
+                if (typeof ChibiModule !== 'undefined') ChibiModule.openBuilder();
                 LobbyNeon.triggerFashionNpcDialogue(true);
                 return;
             } else if (distFs < 180) {
