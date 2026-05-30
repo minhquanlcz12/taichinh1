@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Pet Chibi Avatar Builder Module
  * Phong cÃ¡ch Zepeto / Gacha Life - SVG Composite Layers
  */
@@ -681,7 +681,8 @@ const ChibiModule = {
                     border-color: #fff;
                     box-shadow: 0 0 10px #8b5cf6;
                     transform: scale(1.18);
-                };
+                }
+            `;
             document.head.appendChild(style);
         }
 
