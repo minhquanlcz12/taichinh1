@@ -1492,6 +1492,10 @@ const GamesModule = {
         for (let i = 0; i < 20; i++) tilesHtml += getTileHtml(i);
 
         const activePlayer = mState.players[mState.currentPlayerIdx];
+        if (!activePlayer) {
+            boardContainer.innerHTML = `<div style="text-align:center; padding: 40px; color:#cbd5e1; font-weight: bold; background: rgba(0,0,0,0.2); border-radius: 12px; margin: 20px auto; max-width: 500px;">⏳ Đang đồng bộ danh sách người chơi...</div>`;
+            return;
+        }
         const isMyTurn = activePlayer && activePlayer.name === Auth.currentUser.username;
 
         // Custom Dice rendering HTML
@@ -2396,6 +2400,9 @@ const GamesModule = {
                             } else {
                                 localPlayers[localIndex] = remoteP;
                             }
+                        } else {
+                            // If player doesn't exist locally yet, add them
+                            localPlayers.push(remoteP);
                         }
                     });
                     mState.players = localPlayers;
