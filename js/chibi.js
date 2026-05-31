@@ -1,43 +1,43 @@
 /**
  * Pet Chibi Avatar Builder Module
- * Phong cÃ¡ch Zepeto / Gacha Life - SVG Composite Layers
+ * Phong cách Zepeto / Gacha Life - SVG Composite Layers
  */
 
 const ChibiModule = {
     // Preset Colors
     colors: {
         skin: [
-            '#ffe0bd', // Há»“ng hÃ o sÃ¡ng
-            '#ffcd94', // Kem tá»± nhiÃªn
-            '#e0ac69', // BÃ¡nh máº­t ngá»t ngÃ o
-            '#c68642', // NÃ¢u áº¥m Ã¡p
-            '#8d5524', // NÃ¢u sÃ´-cÃ´-la
-            '#3c1f06', // Äen mun huyá»n bÃ­
-            '#00f3ff', // Xanh ngÆ°á»i ngoÃ i hÃ nh tinh
-            '#a78bfa'  // TÃ­m pastel má»™ng mÆ¡
+            '#ffe0bd', // Hồng hào sáng
+            '#ffcd94', // Kem tự nhiên
+            '#e0ac69', // Bánh mật ngọt ngào
+            '#c68642', // Nâu ấm áp
+            '#8d5524', // Nâu sô-cô-la
+            '#3c1f06', // Đen mun huyền bí
+            '#00f3ff', // Xanh người ngoài hành tinh
+            '#a78bfa'  // Tím pastel mộng mơ
         ],
         hair: [
-            '#111827', // Äen huyá»n
-            '#4b5563', // XÃ¡m tro
-            '#7c2d12', // NÃ¢u Ä‘á» auburn
-            '#d97706', // VÃ ng báº¡ch kim
-            '#ec4899', // Há»“ng neon cá»±c chÃ¡y
-            '#8b5cf6', // TÃ­m thá»§y chung
-            '#10b981', // Xanh lá»¥c báº£o
-            '#3b82f6', // Xanh Ä‘áº¡i dÆ°Æ¡ng
-            '#f3f4f6'  // Tráº¯ng tuyáº¿t
+            '#111827', // Đen huyền
+            '#4b5563', // Xám tro
+            '#7c2d12', // Nâu đỏ auburn
+            '#d97706', // Vàng bạch kim
+            '#ec4899', // Hồng neon cực cháy
+            '#8b5cf6', // Tím thủy chung
+            '#10b981', // Xanh lục bảo
+            '#3b82f6', // Xanh đại dương
+            '#f3f4f6'  // Trắng tuyết
         ],
         clothing: [
-            '#ef4444', // Äá» rá»±c rá»¡
-            '#ec4899', // Há»“ng ngá»t ngÃ o
-            '#8b5cf6', // TÃ­m má»™ng mÆ¡
-            '#3b82f6', // Xanh thanh lá»‹ch
-            '#06b6d4', // Cyan mÃ¡t láº¡nh
-            '#10b981', // Xanh lÃ¡ tÆ°Æ¡i
-            '#eab308', // VÃ ng náº¯ng
-            '#f97316', // Cam nhiá»‡t Ä‘á»›i
-            '#1f2937', // Äen tá»‘i thÆ°á»£ng
-            '#ffffff'  // Tráº¯ng tinh khÃ´i
+            '#ef4444', // Đỏ rực rỡ
+            '#ec4899', // Hồng ngọt ngào
+            '#8b5cf6', // Tím mộng mơ
+            '#3b82f6', // Xanh thanh lịch
+            '#06b6d4', // Cyan mát lạnh
+            '#10b981', // Xanh lá tươi
+            '#eab308', // Vàng nắng
+            '#f97316', // Cam nhiệt đới
+            '#1f2937', // Đen tối thượng
+            '#ffffff'  // Trắng tinh khôi
         ],
         dragons: [
             '#3b82f6', // Lam Long
@@ -81,52 +81,52 @@ const ChibiModule = {
 
     gearRequirements: {
         gear: {
-            1: { label: "Äáº¡i Äao Lá»­a", requiredLevel: 2 },
-            2: { label: "SÃºng VÃ´ Cá»±c", requiredLevel: 2 },
-            3: { label: "Kiáº¿m Cyber Laser", requiredLevel: 3 },
-            4: { label: "ThÆ°Æ¡ng Heo Tá»™c", requiredLevel: 1 },
-            5: { label: "DÃ©p Tá»• Ong VÃ ng", requiredLevel: 1 },
-            6: { label: "Chá»•i Tre Ã‚m DÆ°Æ¡ng", requiredLevel: 2 },
-            7: { label: "Muá»—ng MÃ¬ Háº£o Háº¡ng", requiredLevel: 1 },
-            8: { label: "Gáº­y Selfie CÃ¡nh VÃ ng", requiredLevel: 4 },
-            9: { label: "Cá» LÃª Tia Chá»›p", requiredLevel: 3 },
-            10: { label: "CÃ¢y Lau NhÃ  Ma Thuáº­t", requiredLevel: 2 },
-            11: { label: "NÃ³n LÃ¡ Phi TiÃªu", requiredLevel: 4 },
-            12: { label: "Vá»£t Muá»—i Äiá»‡n", requiredLevel: 3 },
-            13: { label: "Gháº¿ Äá» Quyá»n Lá»±c", requiredLevel: 5 },
-            14: { label: "Quáº¡t TrÃºc Thanh LÆ°Æ¡ng", requiredLevel: 2 },
-            15: { label: "Lá»“ng ÄÃ¨n Há»™i An", requiredLevel: 3 },
-            16: { label: "GÃ¡nh HÃ ng Rong", requiredLevel: 3 },
-            17: { label: "BÃ¡nh MÃ¬ SÃ i GÃ²n", requiredLevel: 1 },
-            18: { label: "CÃ  PhÃª Phin", requiredLevel: 2 },
-            19: { label: "DÃ©p Tá»• Ong Huyá»n Thoáº¡i", requiredLevel: 1 }
+            1: { label: "Đại Đao Lửa", requiredLevel: 2 },
+            2: { label: "Súng Vô Cực", requiredLevel: 2 },
+            3: { label: "Kiếm Cyber Laser", requiredLevel: 3 },
+            4: { label: "Thương Heo Tộc", requiredLevel: 1 },
+            5: { label: "Dép Tổ Ong Vàng", requiredLevel: 1 },
+            6: { label: "Chổi Tre Âm Dương", requiredLevel: 2 },
+            7: { label: "Muỗng Mì Hảo Hạng", requiredLevel: 1 },
+            8: { label: "Gậy Selfie Cánh Vàng", requiredLevel: 4 },
+            9: { label: "Cờ Lê Tia Chớp", requiredLevel: 3 },
+            10: { label: "Cây Lau Nhà Ma Thuật", requiredLevel: 2 },
+            11: { label: "Nón Lá Phi Tiêu", requiredLevel: 4 },
+            12: { label: "Vợt Muỗi Điện", requiredLevel: 3 },
+            13: { label: "Ghế Đỏ Quyền Lực", requiredLevel: 5 },
+            14: { label: "Quạt Trúc Thanh Lương", requiredLevel: 2 },
+            15: { label: "Lồng Đèn Hội An", requiredLevel: 3 },
+            16: { label: "Gánh Hàng Rong", requiredLevel: 3 },
+            17: { label: "Bánh Mì Sài Gòn", requiredLevel: 1 },
+            18: { label: "Cà Phê Phin", requiredLevel: 2 },
+            19: { label: "Dép Tổ Ong Huyền Thoại", requiredLevel: 1 }
         },
         mount: {
-            1: { label: "ðŸŽï¸ SiÃªu Xe Thá»ƒ Thao V6", requiredLevel: 7 },
-            2: { label: "ðŸï¸ Motor Cyber TRON V6", requiredLevel: 5 },
-            3: { label: "ðŸ›¹ VÃ¡n TrÆ°á»£t Bay V6", requiredLevel: 5 },
-            4: { label: "ðŸ›µ Vespa Cá»• Äiá»ƒn V6", requiredLevel: 4 },
-            5: { label: "ðŸš Drone Chiáº¿n Äáº¥u V6", requiredLevel: 8 }
+            1: { label: "🏎️ Siêu Xe Thể Thao V6", requiredLevel: 7 },
+            2: { label: "🏍️ Motor Cyber TRON V6", requiredLevel: 5 },
+            3: { label: "🛹 Ván Trượt Bay V6", requiredLevel: 5 },
+            4: { label: "🛵 Vespa Cổ Điển V6", requiredLevel: 4 },
+            5: { label: "🚁 Drone Chiến Đấu V6", requiredLevel: 8 }
         },
         wing: {
-            1: { label: "CÃ¡nh ThiÃªn Tháº§n", requiredLevel: 5 },
-            2: { label: "CÃ¡nh Ãc Quá»·", requiredLevel: 6 },
-            3: { label: "CÃ¡nh ThiÃªn Tháº§n VIP", requiredLevel: 7 },
-            4: { label: "CÃ¡nh BÆ°á»›m Pha LÃª", requiredLevel: 8 },
-            5: { label: "CÃ¡nh PhÆ°á»£ng HoÃ ng Lá»­a", requiredLevel: 9 },
-            6: { label: "CÃ¡nh DÆ¡i Háº¯c Ãm", requiredLevel: 10 },
-            7: { label: "CÃ¡nh BÄƒng Tuyáº¿t VIP", requiredLevel: 12 }
+            1: { label: "Cánh Thiên Thần", requiredLevel: 5 },
+            2: { label: "Cánh Ác Quỷ", requiredLevel: 6 },
+            3: { label: "Cánh Thiên Thần VIP", requiredLevel: 7 },
+            4: { label: "Cánh Bướm Pha Lê", requiredLevel: 8 },
+            5: { label: "Cánh Phượng Hoàng Lửa", requiredLevel: 9 },
+            6: { label: "Cánh Dơi Hắc Ám", requiredLevel: 10 },
+            7: { label: "Cánh Băng Tuyết VIP", requiredLevel: 12 }
         },
         dragon: {
-            1: { label: "ðŸŒŠ Lam Long Tháº§n V6", requiredLevel: 7 },
-            2: { label: "ðŸ”¥ XÃ­ch Long Tháº§n V6", requiredLevel: 9 },
-            3: { label: "âš¡ HoÃ ng Long Tháº§n V6", requiredLevel: 12 },
-            4: { label: "ðŸŒ‘ Háº¯c Long Tháº§n V6", requiredLevel: 15 }
+            1: { label: "🌊 Lam Long Thần V6", requiredLevel: 7 },
+            2: { label: "🔥 Xích Long Thần V6", requiredLevel: 9 },
+            3: { label: "⚡ Hoàng Long Thần V6", requiredLevel: 12 },
+            4: { label: "🌑 Hắc Long Thần V6", requiredLevel: 15 }
         },
         accessory: {
-            11: { label: "MÅ© Cá»‘i KhÃ¡ng Chiáº¿n", requiredLevel: 3 },
-            12: { label: "NÃ³n LÃ¡ Truyá»n Thá»‘ng", requiredLevel: 3 },
-            13: { label: "KhÄƒn Ráº±n Nam Bá»™", requiredLevel: 2 }
+            11: { label: "Mũ Cối Kháng Chiến", requiredLevel: 3 },
+            12: { label: "Nón Lá Truyền Thống", requiredLevel: 3 },
+            13: { label: "Khăn Rằn Nam Bộ", requiredLevel: 2 }
         }
     },
 
@@ -134,45 +134,45 @@ const ChibiModule = {
     presets: [
         {
             id: 'tokyo-cyber',
-            name: 'SiÃªu NhÃ¢n Äiá»‡n Quang (Cyber)',
-            desc: 'Phong cÃ¡ch Cyberpunk tÆ°Æ¡ng lai cá»±c chÃ¡y.',
+            name: 'Siêu Nhân Điện Quang (Cyber)',
+            desc: 'Phong cách Cyberpunk tương lai cực cháy.',
             config: { gender: 'nam', hairStyle: 3, hairColor: '#00f3ff', eyeStyle: 1, mouthStyle: 6, topStyle: 3, topColor: '#1e293b', bottomStyle: 5, bottomColor: '#1e293b', shoeStyle: 4, mount: 2, dragon: 1, aura: 1 }
         },
         {
             id: 'viet-legend',
-            name: 'Huyá»n Thoáº¡i Viá»‡t Nam ðŸ‡»ðŸ‡³',
-            desc: 'Ão dÃ i, nÃ³n lÃ¡, hÃ i lÃ²ng dÃ¢n tá»™c!',
-            config: { gender: 'ná»¯', hairStyle: 2, hairColor: '#111827', eyeStyle: 0, mouthStyle: 0, topStyle: 7, topColor: '#b91c1c', bottomStyle: 2, bottomColor: '#ffffff', shoeStyle: 1, accessory: 12, mount: 4, dragon: 3, aura: 6 }
+            name: 'Huyền Thoại Việt Nam 🇻🇳',
+            desc: 'Áo dài, nón lá, hài lòng dân tộc!',
+            config: { gender: 'nữ', hairStyle: 2, hairColor: '#111827', eyeStyle: 0, mouthStyle: 0, topStyle: 7, topColor: '#b91c1c', bottomStyle: 2, bottomColor: '#ffffff', shoeStyle: 1, accessory: 12, mount: 4, dragon: 3, aura: 6 }
         },
         {
             id: 'samurai-spirit',
-            name: 'VÃµ SÄ© Äáº¡o (Samurai)',
-            desc: 'Tinh tháº§n thÃ©p, Ä‘áº¡i Ä‘ao lá»­a!',
+            name: 'Võ Sĩ Đạo (Samurai)',
+            desc: 'Tinh thần thép, đại đao lửa!',
             config: { gender: 'nam', hairStyle: 2, hairColor: '#111827', eyeStyle: 5, mouthStyle: 8, topStyle: 4, topColor: '#1e293b', bottomStyle: 7, bottomColor: '#1e293b', shoeStyle: 3, gear: 1, dragon: 2, aura: 2 }
         },
         {
             id: 'hero-divine',
-            name: 'Anh HÃ¹ng CÃ´ng LÃ½',
-            desc: 'Báº£o vá»‡ tháº¿ giá»›i khá»i bÃ³ng tá»‘i!',
+            name: 'Anh Hùng Công Lý',
+            desc: 'Bảo vệ thế giới khỏi bóng tối!',
             config: { gender: 'nam', hairStyle: 7, hairColor: '#facc15', eyeStyle: 7, mouthStyle: 0, topStyle: 8, topColor: '#3b82f6', bottomStyle: 4, bottomColor: '#1e3a8a', shoeStyle: 3, aura: 6, dragon: 3 }
         },
 
         {
             id: 'to-ong-king',
-            name: 'Vua DÃ©p Tá»• Ong ðŸ',
-            desc: 'DÃ¢n chÆ¡i xÃ³m nÃºp lÃ¹m!',
+            name: 'Vua Dép Tổ Ong 🐝',
+            desc: 'Dân chơi xóm núp lùm!',
             config: { gender: 'nam', hairStyle: 1, hairColor: '#7c2d12', eyeStyle: 9, mouthStyle: 2, topStyle: 1, topColor: '#ffffff', bottomStyle: 3, bottomColor: '#2563eb', shoeStyle: 1, gear: 19, accessory: 11, mount: 4 }
         },
         {
             id: 'angel-divine',
-            name: 'ThiÃªn Tháº§n Thanh Khiáº¿t',
-            desc: 'Sá»©c máº¡nh tá»« thiÃªn giá»›i.',
-            config: { gender: 'ná»¯', hairStyle: 12, hairColor: '#ffffff', eyeStyle: 7, mouthStyle: 0, topStyle: 1, topColor: '#ffffff', bottomStyle: 2, bottomColor: '#ffffff', shoeStyle: 6, wing: 1, dragon: 3 }
+            name: 'Thiên Thần Thanh Khiết',
+            desc: 'Sức mạnh từ thiên giới.',
+            config: { gender: 'nữ', hairStyle: 12, hairColor: '#ffffff', eyeStyle: 7, mouthStyle: 0, topStyle: 1, topColor: '#ffffff', bottomStyle: 2, bottomColor: '#ffffff', shoeStyle: 6, wing: 1, dragon: 3 }
         },
         {
             id: 'reaper-soul',
-            name: 'Tá»­ Tháº§n Háº¯c Ãm',
-            desc: 'BÃ³ng tá»‘i vÄ©nh háº±ng...',
+            name: 'Tử Thần Hắc Ám',
+            desc: 'Bóng tối vĩnh hằng...',
             config: { gender: 'nam', hairStyle: 17, hairColor: '#1e1b4b', eyeStyle: 8, mouthStyle: 4, topStyle: 5, topColor: '#111', bottomStyle: 1, bottomColor: '#111', shoeStyle: 5, wing: 6, dragon: 5 }
         }
     ],
@@ -191,7 +191,7 @@ const ChibiModule = {
             if (t.owner !== username) return;
 
             const status = (t.trangThai || '').toLowerCase();
-            const isCompleted = status.includes('done') || status.includes('hoÃ n thÃ nh');
+            const isCompleted = status.includes('done') || status.includes('hoàn thành');
             if (!isCompleted) return;
 
             let taskMonth = -1;
@@ -219,14 +219,14 @@ const ChibiModule = {
     },
 
     isGearLocked: function(index, category) {
-        // Kiá»ƒm tra trang bá»‹ cÃ³ bá»‹ khÃ³a theo Level khÃ´ng
+        // Kiểm tra trang bị có bị khóa theo Level không
         if (typeof Auth === 'undefined' || !Auth.currentUser) return true;
         if (Auth.currentUser.role === 'admin') return false;
 
         const userLevel = Auth.currentUser.level || 1;
         const cat = category || ChibiModule.activeTab || 'gear';
         const reqs = ChibiModule.gearRequirements[cat];
-        if (!reqs || !reqs[index]) return false; // KhÃ´ng cÃ³ yÃªu cáº§u = luÃ´n má»Ÿ
+        if (!reqs || !reqs[index]) return false; // Không có yêu cầu = luôn mở
 
         return userLevel < reqs[index].requiredLevel;
     },
@@ -490,7 +490,7 @@ const ChibiModule = {
         // Read current user's profile and config
         const user = Auth.currentUser;
         if (!user) {
-            Utils.showToast("Báº¡n cáº§n Ä‘Äƒng nháº­p trÆ°á»›c!", "error");
+            Utils.showToast("Bạn cần đăng nhập trước!", "error");
             return;
         }
 
@@ -701,7 +701,7 @@ const ChibiModule = {
                 <!-- Header -->
                 <div style="padding: 16px 24px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.25);">
                     <h3 style="margin: 0; font-size: 18px; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; background: linear-gradient(135deg, #ec4899, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: flex; align-items: center; gap: 10px;">
-                        <i class="fa-solid fa-ghost"></i> Thiáº¿t Káº¿ Pet Chibi Avatar
+                        <i class="fa-solid fa-ghost"></i> Thiết Kế Pet Chibi Avatar
                     </h3>
                     <button onclick="ChibiModule.closeBuilder()" style="background: none; border: none; color: #64748b; cursor: pointer; font-size: 20px; transition: color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#64748b'">
                         <i class="fa-solid fa-times"></i>
@@ -721,10 +721,10 @@ const ChibiModule = {
                                     style="flex: 1; padding: 8px; font-weight: 800; border-radius: 8px;">
                                 <i class="fa-solid fa-mars"></i> NAM
                             </button>
-                            <button onclick="ChibiModule.currentConfig.gender='ná»¯'; ChibiModule.updatePreview(); this.parentNode.querySelectorAll('button').forEach(b=>b.classList.remove('active')); this.classList.add('active');" 
-                                    class="chibi-btn-outline ${ChibiModule.currentConfig.gender==='ná»¯'?'active':''}" 
+                            <button onclick="ChibiModule.currentConfig.gender='nữ'; ChibiModule.updatePreview(); this.parentNode.querySelectorAll('button').forEach(b=>b.classList.remove('active')); this.classList.add('active');" 
+                                    class="chibi-btn-outline ${ChibiModule.currentConfig.gender==='nữ'?'active':''}" 
                                     style="flex: 1; padding: 8px; font-weight: 800; border-radius: 8px;">
-                                <i class="fa-solid fa-venus"></i> Ná»®
+                                <i class="fa-solid fa-venus"></i> NỮ
                             </button>
                         </div>
 
@@ -735,13 +735,13 @@ const ChibiModule = {
                         <!-- Bounce dancing toggle -->
                         <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: #cbd5e1; font-weight: bold; background: rgba(255,255,255,0.05); padding: 8px 16px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.08); user-select: none;">
                             <input type="checkbox" id="chibi-dance-toggle" checked onchange="ChibiModule.updatePreview()" style="cursor: pointer; accent-color: #8b5cf6;">
-                            <span>ðŸ’ƒ Hiá»‡u á»©ng Animation VIP</span>
+                            <span>💃 Hiệu ứng Animation VIP</span>
                         </label>
                         
                         <!-- Mini controls -->
                         <div style="display: flex; gap: 10px; width: 100%;">
                             <button onclick="ChibiModule.randomizeBuilder()" class="chibi-btn-outline" style="flex: 1; padding: 10px; font-weight: bold; font-size: 13px; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid rgba(255,255,255,0.1); transition: all 0.2s;">
-                                <i class="fa-solid fa-dice"></i> Ngáº«u nhiÃªn
+                                <i class="fa-solid fa-dice"></i> Ngẫu nhiên
                             </button>
                             <button onclick="ChibiModule.resetBuilder()" class="chibi-btn-outline" style="flex: 1; padding: 10px; font-weight: bold; font-size: 13px; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid rgba(255,255,255,0.1); transition: all 0.2s;">
                                 <i class="fa-solid fa-arrow-rotate-left"></i> Reset
@@ -756,16 +756,16 @@ const ChibiModule = {
                         <div style="display: flex; flex-wrap: wrap; gap: 6px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 10px;" id="chibi-tabs-nav">
                             <button onclick="ChibiModule.switchTab('presets')" class="chibi-tab-btn" id="tab-presets"><i class="fa-solid fa-star"></i> SETs</button>
                             <button onclick="ChibiModule.switchTab('skin')" class="chibi-tab-btn active" id="tab-skin">Da</button>
-                            <button onclick="ChibiModule.switchTab('hair')" class="chibi-tab-btn" id="tab-hair">TÃ³c</button>
-                            <button onclick="ChibiModule.switchTab('eyes')" class="chibi-tab-btn" id="tab-eyes">Máº¯t</button>
-                            <button onclick="ChibiModule.switchTab('top')" class="chibi-tab-btn" id="tab-top">Ão</button>
-                            <button onclick="ChibiModule.switchTab('bottom')" class="chibi-tab-btn" id="tab-bottom">Quáº§n</button>
-                            <button onclick="ChibiModule.switchTab('shoe')" class="chibi-tab-btn" id="tab-shoe">GiÃ y</button>
-                            <button onclick="ChibiModule.switchTab('accessory')" class="chibi-tab-btn" id="tab-accessory">NÃ³n/KÃ­nh</button>
-                            <button onclick="ChibiModule.switchTab('gear')" class="chibi-tab-btn" id="tab-gear">VÅ© KhÃ­</button>
-                            <button onclick="ChibiModule.switchTab('aura')" class="chibi-tab-btn" id="tab-aura">VÃ²ng SÃ¡ng</button>
-                            <button onclick="ChibiModule.switchTab('wing')" class="chibi-tab-btn" id="tab-wing">CÃ¡nh</button>
-                            <button onclick="ChibiModule.switchTab('dragon')" class="chibi-tab-btn" id="tab-dragon">Linh ThÃº</button>
+                            <button onclick="ChibiModule.switchTab('hair')" class="chibi-tab-btn" id="tab-hair">Tóc</button>
+                            <button onclick="ChibiModule.switchTab('eyes')" class="chibi-tab-btn" id="tab-eyes">Mắt</button>
+                            <button onclick="ChibiModule.switchTab('top')" class="chibi-tab-btn" id="tab-top">Áo</button>
+                            <button onclick="ChibiModule.switchTab('bottom')" class="chibi-tab-btn" id="tab-bottom">Quần</button>
+                            <button onclick="ChibiModule.switchTab('shoe')" class="chibi-tab-btn" id="tab-shoe">Giày</button>
+                            <button onclick="ChibiModule.switchTab('accessory')" class="chibi-tab-btn" id="tab-accessory">Nón/Kính</button>
+                            <button onclick="ChibiModule.switchTab('gear')" class="chibi-tab-btn" id="tab-gear">Vũ Khí</button>
+                            <button onclick="ChibiModule.switchTab('aura')" class="chibi-tab-btn" id="tab-aura">Vòng Sáng</button>
+                            <button onclick="ChibiModule.switchTab('wing')" class="chibi-tab-btn" id="tab-wing">Cánh</button>
+                            <button onclick="ChibiModule.switchTab('dragon')" class="chibi-tab-btn" id="tab-dragon">Linh Thú</button>
                         </div>
 
                         <!-- Tab Content -->
@@ -778,13 +778,13 @@ const ChibiModule = {
                 <!-- Footer -->
                 <div style="padding: 16px 24px; border-top: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: flex-end; gap: 12px; background: rgba(0,0,0,0.25); align-items: center;">
                     <button onclick="Auth.openTitleSelector()" style="background: linear-gradient(135deg, #a855f7, #38bdf8); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.2s; box-shadow: 0 0 15px rgba(168,85,247,0.4); margin-right: auto;" onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 0 20px rgba(168,85,247,0.6)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 0 15px rgba(168,85,247,0.4)'">
-                        ðŸ·ï¸ Äá»”I DANH HIá»†U Láº¤P LÃNH
+                        🏷️ ĐỔI DANH HIỆU LẤP LÁNH
                     </button>
                     <button onclick="ChibiModule.closeBuilder()" style="background: rgba(255,255,255,0.04); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.1); padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.04)'">
-                        Há»¦Y Bá»Ž
+                        HỦY BỎ
                     </button>
                     <button onclick="ChibiModule.saveBuilder()" style="background: linear-gradient(135deg, #ec4899, #8b5cf6); color: #fff; border: none; padding: 10px 24px; border-radius: 8px; font-weight: 800; cursor: pointer; transition: all 0.2s; box-shadow: 0 0 15px rgba(236,72,153,0.4);" onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 0 20px rgba(236,72,153,0.6)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 0 15px rgba(236,72,153,0.4)'">
-                        ðŸ’¾ LÆ¯U AVATAR
+                        💾 LƯU AVATAR
                     </button>
                 </div>
             </div>
@@ -808,10 +808,10 @@ const ChibiModule = {
                     const miniSvg = ChibiModule.renderMiniOption(property, i);
                     const reqs = ChibiModule.gearRequirements[property];
                     const req = reqs ? reqs[i] : null;
-                    const lockInfo = locked && req ? `Cáº¥p ${req.requiredLevel}` : '';
+                    const lockInfo = locked && req ? `Cấp ${req.requiredLevel}` : '';
                     if (locked) {
                         return `
-                            <div class="chibi-item-card chibi-item-locked" onclick="ChibiModule.selectItem('${property}', ${i})" title="ðŸ”’ ${req ? req.label : ''} - YÃªu cáº§u ${lockInfo}">
+                            <div class="chibi-item-card chibi-item-locked" onclick="ChibiModule.selectItem('${property}', ${i})" title="🔒 ${req ? req.label : ''} - Yêu cầu ${lockInfo}">
                                 <div class="chibi-item-preview-wrap" style="transform: scale(${scale}); filter: grayscale(0.8) brightness(0.5);">
                                     ${miniSvg}
                                 </div>
@@ -841,17 +841,17 @@ const ChibiModule = {
      */
     renderTabs: function() {
         const tabs = [
-            { id: 'skin', label: 'ðŸŽ¨ CÆ¡ Thá»ƒ' },
-            { id: 'hair', label: 'ðŸ’‡ TÃ³c' },
-            { id: 'face', label: 'ðŸ˜Š KhuÃ´n Máº·t' },
-            { id: 'clothing', label: 'ðŸ‘• Quáº§n Ão' },
-            { id: 'accessory', label: 'ðŸ‘‘ Phá»¥ Kiá»‡n' },
-            { id: 'gear', label: 'âš”ï¸ VÅ© KhÃ­' },
-            { id: 'wing', label: 'ðŸ•Šï¸ CÃ¡nh' },
-            { id: 'mount', label: 'ðŸŽï¸ CÆ°á»¡i' },
-            { id: 'dragon', label: 'ðŸ‰ Rá»“ng' },
-            { id: 'aura', label: 'âœ¨ Hiá»‡u á»©ng' },
-            { id: 'presets', label: 'â­ Full SET' }
+            { id: 'skin', label: '🎨 Cơ Thể' },
+            { id: 'hair', label: '💇 Tóc' },
+            { id: 'face', label: '😊 Khuôn Mặt' },
+            { id: 'clothing', label: '👕 Quần Áo' },
+            { id: 'accessory', label: '👑 Phụ Kiện' },
+            { id: 'gear', label: '⚔️ Vũ Khí' },
+            { id: 'wing', label: '🕊️ Cánh' },
+            { id: 'mount', label: '🏎️ Cưỡi' },
+            { id: 'dragon', label: '🐉 Rồng' },
+            { id: 'aura', label: '✨ Hiệu ứng' },
+            { id: 'presets', label: '⭐ Full SET' }
         ];
 
         const nav = document.getElementById('chibi-tabs-nav');
@@ -881,22 +881,22 @@ const ChibiModule = {
             contentHtml = `
                 <div style="display: flex; flex-direction: column; gap: 16px;">
                     <div>
-                        <h4 style="margin: 0 0 8px 0; font-size: 13px; color: #94a3b8; text-transform: uppercase;">Giá»›i TÃ­nh (Gender)</h4>
+                        <h4 style="margin: 0 0 8px 0; font-size: 13px; color: #94a3b8; text-transform: uppercase;">Giới Tính (Gender)</h4>
                         <div style="display: flex; gap: 12px; margin-bottom: 16px;">
                             <button class="chibi-btn-outline ${ChibiModule.currentConfig.gender === 'nam' ? 'active' : ''}" 
                                     style="flex: 1; padding: 10px; font-weight: bold; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer;"
                                     onclick="ChibiModule.selectGender('nam')">
-                                â™‚ï¸ NAM
+                                ♂️ NAM
                             </button>
-                            <button class="chibi-btn-outline ${ChibiModule.currentConfig.gender === 'ná»¯' ? 'active' : ''}" 
+                            <button class="chibi-btn-outline ${ChibiModule.currentConfig.gender === 'nữ' ? 'active' : ''}" 
                                     style="flex: 1; padding: 10px; font-weight: bold; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer;"
-                                    onclick="ChibiModule.selectGender('ná»¯')">
-                                â™€ï¸ Ná»®
+                                    onclick="ChibiModule.selectGender('nữ')">
+                                ♀️ NỮ
                             </button>
                         </div>
                     </div>
                     <div>
-                        <h4 style="margin: 0 0 8px 0; font-size: 13px; color: #94a3b8; text-transform: uppercase;">Lá»±a Chá»n MÃ u Da</h4>
+                        <h4 style="margin: 0 0 8px 0; font-size: 13px; color: #94a3b8; text-transform: uppercase;">Lựa Chọn Màu Da</h4>
                         <div style="display: flex; flex-wrap: wrap; gap: 10px;">
                             ${ChibiModule.colors.skin.map((col, idx) => `
                                 <div class="chibi-color-circle ${ChibiModule.currentConfig.skinColor === col ? 'active' : ''}" 
@@ -906,7 +906,7 @@ const ChibiModule = {
                         </div>
                     </div>
                     <div style="margin-top: 10px; display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.02); padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
-                        <span style="font-size: 12px; font-weight: bold; color: #cbd5e1;">MÃ u TÃ¹y Chá»n:</span>
+                        <span style="font-size: 12px; font-weight: bold; color: #cbd5e1;">Màu Tùy Chọn:</span>
                         <input type="color" value="${ChibiModule.currentConfig.skinColor}" 
                                onchange="ChibiModule.selectColor('skinColor', this.value)" 
                                style="background: none; border: none; width: 40px; height: 30px; cursor: pointer; outline: none;">
@@ -920,7 +920,7 @@ const ChibiModule = {
             contentHtml = `
                 <div style="display: flex; flex-direction: column; gap: 16px;">
                     <div>
-                        <h4 style="margin: 0 0 10px 0; font-size: 13px; color: #94a3b8; text-transform: uppercase;">Kiá»ƒu TÃ³c</h4>
+                        <h4 style="margin: 0 0 10px 0; font-size: 13px; color: #94a3b8; text-transform: uppercase;">Kiểu Tóc</h4>
                         <div class="chibi-item-grid">
                             ${options.map(i => {
                                 const activeClass = ChibiModule.currentConfig.hairStyle === i ? 'active' : '';
@@ -930,7 +930,7 @@ const ChibiModule = {
                                         <div class="chibi-item-preview-wrap" style="transform: scale(1.15);">
                                             ${miniSvg}
                                         </div>
-                                        <span class="chibi-item-label">${i === 0 ? 'Trá»c' : 'TÃ³c ' + i}</span>
+                                        <span class="chibi-item-label">${i === 0 ? 'Trọc' : 'Tóc ' + i}</span>
                                     </div>
                                 `;
                             }).join('')}
@@ -938,7 +938,7 @@ const ChibiModule = {
                     </div>
                     <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.08); margin: 5px 0;">
                     <div>
-                        <h4 style="margin: 0 0 8px 0; font-size: 13px; color: #94a3b8; text-transform: uppercase;">MÃ u TÃ³c</h4>
+                        <h4 style="margin: 0 0 8px 0; font-size: 13px; color: #94a3b8; text-transform: uppercase;">Màu Tóc</h4>
                         <div style="display: flex; flex-wrap: wrap; gap: 10px;">
                             ${ChibiModule.colors.hair.map(col => `
                                 <div class="chibi-color-circle ${ChibiModule.currentConfig.hairColor === col ? 'active' : ''}" 
@@ -948,7 +948,7 @@ const ChibiModule = {
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.02); padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
-                        <span style="font-size: 12px; font-weight: bold; color: #cbd5e1;">MÃ u TÃ³c Tá»± Chá»n:</span>
+                        <span style="font-size: 12px; font-weight: bold; color: #cbd5e1;">Màu Tóc Tự Chọn:</span>
                         <input type="color" value="${ChibiModule.currentConfig.hairColor}" 
                                onchange="ChibiModule.selectColor('hairColor', this.value)" 
                                style="background: none; border: none; width: 40px; height: 30px; cursor: pointer; outline: none;">
@@ -963,7 +963,7 @@ const ChibiModule = {
             contentHtml = `
                 <div style="display: flex; flex-direction: column; gap: 20px;">
                     <div>
-                        <h4 style="margin: 0 0 10px 0; font-size: 13px; color: #94a3b8; text-transform: uppercase;">Kiá»ƒu Máº¯t</h4>
+                        <h4 style="margin: 0 0 10px 0; font-size: 13px; color: #94a3b8; text-transform: uppercase;">Kiểu Mắt</h4>
                         <div class="chibi-item-grid">
                             ${eyeOptions.map(i => {
                                 const activeClass = ChibiModule.currentConfig.eyeStyle === i ? 'active' : '';
@@ -973,7 +973,7 @@ const ChibiModule = {
                                         <div class="chibi-item-preview-wrap" style="transform: scale(1.6);">
                                             ${miniSvg}
                                         </div>
-                                        <span class="chibi-item-label">Máº¯t ${i + 1}</span>
+                                        <span class="chibi-item-label">Mắt ${i + 1}</span>
                                     </div>
                                 `;
                             }).join('')}
@@ -981,7 +981,7 @@ const ChibiModule = {
                     </div>
                     <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.08); margin: 5px 0;">
                     <div>
-                        <h4 style="margin: 0 0 10px 0; font-size: 13px; color: #94a3b8; text-transform: uppercase;">Kiá»ƒu Miá»‡ng</h4>
+                        <h4 style="margin: 0 0 10px 0; font-size: 13px; color: #94a3b8; text-transform: uppercase;">Kiểu Miệng</h4>
                         <div class="chibi-item-grid">
                             ${mouthOptions.map(i => {
                                 const activeClass = ChibiModule.currentConfig.mouthStyle === i ? 'active' : '';
@@ -991,7 +991,7 @@ const ChibiModule = {
                                         <div class="chibi-item-preview-wrap" style="transform: scale(1.8);">
                                             ${miniSvg}
                                         </div>
-                                        <span class="chibi-item-label">Miá»‡ng ${i + 1}</span>
+                                        <span class="chibi-item-label">Miệng ${i + 1}</span>
                                     </div>
                                 `;
                             }).join('')}
@@ -1006,12 +1006,12 @@ const ChibiModule = {
             const bottomOptions = Array.from({ length: ChibiModule.counts.bottom }, (_, i) => i);
             const shoeOptions = Array.from({ length: ChibiModule.counts.shoe }, (_, i) => i);
             const shoeNames = ['Chan tran', 'Sneaker Neon', 'Giay Tay Xin', 'Ung Cyber', 'Dep To Ong', 'Sandal Dao Pho', 'Giap Chan Titan', 'Hai Co Trang'];
-            const topNames = ['Máº·c Ä‘á»‹nh', 'Ão PhÃ´ng Neo', 'Vest CÃ´ng Sá»Ÿ', 'GiÃ¡p Cyber Titan', 'Ronin Kimono', 'Vest Äáº·c Nhiá»‡m', 'Hoodie Dáº¡o Phá»‘', 'Ão DÃ i HoÃ ng Gia ðŸ‡»ðŸ‡³', 'SiÃªu NhÃ¢n Hero', 'Shinobi ðŸ¥·', 'Tu SÄ© Rá»“ng', 'Phi CÃ´ng Tinh Há»‡']; 
+            const topNames = ['Mặc định', 'Áo Phông Neo', 'Vest Công Sở', 'Giáp Cyber Titan', 'Ronin Kimono', 'Vest Đặc Nhiệm', 'Hoodie Dạo Phố', 'Áo Dài Hoàng Gia 🇻🇳', 'Siêu Nhân Hero', 'Shinobi 🥷', 'Tu Sĩ Rồng', 'Phi Công Tinh Hệ']; 
 
             contentHtml = `
                 <div style="display: flex; flex-direction: column; gap: 20px;">
                     <div>
-                        <h4 style="margin: 0 0 10px 0; font-size: 13px; color: #94a3b8; text-transform: uppercase;">Kiá»ƒu Ão (Tops)</h4>
+                        <h4 style="margin: 0 0 10px 0; font-size: 13px; color: #94a3b8; text-transform: uppercase;">Kiểu Áo (Tops)</h4>
                         <div class="chibi-item-grid" style="margin-bottom: 12px;">
                             ${topOptions.map(i => {
                                 const activeClass = ChibiModule.currentConfig.topStyle === i ? 'active' : '';
@@ -1021,12 +1021,12 @@ const ChibiModule = {
                                         <div class="chibi-item-preview-wrap" style="transform: scale(1.3);">
                                             ${miniSvg}
                                         </div>
-                                        <span class="chibi-item-label">${topNames[i] || 'Ão ' + i}</span>
+                                        <span class="chibi-item-label">${topNames[i] || 'Áo ' + i}</span>
                                     </div>
                                 `;
                             }).join('')}
                         </div>
-                        <h5 style="margin: 8px 0 8px 0; font-size: 11px; color: #64748b; text-transform: uppercase;">MÃ u Ão</h5>
+                        <h5 style="margin: 8px 0 8px 0; font-size: 11px; color: #64748b; text-transform: uppercase;">Màu Áo</h5>
                         <div style="display: flex; flex-wrap: wrap; gap: 8px;">
                             ${ChibiModule.colors.clothing.map(col => `
                                 <div class="chibi-color-circle ${ChibiModule.currentConfig.topColor === col ? 'active' : ''}" 
@@ -1042,10 +1042,10 @@ const ChibiModule = {
                     <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.08); margin: 5px 0;">
 
                     <div>
-                        <h4 style="margin: 0 0 10px 0; font-size: 13px; color: #94a3b8; text-transform: uppercase;">Kiá»ƒu Quáº§n / VÃ¡y (Bottoms)</h4>
+                        <h4 style="margin: 0 0 10px 0; font-size: 13px; color: #94a3b8; text-transform: uppercase;">Kiểu Quần / Váy (Bottoms)</h4>
                         <div class="chibi-item-grid" style="margin-bottom: 12px;">
                             ${bottomOptions.map(i => {
-                                const bottomNames = ['Máº·c Ä‘á»‹nh', 'Quáº§n TÃ¢y', 'VÃ¡y Xáº¿p Ly', 'Quáº§n Short', 'Quáº§n Jogger', 'GiÃ¡p ChÃ¢n Cyber', 'Tech-Cargo', 'Hakama VÃµ SÄ©', 'Quáº§n Váº£y Rá»“ng'];
+                                const bottomNames = ['Mặc định', 'Quần Tây', 'Váy Xếp Ly', 'Quần Short', 'Quần Jogger', 'Giáp Chân Cyber', 'Tech-Cargo', 'Hakama Võ Sĩ', 'Quần Vảy Rồng'];
                                 const activeClass = ChibiModule.currentConfig.bottomStyle === i ? 'active' : '';
                                 const miniSvg = ChibiModule.renderMiniOption('bottom', i, ChibiModule.currentConfig.bottomColor);
                                 return `
@@ -1053,12 +1053,12 @@ const ChibiModule = {
                                         <div class="chibi-item-preview-wrap" style="transform: scale(1.35);">
                                             ${miniSvg}
                                         </div>
-                                        <span class="chibi-item-label">${bottomNames[i] || 'Quáº§n ' + i}</span>
+                                        <span class="chibi-item-label">${bottomNames[i] || 'Quần ' + i}</span>
                                     </div>
                                 `;
                             }).join('')}
                         </div>
-                        <h5 style="margin: 8px 0 8px 0; font-size: 11px; color: #64748b; text-transform: uppercase;">MÃ u Quáº§n</h5>
+                        <h5 style="margin: 8px 0 8px 0; font-size: 11px; color: #64748b; text-transform: uppercase;">Màu Quần</h5>
                         <div style="display: flex; flex-wrap: wrap; gap: 8px;">
                             ${ChibiModule.colors.clothing.map(col => `
                                 <div class="chibi-color-circle ${ChibiModule.currentConfig.bottomColor === col ? 'active' : ''}" 
@@ -1074,7 +1074,7 @@ const ChibiModule = {
                     <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.08); margin: 5px 0;">
 
                     <div>
-                        <h4 style="margin: 0 0 10px 0; font-size: 13px; color: #94a3b8; text-transform: uppercase;">Kiá»ƒu GiÃ y (Shoes)</h4>
+                        <h4 style="margin: 0 0 10px 0; font-size: 13px; color: #94a3b8; text-transform: uppercase;">Kiểu Giày (Shoes)</h4>
                         <div class="chibi-item-grid" style="margin-bottom: 12px;">
                             ${shoeOptions.map(i => {
                                 const activeClass = ChibiModule.currentConfig.shoeStyle === i ? 'active' : '';
@@ -1089,7 +1089,7 @@ const ChibiModule = {
                                 `;
                             }).join('')}
                         </div>
-                        <h5 style="margin: 8px 0 8px 0; font-size: 11px; color: #64748b; text-transform: uppercase;">MÃ u GiÃ y</h5>
+                        <h5 style="margin: 8px 0 8px 0; font-size: 11px; color: #64748b; text-transform: uppercase;">Màu Giày</h5>
                         <div style="display: flex; flex-wrap: wrap; gap: 8px;">
                             ${ChibiModule.colors.clothing.map(col => `
                                 <div class="chibi-color-circle ${ChibiModule.currentConfig.shoeColor === col ? 'active' : ''}" 
@@ -1106,32 +1106,32 @@ const ChibiModule = {
         } 
         else if (tabId === 'accessory') {
             const options = Array.from({ length: ChibiModule.counts.accessory }, (_, i) => i);
-            const accNames = ['Trá»‘ng', 'KÃ­nh rÃ¢m Neon', 'MÃ¨o Tháº§n TÃ i', 'Tai nghe Gaming', 'VÃ²ng thiÃªn sá»©', 'VÆ°Æ¡ng miá»‡n VÃ ng', 'Kháº©u trang Ninja', 'Äáº§u báº¿p Master', 'Bá»‹t máº¯t Háº£i táº·c', 'NÆ¡ Há»“ng', 'XÄƒm KÃ­n NgÆ°á»i', 'MÅ© Cá»‘i VIP ðŸ‡»ðŸ‡³', 'NÃ³n LÃ¡ Váº¡n XuÃ¢n ðŸ‡»ðŸ‡³', 'KhÄƒn Ráº±n Nam Bá»™ ðŸ‡»ðŸ‡³', 'KhÄƒn ÄÃ³ng Cung ÄÃ¬nh ðŸ‡»ðŸ‡³'];
+            const accNames = ['Trống', 'Kính râm Neon', 'Mèo Thần Tài', 'Tai nghe Gaming', 'Vòng thiên sứ', 'Vương miện Vàng', 'Khẩu trang Ninja', 'Đầu bếp Master', 'Bịt mắt Hải tặc', 'Nơ Hồng', 'Xăm Kín Người', 'Mũ Cối VIP 🇻🇳', 'Nón Lá Vạn Xuân 🇻🇳', 'Khăn Rằn Nam Bộ 🇻🇳', 'Khăn Đóng Cung Đình 🇻🇳'];
             contentHtml = ChibiModule.renderGrid('accessory', options, accNames, 1.15);
         }
         else if (tabId === 'gear') {
             const options = Array.from({ length: ChibiModule.counts.gear }, (_, i) => i);
-            const gearNames = ['Trá»‘ng', 'Äáº¡i Äao Lá»­a', 'SÃºng VÃ´ Cá»±c', 'Kiáº¿m Cyber', 'ThÆ°Æ¡ng Heo Tá»™c', 'DÃ©p Tá»• Ong', 'Chá»•i Tre PhÃ¡p SÆ°', 'Muá»—ng MÃ¬ Tháº§n ThÃ¡nh', 'Gáº­y Selfie', 'Cá» LÃª Äiá»‡n', 'CÃ¢y Lau NhÃ ', 'NÃ³n LÃ¡ Phi TiÃªu', 'Vá»£t Muá»—i Äiá»‡n', 'Gháº¿ Äá» Quyá»n Lá»±c', 'Quáº¡t TrÃºc', 'Lá»“ng ÄÃ¨n Há»™i An', 'GÃ¡nh HÃ ng Rong', 'BÃ¡nh MÃ¬ SÃ i GÃ²n', 'CÃ  PhÃª Phin', 'ÄÃ´i DÃ©p Tráº¯ng'];
+            const gearNames = ['Trống', 'Đại Đao Lửa', 'Súng Vô Cực', 'Kiếm Cyber', 'Thương Heo Tộc', 'Dép Tổ Ong', 'Chổi Tre Pháp Sư', 'Muỗng Mì Thần Thánh', 'Gậy Selfie', 'Cờ Lê Điện', 'Cây Lau Nhà', 'Nón Lá Phi Tiêu', 'Vợt Muỗi Điện', 'Ghế Đỏ Quyền Lực', 'Quạt Trúc', 'Lồng Đèn Hội An', 'Gánh Hàng Rong', 'Bánh Mì Sài Gòn', 'Cà Phê Phin', 'Đôi Dép Trắng'];
             contentHtml = ChibiModule.renderGrid('gear', options, gearNames, 1.25);
         }
         else if (tabId === 'wing') {
             const options = Array.from({ length: ChibiModule.counts.wing }, (_, i) => i);
-            const wingNames = ['Trá»‘ng', 'CÃ¡nh ThiÃªn Tháº§n', 'CÃ¡nh Ãc Quá»·', 'ThiÃªn Tháº§n VIP', 'CÃ¡nh BÆ°á»›m Pha LÃª', 'PhÆ°á»£ng HoÃ ng Lá»­a', 'DÆ¡i Háº¯c Ãm', 'BÄƒng Tuyáº¿t VÄ©nh Cá»­u'];
+            const wingNames = ['Trống', 'Cánh Thiên Thần', 'Cánh Ác Quỷ', 'Thiên Thần VIP', 'Cánh Bướm Pha Lê', 'Phượng Hoàng Lửa', 'Dơi Hắc Ám', 'Băng Tuyết Vĩnh Cửu'];
             contentHtml = ChibiModule.renderGrid('wing', options, wingNames, 1.1);
         }
         else if (tabId === 'mount') {
             const options = Array.from({ length: ChibiModule.counts.mount + 1 }, (_, i) => i);
-            const mountNames = ['Äi bá»™', 'SiÃªu Xe X-200', 'MÃ´ TÃ´ Ãnh SÃ¡ng', 'Há»“ng Háº¡c Floatie', 'Xe Dream Neon ðŸ‡»ðŸ‡³', 'VÃ¡n Bay Hover', 'Vespa Classique'];
+            const mountNames = ['Đi bộ', 'Siêu Xe X-200', 'Mô Tô Ánh Sáng', 'Hồng Hạc Floatie', 'Xe Dream Neon 🇻🇳', 'Ván Bay Hover', 'Vespa Classique'];
             contentHtml = ChibiModule.renderGrid('mount', options, mountNames, 1.0);
         }
         else if (tabId === 'dragon') {
             const options = Array.from({ length: ChibiModule.counts.dragon + 1 }, (_, i) => i);
-            const dragonNames = ['Trá»‘ng', 'Lam Long Neon', 'XÃ­ch Long Há»a', 'HoÃ ng Long Kim', 'Lá»¥c Long Má»™c', 'Háº¯c Long áº¢nh'];
+            const dragonNames = ['Trống', 'Lam Long Neon', 'Xích Long Hỏa', 'Hoàng Long Kim', 'Lục Long Mộc', 'Hắc Long Ảnh'];
             contentHtml = ChibiModule.renderGrid('dragon', options, dragonNames, 0.9);
         }
         else if (tabId === 'aura') {
             const options = Array.from({ length: ChibiModule.counts.aura + 1 }, (_, i) => i);
-            const labels = ['KhÃ´ng', 'Neon Ring', 'Magic Rune', 'Fire Aura', 'Blood Ritual', 'Zen Circle', 'Void Aura', 'Ethereal Mist'];
+            const labels = ['Không', 'Neon Ring', 'Magic Rune', 'Fire Aura', 'Blood Ritual', 'Zen Circle', 'Void Aura', 'Ethereal Mist'];
             contentHtml = ChibiModule.renderGrid('aura', options, labels);
         }
         else if (tabId === 'presets') {
@@ -1140,16 +1140,16 @@ const ChibiModule = {
                 <div style="display: flex; flex-direction: column; gap: 15px;">
                     <div style="background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.2); padding: 12px; border-radius: 10px; margin-bottom: 5px;">
                         <span style="color: #fbbf24; font-size: 13px; font-weight: bold; display: flex; align-items: center; gap: 8px;">
-                            <i class="fa-solid fa-star"></i> CHá»ŒN TRANG PHá»¤C THEO Bá»˜
+                            <i class="fa-solid fa-star"></i> CHỌN TRANG PHỤC THEO BỘ
                         </span>
-                        <p style="margin: 5px 0 0 0; font-size: 11px; color: #94a3b8;">Trang bá»‹ Ä‘á»“ng bá»™ toÃ n bá»™ tá»« TÃ³c, Quáº§n Ão Ä‘áº¿n Rá»“ng vÃ  VÅ© KhÃ­.</p>
+                        <p style="margin: 5px 0 0 0; font-size: 11px; color: #94a3b8;">Trang bị đồng bộ toàn bộ từ Tóc, Quần Áo đến Rồng và Vũ Khí.</p>
                     </div>
                     <div style="display: flex; flex-direction: column; gap: 10px;">
                         ${ChibiModule.presets.map(set => `
                             <div class="chibi-preset-card" onclick="ChibiModule.applyPreset('${set.id}')"
                                  style="background: rgba(255,255,255,0.03); border: 1.5px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 12px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 15px;">
                                 <div style="width: 40px; height: 40px; background: rgba(139, 92, 246, 0.2); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px;">
-                                    ${set.id.includes('cyber') ? 'ðŸ¤–' : set.id.includes('samurai') ? 'âš”ï¸' : set.id.includes('to-ong') ? 'ðŸ¯' : set.id.includes('reaper') ? 'ðŸ’€' : 'ðŸ˜‡'}
+                                    ${set.id.includes('cyber') ? '🤖' : set.id.includes('samurai') ? '⚔️' : set.id.includes('to-ong') ? '🍯' : set.id.includes('reaper') ? '💀' : '😇'}
                                 </div>
                                 <div style="flex: 1;">
                                     <div style="font-weight: 900; font-size: 14px; color: #fff;">${set.name}</div>
@@ -1208,8 +1208,8 @@ const ChibiModule = {
             const reqs = ChibiModule.gearRequirements[property];
             const req = reqs ? reqs[index] : null;
             const userLevel = Auth.currentUser?.level || 1;
-            Utils.showToast(`ðŸ”’ Trang bá»‹ "${req ? req.label : ''}" yÃªu cáº§u Cáº¥p ${req ? req.requiredLevel : '?'}! (Báº¡n Ä‘ang Cáº¥p ${userLevel}). CÃ y nhiá»‡m vá»¥ Ä‘á»ƒ lÃªn cáº¥p nÃ o!`, "info");
-            return; // KhÃ´ng cho chá»n trang bá»‹ bá»‹ khÃ³a
+            Utils.showToast(`🔒 Trang bị "${req ? req.label : ''}" yêu cầu Cấp ${req ? req.requiredLevel : '?'}! (Bạn đang Cấp ${userLevel}). Cày nhiệm vụ để lên cấp nào!`, "info");
+            return; // Không cho chọn trang bị bị khóa
         }
         ChibiModule.currentConfig[property] = index;
         ChibiModule.updatePreview();
@@ -1226,7 +1226,7 @@ const ChibiModule = {
     },
 
     /**
-     * Choose gender (nam/ná»¯)
+     * Choose gender (nam/nữ)
      */
     selectGender: function(gender) {
         ChibiModule.currentConfig.gender = gender;
@@ -1285,11 +1285,11 @@ const ChibiModule = {
 
         ChibiModule.updatePreview();
         ChibiModule.switchTab(ChibiModule.activeTab);
-        Utils.showToast("ÄÃ£ khÃ´i phá»¥c thiáº¿t káº¿ ban Ä‘áº§u!", "success");
+        Utils.showToast("Đã khôi phục thiết kế ban đầu!", "success");
     },
 
     /**
-     * Generate cohesive beautiful random Chibi config (chá»‰ chá»n tá»« trang bá»‹ Ä‘Ã£ má»Ÿ khÃ³a)
+     * Generate cohesive beautiful random Chibi config (chỉ chọn từ trang bị đã mở khóa)
      */
     randomizeBuilder: function() {
         // Grab a random item from array
@@ -1303,7 +1303,7 @@ const ChibiModule = {
         const randomClothing2 = randItem(ChibiModule.colors.clothing);
         const randomClothing3 = randItem(ChibiModule.colors.clothing);
 
-        // Helper: lá»c chá»‰ láº¥y trang bá»‹ Ä‘Ã£ má»Ÿ khÃ³a cho 1 category
+        // Helper: lọc chỉ lấy trang bị đã mở khóa cho 1 category
         const getUnlocked = (category, maxCount) => {
             return Array.from({ length: maxCount }, (_, i) => i)
                 .filter(i => !ChibiModule.isGearLocked(i, category));
@@ -1317,7 +1317,7 @@ const ChibiModule = {
         const unlockedDragon = getUnlocked('dragon', ChibiModule.counts.dragon + 1);
 
         ChibiModule.currentConfig = {
-            gender: Math.random() > 0.5 ? 'nam' : 'ná»¯',
+            gender: Math.random() > 0.5 ? 'nam' : 'nữ',
             skinColor: randomSkin,
             hairStyle: randStyle(ChibiModule.counts.hair - 1) + 1,
             hairColor: randomHair,
@@ -1338,7 +1338,7 @@ const ChibiModule = {
 
         ChibiModule.updatePreview();
         ChibiModule.switchTab(ChibiModule.activeTab);
-        Utils.showToast("ðŸŽ² BÃ¹m! Má»™t bÃ© Chibi siÃªu dá»… thÆ°Æ¡ng Ä‘Ã£ xuáº¥t hiá»‡n!", "success");
+        Utils.showToast("🎲 Bùm! Một bé Chibi siêu dễ thương đã xuất hiện!", "success");
     },
 
     /**
@@ -1362,7 +1362,7 @@ const ChibiModule = {
         const user = Auth.currentUser;
         if (!user) return;
 
-        // Kiá»ƒm tra táº¥t cáº£ trang bá»‹ Ä‘ang máº·c cÃ³ bá»‹ khÃ³a khÃ´ng
+        // Kiểm tra tất cả trang bị đang mặc có bị khóa không
         const lockCategories = ['gear', 'mount', 'wing', 'dragon', 'accessory'];
         for (const cat of lockCategories) {
             const itemIndex = ChibiModule.currentConfig[cat];
@@ -1370,7 +1370,7 @@ const ChibiModule = {
                 const reqs = ChibiModule.gearRequirements[cat];
                 const req = reqs ? reqs[itemIndex] : null;
                 const userLevel = Auth.currentUser?.level || 1;
-                Utils.showToast(`ðŸ”’ KhÃ´ng thá»ƒ lÆ°u! Trang bá»‹ "${req ? req.label : ''}" yÃªu cáº§u Cáº¥p ${req ? req.requiredLevel : '?'}! (Báº¡n Ä‘ang Cáº¥p ${userLevel})`, "error");
+                Utils.showToast(`🔒 Không thể lưu! Trang bị "${req ? req.label : ''}" yêu cầu Cấp ${req ? req.requiredLevel : '?'}! (Bạn đang Cấp ${userLevel})`, "error");
                 return;
             }
         }
@@ -1389,12 +1389,12 @@ const ChibiModule = {
                 await Auth.saveAccounts(accounts);
             }
             
-            Utils.showToast("ðŸŽ‰ Thiáº¿t káº¿ Chibi V5 Ä‘Ã£ Ä‘Æ°á»£c lÆ°u thÃ nh cÃ´ng!", "success");
+            Utils.showToast("🎉 Thiết kế Chibi V5 đã được lưu thành công!", "success");
             ChibiModule.closeBuilder();
             Auth.showApp();
         } catch (e) {
             console.error("Error saving chibi:", e);
-            Utils.showToast("CÃ³ lá»—i xáº£y ra khi lÆ°u Chibi!", "error");
+            Utils.showToast("Có lỗi xảy ra khi lưu Chibi!", "error");
         }
     }
 };
