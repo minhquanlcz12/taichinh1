@@ -518,6 +518,11 @@ window.LobbyNeon = {
 
     renderQuestNPC: () => {
         console.log("LobbyNeon.renderQuestNPC starting...");
+        if (typeof ChibiModule === 'undefined') {
+            console.warn('ChibiModule not loaded yet, retrying renderQuestNPC in 1s...');
+            setTimeout(() => LobbyNeon.renderQuestNPC(), 1000);
+            return;
+        }
         const map = document.getElementById('lobby-map');
         if (!map) {
             console.error("NPC Error: lobby-map not found");
@@ -580,6 +585,11 @@ window.LobbyNeon = {
 
     renderLeaderboardMonument: () => {
         console.log("LobbyNeon.renderLeaderboardMonument starting...");
+        if (typeof ChibiModule === 'undefined') {
+            console.warn('ChibiModule not loaded yet, retrying renderLeaderboardMonument in 1s...');
+            setTimeout(() => LobbyNeon.renderLeaderboardMonument(), 1000);
+            return;
+        }
         const map = document.getElementById('lobby-map');
         if (!map) {
             console.error("Monument Error: lobby-map not found");
@@ -643,6 +653,11 @@ window.LobbyNeon = {
 
     renderFashionNPC: () => {
         console.log("LobbyNeon.renderFashionNPC starting...");
+        if (typeof ChibiModule === 'undefined') {
+            console.warn('ChibiModule not loaded yet, retrying renderFashionNPC in 1s...');
+            setTimeout(() => LobbyNeon.renderFashionNPC(), 1000);
+            return;
+        }
         const map = document.getElementById('lobby-map');
         if (!map) {
             console.error("NPC Error: lobby-map not found");
@@ -660,7 +675,7 @@ window.LobbyNeon = {
             el.style.cursor = 'help';
             el.onclick = (e) => {
                 e.stopPropagation();
-                ChibiModule.openBuilder();
+                if (typeof ChibiModule !== 'undefined') ChibiModule.openBuilder();
                 LobbyNeon.triggerFashionNpcDialogue(true);
             };
             map.appendChild(el);
@@ -809,7 +824,7 @@ window.LobbyNeon = {
             const dyFs = y - LobbyNeon.state.fashionNpcPos.y;
             const distFs = Math.sqrt(dxFs*dxFs + dyFs*dyFs);
             if (distFs < 80) {
-                ChibiModule.openBuilder();
+                if (typeof ChibiModule !== 'undefined') ChibiModule.openBuilder();
                 LobbyNeon.triggerFashionNpcDialogue(true);
                 return;
             } else if (distFs < 180) {
@@ -1916,12 +1931,27 @@ window.LobbyNeon = {
                             }
 
                             const displayName = Utils.getUserDisplayName(u.username);
+
+                            // Render chibi avatar cho mỗi người chơi
+                            let chibiHtml = '';
+                            try {
+                                const acc = accounts.find(a => a.username === u.username);
+                                const chibiConfig = acc?.profile?.chibiConfig || {};
+                                chibiHtml = ChibiModule.renderChibiSVG(chibiConfig, false, 0);
+                            } catch(e) {
+                                chibiHtml = '<div style="font-size: 30px;">👤</div>';
+                            }
                             
                             return `
                                 <div style="display: flex; align-items: center; padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); background: ${rowBg}; border-radius: 8px; margin-bottom: 8px; border: 1px solid ${i < 3 ? 'rgba(255,255,255,0.05)' : 'transparent'};">
                                     <!-- Hạng và Icon -->
-                                    <div style="width: 40px; font-weight: 900; color: ${rankColor}; font-size: 18px; display: flex; align-items: center; gap: 4px;">
+                                    <div style="width: 35px; font-weight: 900; color: ${rankColor}; font-size: 18px; display: flex; align-items: center; flex-shrink: 0;">
                                         ${icon}
+                                    </div>
+
+                                    <!-- Chibi Avatar -->
+                                    <div style="width: 50px; height: 50px; flex-shrink: 0; margin-right: 12px; filter: drop-shadow(0 0 6px ${rankColor}40); display: flex; align-items: center; justify-content: center;">
+                                        ${chibiHtml}
                                     </div>
                                     
                                     <!-- Thông tin nhân sĩ -->
