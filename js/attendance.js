@@ -3,6 +3,9 @@ const Attendance = {
     DEADLINE_HOURS: 8,
     DEADLINE_MINUTES: 30,
 
+    selectedMonth: new Date().getMonth(),
+    selectedYear: new Date().getFullYear(),
+
     init: () => {
         // Chỉ render khi người dùng click vào tab chấm công (hoặc init lần đầu nếu cần)
     },
@@ -442,16 +445,20 @@ const Attendance = {
         const allLeaves = await Attendance.loadLeaveData();
         const allLates = await Attendance.loadLateRequests();
         
-        // Phân nhóm theo User và Tháng hiện tại
+        // Phân nhóm theo User và Tháng đã chọn
         const now = new Date();
-        const currentYear = now.getFullYear();
-        const currentMonth = now.getMonth();
-        const currentMonthPrefix = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
+        const selYear = Attendance.selectedYear;
+        const selMonth = Attendance.selectedMonth;
+        const currentMonthPrefix = `${selYear}-${String(selMonth + 1).padStart(2, '0')}`;
         
         // Tính số ngày làm việc đã qua trong tháng (Loại trừ Chủ nhật)
+        const isCurrentMonth = (selYear === now.getFullYear() && selMonth === now.getMonth());
+        const daysInMonth = new Date(selYear, selMonth + 1, 0).getDate();
+        const endDay = isCurrentMonth ? now.getDate() : daysInMonth;
+
         let passedWorkingDays = 0;
-        for (let day = 1; day <= now.getDate(); day++) {
-             let d = new Date(currentYear, currentMonth, day);
+        for (let day = 1; day <= endDay; day++) {
+             let d = new Date(selYear, selMonth, day);
              if (d.getDay() !== 0) passedWorkingDays++;
         }
 
@@ -494,9 +501,21 @@ const Attendance = {
         let adminHtml = `
             <div class="glass-panel admin-cyber-box" style="padding: 24px; border: 1px solid rgba(100, 255, 218, 0.5); box-shadow: 0 0 10px rgba(100, 255, 218, 0.1);">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
-                    <h2 style="color: var(--primary); font-size: 18px; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; margin: 0;">
-                        <i class="fa-solid fa-list-check"></i> Tổng hợp Chấm Công (Tháng ${now.getMonth() + 1}/${now.getFullYear()})
-                    </h2>
+                    <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                        <h2 style="color: var(--primary); font-size: 18px; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; margin: 0;">
+                            <i class="fa-solid fa-list-check"></i> Tổng hợp Chấm Công
+                        </h2>
+                        
+                        <div style="display: flex; gap: 8px; background: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+                            <select onchange="Attendance.handleMonthYearChange(this.value, 'month')" style="background: none; border: none; color: #fff; font-size: 14px; cursor: pointer; outline: none; padding: 2px;">
+                                ${Array.from({length: 12}, (_, i) => `<option value="${i}" ${selMonth === i ? 'selected' : ''} style="background: #1a1a2e;">Tháng ${i + 1}</option>`).join('')}
+                            </select>
+                            <select onchange="Attendance.handleMonthYearChange(this.value, 'year')" style="background: none; border: none; color: #fff; font-size: 14px; cursor: pointer; outline: none; padding: 2px;">
+                                ${[now.getFullYear(), now.getFullYear() - 1].map(y => `<option value="${y}" ${selYear === y ? 'selected' : ''} style="background: #1a1a2e;">${y}</option>`).join('')}
+                            </select>
+                        </div>
+                    </div>
+
                     <div style="display: flex; gap: 8px;">
                         <button class="btn btn-outline" style="border-color: var(--primary); color: var(--primary); display: inline-flex; align-items: center; gap: 6px;" onclick="Attendance.showLateConfigModal()"><i class="fa-solid fa-gears"></i> Luật Đi Trễ</button>
                         <button class="btn btn-success" onclick="Attendance.exportAttendanceCSV()"><i class="fa-solid fa-file-excel" style="margin-right: 6px;"></i> Excel</button>
@@ -1058,18 +1077,31 @@ const Attendance = {
         }
     },
 
+    handleMonthYearChange: (value, type) => {
+        if (type === 'month') {
+            Attendance.selectedMonth = parseInt(value);
+        } else {
+            Attendance.selectedYear = parseInt(value);
+        }
+        Attendance.render();
+    },
+
     exportAttendanceCSV: async () => {
         const allData = await Attendance.loadData();
         const allLeaves = await Attendance.loadLeaveData();
         
         const now = new Date();
-        const currentYear = now.getFullYear();
-        const currentMonth = now.getMonth();
-        const currentMonthPrefix = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
+        const selYear = Attendance.selectedYear;
+        const selMonth = Attendance.selectedMonth;
+        const currentMonthPrefix = `${selYear}-${String(selMonth + 1).padStart(2, '0')}`;
         
+        const isCurrentMonth = (selYear === now.getFullYear() && selMonth === now.getMonth());
+        const daysInMonth = new Date(selYear, selMonth + 1, 0).getDate();
+        const endDay = isCurrentMonth ? now.getDate() : daysInMonth;
+
         let passedWorkingDays = 0;
-        for (let day = 1; day <= now.getDate(); day++) {
-             let d = new Date(currentYear, currentMonth, day);
+        for (let day = 1; day <= endDay; day++) {
+             let d = new Date(selYear, selMonth, day);
              if (d.getDay() !== 0) passedWorkingDays++;
         }
 
@@ -1118,7 +1150,7 @@ const Attendance = {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.setAttribute('href', url);
-        a.setAttribute('download', `Bang_Cham_Cong_Thang_${currentMonth + 1}_${currentYear}.csv`);
+        a.setAttribute('download', `Bang_Cham_Cong_Thang_${selMonth + 1}_${selYear}.csv`);
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -1496,13 +1528,17 @@ const Attendance = {
         const allLeaves = await Attendance.loadLeaveData();
         
         const now = new Date();
-        const currentYear = now.getFullYear();
-        const currentMonth = now.getMonth();
-        const currentMonthPrefix = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
+        const selYear = Attendance.selectedYear;
+        const selMonth = Attendance.selectedMonth;
+        const currentMonthPrefix = `${selYear}-${String(selMonth + 1).padStart(2, '0')}`;
         
+        const isCurrentMonth = (selYear === now.getFullYear() && selMonth === now.getMonth());
+        const daysInMonth = new Date(selYear, selMonth + 1, 0).getDate();
+        const endDay = isCurrentMonth ? now.getDate() : daysInMonth;
+
         let passedWorkingDays = 0;
-        for (let day = 1; day <= now.getDate(); day++) {
-             let d = new Date(currentYear, currentMonth, day);
+        for (let day = 1; day <= endDay; day++) {
+             let d = new Date(selYear, selMonth, day);
              if (d.getDay() !== 0) passedWorkingDays++;
         }
 
@@ -1568,7 +1604,7 @@ const Attendance = {
             <div style="text-align:center;margin-bottom:30px;border-bottom:2px solid #da251d;padding-bottom:20px;">
                 <h1 style="color:#da251d;margin-bottom:5px;">THANH LONG WORK</h1>
                 <h3>BẢNG TỔNG HỢP CHẤM CÔNG NHÂN SỰ</h3>
-                <p>Tháng ${now.getMonth() + 1}/${now.getFullYear()} &bull; Ngày xuất: ${now.toLocaleDateString('vi-VN')}</p>
+                <p>Tháng ${selMonth + 1}/${selYear} &bull; Ngày xuất: ${now.toLocaleDateString('vi-VN')}</p>
             </div>
             
             <table style="width:100%;border-collapse:collapse;margin-bottom:40px;font-size:12px;">
@@ -1605,7 +1641,7 @@ const Attendance = {
 
         html2pdf().set({
             margin: 0.5,
-            filename: `TongHop_ChamCong_T${now.getMonth() + 1}_${now.getFullYear()}.pdf`,
+            filename: `TongHop_ChamCong_T${selMonth + 1}_${selYear}.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2 },
             jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
