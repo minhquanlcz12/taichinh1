@@ -1546,8 +1546,6 @@ const app = {
         } else {
             maintenanceOverlay.style.display = 'none';
         }
-    },
-
     }
 };
 
