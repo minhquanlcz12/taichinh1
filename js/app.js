@@ -1548,17 +1548,6 @@ const app = {
         }
     },
 
-    showAdminBypass: (e) => {
-        if (e) {
-            if (typeof e.preventDefault === 'function') e.preventDefault();
-        }
-        const maintenanceOverlay = document.getElementById('maintenance-overlay');
-        if (maintenanceOverlay) {
-            maintenanceOverlay.style.display = 'none';
-        }
-        if (typeof Auth !== 'undefined') {
-            Auth.showLogin();
-        }
     }
 };
 
