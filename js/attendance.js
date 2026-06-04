@@ -263,20 +263,25 @@ const Attendance = {
         // Tính lương tạm tính cho user
         let salaryPreviewHtml = '';
         try {
-            const estSalary = await PayrollModule.calculateUserSalary(user.username, new Date().toISOString().slice(0, 7));
-            const now2 = new Date();
-            const workingDaysInMonth = PayrollModule.getWorkingDaysInMonth(now2.getFullYear(), now2.getMonth());
-            const passedWorkDays = PayrollModule.getWorkedWorkingDays(now2.getFullYear(), now2.getMonth());
+            const currentMonthStr = PayrollModule.getCurrentCycleMonthStr(new Date());
+            const estSalary = await PayrollModule.calculateUserSalary(user.username, currentMonthStr);
+            const cycle = PayrollModule.getCycleRange(currentMonthStr);
+            const workingDaysInCycle = PayrollModule.getWorkingDaysInCycle(cycle.startDate, cycle.endDate);
+            const passedWorkDays = PayrollModule.getWorkedWorkingDaysInCycle(cycle.startDate, cycle.endDate);
+            const formattedStart = cycle.startStr.split('-').slice(1).reverse().join('/'); // DD/MM
+            const formattedEnd = cycle.endStr.split('-').slice(1).reverse().join('/'); // DD/MM
             salaryPreviewHtml = `
                 <div class="glass-card" style="margin-bottom: 20px; padding: 16px; border-color: rgba(46,204,113,0.2); background: rgba(46,204,113,0.03);">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div>
-                            <div style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;"><i class="fa-solid fa-coins" style="color:var(--success); margin-right: 5px;"></i>Lương Tạm Tính (T/Này)</div>
+                            <div style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">
+                                <i class="fa-solid fa-coins" style="color:var(--success); margin-right: 5px;"></i>Lương Tạm Tính (Kỳ ${formattedStart} - ${formattedEnd})
+                            </div>
                             <div style="font-size: 26px; font-weight: 900; color: var(--success);">${Utils.formatCurrency(estSalary)}</div>
                         </div>
                         <div style="text-align: right; font-size: 12px; color: var(--text-secondary);">
-                            <div><i class="fa-solid fa-calendar-days" style="color: var(--primary); margin-right: 4px;"></i>${passedWorkDays} / ${workingDaysInMonth} ngày công</div>
-                        <div style="margin-top: 4px; font-size: 10px; color: rgba(255,255,255,0.3);">Cập nhật theo chấm công</div>
+                            <div><i class="fa-solid fa-calendar-days" style="color: var(--primary); margin-right: 4px;"></i>${passedWorkDays} / ${workingDaysInCycle} ngày công</div>
+                            <div style="margin-top: 4px; font-size: 10px; color: rgba(255,255,255,0.3);">Cập nhật theo chấm công</div>
                         </div>
                     </div>
                 </div>

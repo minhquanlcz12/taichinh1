@@ -28,8 +28,95 @@ const PayrollModule = {
         return count;
     },
 
+    getCycleRange: (monthStr) => {
+        const parts = monthStr.split('-');
+        const year = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10); // 1-indexed
+
+        let startYear = year;
+        let startMonth = month - 1;
+        if (startMonth === 0) {
+            startMonth = 12;
+            startYear--;
+        }
+        const startStr = `${startYear}-${String(startMonth).padStart(2, '0')}-10`;
+        const endStr = `${year}-${String(month).padStart(2, '0')}-09`;
+
+        return {
+            startStr,
+            endStr,
+            startDate: new Date(`${startStr}T00:00:00`),
+            endDate: new Date(`${endStr}T23:59:59`)
+        };
+    },
+
+    getCurrentCycleMonthStr: (date = new Date()) => {
+        const y = date.getFullYear();
+        const m = date.getMonth(); // 0-indexed
+        const d = date.getDate();
+
+        let targetYear = y;
+        let targetMonth = m + 1; // 1-indexed
+
+        if (d >= 10) {
+            targetMonth++;
+            if (targetMonth > 12) {
+                targetMonth = 1;
+                targetYear++;
+            }
+        }
+
+        return `${targetYear}-${String(targetMonth).padStart(2, '0')}`;
+    },
+
+    getWorkingDaysInCycle: (startDate, endDate) => {
+        let count = 0;
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        start.setHours(0,0,0,0);
+        end.setHours(0,0,0,0);
+
+        let current = new Date(start);
+        while (current <= end) {
+            if (current.getDay() !== 0) { // Not Sunday
+                count++;
+            }
+            current.setDate(current.getDate() + 1);
+        }
+        return count;
+    },
+
+    getWorkedWorkingDaysInCycle: (startDate, endDate) => {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        start.setHours(0,0,0,0);
+        end.setHours(0,0,0,0);
+
+        const now = new Date();
+        now.setHours(0,0,0,0);
+
+        const yesterday = new Date(now);
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        if (yesterday < start) {
+            return 0;
+        }
+
+        const limitDate = yesterday < end ? yesterday : end;
+
+        let count = 0;
+        let current = new Date(start);
+        while (current <= limitDate) {
+            if (current.getDay() !== 0) {
+                count++;
+            }
+            current.setDate(current.getDate() + 1);
+        }
+        return count;
+    },
+
     init: () => {
-        // Nothing heavy on init, data is fetched on render
+        PayrollModule.currentMonth = PayrollModule.getCurrentCycleMonthStr(new Date());
     },
 
     toggleViewMode: (mode) => {
@@ -562,9 +649,8 @@ const PayrollModule = {
             const allCustomBonuses = await DB.getCustomBonuses();
             
             let onTimeDays = 0, lateDays = 0, lateExcusedDays = 0, approvedLeaveDays = 0;
-            const targetMonth = parseInt(monthStr.split('-')[1]) - 1;
-            const targetYear = parseInt(monthStr.split('-')[0]);
-            const workingDays = PayrollModule.getWorkingDaysInMonth(targetYear, targetMonth);
+            const cycle = PayrollModule.getCycleRange(monthStr);
+            const workingDays = PayrollModule.getWorkingDaysInCycle(cycle.startDate, cycle.endDate);
 
             // Lấy ngày hôm nay
             const now = new Date();
@@ -572,8 +658,7 @@ const PayrollModule = {
 
             allAttendance.forEach(a => {
                 if (a.username === username && a.dateStr < todayStr) {
-                    const d = new Date(a.dateStr);
-                    if (d.getMonth() === targetMonth && d.getFullYear() === targetYear) {
+                    if (a.dateStr >= cycle.startStr && a.dateStr <= cycle.endStr) {
                         if (a.status === 'on_time') onTimeDays++;
                         else if (a.status === 'late_excused') lateExcusedDays++;
                         else if (a.status === 'late') lateDays++;
@@ -584,8 +669,7 @@ const PayrollModule = {
             allLeaves.forEach(l => {
                 const lDate = l.startDate || l.date || '';
                 if (l.username === username && l.status === 'approved' && lDate < todayStr) {
-                    const d = new Date(lDate);
-                    if (d.getMonth() === targetMonth && d.getFullYear() === targetYear) {
+                    if (lDate >= cycle.startStr && lDate <= cycle.endStr) {
                         approvedLeaveDays += (parseInt(l.days) || 1);
                     }
                 }
@@ -642,10 +726,8 @@ const PayrollModule = {
             const allCustomBonuses = await DB.getCustomBonuses();
             const monthlyBonuses = allCustomBonuses[PayrollModule.currentMonth] || {};
 
-            const selectedDate = new Date(PayrollModule.currentMonth + '-01');
-            const targetMonth = selectedDate.getMonth();
-            const targetYear = selectedDate.getFullYear();
-            const workingDays = PayrollModule.getWorkingDaysInMonth(targetYear, targetMonth);
+            const cycle = PayrollModule.getCycleRange(PayrollModule.currentMonth);
+            const workingDays = PayrollModule.getWorkingDaysInCycle(cycle.startDate, cycle.endDate);
 
             // Lấy ngày hôm nay theo YYYY-MM-DD timezone Local
             const now = new Date();
@@ -669,8 +751,7 @@ const PayrollModule = {
                 // Scan attendance
                 allAttendance.forEach(a => {
                     if (a.username === username && a.dateStr < todayStr) {
-                        const d = new Date(a.dateStr);
-                        if (d.getMonth() === targetMonth && d.getFullYear() === targetYear) {
+                        if (a.dateStr >= cycle.startStr && a.dateStr <= cycle.endStr) {
                             if (a.status === 'on_time') onTimeDays++;
                             else if (a.status === 'late_excused') lateExcusedDays++;
                             else if (a.status === 'late') lateDays++;
@@ -682,8 +763,7 @@ const PayrollModule = {
                 allLeaves.forEach(l => {
                     const lDate = l.startDate || l.date || '';
                     if (l.username === username && l.status === 'approved' && lDate < todayStr) {
-                        const d = new Date(lDate);
-                        if (d.getMonth() === targetMonth && d.getFullYear() === targetYear) {
+                        if (lDate >= cycle.startStr && lDate <= cycle.endStr) {
                             approvedLeaveDays += (parseInt(l.days) || 1);
                         }
                     }
@@ -705,7 +785,7 @@ const PayrollModule = {
                                 if (p.length === 3) d = new Date(`${p[2]}-${p[1]}-${p[0]}T00:00:00`);
                             }
                             
-                            if (d && d.getMonth() === targetMonth && d.getFullYear() === targetYear) {
+                            if (d && d >= cycle.startDate && d <= cycle.endDate) {
                                 const st = (t.trangThai || '').toLowerCase();
                                 if (st.includes('done') || st.includes('hoàn thành')) {
                                     doneTasks++;
@@ -847,8 +927,7 @@ const PayrollModule = {
                     // Scan attendance logs
                     allAttendance.forEach(a => {
                         if (a.username === username && a.dateStr < todayStr) {
-                            const d = new Date(a.dateStr);
-                            if (d.getMonth() === targetMonth && d.getFullYear() === targetYear) {
+                            if (a.dateStr >= cycle.startStr && a.dateStr <= cycle.endStr) {
                                 if (a.status === 'late') {
                                     logs.push({
                                         date: a.dateStr,
@@ -888,8 +967,7 @@ const PayrollModule = {
                     allLeaves.forEach(l => {
                         const lDate = l.startDate || l.date || '';
                         if (l.username === username && l.status === 'approved' && lDate < todayStr) {
-                            const d = new Date(lDate);
-                            if (d.getMonth() === targetMonth && d.getFullYear() === targetYear) {
+                            if (lDate >= cycle.startStr && lDate <= cycle.endStr) {
                                 logs.push({
                                     date: lDate,
                                     type: 'leave',
@@ -930,9 +1008,12 @@ const PayrollModule = {
                             <div class="glass-card" style="padding: 24px; border-radius: 18px; border: 1px solid rgba(255,255,255,0.06); background: rgba(10,10,18,0.85); box-shadow: 0 12px 35px rgba(0,0,0,0.6); height: 100%; display: flex; flex-direction: column; gap: 20px;">
                                 <!-- Section 1: Salary Formula & Breakdown -->
                                 <div>
-                                    <h4 style="font-size: 15px; color: #64ffda; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">
+                                    <h4 style="font-size: 15px; color: #64ffda; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
                                         <i class="fa-solid fa-calculator"></i> Chi Tiết Tính Toán Lương
                                     </h4>
+                                    <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 14px; display: flex; align-items: center; gap: 6px; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 10px;">
+                                        <i class="fa-solid fa-calendar-days" style="color: #64ffda;"></i> Chu kỳ tính: <b>${cycle.startStr.split('-').reverse().join('/')} - ${cycle.endStr.split('-').reverse().join('/')}</b>
+                                    </div>
                                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; font-size: 12px; margin-bottom: 14px;">
                                         <div style="background: rgba(255,255,255,0.02); padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.04);">
                                             <span style="color: var(--text-secondary); font-size: 10px; text-transform: uppercase;">Lương cơ bản</span>
@@ -970,7 +1051,7 @@ const PayrollModule = {
                                 <div style="flex-grow: 1; display: flex; flex-direction: column; min-height: 180px;">
                                     <h4 style="font-size: 15px; color: #64ffda; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">
                                         <span style="display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-clock-rotate-left"></i> Nhật Ký Chi Tiết Chấm Công</span>
-                                        <span style="font-size: 10px; background: rgba(100,255,218,0.1); color: #64ffda; padding: 2px 8px; border-radius: 20px; font-weight: bold;">Tháng ${PayrollModule.currentMonth.split('-')[1]}</span>
+                                        <span style="font-size: 10px; background: rgba(100,255,218,0.1); color: #64ffda; padding: 2px 8px; border-radius: 20px; font-weight: bold;">Kỳ ${cycle.startStr.slice(5).replace('-','/')} - ${cycle.endStr.slice(5).replace('-','/')}</span>
                                     </h4>
                                     <div class="personal-logs-list" style="overflow-y: auto; flex-grow: 1; max-height: 240px; display: flex; flex-direction: column; gap: 10px; padding-right: 4px;">
                                         ${logItemsHtml}
@@ -1123,12 +1204,14 @@ const PayrollModule = {
         clone.style.fontFamily = 'Arial, sans-serif';
 
         const today = new Date().toLocaleDateString('vi-VN');
+        const cycle = PayrollModule.getCycleRange(PayrollModule.currentMonth);
+        const cycleStr = `${cycle.startStr.split('-').reverse().join('/')} - ${cycle.endStr.split('-').reverse().join('/')}`;
 
         clone.innerHTML = `
             <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #da251d; padding-bottom: 20px;">
                 <h1 style="color: #da251d; margin-bottom: 5px;">THANH LONG WORK</h1>
                 <h3>BẢNG LƯƠNG NHÂN SỰ TỔNG HỢP</h3>
-                <p>Kỳ tháng: ${PayrollModule.currentMonth.replace('-', '/')} &bull; Ngày xuất: ${today}</p>
+                <p>Kỳ lương: Tháng ${PayrollModule.currentMonth.split('-')[1]}/${PayrollModule.currentMonth.split('-')[0]} (${cycleStr}) &bull; Ngày xuất: ${today}</p>
             </div>
 
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 40px; font-size: 12px; text-align: left;">
@@ -1228,9 +1311,8 @@ const PayrollModule = {
         const allCustomBonuses = await DB.getCustomBonuses();
         const monthlyBonuses = allCustomBonuses[PayrollModule.currentMonth] || {};
 
-        const selectedDate = new Date(PayrollModule.currentMonth + '-01');
-        const targetMonth = selectedDate.getMonth();
-        const targetYear = selectedDate.getFullYear();
+        const cycle = PayrollModule.getCycleRange(PayrollModule.currentMonth);
+        const workingDays = PayrollModule.getWorkingDaysInCycle(cycle.startDate, cycle.endDate);
         const now = new Date();
         const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
 
@@ -1241,8 +1323,7 @@ const PayrollModule = {
 
             allAttendance.forEach(a => {
                 if (a.username === username && a.dateStr < todayStr) {
-                    const d = new Date(a.dateStr);
-                    if (d.getMonth() === targetMonth && d.getFullYear() === targetYear) {
+                    if (a.dateStr >= cycle.startStr && a.dateStr <= cycle.endStr) {
                         if (a.status === 'on_time') onTimeDays++;
                         else if (a.status === 'late_excused') lateExcusedDays++;
                         else if (a.status === 'late') lateDays++;
@@ -1253,14 +1334,12 @@ const PayrollModule = {
             allLeaves.forEach(l => {
                 const lDate = l.startDate || l.date || '';
                 if (l.username === username && l.status === 'approved' && lDate < todayStr) {
-                    const d = new Date(lDate);
-                    if (d.getMonth() === targetMonth && d.getFullYear() === targetYear) {
+                    if (lDate >= cycle.startStr && lDate <= cycle.endStr) {
                         approvedLeaveDays += (parseInt(l.days) || 1);
                     }
                 }
             });
 
-            const workingDays = PayrollModule.getWorkingDaysInMonth(targetYear, targetMonth);
             const dailyRate = baseSalary / workingDays;
             const paidDays = onTimeDays + lateExcusedDays + lateDays + approvedLeaveDays;
             const attendancePay = paidDays * dailyRate;
