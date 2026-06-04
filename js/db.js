@@ -598,5 +598,21 @@ const DB = {
                 snapshot.forEach(doc => missions.push({ id: doc.id, ...doc.data() }));
                 callback(missions);
             }, err => console.error("Missions listener error:", err));
+    },
+
+    listenSettings: (callback) => {
+        try {
+            return db.collection("system").doc("settings").onSnapshot((doc) => {
+                if (doc.exists && doc.data()) {
+                    const data = doc.data();
+                    Utils.storage.set('backup_settings', data);
+                    callback(data);
+                } else {
+                    callback({});
+                }
+            }, err => console.error("Settings listener error:", err));
+        } catch (e) {
+            console.error("Error setting up settings listener:", e);
+        }
     }
 };

@@ -13,6 +13,7 @@ const app = {
     init: async () => {
         // Load settings
         app.state.settings = await DB.getSettings();
+        app.checkMaintenanceMode();
 
         // Load theme
         app.state.theme = Utils.storage.get('app_theme', 'dark');
@@ -1522,6 +1523,42 @@ const app = {
                 </div>
             `;
         }).join('');
+    },
+
+    checkMaintenanceMode: () => {
+        const settings = app.state.settings || {};
+        const maintenanceOverlay = document.getElementById('maintenance-overlay');
+        const overlayMessage = document.getElementById('maintenance-overlay-message');
+        
+        if (!maintenanceOverlay) return;
+
+        if (settings.maintenanceMode) {
+            // Bypass for admin
+            if (typeof Auth !== 'undefined' && Auth.currentUser && Auth.currentUser.role === 'admin') {
+                maintenanceOverlay.style.display = 'none';
+            } else {
+                maintenanceOverlay.style.display = 'flex';
+                if (overlayMessage) {
+                    overlayMessage.textContent = settings.maintenanceMessage || 
+                        '🚨 HỆ THỐNG ĐANG BẢO TRÌ CỰC GẤP!\nSếp Lớn đang cho server đi tắm rửa thay dầu nhớt. Anh em chịu khó đi pha cốc cà phê rồi quay lại sau nhé, chứ cố đấm ăn xôi lúc này là mất hết công đức đấy! 🙏';
+                }
+            }
+        } else {
+            maintenanceOverlay.style.display = 'none';
+        }
+    },
+
+    showAdminBypass: (e) => {
+        if (e) {
+            if (typeof e.preventDefault === 'function') e.preventDefault();
+        }
+        const maintenanceOverlay = document.getElementById('maintenance-overlay');
+        if (maintenanceOverlay) {
+            maintenanceOverlay.style.display = 'none';
+        }
+        if (typeof Auth !== 'undefined') {
+            Auth.showLogin();
+        }
     }
 };
 

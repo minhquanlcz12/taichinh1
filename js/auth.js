@@ -27,6 +27,18 @@ const Auth = {
         } catch (e) {
             console.error('[Auth] Lỗi khởi chạy Auth UI:', e);
         }
+
+        // Start settings listener early for maintenance mode check
+        if (typeof DB !== 'undefined' && typeof DB.listenSettings === 'function') {
+            DB.listenSettings((settings) => {
+                if (typeof app !== 'undefined') {
+                    app.state.settings = settings;
+                    if (typeof app.checkMaintenanceMode === 'function') {
+                        app.checkMaintenanceMode();
+                    }
+                }
+            });
+        }
     },
 
     getAccounts: async () => {
@@ -189,6 +201,11 @@ const Auth = {
         const found = accounts.find(a => a.username === userIn && a.password === passIn);
 
         if (found) {
+            // Check maintenance mode: only admin can log in when active
+            if (typeof app !== 'undefined' && app.state && app.state.settings && app.state.settings.maintenanceMode && found.role !== 'admin') {
+                document.getElementById('login-error').textContent = 'Hệ thống đang bảo trì! Chỉ có sếp mới được quyền đăng nhập lúc này.';
+                return;
+            }
             Auth.currentUser = { username: found.username, role: found.role, profile: found.profile || {}, balance: found.balance || 0, purchasedBots: found.purchasedBots || [], exp: found.exp || 0, level: found.level || 1, selectedTitleLevel: found.selectedTitleLevel ?? null, selectedTitleKey: found.selectedTitleKey ?? null, achievements: found.achievements || [] };
             Utils.storage.set(Auth.currentUserKey, Auth.currentUser); // Keep current user locally for session
             Utils.showToast('Đăng nhập thành công!', 'success');
@@ -526,6 +543,27 @@ const Auth = {
                 </table>
             `, isOpen('acc-users', true));
 
+            const settingsObj = (typeof app !== 'undefined' && app.state && app.state.settings) ? app.state.settings : {};
+            const isMaint = !!settingsObj.maintenanceMode;
+            const maintMsg = settingsObj.maintenanceMessage || '🚨 HỆ THỐNG ĐANG BẢO TRÌ CỰC GẤP!\nSếp Lớn đang cho server đi tắm rửa thay dầu nhớt. Anh em chịu khó đi pha cốc cà phê rồi quay lại sau nhé, chứ cố đấm ăn xôi lúc này là mất hết công đức đấy! 🙏';
+
+            html += Auth.createAccordionBlock('acc-maintenance', 'Bảo trì Hệ thống (Bảo mật)', 'fa-screwdriver-wrench', `
+                <p style="color:var(--text-secondary); margin-bottom: 16px; margin-top: 0;">Bật chế độ bảo trì để tạm khóa không cho người dùng khác đăng nhập hoặc thao tác trên website khi bạn đang cập nhật ứng dụng.</p>
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom: 16px;">
+                    <button class="btn ${isMaint ? 'btn-danger' : 'btn-success'}" onclick="Auth.toggleMaintenanceMode()" id="maintenance-toggle-btn" style="display: flex; align-items: center; gap: 8px; font-weight: bold; padding: 10px 18px; border-radius: 8px;">
+                        <i class="fa-solid ${isMaint ? 'fa-toggle-on' : 'fa-toggle-off'}" style="font-size: 16px;"></i> 
+                        ${isMaint ? 'ĐANG BẬT BẢO TRÌ (Khóa web)' : 'ĐANG TẮT BẢO TRÌ (Mở web)'}
+                    </button>
+                </div>
+                <div class="form-group" style="margin-top: 12px;">
+                    <label style="color: var(--text-secondary); font-size: 13px; font-weight: 500;">Nội dung thông báo bảo trì (Ngôn ngữ hài hước tùy chỉnh):</label>
+                    <textarea id="maintenance-message" class="form-control" rows="4" style="margin-top:6px; background: rgba(0,0,0,0.25); color:#fff; font-family:inherit; font-size:13px; line-height:1.5; width: 100%; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 10px; box-sizing: border-box;" placeholder="Nhập thông điệp bảo trì bá đạo tại đây...">${maintMsg}</textarea>
+                </div>
+                <button class="btn btn-primary" onclick="Auth.saveMaintenanceMessage()" style="margin-top: 12px; display: flex; align-items: center; gap: 6px; border-radius: 6px;">
+                    <i class="fa-solid fa-floppy-disk"></i> Lưu Thông Báo Bảo Trì
+                </button>
+            `, isOpen('acc-maintenance', false));
+
             html += Auth.createAccordionBlock('acc-danger', 'Dữ liệu Hệ thống (Vùng nguy hiểm)', 'fa-triangle-exclamation', `
                 <p style="color:var(--text-secondary); margin-bottom: 20px; margin-top: 0;">Lưu ý: Xóa dữ liệu sẽ làm mất vĩnh viễn toàn bộ giao dịch và kế hoạch hệ thống.</p>
                 <button class="btn btn-danger" id="clear-data-btn">
@@ -635,6 +673,44 @@ const Auth = {
         let reqs = await DB.getPasswordRequests();
         reqs = reqs.filter(r => r.username !== username);
         await DB.savePasswordRequests(reqs);
+        Auth.renderSettings();
+    },
+
+    toggleMaintenanceMode: async () => {
+        const isCurrentlyActive = !!(app.state.settings && app.state.settings.maintenanceMode);
+        const newStatus = !isCurrentlyActive;
+        
+        const confirmMsg = newStatus 
+            ? 'Bạn có chắc chắn muốn BẬT chế độ bảo trì? Tất cả người dùng không phải admin sẽ lập tức bị chặn không thể đăng nhập hoặc thao tác.'
+            : 'Xác nhận TẮT chế độ bảo trì và mở khóa website cho mọi người?';
+            
+        if (!await Utils.showConfirm('Chế độ Bảo trì', confirmMsg)) return;
+
+        if (!app.state.settings) app.state.settings = {};
+        app.state.settings.maintenanceMode = newStatus;
+        if (!app.state.settings.maintenanceMessage) {
+            app.state.settings.maintenanceMessage = '🚨 HỆ THỐNG ĐANG BẢO TRÌ CỰC GẤP!\nSếp Lớn đang cho server đi tắm rửa thay dầu nhớt. Anh em chịu khó đi pha cốc cà phê rồi quay lại sau nhé, chứ cố đấm ăn xôi lúc này là mất hết công đức đấy! 🙏';
+        }
+
+        await DB.saveSettings(app.state.settings);
+        Utils.showToast(newStatus ? 'Đã bật chế độ bảo trì!' : 'Đã tắt chế độ bảo trì!', 'success');
+        Auth.renderSettings();
+    },
+
+    saveMaintenanceMessage: async () => {
+        const msgEl = document.getElementById('maintenance-message');
+        if (!msgEl) return;
+        
+        const val = msgEl.value.trim();
+        if (!val) {
+            Utils.showToast('Vui lòng nhập nội dung thông báo bảo trì!', 'warning');
+            return;
+        }
+
+        if (!app.state.settings) app.state.settings = {};
+        app.state.settings.maintenanceMessage = val;
+        await DB.saveSettings(app.state.settings);
+        Utils.showToast('Đã lưu thông báo bảo trì thành công!', 'success');
         Auth.renderSettings();
     },
 
