@@ -647,8 +647,10 @@ const PayrollModule = {
             const allAttendance = await Attendance.loadData();
             const allLeaves = await Attendance.loadLeaveData();
             const allCustomBonuses = await DB.getCustomBonuses();
+            const allSalaryAdvances = await DB.getSalaryAdvances();
             
             let onTimeDays = 0, lateDays = 0, lateExcusedDays = 0, approvedLeaveDays = 0;
+            let lateCount = 0;
             const cycle = PayrollModule.getCycleRange(monthStr);
             const workingDays = PayrollModule.getWorkingDaysInCycle(cycle.startDate, cycle.endDate);
 
@@ -659,9 +661,13 @@ const PayrollModule = {
             allAttendance.forEach(a => {
                 if (a.username === username && a.dateStr < todayStr) {
                     if (a.dateStr >= cycle.startStr && a.dateStr <= cycle.endStr) {
-                        if (a.status === 'on_time') onTimeDays++;
-                        else if (a.status === 'late_excused') lateExcusedDays++;
-                        else if (a.status === 'late') lateDays++;
+                        const weight = a.type ? 0.5 : 1.0;
+                        if (a.status === 'on_time') onTimeDays += weight;
+                        else if (a.status === 'late_excused') lateExcusedDays += weight;
+                        else if (a.status === 'late') {
+                            lateDays += weight;
+                            lateCount++;
+                        }
                     }
                 }
             });
@@ -679,11 +685,13 @@ const PayrollModule = {
             const paidDays = onTimeDays + lateExcusedDays + lateDays + approvedLeaveDays;
             
             const attendancePay = paidDays * dailyRate;
-            const latePenaltyTotal = lateDays * PayrollModule.LATE_PENALTY;
+            const latePenaltyTotal = lateCount * PayrollModule.LATE_PENALTY;
             const customBonus = parseFloat((allCustomBonuses[monthStr] || {})[username]) || 0;
+            const advance = parseFloat((allSalaryAdvances[monthStr] || {})[username]) || 0;
 
-            const netSalary = attendancePay + customBonus - latePenaltyTotal;
-            return Math.round(netSalary > 0 ? netSalary : 0);
+            const netSalary = attendancePay + customBonus - latePenaltyTotal - advance;
+            const roundedNetSalary = Math.round(netSalary / 1000) * 1000;
+            return Math.round(roundedNetSalary > 0 ? roundedNetSalary : 0);
         } catch (e) {
             console.error(e);
             return 0;
@@ -701,7 +709,7 @@ const PayrollModule = {
         if (!tbody || !contentArea) return;
 
         contentArea.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-secondary);"><i class="fa-solid fa-spinner fa-spin"></i> Đang tổng hợp dữ liệu...</div>';
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;"><i class="fa-solid fa-spinner fa-spin"></i> Đang tổng hợp dữ liệu...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;"><i class="fa-solid fa-spinner fa-spin"></i> Đang tổng hợp dữ liệu...</td></tr>';
 
         try {
             const currentUser = Auth.currentUser;
@@ -729,6 +737,8 @@ const PayrollModule = {
             const allTasks = WorkModule.data.tasks;
             const allCustomBonuses = await DB.getCustomBonuses();
             const monthlyBonuses = allCustomBonuses[PayrollModule.currentMonth] || {};
+            const allSalaryAdvances = await DB.getSalaryAdvances();
+            const monthlyAdvances = allSalaryAdvances[PayrollModule.currentMonth] || {};
 
             const cycle = PayrollModule.getCycleRange(PayrollModule.currentMonth);
             const workingDays = PayrollModule.getWorkingDaysInCycle(cycle.startDate, cycle.endDate);
@@ -751,14 +761,19 @@ const PayrollModule = {
                 let lateDays = 0;
                 let lateExcusedDays = 0;
                 let approvedLeaveDays = 0;
+                let lateCount = 0;
 
                 // Scan attendance
                 allAttendance.forEach(a => {
                     if (a.username === username && a.dateStr < todayStr) {
                         if (a.dateStr >= cycle.startStr && a.dateStr <= cycle.endStr) {
-                            if (a.status === 'on_time') onTimeDays++;
-                            else if (a.status === 'late_excused') lateExcusedDays++;
-                            else if (a.status === 'late') lateDays++;
+                            const weight = a.type ? 0.5 : 1.0;
+                            if (a.status === 'on_time') onTimeDays += weight;
+                            else if (a.status === 'late_excused') lateExcusedDays += weight;
+                            else if (a.status === 'late') {
+                                lateDays += weight;
+                                lateCount++;
+                            }
                         }
                     }
                 });
@@ -806,11 +821,11 @@ const PayrollModule = {
                 const paidDays = onTimeDays + lateExcusedDays + lateDays + approvedLeaveDays;
                 
                 const attendancePay = paidDays * dailyRate;
-                const latePenaltyTotal = lateDays * PayrollModule.LATE_PENALTY;
+                const latePenaltyTotal = lateCount * PayrollModule.LATE_PENALTY;
                 
                 // Thưởng chuyên cần: 200k nếu đi muộn 0 lần và có đi làm ít nhất 15 ngày
                 let eligibleForBonus = false;
-                if (lateDays === 0 && (onTimeDays + approvedLeaveDays) >= 15) {
+                if (lateCount === 0 && (onTimeDays + approvedLeaveDays) >= 15) {
                     eligibleForBonus = true;
                 }
 
@@ -820,9 +835,10 @@ const PayrollModule = {
 
                 // Manual custom Bonus/Penalty
                 const customBonus = parseFloat(monthlyBonuses[username]) || 0;
+                const advance = parseFloat(monthlyAdvances[username]) || 0;
 
-                const netSalary = attendancePay + customBonus + punctualityBonusVal - latePenaltyTotal;
-                const roundedNetSalary = Math.round(netSalary > 0 ? netSalary : 0);
+                const netSalary = attendancePay + customBonus + punctualityBonusVal - latePenaltyTotal - advance;
+                const roundedNetSalary = Math.round(netSalary > 0 ? Math.round(netSalary / 1000) * 1000 : 0);
 
                 // Setup Neon Border Theme based on role and success
                 let glowColor = '0, 229, 255'; // Cyan neon
@@ -872,7 +888,7 @@ const PayrollModule = {
                                         <span class="att-lbl">Có phép</span>
                                     </div>
                                     <div class="att-box late" title="Muộn không phép">
-                                        <span class="att-num">${lateDays}</span>
+                                        <span class="att-num">${lateCount}</span>
                                         <span class="att-lbl">Muộn</span>
                                     </div>
                                     <div class="att-box leave" title="Nghỉ phép">
@@ -909,11 +925,23 @@ const PayrollModule = {
                                     
                                     ${latePenaltyTotal > 0 ? `<div class="penalty-text"><i class="fa-solid fa-triangle-exclamation"></i> Phạt muộn: -${Utils.formatCurrency(latePenaltyTotal)}</div>` : ''}
                                 </div>
+
+                                <div class="stat-group-title">Tạm ứng lương</div>
+                                <div class="custom-bonus-section" style="margin-top: 4px;">
+                                    ${currentUser.role === 'admin' ? 
+                                    `<div class="admin-input-group" title="Sếp nhập tạm ứng lương">
+                                        <input type="number" class="card-input" style="color: #ef4444;" value="${advance}" placeholder="0" onchange="PayrollModule.saveSalaryAdvance('${username}', this.value)">
+                                        <span class="currency-unit">đ</span>
+                                    </div>` 
+                                    : `<strong class="bonus-value" style="color: #ef4444;">-${Utils.formatCurrency(advance)}</strong>`}
+                                </div>
                             </div>
 
                             <!-- Card Footer: Thực Lĩnh -->
-                            <div class="card-footer">
-                                <div class="net-pay-label">THỰC LĨNH</div>
+                            <div class="card-footer" style="cursor: pointer;" onclick="PayrollModule.showDetailModal('${username}')">
+                                <div class="net-pay-label" style="display: flex; align-items: center; gap: 4px;">
+                                    THỰC LĨNH <i class="fa-solid fa-circle-info" style="font-size: 10px; color: var(--success);" title="Xem chi tiết tính lương"></i>
+                                </div>
                                 <div class="net-pay-val" style="text-shadow: 0 0 10px rgba(${roundedNetSalary >= 0 ? '16,185,129' : '239,68,68'}, 0.5); color: ${roundedNetSalary >= 0 ? '#10b981' : '#ef4444'};">
                                     ${roundedNetSalary >= 0 ? '' : '-'}${Utils.formatCurrency(Math.abs(roundedNetSalary))}
                                 </div>
@@ -1028,25 +1056,26 @@ const PayrollModule = {
                                             <div style="font-size: 14px; font-weight: 800; color: #ffffff; margin-top: 4px;">${workingDays} ngày</div>
                                         </div>
                                         <div style="background: rgba(255,255,255,0.02); padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.04);">
-                                            <span style="color: var(--text-secondary); font-size: 10px; text-transform: uppercase;">Đơn giá/ngày công</span>
-                                            <div style="font-size: 14px; font-weight: 800; color: #ffffff; margin-top: 4px;">${Utils.formatCurrency(Math.round(dailyRate))}</div>
+                                            <span style="color: var(--text-secondary); font-size: 10px; text-transform: uppercase;">Lương làm thực tế</span>
+                                            <div style="font-size: 14px; font-weight: 800; color: #10b981; margin-top: 4px;">${paidDays} ngày</div>
                                         </div>
                                         <div style="background: rgba(255,255,255,0.02); padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.04);">
-                                            <span style="color: var(--text-secondary); font-size: 10px; text-transform: uppercase;">Ngày công tính lương</span>
-                                            <div style="font-size: 14px; font-weight: 800; color: #10b981; margin-top: 4px;">${paidDays} ngày</div>
+                                            <span style="color: var(--text-secondary); font-size: 10px; text-transform: uppercase;">Ngày nghỉ không lương</span>
+                                            <div style="font-size: 14px; font-weight: 800; color: var(--warning); margin-top: 4px;">${Math.max(0, workingDays - paidDays)} ngày</div>
                                         </div>
                                     </div>
                                     
                                     <!-- Formula Block -->
                                     <div style="background: rgba(0,0,0,0.35); padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06); font-size: 12px; color: var(--text-secondary); line-height: 1.5;">
                                         <div style="color: #64ffda; font-weight: bold; margin-bottom: 4px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;">Công thức tính Thực Lĩnh:</div>
-                                        Thực lĩnh = (Lương/ngày &times; Số ngày tính lương) + Thưởng/Phạt khác + Thưởng chuyên cần - Phạt đi muộn
+                                        Thực lĩnh = (Lương ngày &times; Ngày làm thực tế) + Thưởng - Phạt - Tạm ứng
                                         <div style="margin-top: 8px; font-size: 13px; color: #ffffff; font-weight: 600; border-top: 1px dashed rgba(255,255,255,0.08); padding-top: 8px;">
                                             = (${Utils.formatCurrency(Math.round(dailyRate))} &times; ${paidDays}) 
                                             ${customBonus !== 0 ? ` ${customBonus > 0 ? '+' : ''}${Utils.formatCurrency(customBonus)}` : ''}
                                             ${punctualityBonusVal > 0 ? ` + ${Utils.formatCurrency(punctualityBonusVal)}` : ''}
                                             ${latePenaltyTotal > 0 ? ` - ${Utils.formatCurrency(latePenaltyTotal)}` : ''}
-                                            = <span style="color: ${roundedNetSalary >= 0 ? '#10b981' : '#ef4444'}; font-weight: bold;">${Utils.formatCurrency(roundedNetSalary)}</span>
+                                            ${advance > 0 ? ` - ${Utils.formatCurrency(advance)}` : ''}
+                                            = <span style="color: ${roundedNetSalary >= 0 ? '#10b981' : '#ef4444'}; font-weight: bold; cursor: pointer; text-decoration: underline;" onclick="PayrollModule.showDetailModal('${username}')">${Utils.formatCurrency(roundedNetSalary)} <i class="fa-solid fa-circle-info" style="font-size: 10px; margin-left: 2px;"></i></span>
                                         </div>
                                     </div>
                                 </div>
@@ -1079,7 +1108,7 @@ const PayrollModule = {
                         <td style="text-align: center; font-size: 13px;">
                             <span style="color: var(--success);" title="Đúng giờ"><i class="fa-solid fa-check-circle"></i> ${onTimeDays}</span> &nbsp;|&nbsp; 
                             ${lateExcusedDays > 0 ? `<span style="color: #64ffda; font-weight: bold;" title="Muộn có phép"><i class="fa-regular fa-clock"></i> ${lateExcusedDays}</span> &nbsp;|&nbsp; ` : ''}
-                            <span style="color: var(--warning);" title="Đi muộn không phép"><i class="fa-solid fa-clock"></i> ${lateDays}</span> &nbsp;|&nbsp; 
+                            <span style="color: var(--warning);" title="Đi muộn không phép"><i class="fa-solid fa-clock"></i> ${lateCount}</span> &nbsp;|&nbsp; 
                             <span style="color: var(--primary);" title="Nghỉ phép (Có lương)"><i class="fa-solid fa-bed"></i> ${approvedLeaveDays}</span>
                         </td>
                         <td style="text-align: center; font-size: 13px;">
@@ -1104,9 +1133,15 @@ const PayrollModule = {
                             
                             ${latePenaltyTotal > 0 ? `<div style="color: var(--danger); font-size: 11px; margin-top: 4px;">Phạt muộn: -${Utils.formatCurrency(latePenaltyTotal)}</div>` : ''}
                         </td>
-                        <td style="text-align: right;">
-                            <strong style="font-size: 16px; color: ${roundedNetSalary >= 0 ? 'var(--success)' : 'var(--danger)'};">
+                        <td style="text-align: right; font-size: 13px;">
+                            ${currentUser.role === 'admin' ? 
+                            `<input type="number" class="form-control" style="width: 100px; padding: 4px 8px; font-size: 13px; text-align: right; display: inline-block; color: var(--danger); border-color: rgba(255,255,255,0.1);" value="${advance}" placeholder="0" onchange="PayrollModule.saveSalaryAdvance('${username}', this.value)">` 
+                            : `<strong style="color: var(--danger);">${advance > 0 ? '-' : ''}${Utils.formatCurrency(advance)}</strong>`}
+                        </td>
+                        <td style="text-align: right; cursor: pointer;" onclick="PayrollModule.showDetailModal('${username}')">
+                            <strong style="font-size: 16px; color: ${roundedNetSalary >= 0 ? 'var(--success)' : 'var(--danger)'}; display: inline-flex; align-items: center; gap: 4px;">
                                 ${roundedNetSalary >= 0 ? '' : '-'}${Utils.formatCurrency(Math.abs(roundedNetSalary))}
+                                <i class="fa-solid fa-circle-info" style="font-size: 11px; color: var(--text-secondary);" title="Xem chi tiết"></i>
                             </strong>
                         </td>
                     </tr>
@@ -1115,7 +1150,7 @@ const PayrollModule = {
 
             // Update standard hidden table body
             if (accounts.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--text-secondary);">Không có dữ liệu tài khoản</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--text-secondary);">Không có dữ liệu tài khoản</td></tr>';
             } else {
                 tbody.innerHTML = rowsHtml;
             }
@@ -1152,6 +1187,7 @@ const PayrollModule = {
                                         <th style="text-align: center;">Chấm công</th>
                                         <th style="text-align: center;">Hiệu suất (Task)</th>
                                         <th style="text-align: right;">Thưởng/Phạt khác</th>
+                                        <th style="text-align: right;">Tạm ứng</th>
                                         <th style="text-align: right;">Thực Lĩnh</th>
                                     </tr>
                                 </thead>
@@ -1167,7 +1203,7 @@ const PayrollModule = {
         } catch (e) {
             console.error("Lỗi khi tính lương:", e);
             contentArea.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--danger);"><i class="fa-solid fa-triangle-exclamation"></i> Đã xảy ra lỗi trong quá trình tính toán.</div>';
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--danger);">Đã xảy ra lỗi trong quá trình tính toán.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--danger);">Đã xảy ra lỗi trong quá trình tính toán.</td></tr>';
         }
     },
 
@@ -1329,13 +1365,18 @@ const PayrollModule = {
             const username = acc.username;
             const baseSalary = acc.baseSalary || 0;
             let onTimeDays = 0, lateDays = 0, lateExcusedDays = 0, approvedLeaveDays = 0;
+            let lateCount = 0;
 
             allAttendance.forEach(a => {
                 if (a.username === username && a.dateStr < todayStr) {
                     if (a.dateStr >= cycle.startStr && a.dateStr <= cycle.endStr) {
-                        if (a.status === 'on_time') onTimeDays++;
-                        else if (a.status === 'late_excused') lateExcusedDays++;
-                        else if (a.status === 'late') lateDays++;
+                        const weight = a.type ? 0.5 : 1.0;
+                        if (a.status === 'on_time') onTimeDays += weight;
+                        else if (a.status === 'late_excused') lateExcusedDays += weight;
+                        else if (a.status === 'late') {
+                            lateDays += weight;
+                            lateCount++;
+                        }
                     }
                 }
             });
@@ -1352,9 +1393,12 @@ const PayrollModule = {
             const dailyRate = baseSalary / workingDays;
             const paidDays = onTimeDays + lateExcusedDays + lateDays + approvedLeaveDays;
             const attendancePay = paidDays * dailyRate;
-            const latePenaltyTotal = lateDays * PayrollModule.LATE_PENALTY;
+            const latePenaltyTotal = lateCount * PayrollModule.LATE_PENALTY;
             const customBonus = parseFloat(monthlyBonuses[username]) || 0;
-            const netSalary = Math.round(Math.max(0, attendancePay + customBonus - latePenaltyTotal));
+            const advance = parseFloat(monthlyAdvances[username]) || 0;
+            
+            const netSalary = attendancePay + customBonus - latePenaltyTotal - advance;
+            const roundedNetSalary = Math.round(netSalary > 0 ? Math.round(netSalary / 1000) * 1000 : 0);
 
             return {
                 'Nhân sự': username,
@@ -1365,8 +1409,9 @@ const PayrollModule = {
                 'Đi muộn không phép': lateDays,
                 'Nghỉ phép': approvedLeaveDays,
                 'Phạt muộn': -latePenaltyTotal,
+                'Tạm ứng': -advance,
                 'Thưởng/Phạt khác': customBonus,
-                'Thực lĩnh': netSalary
+                'Thực lĩnh': roundedNetSalary
             };
         });
 
@@ -1375,5 +1420,252 @@ const PayrollModule = {
         XLSX.utils.book_append_sheet(wb, ws, 'Luong_' + PayrollModule.currentMonth);
         XLSX.writeFile(wb, `Bang_Luong_${PayrollModule.currentMonth}.xlsx`);
         Utils.showToast("Đã xuất Bảng Lương ra Excel!", "success");
+    },
+
+    saveSalaryAdvance: async (username, amount) => {
+        const val = parseFloat(amount) || 0;
+        const monthStr = PayrollModule.currentMonth;
+        const allSalaryAdvances = await DB.getSalaryAdvances();
+        
+        if (!allSalaryAdvances[monthStr]) {
+            allSalaryAdvances[monthStr] = {};
+        }
+        allSalaryAdvances[monthStr][username] = val;
+        
+        await DB.saveSalaryAdvances(allSalaryAdvances);
+        Utils.showToast(`Đã lưu Tạm ứng cho ${username}`, 'success');
+        PayrollModule.calculateAndRenderBody();
+    },
+
+    currentDetailReport: null,
+
+    showDetailModal: async (username) => {
+        try {
+            Utils.showToast("Đang tải chi tiết...", "info");
+            const accounts = await Auth.getAccounts();
+            const acc = accounts.find(a => a.username === username);
+            if (!acc) return;
+
+            const baseSalary = acc.baseSalary || 0;
+            const allAttendance = await Attendance.loadData();
+            const allLeaves = await Attendance.loadLeaveData();
+            const allBonusApprovals = await DB.getBonusApprovals();
+            const monthlyApprovals = allBonusApprovals[PayrollModule.currentMonth] || {};
+            const allCustomBonuses = await DB.getCustomBonuses();
+            const monthlyBonuses = allCustomBonuses[PayrollModule.currentMonth] || {};
+            const allSalaryAdvances = await DB.getSalaryAdvances();
+            const monthlyAdvances = allSalaryAdvances[PayrollModule.currentMonth] || {};
+
+            const cycle = PayrollModule.getCycleRange(PayrollModule.currentMonth);
+            const workingDays = PayrollModule.getWorkingDaysInCycle(cycle.startDate, cycle.endDate);
+
+            const now = new Date();
+            const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+
+            let onTimeDays = 0, lateDays = 0, lateExcusedDays = 0, approvedLeaveDays = 0;
+            let lateCount = 0;
+
+            allAttendance.forEach(a => {
+                if (a.username === username && a.dateStr < todayStr) {
+                    if (a.dateStr >= cycle.startStr && a.dateStr <= cycle.endStr) {
+                        const weight = a.type ? 0.5 : 1.0;
+                        if (a.status === 'on_time') onTimeDays += weight;
+                        else if (a.status === 'late_excused') lateExcusedDays += weight;
+                        else if (a.status === 'late') {
+                            lateDays += weight;
+                            lateCount++;
+                        }
+                    }
+                }
+            });
+
+            allLeaves.forEach(l => {
+                const lDate = l.startDate || l.date || '';
+                if (l.username === username && l.status === 'approved' && lDate < todayStr) {
+                    if (lDate >= cycle.startStr && lDate <= cycle.endStr) {
+                        approvedLeaveDays += (parseInt(l.days) || 1);
+                    }
+                }
+            });
+
+            const dailyRate = baseSalary / workingDays;
+            const paidDays = onTimeDays + lateExcusedDays + lateDays + approvedLeaveDays;
+            const absentDays = Math.max(0, workingDays - paidDays);
+
+            const attendancePay = paidDays * dailyRate;
+            const latePenaltyTotal = lateCount * PayrollModule.LATE_PENALTY;
+            
+            let eligibleForBonus = false;
+            if (lateCount === 0 && (onTimeDays + approvedLeaveDays) >= 15) {
+                eligibleForBonus = true;
+            }
+            const isApproved = monthlyApprovals[username] === true;
+            const punctualityBonusVal = (eligibleForBonus && isApproved) ? 200000 : 0;
+
+            const customBonus = parseFloat(monthlyBonuses[username]) || 0;
+            const advance = parseFloat(monthlyAdvances[username]) || 0;
+
+            const totalDeductions = (dailyRate * absentDays) + advance + latePenaltyTotal + (customBonus < 0 ? Math.abs(customBonus) : 0);
+            const totalAdditions = punctualityBonusVal + (customBonus > 0 ? customBonus : 0);
+
+            const netSalary = attendancePay + customBonus + punctualityBonusVal - latePenaltyTotal - advance;
+            const roundedNetSalary = Math.round(netSalary > 0 ? Math.round(netSalary / 1000) * 1000 : 0);
+
+            PayrollModule.currentDetailReport = {
+                displayName: Utils.getUserDisplayName(username) || username,
+                month: PayrollModule.currentMonth.split('-')[1] + '/' + PayrollModule.currentMonth.split('-')[0],
+                baseSalary,
+                workingDays,
+                paidDays,
+                absentDays,
+                dailyRate,
+                absentDeduction: dailyRate * absentDays,
+                advance,
+                lateCount,
+                latePenaltyTotal,
+                customBonus,
+                punctualityBonusVal,
+                roundedNetSalary,
+                netSalary
+            };
+
+            const body = document.getElementById('payroll-detail-modal-body');
+            body.innerHTML = `
+                <div style="font-family: 'Inter', sans-serif; color: #fff;">
+                    <!-- Thông tin chung -->
+                    <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 16px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px;">
+                            <span style="color: var(--text-secondary);">Nhân sự:</span>
+                            <strong style="color: var(--primary);">${Utils.getUserDisplayName(username) || username}</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px;">
+                            <span style="color: var(--text-secondary);">Kỳ lương:</span>
+                            <strong>Tháng ${PayrollModule.currentMonth.split('-')[1]} / ${PayrollModule.currentMonth.split('-')[0]}</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                            <span style="color: var(--text-secondary);">Mức lương cơ bản:</span>
+                            <strong style="color: #ffd700;">${Utils.formatCurrency(baseSalary)}</strong>
+                        </div>
+                    </div>
+
+                    <!-- Chỉ số công -->
+                    <h4 style="color: var(--primary); border-left: 3px solid var(--primary); padding-left: 8px; margin-bottom: 10px; font-size: 13px; text-transform: uppercase;">1. Chỉ số công & Ngày công</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; font-size: 13px;">
+                        <div style="background: rgba(255,255,255,0.02); padding: 8px 10px; border-radius: 6px;">
+                            <div style="color: var(--text-secondary); font-size: 11px;">Số ngày công chuẩn</div>
+                            <strong style="font-size: 14px;">${workingDays} ngày</strong>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.02); padding: 8px 10px; border-radius: 6px;">
+                            <div style="color: var(--text-secondary); font-size: 11px;">Số ngày làm thực tế</div>
+                            <strong style="color: var(--success); font-size: 14px;">${paidDays} ngày</strong>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.02); padding: 8px 10px; border-radius: 6px;">
+                            <div style="color: var(--text-secondary); font-size: 11px;">Lương 1 ngày công</div>
+                            <strong style="font-size: 14px;">${Utils.formatCurrency(Math.round(dailyRate))}</strong>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.02); padding: 8px 10px; border-radius: 6px;">
+                            <div style="color: var(--text-secondary); font-size: 11px;">Số ngày nghỉ không lương</div>
+                            <strong style="color: var(--warning); font-size: 14px;">${absentDays} ngày</strong>
+                        </div>
+                    </div>
+
+                    <!-- Các khoản cộng -->
+                    <h4 style="color: var(--success); border-left: 3px solid var(--success); padding-left: 8px; margin-bottom: 10px; font-size: 13px; text-transform: uppercase;">2. Các khoản cộng thêm</h4>
+                    <div style="background: rgba(46,204,113,0.03); border: 1px solid rgba(46,204,113,0.1); padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 13px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span>Thưởng chuyên cần:</span>
+                            <span style="color: var(--success); font-weight: bold;">+${Utils.formatCurrency(punctualityBonusVal)}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Thưởng khác:</span>
+                            <span style="color: var(--success); font-weight: bold;">+${Utils.formatCurrency(customBonus > 0 ? customBonus : 0)}</span>
+                        </div>
+                    </div>
+
+                    <!-- Chi tiết khấu trừ -->
+                    <h4 style="color: var(--danger); border-left: 3px solid var(--danger); padding-left: 8px; margin-bottom: 10px; font-size: 13px; text-transform: uppercase;">3. Chi tiết các khoản khấu trừ</h4>
+                    <div style="background: rgba(231,76,60,0.03); border: 1px solid rgba(231,76,60,0.1); padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 13px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span>Trừ tiền ngày nghỉ (${absentDays} ngày):</span>
+                            <span style="color: var(--danger); font-weight: bold;">-${Utils.formatCurrency(Math.round(dailyRate * absentDays))}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span>Trừ tiền đã tạm ứng:</span>
+                            <span style="color: var(--danger); font-weight: bold;">-${Utils.formatCurrency(advance)}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span>Phạt đi muộn (${lateCount} lần):</span>
+                            <span style="color: var(--danger); font-weight: bold;">-${Utils.formatCurrency(latePenaltyTotal)}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Khấu trừ khác:</span>
+                            <span style="color: var(--danger); font-weight: bold;">-${Utils.formatCurrency(customBonus < 0 ? Math.abs(customBonus) : 0)}</span>
+                        </div>
+                    </div>
+
+                    <!-- Thực lĩnh -->
+                    <div style="background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25); padding: 14px; border-radius: 10px; font-size: 13px; text-align: center;">
+                        <div style="color: var(--text-secondary); font-size: 11px; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; margin-bottom: 4px;">Số tiền lương thực lĩnh</div>
+                        <div style="font-size: 24px; font-weight: 900; color: #10b981; margin-bottom: 6px;">${Utils.formatCurrency(roundedNetSalary)}</div>
+                        <div style="font-size: 11px; color: var(--text-secondary); font-style: italic; line-height: 1.4; word-break: break-word;">
+                            Công thức: (Lương ngày &times; Ngày làm thực tế) + Thưởng - Phạt - Tạm ứng<br>
+                            Chi tiết: (${Utils.formatCurrency(Math.round(dailyRate))} &times; ${paidDays}) 
+                            ${totalAdditions > 0 ? ` + ${Utils.formatCurrency(totalAdditions)}` : ''} 
+                            ${(latePenaltyTotal + (customBonus < 0 ? Math.abs(customBonus) : 0)) > 0 ? ` - ${Utils.formatCurrency(latePenaltyTotal + (customBonus < 0 ? Math.abs(customBonus) : 0))}` : ''}
+                            ${advance > 0 ? ` - ${Utils.formatCurrency(advance)}` : ''} 
+                            = ${Utils.formatCurrency(Math.max(0, netSalary))} (Làm tròn: ${Utils.formatCurrency(roundedNetSalary)})
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('payroll-detail-modal-overlay').classList.add('active');
+        } catch (e) {
+            console.error("Lỗi khi hiển thị chi tiết lương:", e);
+            Utils.showToast("Không thể hiển thị chi tiết", "error");
+        }
+    },
+
+    closeDetailModal: () => {
+        const modal = document.getElementById('payroll-detail-modal-overlay');
+        if (modal) modal.classList.remove('active');
+    },
+
+    copyPayrollReportToClipboard: () => {
+        const data = PayrollModule.currentDetailReport;
+        if (!data) return;
+
+        const text = `📊 BẢNG TÍNH LƯƠNG CHI TIẾT - THÁNG ${data.month}
+👤 Nhân viên: ${data.displayName}
+--------------------------------------
+- Mức lương cơ bản: ${Utils.formatCurrency(data.baseSalary)}
+- Số ngày công chuẩn: ${data.workingDays} ngày
+- Số ngày làm thực tế: ${data.paidDays} ngày
+- Số ngày nghỉ: ${data.absentDays} ngày
+- Lương 1 ngày công: ${Utils.formatCurrency(Math.round(data.dailyRate))}
+
+💸 CHI TIẾT CÁC KHOẢN KHẤU TRỪ:
+- Trừ tiền ngày nghỉ (${data.absentDays} ngày): ${Utils.formatCurrency(Math.round(data.absentDeduction))}
+- Trừ tiền đã tạm ứng: ${Utils.formatCurrency(data.advance)}
+- Phạt đi muộn (${data.lateCount} lần): ${Utils.formatCurrency(data.latePenaltyTotal)}
+- Khấu trừ khác: ${Utils.formatCurrency(data.customBonus < 0 ? Math.abs(data.customBonus) : 0)}
+
+🎁 CÁC KHOẢN CỘNG THÊM:
+- Thưởng chuyên cần: ${Utils.formatCurrency(data.punctualityBonusVal)}
+- Thưởng khác: ${Utils.formatCurrency(data.customBonus > 0 ? data.customBonus : 0)}
+
+💰 SỐ TIỀN LƯƠNG THỰC LĨNH:
+- Công thức: (Lương ngày x Ngày làm thực tế) + Thưởng - Phạt - Tạm ứng
+- Chi tiết: (${Utils.formatCurrency(Math.round(data.dailyRate))} x ${data.paidDays}) + ${Utils.formatCurrency(data.punctualityBonusVal + (data.customBonus > 0 ? data.customBonus : 0))} - ${Utils.formatCurrency(data.latePenaltyTotal + (data.customBonus < 0 ? Math.abs(data.customBonus) : 0))} - ${Utils.formatCurrency(data.advance)} = ${Utils.formatCurrency(Math.max(0, data.netSalary))}
+- Làm tròn: ${Utils.formatCurrency(data.roundedNetSalary)}
+--------------------------------------
+Thanh Long Work - Chúc bạn tháng mới làm việc hiệu quả!`;
+
+        navigator.clipboard.writeText(text).then(() => {
+            Utils.showToast("Đã copy báo cáo chi tiết vào bộ nhớ tạm!", "success");
+        }).catch(err => {
+            console.error("Lỗi khi copy:", err);
+            Utils.showToast("Copy thất bại, vui lòng thử lại!", "error");
+        });
     }
 };

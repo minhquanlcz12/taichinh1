@@ -1114,16 +1114,33 @@
                 <button class="btn btn-primary" onclick="WorkModule.saveTicketModal()"><i class="fa-solid fa-floppy-disk" style="margin-right: 8px;"></i>Lưu Phiếu Việc</button>
             </div>
         </div>
+    <!-- Payroll Detail Modal Overlay -->
+    <div class="modal-overlay" id="payroll-detail-modal-overlay" onclick="if(event.target===this) PayrollModule.closeDetailModal()">
+        <div class="modal profile-modal-content" id="payroll-detail-modal" style="width: 90%; max-width: 500px; border-color: rgba(46,204,113,0.3); background: rgba(10,10,18,0.95); box-shadow: 0 12px 40px rgba(0,0,0,0.8);">
+            <div class="modal-header" style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 14px;">
+                <h3 style="display: flex; align-items: center; gap: 8px; font-size: 16px;"><i class="fa-solid fa-calculator" style="color:var(--success);"></i> BÁO CÁO LƯƠNG CHI TIẾT</h3>
+                <button class="btn-close" onclick="PayrollModule.closeDetailModal()"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="modal-body" id="payroll-detail-modal-body" style="padding-top: 15px; max-height: 70vh; overflow-y: auto;">
+                <!-- Content generated dynamically -->
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 14px; display: flex; justify-content: flex-end; gap: 12px;">
+                <button class="btn btn-outline" id="btn-copy-payroll-report" onclick="PayrollModule.copyPayrollReportToClipboard()" style="border-color: var(--success); color: var(--success); font-size: 12px; font-weight: bold; border-radius: 8px;">
+                    <i class="fa-solid fa-copy" style="margin-right: 6px;"></i> Copy Báo Cáo Nhanh
+                </button>
+                <button class="btn btn-primary" onclick="PayrollModule.closeDetailModal()" style="font-size: 12px; font-weight: bold; border-radius: 8px;">Đóng</button>
+            </div>
+        </div>
     </div>
 
 
-    <script src="js/db.js?v=170.0"></script>
+    <script src="js/db.js?v=176.0"></script>
     <script src="js/finance.js?v=165.0"></script>
     <script src="js/work.js?v=165.0"></script>
-    <script src="js/attendance.js?v=175.0"></script>
+    <script src="js/attendance.js?v=176.0"></script>
     <script src="js/chibi.js?v=167.0"></script>
     <script src="js/rewards.js?v=165.0"></script>
-    <script src="js/payroll.js?v=175.0"></script>
+    <script src="js/payroll.js?v=176.0"></script>
     <script src="js/chat.js?v=165.0"></script>
     <script src="js/prompt.js?v=165.0"></script>
     <script src="js/chatbot.js?v=165.0"></script>

@@ -199,6 +199,29 @@ const DB = {
         return Utils.storage.get('backup_custom_bonuses', {});
     },
 
+    saveSalaryAdvances: async (advancesObj) => {
+        try {
+            Utils.storage.set('backup_salary_advances', advancesObj);
+            await db.collection("system").doc("salary_advances").set(advancesObj);
+        } catch (e) {
+            console.error("Error saving salary advances:", e);
+        }
+    },
+
+    getSalaryAdvances: async () => {
+        try {
+            const doc = await db.collection("system").doc("salary_advances").get();
+            if (doc.exists && doc.data()) {
+                let data = doc.data();
+                Utils.storage.set('backup_salary_advances', data);
+                return data;
+            }
+        } catch (e) {
+            console.error("Error getting salary advances:", e);
+        }
+        return Utils.storage.get('backup_salary_advances', {});
+    },
+
     // --- LƯU TRỮ PROMPT VAULT ---
     savePrompts: async (promptsArray) => {
         try {

@@ -1,7 +1,9 @@
 const Attendance = {
-    // Thời hạn chấm công đúng giờ: 08:30 AM
+    // Thời hạn chấm công đúng giờ
     DEADLINE_HOURS: 8,
     DEADLINE_MINUTES: 30,
+    AFTERNOON_DEADLINE_HOURS: 14,
+    AFTERNOON_DEADLINE_MINUTES: 0,
 
     selectedMonth: new Date().getMonth(),
     selectedYear: new Date().getFullYear(),
@@ -158,25 +160,33 @@ const Attendance = {
         const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
         const allData = await Attendance.loadData();
         
-        // Kiểm tra xem hôm nay đã chấm công chưa
-        const todayRecord = allData.find(r => r.username === user.username && r.dateStr === dateStr);
+        // Kiểm tra xem ca hiện tại đã chấm công chưa
+        const currentHour = today.getHours();
+        const currentSession = currentHour < 12 ? 'morning' : 'afternoon';
+        const sessionRecord = allData.find(r => 
+            r.username === user.username && 
+            r.dateStr === dateStr && 
+            (r.type === currentSession || (currentSession === 'morning' && !r.type))
+        );
         let checkInHtml = '';
 
-        if (todayRecord) {
+        if (sessionRecord) {
             let meritPts = 1;
             let statusText = '';
             let badgeClass = '';
-            if (todayRecord.status === 'on_time') {
+            const sessionName = (sessionRecord.type === 'afternoon') ? 'Ca Chiều' : 'Ca Sáng';
+            
+            if (sessionRecord.status === 'on_time') {
                 meritPts = 1;
-                statusText = `🏆 Đúng giờ — Công đức +1`;
+                statusText = `🏆 Đúng giờ (${sessionName}) — Công đức +1`;
                 badgeClass = 'on-time';
-            } else if (todayRecord.status === 'late_excused') {
+            } else if (sessionRecord.status === 'late_excused') {
                 meritPts = 1;
-                statusText = `🏆 Muộn có phép — Công đức +1`;
+                statusText = `🏆 Muộn có phép (${sessionName}) — Công đức +1`;
                 badgeClass = 'late-excused';
             } else {
                 meritPts = -1;
-                statusText = `⏰ Muộn ${todayRecord.lateMinutes}p — Phạt 20k & Trừ 1 Công đức`;
+                statusText = `⏰ Muộn ${sessionRecord.lateMinutes}p (${sessionName}) — Phạt 20k & Trừ 1 Công đức`;
                 badgeClass = 'late';
             }
             checkInHtml = `
@@ -193,15 +203,18 @@ const Attendance = {
                             <circle cx="12" cy="12" r="3" />
                         </svg>
                     </div>
-                    <h3><i class="fa-solid fa-circle-check" style="color:#2ecc71;margin-right:8px;"></i> Công đức hôm nay đã ghi nhận</h3>
-                    <p>Gõ mõ lúc: <strong style="color:#daa520;">${new Date(todayRecord.timestamp).toLocaleTimeString('vi-VN')}</strong></p>
-                    ${todayRecord.location ? `<p style="font-size:12px;"><i class="fa-solid fa-location-dot" style="color:#daa520;"></i> GPS xác minh vị trí tại công ty</p>` : ''}
+                    <h3><i class="fa-solid fa-circle-check" style="color:#2ecc71;margin-right:8px;"></i> ${sessionName} hôm nay đã ghi nhận</h3>
+                    <p>Gõ mõ lúc: <strong style="color:#daa520;">${new Date(sessionRecord.timestamp).toLocaleTimeString('vi-VN')}</strong></p>
+                    ${sessionRecord.location ? `<p style="font-size:12px;"><i class="fa-solid fa-location-dot" style="color:#daa520;"></i> GPS xác minh vị trí tại công ty</p>` : ''}
                     <span class="wf-badge ${badgeClass}">
                         ${statusText}
                     </span>
                 </div>
             `;
-            if (!todayRecord.checkoutTimestamp) {
+            
+            // Tìm bản ghi checkout của ngày hôm nay
+            const checkoutRecord = allData.find(r => r.username === user.username && r.dateStr === dateStr && r.checkoutTimestamp);
+            if (!checkoutRecord) {
                 checkInHtml += `
                 <div style="text-align:center;margin-top:20px;">
                     <button class="btn" style="background:#daa520;color:#000;padding:12px 24px;font-weight:bold;border-radius:30px;box-shadow:0 4px 15px rgba(218,165,32,0.4);" onclick="Attendance.showCheckoutModal()">
@@ -213,10 +226,11 @@ const Attendance = {
                 checkInHtml += `
                 <div class="glass-panel" style="margin-top:20px;padding:16px;border-color:rgba(218,165,32,0.2);">
                     <h4 style="color:#daa520;margin-bottom:8px;"><i class="fa-solid fa-clipboard-check"></i> Hoàn thành ngày làm việc</h4>
-                    <p style="color:var(--text-secondary);font-size:13px;margin:0;">Ra về lúc: <strong>${new Date(todayRecord.checkoutTimestamp).toLocaleTimeString('vi-VN')}</strong></p>
+                    <p style="color:var(--text-secondary);font-size:13px;margin:0;">Ra về lúc: <strong>${new Date(checkoutRecord.checkoutTimestamp).toLocaleTimeString('vi-VN')}</strong></p>
                 </div>`;
             }
         } else {
+            const sessLabel = currentSession === 'afternoon' ? 'Ca Chiều (Hạn chốt 14:00)' : 'Ca Sáng (Hạn chốt 08:30)';
             checkInHtml = `
                 <div class="check-in-box" style="text-align: center;">
                     <div class="monk-video-container" style="margin: 0 auto 24px; width: fit-content; border-radius: 16px; overflow: hidden; border: 2px solid rgba(218,165,32,0.2); box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
@@ -242,7 +256,7 @@ const Attendance = {
                         <div class="wf-cong-duc"><i class="fa-solid fa-hands-praying"></i> +1 Công Đức Đi Làm</div>
                         <span class="wf-label"><i class="fa-solid fa-gavel" style="margin-right:6px;"></i> GÕ MÕ ĐIỂM DANH</span>
                     </button>
-                    <p style="margin-top:28px;color:#daa520;font-weight:600;font-size:14px;">🙏 Gõ mõ để tích công đức đi làm hôm nay!</p>
+                    <p style="margin-top:28px;color:#daa520;font-weight:600;font-size:14px;">🙏 Gõ mõ để tích công đức đi làm ${sessLabel}!</p>
                     <small style="color:rgba(255,255,255,0.35);display:block;margin-top:6px;"><i class="fa-solid fa-location-dot" style="color:#daa520;"></i> GPS xác minh vị trí tại công ty</small>
                 </div>
             `;
@@ -484,13 +498,14 @@ const Attendance = {
                 if (!summary[r.username]) {
                     summary[r.username] = { totalDays: 0, onTime: 0, late: 0, lateExcused: 0, totalLateMinutes: 0 };
                 }
-                summary[r.username].totalDays++;
+                const weight = r.type ? 0.5 : 1.0;
+                summary[r.username].totalDays += weight;
                 if (r.status === 'on_time') {
-                    summary[r.username].onTime++;
+                    summary[r.username].onTime += weight;
                 } else if (r.status === 'late_excused') {
-                    summary[r.username].lateExcused++;
+                    summary[r.username].lateExcused += weight;
                 } else {
-                    summary[r.username].late++;
+                    summary[r.username].late += weight;
                     summary[r.username].totalLateMinutes += r.lateMinutes || 0;
                 }
             }
@@ -857,8 +872,15 @@ const Attendance = {
         const now = new Date();
         const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
 
+        const currentHour = now.getHours();
+        const currentSession = currentHour < 12 ? 'morning' : 'afternoon';
+        
         const deadline = new Date(now);
-        deadline.setHours(Attendance.DEADLINE_HOURS, Attendance.DEADLINE_MINUTES, 0, 0);
+        if (currentSession === 'morning') {
+            deadline.setHours(Attendance.DEADLINE_HOURS, Attendance.DEADLINE_MINUTES, 0, 0);
+        } else {
+            deadline.setHours(Attendance.AFTERNOON_DEADLINE_HOURS, Attendance.AFTERNOON_DEADLINE_MINUTES, 0, 0);
+        }
 
         let status = 'on_time', lateMinutes = 0;
         let lateExcuseDetails = null;
@@ -869,7 +891,7 @@ const Attendance = {
             const lates = await Attendance.loadLateRequests();
             const todayApprovedRequest = lates.find(r => r.username === user.username && r.date === dateStr && r.status === 'approved');
             const locStr = lat ? `\n📍 <b>Vị trí:</b> <a href="https://google.com/maps?q=${lat},${lng}">Xem bản đồ</a>` : '';
-            const shiftName = now.getHours() < 12 ? 'CA SÁNG' : 'CA CHIỀU';
+            const shiftName = currentSession === 'morning' ? 'CA SÁNG' : 'CA CHIỀU';
             
             if (todayApprovedRequest) {
                 const requestedMinutes = parseInt(todayApprovedRequest.minutes) || 0;
@@ -923,13 +945,20 @@ const Attendance = {
             id: 'att_' + Date.now(), username: user.username,
             timestamp: now.getTime(), dateStr, status, lateMinutes,
             location: lat ? { lat, lng } : null, note: '',
-            lateExcuse: lateExcuseDetails
+            lateExcuse: lateExcuseDetails,
+            type: currentSession
         };
 
         try {
             const allData = await Attendance.loadData();
-            if (allData.find(r => r.username === user.username && r.dateStr === dateStr)) {
-                Utils.showToast('Hôm nay đã điểm danh rồi!', 'info');
+            const existingRecord = allData.find(r => 
+                r.username === user.username && 
+                r.dateStr === dateStr && 
+                (r.type === currentSession || (currentSession === 'morning' && !r.type))
+            );
+            if (existingRecord) {
+                const sessionLabel = currentSession === 'afternoon' ? 'ca chiều' : 'ca sáng';
+                Utils.showToast(`Hôm nay bạn đã điểm danh ${sessionLabel} rồi!`, 'info');
                 if (btn) btn.dataset.state = 'idle';
                 return;
             }
@@ -1078,7 +1107,8 @@ const Attendance = {
         const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
         
         const allData = await Attendance.loadData();
-        const todayRecord = allData.find(r => r.username === user.username && r.dateStr === dateStr);
+        const todayRecord = allData.find(r => r.username === user.username && r.dateStr === dateStr && r.type === 'afternoon') ||
+                            allData.find(r => r.username === user.username && r.dateStr === dateStr && (r.type === 'morning' || !r.type));
         
         if (todayRecord) {
             todayRecord.checkoutTimestamp = now.getTime();
@@ -1140,10 +1170,11 @@ const Attendance = {
         allData.forEach(r => {
             if (r.dateStr >= startStr && r.dateStr <= endStr) {
                 if (!summary[r.username]) summary[r.username] = { totalDays: 0, onTime: 0, late: 0, totalLateMinutes: 0 };
-                summary[r.username].totalDays++;
-                if (r.status === 'on_time') summary[r.username].onTime++;
+                const weight = r.type ? 0.5 : 1.0;
+                summary[r.username].totalDays += weight;
+                if (r.status === 'on_time') summary[r.username].onTime += weight;
                 else {
-                    summary[r.username].late++;
+                    summary[r.username].late += weight;
                     summary[r.username].totalLateMinutes += r.lateMinutes || 0;
                 }
             }
@@ -1597,13 +1628,14 @@ const Attendance = {
                 if (!summary[r.username]) {
                     summary[r.username] = { totalDays: 0, onTime: 0, late: 0, lateExcused: 0, totalLateMinutes: 0 };
                 }
-                summary[r.username].totalDays++;
+                const weight = r.type ? 0.5 : 1.0;
+                summary[r.username].totalDays += weight;
                 if (r.status === 'on_time') {
-                    summary[r.username].onTime++;
+                    summary[r.username].onTime += weight;
                 } else if (r.status === 'late_excused') {
-                    summary[r.username].lateExcused++;
+                    summary[r.username].lateExcused += weight;
                 } else {
-                    summary[r.username].late++;
+                    summary[r.username].late += weight;
                     summary[r.username].totalLateMinutes += r.lateMinutes || 0;
                 }
             }
