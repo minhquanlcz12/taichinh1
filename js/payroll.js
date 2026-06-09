@@ -707,9 +707,13 @@ const PayrollModule = {
             const currentUser = Auth.currentUser;
             let accounts = await Auth.getAccounts();
             
+            // Exclude admin and CONGTY accounts
+            accounts = accounts.filter(a => a.role !== 'admin' && a.username.toLowerCase() !== 'admin' && a.username.toLowerCase() !== 'congty');
+            
             // If not admin, only calculate for self
             if (currentUser.role !== 'admin') {
-                accounts = accounts.filter(a => a.username === currentUser.username);
+                const myAcc = (await Auth.getAccounts()).find(a => a.username === currentUser.username);
+                accounts = myAcc ? [myAcc] : [];
             }
 
             // Load data
@@ -1302,8 +1306,13 @@ const PayrollModule = {
 
         const currentUser = Auth.currentUser;
         let accounts = await Auth.getAccounts();
+        
+        // Exclude admin and CONGTY accounts
+        accounts = accounts.filter(a => a.role !== 'admin' && a.username.toLowerCase() !== 'admin' && a.username.toLowerCase() !== 'congty');
+        
         if (currentUser.role !== 'admin') {
-            accounts = accounts.filter(a => a.username === currentUser.username);
+            const myAcc = (await Auth.getAccounts()).find(a => a.username === currentUser.username);
+            accounts = myAcc ? [myAcc] : [];
         }
 
         const allAttendance = await Attendance.loadData();

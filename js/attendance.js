@@ -505,13 +505,17 @@ const Attendance = {
             }
         });
 
-        // Lấy tất cả user từ DB (loại admin) để hiển thị kể cả khi chưa điểm danh
+        // Lấy tất cả user từ DB (loại admin và CONGTY) để hiển thị kể cả khi chưa điểm danh
         const accounts = (typeof Auth !== 'undefined' && await Auth.getAccounts()) || [];
-        const usersList = accounts.filter(a => a.role !== 'admin').map(a => a.username);
+        const usersList = accounts
+            .filter(a => a.role !== 'admin' && a.username.toLowerCase() !== 'admin' && a.username.toLowerCase() !== 'congty')
+            .map(a => a.username);
         
         // Cứ thêm user có dữ liệu điểm danh lỡ như tài khoản bị xoá
         Object.keys(summary).forEach(u => {
-            if (!usersList.includes(u) && u !== 'admin') usersList.push(u);
+            if (!usersList.includes(u) && u.toLowerCase() !== 'admin' && u.toLowerCase() !== 'congty') {
+                usersList.push(u);
+            }
         });
         
         let adminHtml = `
@@ -1155,9 +1159,13 @@ const Attendance = {
         });
 
         const accounts = (typeof Auth !== 'undefined' && await Auth.getAccounts()) || [];
-        const usersList = accounts.filter(a => a.role !== 'admin').map(a => a.username);
+        const usersList = accounts
+            .filter(a => a.role !== 'admin' && a.username.toLowerCase() !== 'admin' && a.username.toLowerCase() !== 'congty')
+            .map(a => a.username);
         Object.keys(summary).forEach(u => {
-            if (!usersList.includes(u) && u !== 'admin') usersList.push(u);
+            if (!usersList.includes(u) && u.toLowerCase() !== 'admin' && u.toLowerCase() !== 'congty') {
+                usersList.push(u);
+            }
         });
 
         // Tạo nội dung CSV (UTF-8 BOM hỗ trợ tiếng Việt)
@@ -1611,9 +1619,13 @@ const Attendance = {
         });
 
         const accounts = (typeof Auth !== 'undefined' && await Auth.getAccounts()) || [];
-        const usersList = accounts.filter(a => a.role !== 'admin').map(a => a.username);
+        const usersList = accounts
+            .filter(a => a.role !== 'admin' && a.username.toLowerCase() !== 'admin' && a.username.toLowerCase() !== 'congty')
+            .map(a => a.username);
         Object.keys(summary).forEach(u => {
-            if (!usersList.includes(u) && u !== 'admin') usersList.push(u);
+            if (!usersList.includes(u) && u.toLowerCase() !== 'admin' && u.toLowerCase() !== 'congty') {
+                usersList.push(u);
+            }
         });
 
         const clone = document.createElement('div');
