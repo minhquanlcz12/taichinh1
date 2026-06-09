@@ -450,26 +450,37 @@ const Attendance = {
         const allLeaves = await Attendance.loadLeaveData();
         const allLates = await Attendance.loadLateRequests();
         
-        // Phân nhóm theo User và Tháng đã chọn
+        // Phân nhóm theo User và Tháng đã chọn (đồng bộ theo chu kỳ lương)
         const now = new Date();
         const selYear = Attendance.selectedYear;
         const selMonth = Attendance.selectedMonth;
-        const currentMonthPrefix = `${selYear}-${String(selMonth + 1).padStart(2, '0')}`;
+        const monthStr = `${selYear}-${String(selMonth + 1).padStart(2, '0')}`;
         
-        // Tính số ngày làm việc đã qua trong tháng (Loại trừ Chủ nhật)
-        const isCurrentMonth = (selYear === now.getFullYear() && selMonth === now.getMonth());
-        const daysInMonth = new Date(selYear, selMonth + 1, 0).getDate();
-        const endDay = isCurrentMonth ? now.getDate() : daysInMonth;
+        const cycle = PayrollModule.getCycleRange(monthStr);
+        const startStr = cycle.startStr;
+        const endStr = cycle.endStr;
+        
+        // Tính số ngày làm việc đã qua trong chu kỳ tính lương (Loại trừ Chủ nhật)
+        const todayZero = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        let limitDate = new Date(cycle.endDate);
+        limitDate.setHours(0,0,0,0);
+        if (todayZero < limitDate) {
+            limitDate = todayZero;
+        }
 
         let passedWorkingDays = 0;
-        for (let day = 1; day <= endDay; day++) {
-             let d = new Date(selYear, selMonth, day);
-             if (d.getDay() !== 0) passedWorkingDays++;
+        let tempDate = new Date(cycle.startDate);
+        tempDate.setHours(0,0,0,0);
+        while (tempDate <= limitDate) {
+            if (tempDate.getDay() !== 0) {
+                passedWorkingDays++;
+            }
+            tempDate.setDate(tempDate.getDate() + 1);
         }
 
         const summary = {};
         allData.forEach(r => {
-            if (r.dateStr.startsWith(currentMonthPrefix)) {
+            if (r.dateStr >= startStr && r.dateStr <= endStr) {
                 if (!summary[r.username]) {
                     summary[r.username] = { totalDays: 0, onTime: 0, late: 0, lateExcused: 0, totalLateMinutes: 0 };
                 }
@@ -488,7 +499,7 @@ const Attendance = {
         const approvedLeaves = {};
         allLeaves.forEach(l => {
             const lStart = l.startDate || l.date || '';
-            if (l.status === 'approved' && lStart.startsWith(currentMonthPrefix)) {
+            if (l.status === 'approved' && lStart >= startStr && lStart <= endStr) {
                 if (!approvedLeaves[l.username]) approvedLeaves[l.username] = 0;
                 approvedLeaves[l.username] += parseFloat(l.days) || 0;
             }
@@ -1098,21 +1109,32 @@ const Attendance = {
         const now = new Date();
         const selYear = Attendance.selectedYear;
         const selMonth = Attendance.selectedMonth;
-        const currentMonthPrefix = `${selYear}-${String(selMonth + 1).padStart(2, '0')}`;
+        const monthStr = `${selYear}-${String(selMonth + 1).padStart(2, '0')}`;
         
-        const isCurrentMonth = (selYear === now.getFullYear() && selMonth === now.getMonth());
-        const daysInMonth = new Date(selYear, selMonth + 1, 0).getDate();
-        const endDay = isCurrentMonth ? now.getDate() : daysInMonth;
+        const cycle = PayrollModule.getCycleRange(monthStr);
+        const startStr = cycle.startStr;
+        const endStr = cycle.endStr;
+        
+        const todayZero = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        let limitDate = new Date(cycle.endDate);
+        limitDate.setHours(0,0,0,0);
+        if (todayZero < limitDate) {
+            limitDate = todayZero;
+        }
 
         let passedWorkingDays = 0;
-        for (let day = 1; day <= endDay; day++) {
-             let d = new Date(selYear, selMonth, day);
-             if (d.getDay() !== 0) passedWorkingDays++;
+        let tempDate = new Date(cycle.startDate);
+        tempDate.setHours(0,0,0,0);
+        while (tempDate <= limitDate) {
+            if (tempDate.getDay() !== 0) {
+                passedWorkingDays++;
+            }
+            tempDate.setDate(tempDate.getDate() + 1);
         }
 
         const summary = {};
         allData.forEach(r => {
-            if (r.dateStr.startsWith(currentMonthPrefix)) {
+            if (r.dateStr >= startStr && r.dateStr <= endStr) {
                 if (!summary[r.username]) summary[r.username] = { totalDays: 0, onTime: 0, late: 0, totalLateMinutes: 0 };
                 summary[r.username].totalDays++;
                 if (r.status === 'on_time') summary[r.username].onTime++;
@@ -1125,7 +1147,8 @@ const Attendance = {
 
         const approvedLeaves = {};
         allLeaves.forEach(l => {
-            if (l.status === 'approved' && l.startDate.startsWith(currentMonthPrefix)) {
+            const lStart = l.startDate || l.date || '';
+            if (l.status === 'approved' && lStart >= startStr && lStart <= endStr) {
                 if (!approvedLeaves[l.username]) approvedLeaves[l.username] = 0;
                 approvedLeaves[l.username] += parseFloat(l.days) || 0;
             }
@@ -1166,16 +1189,18 @@ const Attendance = {
         const allData = await Attendance.loadData();
         const allLeaves = await Attendance.loadLeaveData();
         
-        const now = new Date();
-        const currentMonthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        const currentMonthStr = PayrollModule.getCurrentCycleMonthStr(new Date());
+        const cycle = PayrollModule.getCycleRange(currentMonthStr);
+        const startStr = cycle.startStr;
+        const endStr = cycle.endStr;
         
-        // Filter by this user + current month
+        // Filter by this user + current payroll cycle
         const userRecords = allData
-            .filter(r => r.username === username && r.dateStr.startsWith(currentMonthPrefix))
+            .filter(r => r.username === username && r.dateStr >= startStr && r.dateStr <= endStr)
             .sort((a, b) => a.dateStr.localeCompare(b.dateStr));
         
         const userLeaves = allLeaves
-            .filter(l => l.username === username && l.startDate.startsWith(currentMonthPrefix));
+            .filter(l => l.username === username && (l.startDate || l.date) >= startStr && (l.startDate || l.date) <= endStr);
         
         const totalOnTime = userRecords.filter(r => r.status === 'on_time').length;
         const totalExcusedLate = userRecords.filter(r => r.status === 'late_excused').length;
@@ -1191,7 +1216,7 @@ const Attendance = {
             <div style="text-align:center;margin-bottom:30px;border-bottom:2px solid #da251d;padding-bottom:20px;">
                 <h1 style="color:#da251d;margin-bottom:5px;">THANH LONG WORK</h1>
                 <h3>LỊCH SỬ CHẤM CÔNG CÁ NHÂN</h3>
-                <p><strong>${username}</strong> &bull; Tháng ${now.getMonth() + 1}/${now.getFullYear()} &bull; Ngày xuất: ${now.toLocaleDateString('vi-VN')}</p>
+                <p><strong>${username}</strong> &bull; Tháng ${now.getMonth() + 1}/${now.getFullYear()} &bull; Chu kỳ: ${cycle.startStr.split('-').reverse().join('/')} - ${cycle.endStr.split('-').reverse().join('/')} &bull; Ngày xuất: ${now.toLocaleDateString('vi-VN')}</p>
             </div>
             
             <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:25px;text-align:center;border:1px solid #eee;padding:15px;border-radius:8px;">
@@ -1535,21 +1560,32 @@ const Attendance = {
         const now = new Date();
         const selYear = Attendance.selectedYear;
         const selMonth = Attendance.selectedMonth;
-        const currentMonthPrefix = `${selYear}-${String(selMonth + 1).padStart(2, '0')}`;
+        const monthStr = `${selYear}-${String(selMonth + 1).padStart(2, '0')}`;
         
-        const isCurrentMonth = (selYear === now.getFullYear() && selMonth === now.getMonth());
-        const daysInMonth = new Date(selYear, selMonth + 1, 0).getDate();
-        const endDay = isCurrentMonth ? now.getDate() : daysInMonth;
+        const cycle = PayrollModule.getCycleRange(monthStr);
+        const startStr = cycle.startStr;
+        const endStr = cycle.endStr;
+        
+        const todayZero = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        let limitDate = new Date(cycle.endDate);
+        limitDate.setHours(0,0,0,0);
+        if (todayZero < limitDate) {
+            limitDate = todayZero;
+        }
 
         let passedWorkingDays = 0;
-        for (let day = 1; day <= endDay; day++) {
-             let d = new Date(selYear, selMonth, day);
-             if (d.getDay() !== 0) passedWorkingDays++;
+        let tempDate = new Date(cycle.startDate);
+        tempDate.setHours(0,0,0,0);
+        while (tempDate <= limitDate) {
+            if (tempDate.getDay() !== 0) {
+                passedWorkingDays++;
+            }
+            tempDate.setDate(tempDate.getDate() + 1);
         }
 
         const summary = {};
         allData.forEach(r => {
-            if (r.dateStr.startsWith(currentMonthPrefix)) {
+            if (r.dateStr >= startStr && r.dateStr <= endStr) {
                 if (!summary[r.username]) {
                     summary[r.username] = { totalDays: 0, onTime: 0, late: 0, lateExcused: 0, totalLateMinutes: 0 };
                 }
@@ -1568,7 +1604,7 @@ const Attendance = {
         const approvedLeaves = {};
         allLeaves.forEach(l => {
             const lStart = l.startDate || l.date || '';
-            if (l.status === 'approved' && lStart.startsWith(currentMonthPrefix)) {
+            if (l.status === 'approved' && lStart >= startStr && lStart <= endStr) {
                 if (!approvedLeaves[l.username]) approvedLeaves[l.username] = 0;
                 approvedLeaves[l.username] += parseFloat(l.days) || 0;
             }
@@ -1609,7 +1645,7 @@ const Attendance = {
             <div style="text-align:center;margin-bottom:30px;border-bottom:2px solid #da251d;padding-bottom:20px;">
                 <h1 style="color:#da251d;margin-bottom:5px;">THANH LONG WORK</h1>
                 <h3>BẢNG TỔNG HỢP CHẤM CÔNG NHÂN SỰ</h3>
-                <p>Tháng ${selMonth + 1}/${selYear} &bull; Ngày xuất: ${now.toLocaleDateString('vi-VN')}</p>
+                <p>Tháng ${selMonth + 1}/${selYear} &bull; Chu kỳ: ${cycle.startStr.split('-').reverse().join('/')} - ${cycle.endStr.split('-').reverse().join('/')} &bull; Ngày xuất: ${now.toLocaleDateString('vi-VN')}</p>
             </div>
             
             <table style="width:100%;border-collapse:collapse;margin-bottom:40px;font-size:12px;">
