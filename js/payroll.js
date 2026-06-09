@@ -33,14 +33,14 @@ const PayrollModule = {
         const year = parseInt(parts[0], 10);
         const month = parseInt(parts[1], 10); // 1-indexed
 
-        let startYear = year;
-        let startMonth = month - 1;
-        if (startMonth === 0) {
-            startMonth = 12;
-            startYear--;
+        let endYear = year;
+        let endMonth = month + 1;
+        if (endMonth > 12) {
+            endMonth = 1;
+            endYear++;
         }
-        const startStr = `${startYear}-${String(startMonth).padStart(2, '0')}-10`;
-        const endStr = `${year}-${String(month).padStart(2, '0')}-09`;
+        const startStr = `${year}-${String(month).padStart(2, '0')}-10`;
+        const endStr = `${endYear}-${String(endMonth).padStart(2, '0')}-09`;
 
         return {
             startStr,
@@ -58,11 +58,11 @@ const PayrollModule = {
         let targetYear = y;
         let targetMonth = m + 1; // 1-indexed
 
-        if (d >= 10) {
-            targetMonth++;
-            if (targetMonth > 12) {
-                targetMonth = 1;
-                targetYear++;
+        if (d < 10) {
+            targetMonth--;
+            if (targetMonth === 0) {
+                targetMonth = 12;
+                targetYear--;
             }
         }
 
