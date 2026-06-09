@@ -1262,6 +1262,7 @@ const PayrollModule = {
                         <th style="padding: 10px; border: 1px solid #d1d5db; text-align: center;">Chấm công</th>
                         <th style="padding: 10px; border: 1px solid #d1d5db; text-align: center;">Hiệu suất</th>
                         <th style="padding: 10px; border: 1px solid #d1d5db; text-align: right;">Thưởng/Phạt</th>
+                        <th style="padding: 10px; border: 1px solid #d1d5db; text-align: right;">Tạm ứng</th>
                         <th style="padding: 10px; border: 1px solid #d1d5db; text-align: right;">Thực Lĩnh</th>
                     </tr>
                 </thead>
@@ -1293,13 +1294,18 @@ const PayrollModule = {
             </div>
         `;
 
-        // Strip input tags for PDF formatting
+        // Format input values nicely for PDF
         const inputs = clone.querySelectorAll('input');
         inputs.forEach(input => {
-            const val = input.value;
-            const textNode = document.createTextNode(val + 'đ');
+            const val = parseInt(input.value) || 0;
+            const formatted = Utils.formatCurrency(val);
+            const textNode = document.createTextNode(formatted);
             input.replaceWith(textNode);
         });
+
+        // Remove the info circle icons in the print view
+        const infoIcons = clone.querySelectorAll('.fa-circle-info');
+        infoIcons.forEach(icon => icon.remove());
 
         const bdgs = clone.querySelectorAll('.badge');
         bdgs.forEach(b => {
