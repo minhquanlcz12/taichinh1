@@ -1227,110 +1227,30 @@ const RewardsModule = {
                                 <i class="fa-solid fa-chart-bar"></i> TỶ LỆ NHÂN PHẨM
                             </div>
 
+                            ${[
+                                { name: 'HỤT RỒI! 😅', prob: 55, color: '#6366f1', sub: '' },
+                                { name: 'Hòa vốn (+1đ)', prob: 15, color: '#10b981', sub: '' },
+                                { name: 'Lãi nhẹ (+2đ)', prob: 8, color: '#14b8a6', sub: '' },
+                                { name: 'Thẻ Đặc Quyền 🃏', prob: 7, color: '#3b82f6', sub: '' },
+                                { name: 'Quà Tặng 🎁', prob: 6, color: '#f59e0b', sub: '' },
+                                { name: 'Hắc ám (-1đ) 💀', prob: 5, color: '#ef4444', sub: '' },
+                                { name: 'ĐỘC ĐẮC 💎', prob: 2, color: '#ec4899', sub: 'Jackpot VVIP 0.1% | Thẻ Đặc Biệt 1.9%' },
+                                { name: 'Hũ lớn (+5đ)', prob: 2, color: '#06b6d4', sub: '' }
+                            ].sort((a,b) => b.prob - a.prob).map(p => `
                             <div class="prob-row">
                                 <div class="prob-label">
-                                    <span class="prob-dot" style="background: #6366f1; box-shadow: 0 0 8px #6366f1;"></span>
-                                    <span class="prob-name">HỤT RỒI! 😅</span>
+                                    <span class="prob-dot" style="background: ${p.color}; box-shadow: 0 0 8px ${p.color};"></span>
+                                    <span class="prob-name">${p.name}</span>
                                 </div>
                                 <div class="prob-bar-track">
-                                    <div class="prob-bar-fill" style="width: 55%; background: linear-gradient(90deg, #6366f1, #818cf8);"></div>
+                                    <div class="prob-bar-fill" style="width: ${p.prob}%; background: linear-gradient(90deg, ${p.color}, ${p.color}dd);"></div>
                                 </div>
                                 <div class="prob-meta">
-                                    <span class="prob-value">55.0%</span>
+                                    <span class="prob-value">${p.prob.toFixed(1)}%</span>
+                                    ${p.sub ? `<span class="prob-sub">${p.sub}</span>` : ''}
                                 </div>
                             </div>
-                            
-                            <div class="prob-row">
-                                <div class="prob-label">
-                                    <span class="prob-dot" style="background: #10b981; box-shadow: 0 0 8px #10b981;"></span>
-                                    <span class="prob-name">Hòa vốn (+1đ)</span>
-                                </div>
-                                <div class="prob-bar-track">
-                                    <div class="prob-bar-fill" style="width: 15%; background: linear-gradient(90deg, #10b981, #34d399);"></div>
-                                </div>
-                                <div class="prob-meta">
-                                    <span class="prob-value">15.0%</span>
-                                </div>
-                            </div>
-
-                            <div class="prob-row">
-                                <div class="prob-label">
-                                    <span class="prob-dot" style="background: #14b8a6; box-shadow: 0 0 8px #14b8a6;"></span>
-                                    <span class="prob-name">Lãi nhẹ (+2đ)</span>
-                                </div>
-                                <div class="prob-bar-track">
-                                    <div class="prob-bar-fill" style="width: 8%; background: linear-gradient(90deg, #14b8a6, #2dd4bf);"></div>
-                                </div>
-                                <div class="prob-meta">
-                                    <span class="prob-value">8.0%</span>
-                                </div>
-                            </div>
-
-                            <div class="prob-row">
-                                <div class="prob-label">
-                                    <span class="prob-dot" style="background: #f59e0b; box-shadow: 0 0 8px #f59e0b;"></span>
-                                    <span class="prob-name">Quà Tặng 🎁</span>
-                                </div>
-                                <div class="prob-bar-track">
-                                    <div class="prob-bar-fill" style="width: 6%; background: linear-gradient(90deg, #f59e0b, #fbbf24);"></div>
-                                </div>
-                                <div class="prob-meta">
-                                    <span class="prob-value">6.0%</span>
-                                </div>
-                            </div>
-
-                            <div class="prob-row">
-                                <div class="prob-label">
-                                    <span class="prob-dot" style="background: #ec4899; box-shadow: 0 0 8px #ec4899;"></span>
-                                    <span class="prob-name">ĐỘC ĐẮC 💎</span>
-                                </div>
-                                <div class="prob-bar-track">
-                                    <div class="prob-bar-fill" style="width: 2%; background: linear-gradient(90deg, #ec4899, #f472b6);"></div>
-                                </div>
-                                <div class="prob-meta">
-                                    <span class="prob-value">2.0%</span>
-                                    <span class="prob-sub">Jackpot VVIP 0.1% | Thẻ Đặc Biệt 1.9%</span>
-                                </div>
-                            </div>
-
-                            <div class="prob-row">
-                                <div class="prob-label">
-                                    <span class="prob-dot" style="background: #06b6d4; box-shadow: 0 0 8px #06b6d4;"></span>
-                                    <span class="prob-name">Hũ lớn (+5đ)</span>
-                                </div>
-                                <div class="prob-bar-track">
-                                    <div class="prob-bar-fill" style="width: 2%; background: linear-gradient(90deg, #06b6d4, #22d3ee);"></div>
-                                </div>
-                                <div class="prob-meta">
-                                    <span class="prob-value">2.0%</span>
-                                </div>
-                            </div>
-
-                            <div class="prob-row">
-                                <div class="prob-label">
-                                    <span class="prob-dot" style="background: #3b82f6; box-shadow: 0 0 8px #3b82f6;"></span>
-                                    <span class="prob-name">Thẻ Đặc Quyền 🃏</span>
-                                </div>
-                                <div class="prob-bar-track">
-                                    <div class="prob-bar-fill" style="width: 7%; background: linear-gradient(90deg, #3b82f6, #60a5fa);"></div>
-                                </div>
-                                <div class="prob-meta">
-                                    <span class="prob-value">7.0%</span>
-                                </div>
-                            </div>
-
-                            <div class="prob-row" style="margin-bottom: 16px;">
-                                <div class="prob-label">
-                                    <span class="prob-dot" style="background: #ef4444; box-shadow: 0 0 8px #ef4444;"></span>
-                                    <span class="prob-name">Hắc ám (-1đ) 💀</span>
-                                </div>
-                                <div class="prob-bar-track">
-                                    <div class="prob-bar-fill" style="width: 5%; background: linear-gradient(90deg, #ef4444, #f87171);"></div>
-                                </div>
-                                <div class="prob-meta">
-                                    <span class="prob-value">5.0%</span>
-                                </div>
-                            </div>
+                            `).join('')}
 
                             <div style="font-size: 10px; color: #475569; font-style: italic; line-height: 1.5; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 12px;">
                                 * Tỷ lệ hoàn toàn tĩnh và độc lập cho từng lượt quay riêng lẻ.
