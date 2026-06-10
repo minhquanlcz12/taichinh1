@@ -110,18 +110,18 @@ const RewardsModule = {
     },
 
     adminCheatPoints: async (username) => {
+        console.log("adminCheatPoints called for:", username);
         const currentUser = Auth.currentUser;
         if (!currentUser || currentUser.role !== 'admin') {
+            console.error("Access denied: User is not admin");
             Utils.showToast("Bạn không có quyền thực hiện hành động này!", "error");
             return;
         }
 
-        const isConfirm = await Utils.showConfirm(
-            'HACK ĐIỂM TEST (ADMIN)',
-            `Bạn có chắc chắn muốn cộng thêm <strong style="color:var(--success)">+50đ Công Đức</strong> cho chính mình để test không?`
-        );
+        const isConfirm = window.confirm('ADMIN DEBUG: Bạn có chắc chắn muốn cộng thêm +50đ Công Đức để test không?');
         if (!isConfirm) return;
 
+        console.log("Hack confirmed. Processing...");
         const allRewards = await RewardsModule.loadData();
         const cheatRecord = {
             id: 'cheat_' + Date.now(),
@@ -131,11 +131,12 @@ const RewardsModule = {
             title: '🛠️ Admin Hack: +50đ Test',
             icon: 'fa-wand-magic-sparkles',
             color: '#10b981',
-            cost: -50 // Negative cost = positive merit
+            cost: -50
         };
 
         allRewards.push(cheatRecord);
         await RewardsModule.saveData(allRewards);
+        console.log("Hack success. Refreshing UI...");
         Utils.showToast("Đã hack thành công +50 điểm Công Đức! 🛠️", "success");
         RewardsModule.render();
     },
