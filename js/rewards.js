@@ -1583,26 +1583,6 @@ const RewardsModule = {
         RewardsModule.render();
     },
 
-    adminCheatPoints: async (username) => {
-        if (!Auth.currentUser || Auth.currentUser.role !== 'admin') return;
-        
-        const newRecord = {
-            id: 'reward_cheat_' + Date.now(),
-            username: username,
-            timestamp: Date.now(),
-            cardId: 'admin_cheat',
-            title: '🎁 Quỹ Hỗ Trợ Khẩn Cấp (Test)',
-            icon: 'fa-wand-magic-sparkles',
-            color: '#10b981',
-            cost: -50 // Âm = Cộng điểm
-        };
-
-        const allRewards = await RewardsModule.loadData();
-        allRewards.push(newRecord);
-        await RewardsModule.saveData(allRewards);
-        Utils.showToast(`${card.title} đã về tay! ✨`, "success");
-        RewardsModule.render();
-    },
 
     /**
      * Lấy danh sách thẻ chưa sử dụng của user
