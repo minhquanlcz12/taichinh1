@@ -63,6 +63,9 @@ const RewardsModule = {
         const onTimeRecords = userHistory.filter(r => r.status === 'on_time' || r.status === 'late_excused');
         const lateRecords = userHistory.filter(r => r.status === 'late');
 
+        const resetTime = new Date('2026-06-10').getTime();
+        const activeRewards = userRewards.filter(r => (r.timestamp || 0) >= resetTime);
+
         // Weights: On-time/Excused = +0.5, Late = -0.5
         // Apply multiplier to on-time sessions earned AFTER using the card
         const earnedFromCheckin = userHistory.reduce((acc, r) => {
@@ -75,12 +78,12 @@ const RewardsModule = {
             return acc;
         }, 0);
         
-        const spentOnCards = userRewards.filter(r => r.cardId && r.cardId.startsWith('card_')).reduce((acc, r) => acc + (r.cost || 0), 0);
-        const spentOnSpins = userRewards.filter(r => r.cardId === 'wheel_entry').reduce((acc, r) => acc + (r.cost || 0), 0);
-        const gainedFromSpins = userRewards.filter(r => (r.cardId === 'wheel_win' || r.cardId === 'wheel_win_converted') && (r.cost || 0) < 0).reduce((acc, r) => acc + Math.abs(r.cost || 0), 0);
-        const lostFromSpins = userRewards.filter(r => r.cardId === 'wheel_loss' && (r.cost || 0) > 0).reduce((acc, r) => acc + (r.cost || 0), 0);
+        const spentOnCards = activeRewards.filter(r => r.cardId && r.cardId.startsWith('card_')).reduce((acc, r) => acc + (r.cost || 0), 0);
+        const spentOnSpins = activeRewards.filter(r => r.cardId === 'wheel_entry').reduce((acc, r) => acc + (r.cost || 0), 0);
+        const gainedFromSpins = activeRewards.filter(r => (r.cardId === 'wheel_win' || r.cardId === 'wheel_win_converted') && (r.cost || 0) < 0).reduce((acc, r) => acc + Math.abs(r.cost || 0), 0);
+        const lostFromSpins = activeRewards.filter(r => r.cardId === 'wheel_loss' && (r.cost || 0) > 0).reduce((acc, r) => acc + (r.cost || 0), 0);
         
-        const basePoint = 1.0;
+        const basePoint = 1.0; // Điểm tặng khởi đầu hệ thống mới
         const current = basePoint + earnedFromCheckin - spentOnCards - spentOnSpins + gainedFromSpins - lostFromSpins;
 
         return {
