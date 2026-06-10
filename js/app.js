@@ -617,6 +617,17 @@ const app = {
                 else if (st.includes('hết hạn') || st.includes('quá hạn')) users[owner].expired++;
             }
         });
+        // Fetch VIP data once
+        let vipUsers = new Set();
+        try {
+            if (typeof RewardsModule !== 'undefined') {
+                const allRewards = await RewardsModule.loadData();
+                vipUsers = new Set(allRewards
+                    .filter(r => r.cardId === 'card_vip' && r.isUsed && (Date.now() - (r.usedAt || 0) < 30 * 24 * 60 * 60 * 1000))
+                    .map(r => r.username)
+                );
+            }
+        } catch(e) { console.warn("Fetch vip check error:", e); }
 
         const rankedUsers = Object.keys(users).map(u => {
             const userColor = Utils.getUserAvatarColor(u);
@@ -639,7 +650,8 @@ const app = {
                 selectedTitleLevel: userData.selectedTitleLevel,
                 selectedTitleKey: userData.selectedTitleKey,
                 achievements: userData.achievements,
-                rate: userData.total > 0 ? (userData.done / userData.total * 100) : 0
+                rate: userData.total > 0 ? (userData.done / userData.total * 100) : 0,
+                isVip: vipUsers.has(u)
             }
         })
         .filter(u => u.done > 0)
@@ -935,7 +947,7 @@ const app = {
                     <div class="podium-character">
                         ${getChibiSvg(u)}
                     </div>
-                    <div class="podium-name">${u.displayName}</div>
+                    <div class="podium-name">${u.isVip ? `<span class="vip-neon-name">${u.displayName}</span>` : u.displayName}</div>
                     ${!u.placeholder ? `
                         <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 2px; z-index: 3;">
                             <span style="font-size: 9px; font-weight: 900; color: #fbbf24; background: rgba(0,0,0,0.5); padding: 1px 6px; border-radius: 8px;">Lv.${userLevel}</span>
@@ -973,8 +985,8 @@ const app = {
                             ${u.avatarHtml}
                         </div>
                         <div>
-                            <div style="display: flex; align-items: center; gap: 6px;">
-                                <span style="font-weight: 600; font-size: 13px; color: #fff;">${u.displayName}</span>
+                             <div style="display: flex; align-items: center; gap: 6px;">
+                                <span style="font-weight: 600; font-size: 13px; color: #fff;">${u.isVip ? `<span class="vip-neon-name">${u.displayName}</span>` : u.displayName}</span>
                                 <span style="font-size: 9px; font-weight: 900; color: #fbbf24; background: rgba(0,0,0,0.4); padding: 1px 5px; border-radius: 6px;">Lv.${restLevel}</span>
                             </div>
                             <div style="font-size: 10px; color: ${restTitleInfo.color}; font-weight: 700;">${restTitleInfo.title}</div>
@@ -1375,7 +1387,9 @@ const app = {
                         <span style="font-size: 13px; font-weight: bold; color: #ff6b6b; width: 15px; text-align: center;">${actualRank}</span>
                         ${listAvatarHtml}
                         <div>
-                            <div style="font-weight: 600; font-size: 13px; color: #ff6b6b;">${u.displayName}</div>
+                            <div style="font-weight: 600; font-size: 13px; color: #ff6b6b;">
+                                ${vipUsers && vipUsers.has(u.username) ? `<span class="vip-neon-name">${u.displayName}</span>` : u.displayName}
+                            </div>
                             <div style="font-size: 11px; color: var(--text-secondary);">Vi phạm: <b>${u.count} lần</b> (${u.totalMinutes}p)</div>
                         </div>
                     </div>

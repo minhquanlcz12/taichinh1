@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /js/
+Disallow: /css/
+Disallow: /img/
+
+Sitemap: https://admin.thanhlongwork.io/sitemap.xml

@@ -878,6 +878,17 @@ const Attendance = {
         const deadline = new Date(now);
         if (currentSession === 'morning') {
             deadline.setHours(Attendance.DEADLINE_HOURS, Attendance.DEADLINE_MINUTES, 0, 0);
+            
+            // Flex-Time Card Buff (card_flex) - 1 hour extension
+            try {
+                if (typeof RewardsModule !== 'undefined') {
+                    const allRewards = await RewardsModule.loadData();
+                    const flexCard = allRewards.find(r => r.username === user.username && r.cardId === 'card_flex' && r.isUsed && (Date.now() - (r.usedAt || 0) < 7 * 24 * 60 * 60 * 1000));
+                    if (flexCard) {
+                        deadline.setHours(deadline.getHours() + 1); 
+                    }
+                }
+            } catch(e) { console.warn("Flex card check error:", e); }
         } else {
             deadline.setHours(Attendance.AFTERNOON_DEADLINE_HOURS, Attendance.AFTERNOON_DEADLINE_MINUTES, 0, 0);
         }

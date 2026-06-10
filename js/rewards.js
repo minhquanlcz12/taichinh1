@@ -5,9 +5,11 @@ const RewardsModule = {
         { id: 'card_early', title: 'Về Sớm 1 Tiếng', icon: 'fa-person-running', cost: 8, color: '#3b82f6', desc: 'Xin sếp về sớm 1 chút để xử lý việc cá nhân.' },
         { id: 'card_leave', title: 'Nghỉ Phép Thêm 1 Ngày', icon: 'fa-umbrella-beach', cost: 25, color: '#a855f7', desc: 'Có ngay 1 ngày phép hưởng nguyên lương.' },
         { id: 'card_tea', title: '1 Lon Nước Ngọt 10k', icon: 'fa-glass-water', cost: 5, color: '#f43f5e', desc: 'Sếp bao 1 lon nước ngọt mát lạnh trị giá 10k.' },
-        { id: 'card_rescue', title: 'Thánh Nhân Cứu Bồ', icon: 'fa-handshake-angle', cost: 12, color: '#ec4899', desc: 'Dùng để bảo lãnh/xoá án phạt đi muộn cho 1 NGƯỜI KHÁC (Tăng tình kết nghĩa anh em).' },
+        { id: 'card_rescue', title: 'Thánh Nhân Cứu Bồ', icon: 'fa-handshake-angle', cost: 5, color: '#ec4899', desc: 'Dùng để bảo lãnh/xoá án phạt đi muộn cho 1 NGƯỜI KHÁC (Tăng tình kết nghĩa anh em).' },
         { id: 'card_mystery', title: 'Quà Bất Ngờ', icon: 'fa-gift', cost: 30, color: '#ffd700', desc: 'Một món quà bí mật và giá trị do Quản lý chuẩn bị.' },
-        { id: 'card_king', title: 'Chiếc Ghế Quyền Lực', icon: 'fa-crown', cost: 50, color: '#fbbf24', desc: 'Được quyền nhờ Quản lý đi pha 1 ly cafe/trà, hoặc Quản lý bao ăn trưa 1-1 đàm đạo riêng.' }
+        { id: 'card_x2', title: 'Nhân Bản Công Đức', icon: 'fa-angles-up', cost: 50, color: '#fbbf24', desc: 'X2 điểm thưởng (+1.0đ) mỗi khi đi làm đúng giờ (Hiệu lực 30 ngày).' },
+        { id: 'card_flex', title: 'Giờ Làm Linh Hoạt', icon: 'fa-clock-rotate-left', cost: 50, color: '#06b6d4', desc: 'Cho phép đi muộn 1 tiếng (tới 9:30) không bị phạt (Hiệu lực 7 ngày).' },
+        { id: 'card_vip', title: 'VIP Nametag Legend', icon: 'fa-crown', cost: 50, color: '#ec4899', desc: 'Tên đổi màu Neon lấp lánh + Giảm 20% giá mua mọi thẻ bài (Hiệu lực 30 ngày).' }
     ],
     
     _isSpinning: false,
@@ -51,14 +53,27 @@ const RewardsModule = {
         const allAttendance = await Attendance.loadData();
         const userHistory = allAttendance.filter(r => r.username === username && r.dateStr >= RESET_DATE);
         
-        // Weights: On-time/Excused = +0.5, Late = -0.5
+        // Load rewards history for this user
+        const allRewardsHistory = await RewardsModule.loadData();
+        const userRewards = allRewardsHistory.filter(r => r.username === username);
+        
+        // Check for active X2 Buff (Double XP)
+        const x2Used = userRewards.find(r => r.cardId === 'card_x2' && r.isUsed && (Date.now() - (r.usedAt || 0) < 30 * 24 * 60 * 60 * 1000));
+        
         const onTimeRecords = userHistory.filter(r => r.status === 'on_time' || r.status === 'late_excused');
         const lateRecords = userHistory.filter(r => r.status === 'late');
-        
-        const earnedFromCheckin = (onTimeRecords.length * 0.5) - (lateRecords.length * 0.5);
-        
-        const allRewards = await RewardsModule.loadData();
-        const userRewards = allRewards.filter(r => r.username === username && r.timestamp >= new Date(RESET_DATE).getTime());
+
+        // Weights: On-time/Excused = +0.5, Late = -0.5
+        // Apply multiplier to on-time sessions earned AFTER using the card
+        const earnedFromCheckin = userHistory.reduce((acc, r) => {
+            if (r.status === 'on_time' || r.status === 'late_excused') {
+                const multiplier = (x2Used && r.timestamp > x2Used.usedAt) ? 2.0 : 1.0;
+                return acc + (0.5 * multiplier);
+            } else if (r.status === 'late') {
+                return acc - 0.5;
+            }
+            return acc;
+        }, 0);
         
         const spentOnCards = userRewards.filter(r => r.cardId && r.cardId.startsWith('card_')).reduce((acc, r) => acc + (r.cost || 0), 0);
         const spentOnSpins = userRewards.filter(r => r.cardId === 'wheel_entry').reduce((acc, r) => acc + (r.cost || 0), 0);
@@ -116,7 +131,7 @@ const RewardsModule = {
                         </thead>
                         <tbody>
                             <tr>
-                                <td>Điểm nền khởi đầu (Reset 20/05)</td>
+                                <td>Điểm nền khởi đầu (Reset 10/06)</td>
                                 <td style="text-align: right; color: var(--success);">+${b.basePoint}</td>
                             </tr>
                             <tr>
@@ -153,7 +168,7 @@ const RewardsModule = {
                     </table>
                 </div>
                 <div style="margin-top: 15px; font-size: 11px; color: #64748b; font-style: italic;">
-                    * Cơ chế: +0.5đ mỗi session đúng giờ, -0.5đ mỗi session muộn. Chúc sếp sớm tích lũy thêm nhiều công đức!
+                    * Cơ chế: +0.5đ mỗi session đúng giờ, -0.5đ mỗi session muộn. Nếu có thẻ "Nhân Bản Công Đức" sẽ được x2 điểm đúng giờ.
                 </div>
             </div>
             `
@@ -390,6 +405,25 @@ const RewardsModule = {
                 </div>
             `;
         } else {
+            const legacyCards = ownedCards.filter(c => c.cardId === 'card_power_seat');
+            let legacyHtml = '';
+            if (legacyCards.length > 0) {
+                legacyHtml = `
+                    <div style="background: linear-gradient(135deg, #4f46e5, #7c3aed); border-radius: 12px; padding: 16px; margin-bottom: 20px; border: 2px solid #8b5cf6; box-shadow: 0 0 20px rgba(124, 58, 237, 0.4); animation: packPulse 2s infinite alternate;">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                            <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 20px; color: #fff;"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                            <div>
+                                <div style="color: #fff; font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Khu vực nâng cấp thẻ</div>
+                                <div style="color: rgba(255,255,255,0.9); font-size: 10px;">Bạn có thẻ cũ cần được chuyển đổi!</div>
+                            </div>
+                        </div>
+                        <button onclick="RewardsModule.migratePowerSeat('${legacyCards[0].id}')" class="btn-inventory-use" style="background: #fff; color: #4f46e5; border: none; font-weight: 900; width: 100%; padding: 10px; border-radius: 8px; font-size: 11px;">
+                            ĐỔI SANG THẺ THẦN THOẠI MỚI <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                        </button>
+                    </div>
+                `;
+            }
+
             let packsHtml = unopenedPacks.map(p => `
                 <div style="background: linear-gradient(135deg, rgba(236,72,153,0.15), rgba(139,92,246,0.1)); border: 1px solid rgba(236,72,153,0.4); border-radius: 12px; padding: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; animation: packPulse 2s infinite alternate;">
                     <div style="display: flex; align-items: center; gap: 10px;">
@@ -443,7 +477,7 @@ const RewardsModule = {
                     }).join('')}
                 </div>
             ` : '';
-            bagContentHtml = packsHtml + cardsGridHtml;
+            bagContentHtml = legacyHtml + packsHtml + cardsGridHtml;
         }
 
         // === Build Spin History Content ===
@@ -2082,14 +2116,20 @@ const RewardsModule = {
         if (!card) return;
 
         const meritInfo = await RewardsModule.calcUserMerit(user.username);
-        if (meritInfo.current < card.cost) {
-            Utils.showToast("Bạn không đủ điểm Công Đức để đổi mục này!", "error");
+        
+        // VIP Discount logic
+        const allRewards = await RewardsModule.loadData();
+        const hasVip = allRewards.some(r => r.username === user.username && r.cardId === 'card_vip' && r.isUsed && (Date.now() - r.usedAt < 30 * 24 * 60 * 60 * 1000));
+        const finalCost = hasVip ? Math.floor(card.cost * 0.8) : card.cost;
+
+        if (meritInfo.current < finalCost) {
+            Utils.showToast(`Bạn không đủ điểm Công Đức để đổi mục này!${hasVip ? ' (Đã áp dụng giảm giá 20% VIP)' : ''}`, "error");
             return;
         }
 
         const isConfirm = await Utils.showConfirm(
             'Xác nhận đổi thưởng',
-            `Bạn sẽ dùng <strong style="color:var(--danger)">${card.cost} Công Đức</strong> để đổi lấy phiếu: <br><br><strong style="color:${card.color}; font-size:18px;"><i class="fa-solid ${card.icon}"></i> ${card.title}</strong>`
+            `Bạn sẽ dùng <strong style="color:var(--danger)">${finalCost} Công Đức ${hasVip ? '<span style="font-size:10px;">(Netted 20% OFF)</span>' : ''}</strong> để đổi lấy phiếu: <br><br><strong style="color:${card.color}; font-size:18px;"><i class="fa-solid ${card.icon}"></i> ${card.title}</strong>`
         );
         if (!isConfirm) return;
 
@@ -2102,10 +2142,9 @@ const RewardsModule = {
             title: card.title,
             icon: card.icon,
             color: card.color,
-            cost: card.cost
+            cost: finalCost
         };
 
-        const allRewards = await RewardsModule.loadData();
         allRewards.push(newRecord);
         await RewardsModule.saveData(allRewards);
 
@@ -2151,6 +2190,156 @@ const RewardsModule = {
             Utils.notifyTelegram(`🎁 <b>[MỞ GÓI THẺ BÍ ẨN]</b>\n👤 Nhân sự: <b>${user.username}</b>\n🎫 Đã bóc bao nhận ngay Thẻ Đặc Quyền: <b>${luckyCard.title}</b>!`);
             RewardsModule.render();
         });
+    },
+
+    useCard: async (recordId) => {
+        const user = Auth.currentUser;
+        if (!user) return;
+
+        const allRewards = await RewardsModule.loadData();
+        const cardRecord = allRewards.find(r => r.id === recordId && r.username === user.username && !r.isUsed);
+        if (!cardRecord) {
+            Utils.showToast("Không tìm thấy thẻ hợp lệ hoặc thẻ đã được sử dụng!", "error");
+            return;
+        }
+
+        // Logic cụ thể cho từng loại thẻ
+        if (cardRecord.cardId === 'card_rescue') {
+            // Hiển thị modal chọn người để cứu
+            const accounts = await DB.getAccounts() || [];
+            const otherUsers = accounts.filter(a => a.username !== user.username && a.role !== 'admin' && a.username.toLowerCase() !== 'congty');
+            
+            if (otherUsers.length === 0) {
+                Utils.showToast("Không có nhân sự nào khác để cứu!", "warning");
+                return;
+            }
+
+            Utils.showModal(
+                'CHỌN NGƯỜI ĐỂ CỨU 😇',
+                `
+                <div style="padding: 10px; text-align: center;">
+                    <p>Chọn một đồng đội mà bạn muốn "xoá án" đi muộn cho họ:</p>
+                    <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+                        ${otherUsers.map(u => `
+                            <button class="btn btn-outline" style="width: 100%; justify-content: space-between;" onclick="RewardsModule.confirmRescue('${recordId}', '${u.username}')">
+                                <span><i class="fa-solid fa-user"></i> ${Utils.getUserDisplayName(u.username) || u.username}</span>
+                                <i class="fa-solid fa-hand-holding-heart"></i>
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+                `
+            );
+            return;
+        }
+
+        const card = RewardsModule._catalog.find(c => c.id === cardRecord.cardId);
+        const confirmMsg = card ? `Xác nhận kích hoạt thẻ <strong>${card.title}</strong>?` : "Xác nhận sử dụng thẻ này?";
+        
+        const isConfirm = await Utils.showConfirm('Sử dụng thẻ Đặc Quyền', confirmMsg);
+        if (!isConfirm) return;
+
+        // Đánh dấu đã sử dụng
+        cardRecord.isUsed = true;
+        cardRecord.usedAt = Date.now();
+
+        await RewardsModule.saveData(allRewards);
+        
+        let successMsg = `Đã kích hoạt thẻ: ${cardRecord.title}!`;
+        if (cardRecord.cardId === 'card_x2') successMsg = "⚡ ĐÃ BẬT X2 CÔNG ĐỨC! (Hiệu lực 30 ngày)";
+        if (cardRecord.cardId === 'card_flex') successMsg = "🕰️ GIỜ LÀM LINH HOẠT ĐÃ KÍCH HOẠT! (Hiệu lực 7 ngày)";
+        if (cardRecord.cardId === 'card_vip') successMsg = "👑 WELCOME VIP! Tên bạn đã rực rỡ & được giảm giá 20% shop.";
+
+        Utils.showToast(successMsg, "success");
+        Utils.notifyTelegram(`🃏 <b>[KÍCH HOẠT THẺ]</b>\n👤 <b>${user.username}</b> vừa sử dụng thẻ: <b>${cardRecord.title}</b>!`);
+        
+        RewardsModule.render();
+    },
+
+    confirmRescue: async (cardRecordId, targetUsername) => {
+        const user = Auth.currentUser;
+        if (!user) return;
+
+        const allRewards = await RewardsModule.loadData();
+        const cardRecord = allRewards.find(r => r.id === cardRecordId && r.username === user.username && !r.isUsed);
+        if (!cardRecord) return;
+
+        // Đánh dấu đã sử dụng
+        cardRecord.isUsed = true;
+        cardRecord.usedAt = Date.now();
+        cardRecord.targetUser = targetUsername;
+
+        await RewardsModule.saveData(allRewards);
+        
+        Utils.showToast(`Bạn đã "cứu bồ" thành công cho ${targetUsername}! 😇`, "success");
+        Utils.notifyTelegram(`😇 <b>[THÁNH NHÂN CỨU BỒ]</b>\n👤 <b>${user.username}</b> vừa sử dụng thẻ để cứu đồng nghiệp <b>${targetUsername}</b> thoát khỏi án phạt đi muộn!`);
+        
+        const modal = document.querySelector('.wf-modal-overlay');
+        if (modal) modal.remove();
+        
+        RewardsModule.render();
+    },
+
+    migratePowerSeat: async (recordId) => {
+        const user = Auth.currentUser;
+        if (!user) return;
+
+        const legendaryCards = RewardsModule._catalog.filter(c => c.cost === 50);
+        
+        Utils.showModal(
+            'NÂNG CẤP THẺ CỔ ĐẠI 💎',
+            `
+            <div style="padding: 10px;">
+                <p style="margin-bottom: 20px; font-size: 13px; color: var(--text-secondary); text-align: center;">Thẻ <strong>Chiếc Ghế Quyền Lực</strong> đã được thay thế. Hãy chọn 1 thẻ 50đ mới bạn muốn đổi sang:</p>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    ${legendaryCards.map(c => `
+                        <button class="btn-inventory-use" style="background: rgba(15,23,42,0.8); border: 1px solid ${c.color}60; color: #fff; padding: 14px; border-radius: 12px; text-align: left; display: flex; align-items: center; gap: 15px; cursor: pointer; transition: all 0.2s;" onclick="RewardsModule.confirmMigration('${recordId}', '${c.id}')">
+                            <div style="width: 45px; height: 45px; border-radius: 10px; background: ${c.color}20; display: flex; align-items: center; justify-content: center; border: 1px solid ${c.color}40; flex-shrink: 0;">
+                                <i class="fa-solid ${c.icon}" style="font-size: 22px; color: ${c.color};"></i>
+                            </div>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 800; font-size: 14px; color: ${c.color}; text-transform: uppercase;">${c.title}</div>
+                                <div style="font-size: 10px; color: #94a3b8; line-height: 1.4; margin-top: 2px;">${c.desc}</div>
+                            </div>
+                            <i class="fa-solid fa-chevron-right" style="color: #475569; font-size: 12px;"></i>
+                        </button>
+                    `).join('')}
+                </div>
+            </div>
+            `
+        );
+    },
+
+    confirmMigration: async (oldRecordId, newCardId) => {
+        const user = Auth.currentUser;
+        if (!user) return;
+
+        const allRewards = await RewardsModule.loadData();
+        const oldRecord = allRewards.find(r => r.id === oldRecordId && r.username === user.username);
+        const newCard = RewardsModule._catalog.find(c => c.id === newCardId);
+
+        if (!oldRecord || !newCard) return;
+
+        const isConfirm = await Utils.showConfirm('Xác nhận đổi thẻ', `Bạn có chắc chắn muốn đổi sang thẻ <strong>${newCard.title}</strong>? Thao tác này không thể hoàn tác.`);
+        if (!isConfirm) return;
+
+        // Cập nhật thông tin bản ghi
+        oldRecord.cardId = newCard.id;
+        oldRecord.title = newCard.title;
+        oldRecord.icon = newCard.icon;
+        oldRecord.color = newCard.color;
+        oldRecord.migratedFrom = 'card_power_seat';
+        oldRecord.migratedAt = Date.now();
+
+        await RewardsModule.saveData(allRewards);
+        
+        Utils.showToast(`Đã chuyển đổi thành công sang ${newCard.title}! ✨`, "success");
+        Utils.notifyTelegram(`💎 <b>[NÂNG CẤP THẺ CỔ ĐẠI]</b>\n👤 <b>${user.username}</b> đã đổi thẻ <b>Chiếc Ghế Quyền Lực</b> sang thẻ Thần Thoại mới: <b>${newCard.title}</b>!`);
+        
+        const modal = document.querySelector('.wf-modal-overlay');
+        if (modal) modal.remove();
+        
+        RewardsModule.render();
     },
 
     showGachaOpeningEffect: (card, onComplete) => {

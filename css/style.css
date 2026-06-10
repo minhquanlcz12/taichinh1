@@ -69,6 +69,23 @@ h1, h2, h3, h4, h5, h6 {
     font-weight: 700;
 }
 
+.vip-neon-name {
+    color: #fff !important;
+    text-shadow: 
+        0 0 5px #fff,
+        0 0 10px #ec4899,
+        0 0 20px #ec4899,
+        0 0 40px #ec4899,
+        0 0 80px #ec4899 !important;
+    font-weight: 900 !important;
+    animation: vipNeonPulse 1.5s infinite alternate;
+}
+
+@keyframes vipNeonPulse {
+    from { opacity: 0.8; text-shadow: 0 0 10px #ec4899, 0 0 20px #ec4899; }
+    to { opacity: 1; text-shadow: 0 0 20px #ec4899, 0 0 40px #ec4899, 0 0 60px #ec4899; }
+}
+
 body {
     background-color: var(--bg-color);
     color: var(--text-primary);
