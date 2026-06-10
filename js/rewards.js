@@ -78,13 +78,21 @@ const RewardsModule = {
             return acc;
         }, 0);
         
-        const spentOnCards = activeRewards.filter(r => r.cardId && r.cardId.startsWith('card_')).reduce((acc, r) => acc + (r.cost || 0), 0);
+        const spentOnCards = activeRewards.filter(r => r.cardId && r.cardId.startsWith('card_') && r.cardId !== 'card_power_seat').reduce((acc, r) => acc + (r.cost || 0), 0);
         const spentOnSpins = activeRewards.filter(r => r.cardId === 'wheel_entry').reduce((acc, r) => acc + (r.cost || 0), 0);
         const gainedFromSpins = activeRewards.filter(r => (r.cardId === 'wheel_win' || r.cardId === 'wheel_win_converted') && (r.cost || 0) < 0).reduce((acc, r) => acc + Math.abs(r.cost || 0), 0);
         const lostFromSpins = activeRewards.filter(r => r.cardId === 'wheel_loss' && (r.cost || 0) > 0).reduce((acc, r) => acc + (r.cost || 0), 0);
         
-        const basePoint = 1.0; // Điểm tặng khởi đầu hệ thống mới
-        const current = basePoint + earnedFromCheckin - spentOnCards - spentOnSpins + gainedFromSpins - lostFromSpins;
+        // Cần tính thêm các giao dịch khác (ví dụ: Admin Hack, Cheat, Convert,...)
+        // Bất kỳ giao dịch nào có cost khác 0 mà chưa được tính ở trên đều sẽ được gộp vào đây
+        const otherTransactions = activeRewards.filter(r => {
+            const isStandardCard = r.cardId && r.cardId.startsWith('card_') && r.cardId !== 'card_power_seat';
+            const isSpinRelated = ['wheel_entry', 'wheel_win', 'wheel_win_converted', 'wheel_loss'].includes(r.cardId);
+            return !isStandardCard && !isSpinRelated && (r.cost !== 0);
+        }).reduce((acc, r) => acc + (r.cost || 0), 0);
+
+        const basePoint = 1.0; 
+        const current = basePoint + earnedFromCheckin - spentOnCards - spentOnSpins + gainedFromSpins - lostFromSpins - otherTransactions;
 
         return {
             username,
@@ -92,7 +100,7 @@ const RewardsModule = {
             onTimeCount: onTimeRecords.length,
             lateCount: lateRecords.length,
             earnedFromCheckin,
-            spentOnCards,
+            spentOnCards: spentOnCards + otherTransactions, // Gộp luôn vào đây cho gọn UI
             spentOnSpins,
             gainedFromSpins,
             lostFromSpins,
@@ -110,35 +118,49 @@ const RewardsModule = {
     },
 
     adminCheatPoints: async (username) => {
-        console.log("adminCheatPoints called for:", username);
         const currentUser = Auth.currentUser;
         if (!currentUser || currentUser.role !== 'admin') {
-            console.error("Access denied: User is not admin");
             Utils.showToast("Bạn không có quyền thực hiện hành động này!", "error");
             return;
         }
 
-        const isConfirm = window.confirm('ADMIN DEBUG: Bạn có chắc chắn muốn cộng thêm +50đ Công Đức để test không?');
-        if (!isConfirm) return;
+        // Premium Modal for Hack
+        Utils.showModal(
+            `<span style="color:#10b981"><i class="fa-solid fa-wand-magic-sparkles"></i> ADMIN PRIVILEGE ACCESSED</span>`,
+            `
+            <div style="text-align: center; padding: 20px;">
+                <div style="width: 70px; height: 70px; border-radius: 50%; background: rgba(16,185,129,0.1); border: 2px solid #10b981; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; box-shadow: 0 0 20px rgba(16,185,129,0.3);">
+                    <i class="fa-solid fa-shield-halved" style="font-size: 32px; color: #10b981;"></i>
+                </div>
+                <h2 style="color: #fff; font-size: 18px; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px;">Kích hoạt Giao thức Hack Điểm</h2>
+                <p style="color: #94a3b8; font-size: 14px; line-height: 1.6;">
+                    Xác nhận cộng thêm <strong style="color: #ffd700; font-size: 20px; text-shadow: 0 0 10px rgba(255,215,0,0.5);">+50đ Công Đức</strong> vào tài khoản <strong>@${username}</strong>?
+                </p>
+                <div style="margin-top: 15px; font-size: 11px; color: #64748b; font-family: monospace;">[AUTHORIZATION_LEVEL: OMEGA]</div>
+            </div>
+            `,
+            async () => {
+                const allRewards = await RewardsModule.loadData();
+                const cheatRecord = {
+                    id: 'cheat_' + Date.now(),
+                    username: username,
+                    timestamp: Date.now(),
+                    cardId: 'admin_hack',
+                    title: '🛠️ Admin Hack: +50đ Test',
+                    icon: 'fa-wand-magic-sparkles',
+                    color: '#10b981',
+                    cost: -50
+                };
 
-        console.log("Hack confirmed. Processing...");
-        const allRewards = await RewardsModule.loadData();
-        const cheatRecord = {
-            id: 'cheat_' + Date.now(),
-            username: username,
-            timestamp: Date.now(),
-            cardId: 'admin_hack',
-            title: '🛠️ Admin Hack: +50đ Test',
-            icon: 'fa-wand-magic-sparkles',
-            color: '#10b981',
-            cost: -50
-        };
-
-        allRewards.push(cheatRecord);
-        await RewardsModule.saveData(allRewards);
-        console.log("Hack success. Refreshing UI...");
-        Utils.showToast("Đã hack thành công +50 điểm Công Đức! 🛠️", "success");
-        RewardsModule.render();
+                allRewards.push(cheatRecord);
+                await RewardsModule.saveData(allRewards);
+                Utils.showToast("Đã hack thành công +50 điểm Công Đức! 🛠️", "success");
+                RewardsModule.render();
+                return true; 
+            },
+            'XÁC NHẬN HACK',
+            'HỦY BỎ'
+        );
     },
 
     showMeritBreakdown: async (username) => {
