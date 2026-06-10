@@ -58,12 +58,12 @@ const RewardsModule = {
         const earnedFromCheckin = (onTimeRecords.length * 0.5) - (lateRecords.length * 0.5);
         
         const allRewards = await RewardsModule.loadData();
-        const userRewards = allRewards.filter(r => r.username === username);
+        const userRewards = allRewards.filter(r => r.username === username && r.timestamp >= new Date(RESET_DATE).getTime());
         
-        const spentOnCards = userRewards.filter(r => r.cardId && r.cardId.startsWith('card_')).reduce((acc, r) => acc + r.cost, 0);
-        const spentOnSpins = userRewards.filter(r => r.cardId === 'wheel_entry').reduce((acc, r) => acc + r.cost, 0);
-        const gainedFromSpins = userRewards.filter(r => (r.cardId === 'wheel_win' || r.cardId === 'wheel_win_converted') && r.cost < 0).reduce((acc, r) => acc + Math.abs(r.cost), 0);
-        const lostFromSpins = userRewards.filter(r => r.cardId === 'wheel_loss' && r.cost > 0).reduce((acc, r) => acc + r.cost, 0);
+        const spentOnCards = userRewards.filter(r => r.cardId && r.cardId.startsWith('card_')).reduce((acc, r) => acc + (r.cost || 0), 0);
+        const spentOnSpins = userRewards.filter(r => r.cardId === 'wheel_entry').reduce((acc, r) => acc + (r.cost || 0), 0);
+        const gainedFromSpins = userRewards.filter(r => (r.cardId === 'wheel_win' || r.cardId === 'wheel_win_converted') && (r.cost || 0) < 0).reduce((acc, r) => acc + Math.abs(r.cost || 0), 0);
+        const lostFromSpins = userRewards.filter(r => r.cardId === 'wheel_loss' && (r.cost || 0) > 0).reduce((acc, r) => acc + (r.cost || 0), 0);
         
         const basePoint = 1.0;
         const current = basePoint + earnedFromCheckin - spentOnCards - spentOnSpins + gainedFromSpins - lostFromSpins;
