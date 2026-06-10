@@ -46,21 +46,118 @@ const RewardsModule = {
         }
     },
 
-    calcUserMerit: async (username) => {
-        // RESET DATE 20/05/2026: Tặng 1 điểm mốc khởi đầu, không tính các lỗi đi muộn trước đó.
-        const RESET_DATE = '2026-05-20';
+    getMeritBreakdown: async (username) => {
+        const RESET_DATE = '2026-06-10';
         const allAttendance = await Attendance.loadData();
-        // Lọc những bản ghi từ sau ngày Reset
         const userHistory = allAttendance.filter(r => r.username === username && r.dateStr >= RESET_DATE);
         
-        // Công thức mới: Tặng sẵn 1 điểm + công đức kiếm được (0.5đ mỗi lần điểm danh tốt)
-        const earned = 1 + userHistory.reduce((acc, r) => acc + ((r.status === 'on_time' || r.status === 'late_excused') ? 0.5 : -1), 0);
-
+        // Weights: On-time/Excused = +0.5, Late = -0.5
+        const onTimeRecords = userHistory.filter(r => r.status === 'on_time' || r.status === 'late_excused');
+        const lateRecords = userHistory.filter(r => r.status === 'late');
+        
+        const earnedFromCheckin = (onTimeRecords.length * 0.5) - (lateRecords.length * 0.5);
+        
         const allRewards = await RewardsModule.loadData();
         const userRewards = allRewards.filter(r => r.username === username);
-        const used = userRewards.reduce((acc, r) => acc + r.cost, 0);
+        
+        const spentOnCards = userRewards.filter(r => r.cardId && r.cardId.startsWith('card_')).reduce((acc, r) => acc + r.cost, 0);
+        const spentOnSpins = userRewards.filter(r => r.cardId === 'wheel_entry').reduce((acc, r) => acc + r.cost, 0);
+        const gainedFromSpins = userRewards.filter(r => (r.cardId === 'wheel_win' || r.cardId === 'wheel_win_converted') && r.cost < 0).reduce((acc, r) => acc + Math.abs(r.cost), 0);
+        const lostFromSpins = userRewards.filter(r => r.cardId === 'wheel_loss' && r.cost > 0).reduce((acc, r) => acc + r.cost, 0);
+        
+        const basePoint = 1.0;
+        const current = basePoint + earnedFromCheckin - spentOnCards - spentOnSpins + gainedFromSpins - lostFromSpins;
 
-        return { earned, used, current: earned - used };
+        return {
+            username,
+            basePoint,
+            onTimeCount: onTimeRecords.length,
+            lateCount: lateRecords.length,
+            earnedFromCheckin,
+            spentOnCards,
+            spentOnSpins,
+            gainedFromSpins,
+            lostFromSpins,
+            current: parseFloat(current.toFixed(2))
+        };
+    },
+
+    calcUserMerit: async (username) => {
+        const breakdown = await RewardsModule.getMeritBreakdown(username);
+        return { 
+            earned: breakdown.basePoint + breakdown.onTimeCount * 0.5 + breakdown.gainedFromSpins, 
+            used: breakdown.lateCount * 0.5 + breakdown.spentOnCards + breakdown.spentOnSpins + breakdown.lostFromSpins,
+            current: breakdown.current 
+        };
+    },
+
+    showMeritBreakdown: async (username) => {
+        const b = await RewardsModule.getMeritBreakdown(username);
+        const displayName = Utils.getUserDisplayName(username) || username;
+        
+        Utils.showModal(
+            `CHI TIẾT CÔNG ĐỨC - ${displayName}`,
+            `
+            <div style="padding: 10px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 20px; background: rgba(0,240,255,0.05); padding: 15px; border-radius: 12px; border: 1px solid rgba(0,240,255,0.2);">
+                    <div style="text-align: center; flex: 1;">
+                        <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">Tổng Khả Dụng</div>
+                        <div style="font-size: 28px; font-weight: 900; color: var(--primary);">${b.current}đ</div>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="tl-table" style="font-size: 13px;">
+                        <thead>
+                            <tr>
+                                <th>Danh mục</th>
+                                <th style="text-align: right;">Biến động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Điểm nền khởi đầu (Reset 20/05)</td>
+                                <td style="text-align: right; color: var(--success);">+${b.basePoint}</td>
+                            </tr>
+                            <tr>
+                                <td>Điểm danh đúng giờ (${b.onTimeCount} ca × 0.5)</td>
+                                <td style="text-align: right; color: var(--success);">+${b.onTimeCount * 0.5}</td>
+                            </tr>
+                            <tr>
+                                <td>Điểm danh muộn (${b.lateCount} ca × 0.5)</td>
+                                <td style="text-align: right; color: var(--danger);">${b.lateCount > 0 ? '-' : ''}${b.lateCount * 0.5}</td>
+                            </tr>
+                            <tr>
+                                <td>Trúng thưởng từ Vòng quay</td>
+                                <td style="text-align: right; color: var(--success);">+${b.gainedFromSpins}</td>
+                            </tr>
+                            <tr>
+                                <td>Phí quay hũ (${b.spentOnSpins / 1} lượt × 1đ)</td>
+                                <td style="text-align: right; color: var(--danger);">${b.spentOnSpins > 0 ? '-' : ''}${b.spentOnSpins}</td>
+                            </tr>
+                            <tr>
+                                <td>Mất điểm do quay vào ô "Hắc ám"</td>
+                                <td style="text-align: right; color: var(--danger);">${b.lostFromSpins > 0 ? '-' : ''}${b.lostFromSpins}</td>
+                            </tr>
+                            <tr>
+                                <td>Đổi thẻ trong Cửa hàng</td>
+                                <td style="text-align: right; color: var(--danger);">${b.spentOnCards > 0 ? '-' : ''}${b.spentOnCards}</td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr style="border-top: 2px solid rgba(255,255,255,0.1);">
+                                <th style="padding-top: 15px;">TỔNG CỘNG</th>
+                                <th style="padding-top: 15px; text-align: right; color: var(--primary); font-size: 18px;">${b.current}đ</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <div style="margin-top: 15px; font-size: 11px; color: #64748b; font-style: italic;">
+                    * Cơ chế: +0.5đ mỗi session đúng giờ, -0.5đ mỗi session muộn. Chúc sếp sớm tích lũy thêm nhiều công đức!
+                </div>
+            </div>
+            `
+        );
     },
 
     render: async () => {
@@ -124,7 +221,12 @@ const RewardsModule = {
             const history = allRewardsHistory.filter(r => r.username === currentUser.username).sort((a,b) => b.timestamp - a.timestamp);
             customHistoryHtml = `
                 <div class="glass-panel" style="margin-top: 24px; padding: 20px;">
-                    <h3 style="color: var(--text-secondary); margin-bottom: 16px;"><i class="fa-solid fa-clock-rotate-left"></i> Lịch Sử Đổi Thẻ Cá Nhân</h3>
+                    <h3 style="color: var(--text-secondary); margin-bottom: 5px;"><i class="fa-solid fa-clock-rotate-left"></i> Lịch Sử Đổi Thẻ Cá Nhân</h3>
+                    <div style="margin-bottom: 15px;">
+                        <button onclick="RewardsModule.showMeritBreakdown('${currentUser.username}')" class="btn btn-outline btn-sm" style="font-size: 11px; padding: 6px 12px; border-color: var(--primary); color: var(--primary);">
+                            <i class="fa-solid fa-circle-info"></i> XEM CHI TIẾT CÔNG ĐỨC
+                        </button>
+                    </div>
                     <div class="table-responsive">
                         <table class="tl-table">
                             <thead>
@@ -1551,25 +1653,137 @@ const RewardsModule = {
         }
 
         const reward = allRewards[rewardIdx];
-        const confirm = await Utils.showConfirm("Xác nhận sử dụng", `Bạn có muốn kích hoạt thẻ [${reward.title}] ngay bây giờ không?`);
-        if (!confirm) return;
+        
+        // Define if this is a physical gift that can be converted
+        const isPhysicalGift = reward.cardId === 'card_tea' || 
+                               reward.cardId === 'wheel_gift_10k' || 
+                               reward.cardId === 'card_mystery' ||
+                               reward.title.toLowerCase().includes('nước ngọt') ||
+                               reward.title.toLowerCase().includes('quà tặng');
 
-        // Đánh dấu đã dùng
-        allRewards[rewardIdx].isUsed = true;
-        allRewards[rewardIdx].usedAt = Date.now();
+        // Create the Premium Modal
+        const modal = document.createElement('div');
+        modal.id = 'premium-use-card-modal';
+        modal.style = `
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.85); z-index: 100000;
+            display: flex; align-items: center; justify-content: center;
+            backdrop-filter: blur(12px); animation: fadeIn 0.3s ease;
+        `;
 
-        await RewardsModule.saveData(allRewards);
-        Utils.showToast(`Đã kích hoạt thẻ: ${reward.title} ✨`, "success");
+        const cardColor = reward.color || '#10b981';
+        
+        modal.innerHTML = `
+            <style>
+                @keyframes modalSlideUp {
+                    from { transform: translateY(30px); opacity: 0; }
+                    to { transform: translateY(0); opacity: 1; }
+                }
+                .p-modal-content {
+                    background: linear-gradient(145deg, rgba(30,41,59,0.9), rgba(15,23,42,0.95));
+                    width: 90%; max-width: 440px; border-radius: 24px;
+                    border: 1px solid ${cardColor}40;
+                    padding: 40px 30px; text-align: center;
+                    animation: modalSlideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5), 0 0 30px ${cardColor}15;
+                    position: relative; overflow: hidden;
+                }
+                .p-modal-content::before {
+                    content: ''; position: absolute; top: -100px; left: -100px; width: 200px; height: 200px;
+                    background: ${cardColor}; opacity: 0.1; filter: blur(60px); border-radius: 50%;
+                }
+                .p-icon-box {
+                    width: 80px; height: 80px; border-radius: 24px; background: ${cardColor}20;
+                    margin: 0 auto 24px; display: flex; align-items: center; justify-content: center;
+                    border: 1px solid ${cardColor}40; position: relative;
+                }
+                .p-icon-box i { font-size: 36px; color: ${cardColor}; filter: drop-shadow(0 0 10px ${cardColor}60); }
+                .p-title { color: #fff; font-size: 22px; font-weight: 800; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+                .p-desc { color: #94a3b8; font-size: 15px; line-height: 1.6; margin-bottom: 32px; }
+                .p-btn-group { display: flex; flex-direction: column; gap: 12px; }
+                .p-btn { padding: 16px 24px; border-radius: 14px; font-weight: 800; font-size: 14px; cursor: pointer; border: none; transition: all 0.3s; text-transform: uppercase; letter-spacing: 1px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; }
+                .p-btn-primary { background: linear-gradient(135deg, ${cardColor}, ${cardColor}dd); color: #fff; box-shadow: 0 10px 20px ${cardColor}30; }
+                .p-btn-secondary { background: rgba(51,65,85,0.5); color: #e2e8f0; border: 1px solid rgba(255,255,255,0.1); }
+                .p-btn-convert { background: linear-gradient(135deg, #14b8a6, #0d9488); color: #fff; box-shadow: 0 10px 20px rgba(20,184,166,0.3); }
+                .p-btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
+                .p-btn:active { transform: translateY(0); }
+                .p-close { position: absolute; top: 16px; right: 16px; color: #64748b; cursor: pointer; font-size: 18px; padding: 10px; border-radius: 12px; transition: all 0.2s; }
+                .p-close:hover { color: #fff; background: rgba(255,255,255,0.05); }
+            </style>
+            <div class="p-modal-content">
+                <div class="p-close" onclick="document.getElementById('premium-use-card-modal').remove()"><i class="fa-solid fa-xmark"></i></div>
+                <div class="p-icon-box">
+                    <i class="fa-solid ${reward.icon || 'fa-ticket'}"></i>
+                </div>
+                <div class="p-title">${reward.title}</div>
+                <div class="p-desc">Bạn muốn làm gì với vật phẩm này?</div>
+                
+                <div class="p-btn-group">
+                    <button class="p-btn p-btn-primary" id="p-btn-activate">
+                        <i class="fa-solid fa-bolt"></i> SỬ DỤNG NGAY
+                    </button>
+                    
+                    ${isPhysicalGift ? `
+                        <button class="p-btn p-btn-convert" id="p-btn-convert">
+                            <i class="fa-solid fa-repeat"></i> QUY ĐỔI +3đ CÔNG ĐỨC
+                        </button>
+                    ` : ''}
 
-        // Action đặc biệt tùy loại thẻ
-        if (reward.cardId === 'card_leave') {
-            // Tự động tạo một yêu cầu xin nghỉ phép đã duyệt
-            await RewardsModule._autoApproveLeave(user.username);
+                    <button class="p-btn p-btn-secondary" onclick="document.getElementById('premium-use-card-modal').remove()">
+                        <i class="fa-solid fa-clock-rotate-left"></i> ĐỂ SAU
+                    </button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // Handle Activation
+        document.getElementById('p-btn-activate').onclick = async () => {
+            const currentRewards = await RewardsModule.loadData();
+            const idx = currentRewards.findIndex(r => r.id === rewardId);
+            if (idx === -1) return;
+
+            currentRewards[idx].isUsed = true;
+            currentRewards[idx].usedAt = Date.now();
+            await RewardsModule.saveData(currentRewards);
+            
+            modal.remove();
+            Utils.showToast(`Đã kích hoạt: ${reward.title} ✨`, "success");
+
+            if (reward.cardId === 'card_leave') {
+                await RewardsModule._autoApproveLeave(user.username);
+            }
+
+            RewardsModule.render();
+            if (typeof Attendance !== 'undefined') Attendance.render();
+        };
+
+        // Handle Conversion
+        if (isPhysicalGift) {
+            document.getElementById('p-btn-convert').onclick = async () => {
+                const currentRewards = await RewardsModule.loadData();
+                const idx = currentRewards.findIndex(r => r.id === rewardId);
+                if (idx === -1) return;
+
+                // Replace the card with a conversion record
+                currentRewards[idx] = {
+                    id: 'convert_' + Date.now(),
+                    username: user.username,
+                    timestamp: Date.now(),
+                    cardId: 'card_converted',
+                    title: `✨ Quy đổi: ${reward.title} ➔ +3đ`,
+                    icon: 'fa-repeat',
+                    color: '#14b8a6',
+                    cost: -3 // Negative cost = adds points
+                };
+
+                await RewardsModule.saveData(currentRewards);
+                modal.remove();
+                Utils.showToast("Đã quy đổi thành +3 điểm Công Đức! ✨", "success");
+                RewardsModule.render();
+            };
         }
-
-        RewardsModule.render();
-        // Nếu đang ở tab chấm công thì render lại bên đó
-        if (typeof Attendance !== 'undefined') Attendance.render();
     },
 
     _autoApproveLeave: async (username) => {

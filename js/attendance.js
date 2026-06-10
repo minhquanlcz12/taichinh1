@@ -177,16 +177,16 @@ const Attendance = {
             const sessionName = (sessionRecord.type === 'afternoon') ? 'Ca Chiều' : 'Ca Sáng';
             
             if (sessionRecord.status === 'on_time') {
-                meritPts = 1;
-                statusText = `🏆 Đúng giờ (${sessionName}) — Công đức +1`;
+                meritPts = 0.5;
+                statusText = `🏆 Đúng giờ (${sessionName}) — Công đức +0.5`;
                 badgeClass = 'on-time';
             } else if (sessionRecord.status === 'late_excused') {
-                meritPts = 1;
-                statusText = `🏆 Muộn có phép (${sessionName}) — Công đức +1`;
+                meritPts = 0.5;
+                statusText = `🏆 Muộn có phép (${sessionName}) — Công đức +0.5`;
                 badgeClass = 'late-excused';
             } else {
-                meritPts = -1;
-                statusText = `⏰ Muộn ${sessionRecord.lateMinutes}p (${sessionName}) — Phạt 20k & Trừ 1 Công đức`;
+                meritPts = -0.5;
+                statusText = `⏰ Muộn ${sessionRecord.lateMinutes}p (${sessionName}) — Phạt 20k & Trừ 0.5 Công đức`;
                 badgeClass = 'late';
             }
             checkInHtml = `
@@ -253,7 +253,7 @@ const Attendance = {
                         <span class="wf-particle" style="top:60%;left:35%;--wf-p-dir:translate(-20px,20px)"></span>
                         <span class="wf-particle" style="top:30%;left:40%;--wf-p-dir:translate(-15px,-30px)"></span>
                         <span class="wf-particle" style="top:50%;left:70%;--wf-p-dir:translate(30px,-5px)"></span>
-                        <div class="wf-cong-duc"><i class="fa-solid fa-hands-praying"></i> +1 Công Đức Đi Làm</div>
+                        <div class="wf-cong-duc"><i class="fa-solid fa-hands-praying"></i> +0.5 Công Đức Đi Làm</div>
                         <span class="wf-label"><i class="fa-solid fa-gavel" style="margin-right:6px;"></i> GÕ MÕ ĐIỂM DANH</span>
                     </button>
                     <p style="margin-top:28px;color:#daa520;font-weight:600;font-size:14px;">🙏 Gõ mõ để tích công đức đi làm ${sessLabel}!</p>
@@ -308,14 +308,14 @@ const Attendance = {
         // Lấy lịch sử xin nghỉ
         const allLeaves = await Attendance.loadLeaveData();
         const userLeaves = allLeaves.filter(l => l.username === user.username).sort((a,b) => b.timestamp - a.timestamp);
-        const RESET_DATE = '2026-05-20';
+        const RESET_DATE = '2026-06-10';
         let currentMeritDisplay = '?';
         if (typeof RewardsModule !== 'undefined') {
             const mInfo = await RewardsModule.calcUserMerit(user.username);
             currentMeritDisplay = mInfo.current;
         } else {
             const meritHistory = userHistory.filter(r => r.dateStr >= RESET_DATE);
-            currentMeritDisplay = 1 + meritHistory.reduce((acc, r) => acc + ((r.status === 'on_time' || r.status === 'late_excused') ? 1 : -1), 0);
+            currentMeritDisplay = 1 + meritHistory.reduce((acc, r) => acc + ((r.status === 'on_time' || r.status === 'late_excused') ? 0.5 : -0.5), 0);
         }
         let historyHtml = `
             <div class="wf-history-panel">
@@ -333,7 +333,7 @@ const Attendance = {
                             ${userHistory.length === 0 ? '<tr><td colspan="2" style="text-align:center;color:rgba(218,165,32,0.3);">Chưa có công đức nào</td></tr>' : ''}
                             ${userHistory.map(r => {
                                 const isOld = r.dateStr < RESET_DATE;
-                                const pts = (r.status === 'on_time' || r.status === 'late_excused') ? 1 : -1;
+                                const pts = (r.status === 'on_time' || r.status === 'late_excused') ? 0.5 : -0.5;
                                 let badgeHtml = '';
                                 if (r.status === 'on_time') {
                                     badgeHtml = '<span class="badge bg-success">Đúng giờ</span>';
@@ -922,7 +922,7 @@ const Attendance = {
                     telegramMsg += `⏰ <b>Thời gian:</b> ${now.toLocaleTimeString('vi-VN')} (${shiftName})\n`;
                     telegramMsg += `⏳ <b>Trạng thái:</b> Xin muộn ${requestedMinutes}p nhưng thực tế muộn ${lateMinutes}p (Quá hạn ${lateMinutes - requestedMinutes}p)\n`;
                     telegramMsg += `💸 <b>Phạt vi phạm:</b> 20,000đ (Đã tự động trừ lương)\n`;
-                    telegramMsg += `📉 <b>Trừ công đức:</b> -1đ\n`;
+                    telegramMsg += `📉 <b>Trừ công đức:</b> -0.5đ\n`;
                     telegramMsg += `${locStr}\n\n`;
                     telegramMsg += `<i>"Kỷ luật là sức mạnh! Đề nghị sếp ${user.username} rút kinh nghiệm sâu sắc."</i>`;
                     Utils.notifyTelegram(telegramMsg);

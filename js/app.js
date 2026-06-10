@@ -606,7 +606,8 @@ const app = {
                 if (p.length === 3) d = new Date(`${p[2]}-${p[1]}-${p[0]}T00:00:00`);
             }
             
-            if (d && d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
+            const RESET_DATE = '2026-06-10';
+            if (d && d >= new Date(RESET_DATE) && d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
                 const owner = t.owner || 'admin';
                 if (!users[owner]) return;
                 
@@ -1015,7 +1016,8 @@ const app = {
         logs.forEach(log => {
             if (log.status === 'late') {
                 const logDate = new Date(log.timestamp);
-                if (logDate.getMonth() === currentMonth && logDate.getFullYear() === currentYear) {
+                const RESET_DATE = '2026-06-10';
+                if (logDate >= new Date(RESET_DATE) && logDate.getMonth() === currentMonth && logDate.getFullYear() === currentYear) {
                     const u = log.username;
                     if (!lateStats[u]) lateStats[u] = { count: 0, totalMinutes: 0 };
                     lateStats[u].count++;
