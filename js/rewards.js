@@ -6,15 +6,15 @@ const RewardsModule = {
         { id: 'card_leave', title: 'Nghỉ Phép Thêm 1 Ngày', icon: 'fa-umbrella-beach', cost: 25, color: '#a855f7', desc: 'Có ngay 1 ngày phép hưởng nguyên lương.' },
         { id: 'card_tea', title: '1 Lon Nước Ngọt 10k', icon: 'fa-glass-water', cost: 5, color: '#f43f5e', desc: 'Sếp bao 1 lon nước ngọt mát lạnh trị giá 10k.' },
         { id: 'card_rescue', title: 'Thánh Nhân Cứu Bồ', icon: 'fa-handshake-angle', cost: 12, color: '#ec4899', desc: 'Dùng để bảo lãnh/xoá án phạt đi muộn cho 1 NGƯỜI KHÁC (Tăng tình kết nghĩa anh em).' },
-        { id: 'card_mystery', title: 'Quà Bất Ngờ', icon: 'fa-gift', cost: 30, color: '#ffd700', desc: 'Một món quà bí mật và giá trị do sếp chuẩn bị.' },
-        { id: 'card_king', title: 'Chiếc Ghế Quyền Lực', icon: 'fa-crown', cost: 50, color: '#fbbf24', desc: 'Được quyền nhờ Sếp đi pha 1 ly cafe/trà, hoặc Sếp bao ăn trưa 1-1 đàm đạo riêng.' }
+        { id: 'card_mystery', title: 'Quà Bất Ngờ', icon: 'fa-gift', cost: 30, color: '#ffd700', desc: 'Một món quà bí mật và giá trị do Quản lý chuẩn bị.' },
+        { id: 'card_king', title: 'Chiếc Ghế Quyền Lực', icon: 'fa-crown', cost: 50, color: '#fbbf24', desc: 'Được quyền nhờ Quản lý đi pha 1 ly cafe/trà, hoặc Quản lý bao ăn trưa 1-1 đàm đạo riêng.' }
     ],
     
     _isSpinning: false,
     _currentRotation: 0,
 
     init: () => {
-        console.log("RewardsModule Initialized");
+        console.log("RewardsModule v2.1 (Balanced Economy) Initialized");
     },
 
     loadData: async () => {
@@ -53,8 +53,8 @@ const RewardsModule = {
         // Lọc những bản ghi từ sau ngày Reset
         const userHistory = allAttendance.filter(r => r.username === username && r.dateStr >= RESET_DATE);
         
-        // Công thức mới: Tặng sẵn 1 điểm + công đức kiếm được
-        const earned = 1 + userHistory.reduce((acc, r) => acc + ((r.status === 'on_time' || r.status === 'late_excused') ? 1 : -1), 0);
+        // Công thức mới: Tặng sẵn 1 điểm + công đức kiếm được (0.5đ mỗi lần điểm danh tốt)
+        const earned = 1 + userHistory.reduce((acc, r) => acc + ((r.status === 'on_time' || r.status === 'late_excused') ? 0.5 : -1), 0);
 
         const allRewards = await RewardsModule.loadData();
         const userRewards = allRewards.filter(r => r.username === username);
@@ -311,13 +311,31 @@ const RewardsModule = {
                         const color = catCard ? catCard.color : (c.color || '#10b981');
                         const title = catCard ? catCard.title : (c.title || 'Thẻ');
                         return `
-                        <div style="background: rgba(15,23,42,0.9); border: 1px solid ${color}40; border-radius: 10px; padding: 12px 10px; text-align: center; transition: all 0.3s; cursor: default;">
-                            <div style="width: 36px; height: 36px; border-radius: 50%; background: ${color}20; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center;">
-                                <i class="fa-solid ${icon}" style="color: ${color}; font-size: 16px;"></i>
+                        <div class="inventory-card-premium" style="background: rgba(15,23,42,0.9); border: 1px solid ${color}40; border-radius: 12px; padding: 14px 10px; text-align: center; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden;">
+                            <div style="width: 40px; height: 40px; border-radius: 12px; background: ${color}15; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; border: 1px solid ${color}30;">
+                                <i class="fa-solid ${icon}" style="color: ${color}; font-size: 18px; filter: drop-shadow(0 0 5px ${color}60);"></i>
                             </div>
-                            <div style="color: #e2e8f0; font-size: 11px; font-weight: 700; margin-bottom: 8px; line-height: 1.3; min-height: 28px; display: flex; align-items: center; justify-content: center;">${title}</div>
-                            <button onclick="RewardsModule.useCard('${c.id}')" style="background: linear-gradient(135deg, ${color}, ${color}99); color: #fff; border: none; padding: 5px 12px; border-radius: 6px; font-size: 10px; font-weight: 700; cursor: pointer; width: 100%; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.3s;">
-                                <i class="fa-solid fa-hand-pointer"></i> SỬ DỤNG
+                            <div style="color: #e2e8f0; font-size: 11px; font-weight: 800; margin-bottom: 12px; line-height: 1.3; min-height: 28px; display: flex; align-items: center; justify-content: center; text-transform: uppercase; letter-spacing: 0.5px;">${title}</div>
+                            <button onclick="RewardsModule.useCard('${c.id}')" class="btn-inventory-use" style="
+                                background: linear-gradient(135deg, ${color}, ${color}dd);
+                                color: #fff;
+                                border: none;
+                                padding: 8px 12px;
+                                border-radius: 8px;
+                                font-size: 10px;
+                                font-weight: 900;
+                                cursor: pointer;
+                                width: 100%;
+                                text-transform: uppercase;
+                                letter-spacing: 1px;
+                                transition: all 0.2s;
+                                box-shadow: 0 4px 10px ${color}40;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                gap: 6px;
+                            ">
+                                <i class="fa-solid fa-bolt" style="font-size: 9px;"></i> SỬ DỤNG
                             </button>
                         </div>`;
                     }).join('')}
@@ -1072,13 +1090,13 @@ const RewardsModule = {
                                         <div class="wheel-bg-gradient"></div>
                                         <div class="wheel-content-layer">
                                             <div class="wheel-item" style="--i:0;"><span>HỤT<br>RỒI!</span></div>
-                                            <div class="wheel-item" style="--i:1;"><span>+1đ</span></div>
-                                            <div class="wheel-item" style="--i:2;"><span>+2đ</span></div>
-                                            <div class="wheel-item" style="--i:3;"><span style="color:#ffd700;">10,000<br>VNĐ</span></div>
+                                            <div class="wheel-item" style="--i:1;"><span>HÒA<br>VỐN</span></div>
+                                            <div class="wheel-item" style="--i:2;"><span>LÃI<br>NHẸ</span></div>
+                                            <div class="wheel-item" style="--i:3;"><span style="color:#ffd700;">QUÀ<br>TẶNG</span></div>
                                             <div class="wheel-item" style="--i:4;"><span style="color:#ec4899;">ĐỘC<br>ĐẮC</span></div>
-                                            <div class="wheel-item" style="--i:5;"><span>+5đ</span></div>
-                                            <div class="wheel-item" style="--i:6;"><span style="color:#ff9999;">-1đ</span></div>
-                                            <div class="wheel-item" style="--i:7;"><span style="color:#f43f5e;">NƯỚC<br>NGỌT</span></div>
+                                            <div class="wheel-item" style="--i:5;"><span>HŨ<br>LỚN</span></div>
+                                            <div class="wheel-item" style="--i:7;"><span style="color:#3b82f6;">THẺ<br>SỐ</span></div>
+                                            <div class="wheel-item" style="--i:6;"><span style="color:#ff9999;">HẮC<br>ÁM</span></div>
                                         </div>
                                     </div>
                                     <div class="wheel-center-cap">
@@ -1088,7 +1106,7 @@ const RewardsModule = {
 
                                 <div class="spin-controls" style="display: flex; flex-direction: column; align-items: center; width: 100%;">
                                     <button id="spin-btn-v2" onclick="RewardsModule.spinWheel()" class="spin-btn-premium" 
-                                        ${meritInfo.current < 1 || RewardsModule._isSpinning || hasSpunToday ? 'disabled' : ''}>
+                                        ${meritInfo.current < 5 || RewardsModule._isSpinning || hasSpunToday ? 'disabled' : ''}>
                                         ${RewardsModule._isSpinning ? '<i class="fa-solid fa-sync fa-spin"></i> COMPUTER... ' : 
                                           (hasSpunToday ? '<i class="fa-solid fa-calendar-check"></i> MAI QUAY TIẾP NHÉ' : '<i class="fa-solid fa-bolt"></i> LIỀU THÌ ĂN NHIỀU (-1đ)')}
                                     </button>
@@ -1110,26 +1128,26 @@ const RewardsModule = {
                             <div class="prob-row">
                                 <div class="prob-label">
                                     <span class="prob-dot" style="background: #6366f1; box-shadow: 0 0 8px #6366f1;"></span>
-                                    <span class="prob-name">HỤT RỒI!</span>
+                                    <span class="prob-name">HỤT RỒI! 😅</span>
                                 </div>
                                 <div class="prob-bar-track">
-                                    <div class="prob-bar-fill" style="width: 50%; background: linear-gradient(90deg, #6366f1, #818cf8);"></div>
+                                    <div class="prob-bar-fill" style="width: 55%; background: linear-gradient(90deg, #6366f1, #818cf8);"></div>
                                 </div>
                                 <div class="prob-meta">
-                                    <span class="prob-value">50.0%</span>
+                                    <span class="prob-value">55.0%</span>
                                 </div>
                             </div>
-
+                            
                             <div class="prob-row">
                                 <div class="prob-label">
                                     <span class="prob-dot" style="background: #10b981; box-shadow: 0 0 8px #10b981;"></span>
                                     <span class="prob-name">Hòa vốn (+1đ)</span>
                                 </div>
                                 <div class="prob-bar-track">
-                                    <div class="prob-bar-fill" style="width: 12%; background: linear-gradient(90deg, #10b981, #34d399);"></div>
+                                    <div class="prob-bar-fill" style="width: 15%; background: linear-gradient(90deg, #10b981, #34d399);"></div>
                                 </div>
                                 <div class="prob-meta">
-                                    <span class="prob-value">12.0%</span>
+                                    <span class="prob-value">15.0%</span>
                                 </div>
                             </div>
 
@@ -1139,37 +1157,37 @@ const RewardsModule = {
                                     <span class="prob-name">Lãi nhẹ (+2đ)</span>
                                 </div>
                                 <div class="prob-bar-track">
-                                    <div class="prob-bar-fill" style="width: 10%; background: linear-gradient(90deg, #14b8a6, #2dd4bf);"></div>
+                                    <div class="prob-bar-fill" style="width: 8%; background: linear-gradient(90deg, #14b8a6, #2dd4bf);"></div>
                                 </div>
                                 <div class="prob-meta">
-                                    <span class="prob-value">10.0%</span>
+                                    <span class="prob-value">8.0%</span>
                                 </div>
                             </div>
 
                             <div class="prob-row">
                                 <div class="prob-label">
                                     <span class="prob-dot" style="background: #f59e0b; box-shadow: 0 0 8px #f59e0b;"></span>
-                                    <span class="prob-name">10K VNĐ 💰</span>
+                                    <span class="prob-name">Quà Tặng 🎁</span>
                                 </div>
                                 <div class="prob-bar-track">
-                                    <div class="prob-bar-fill" style="width: 5%; background: linear-gradient(90deg, #f59e0b, #fbbf24);"></div>
+                                    <div class="prob-bar-fill" style="width: 6%; background: linear-gradient(90deg, #f59e0b, #fbbf24);"></div>
                                 </div>
                                 <div class="prob-meta">
-                                    <span class="prob-value">5.0%</span>
+                                    <span class="prob-value">6.0%</span>
                                 </div>
                             </div>
 
                             <div class="prob-row">
                                 <div class="prob-label">
                                     <span class="prob-dot" style="background: #ec4899; box-shadow: 0 0 8px #ec4899;"></span>
-                                    <span class="prob-name">ĐỘC ĐẮC 🎁</span>
+                                    <span class="prob-name">ĐỘC ĐẮC 💎</span>
                                 </div>
                                 <div class="prob-bar-track">
-                                    <div class="prob-bar-fill" style="width: 10.1%; background: linear-gradient(90deg, #ec4899, #f472b6);"></div>
+                                    <div class="prob-bar-fill" style="width: 2%; background: linear-gradient(90deg, #ec4899, #f472b6);"></div>
                                 </div>
                                 <div class="prob-meta">
-                                    <span class="prob-value">10.1%</span>
-                                    <span class="prob-sub">Bao Thẻ 10% | Buffet VVIP 0.1%</span>
+                                    <span class="prob-value">2.0%</span>
+                                    <span class="prob-sub">Jackpot VVIP 0.1% | Thẻ Đặc Biệt 1.9%</span>
                                 </div>
                             </div>
 
@@ -1179,33 +1197,33 @@ const RewardsModule = {
                                     <span class="prob-name">Hũ lớn (+5đ)</span>
                                 </div>
                                 <div class="prob-bar-track">
-                                    <div class="prob-bar-fill" style="width: 3%; background: linear-gradient(90deg, #06b6d4, #22d3ee);"></div>
+                                    <div class="prob-bar-fill" style="width: 2%; background: linear-gradient(90deg, #06b6d4, #22d3ee);"></div>
                                 </div>
                                 <div class="prob-meta">
-                                    <span class="prob-value">3.0%</span>
+                                    <span class="prob-value">2.0%</span>
                                 </div>
                             </div>
 
                             <div class="prob-row">
                                 <div class="prob-label">
-                                    <span class="prob-dot" style="background: #ef4444; box-shadow: 0 0 8px #ef4444;"></span>
-                                    <span class="prob-name">Hắc ám (-1đ)</span>
+                                    <span class="prob-dot" style="background: #3b82f6; box-shadow: 0 0 8px #3b82f6;"></span>
+                                    <span class="prob-name">Thẻ Đặc Quyền 🃏</span>
                                 </div>
                                 <div class="prob-bar-track">
-                                    <div class="prob-bar-fill" style="width: 4.9%; background: linear-gradient(90deg, #ef4444, #f87171);"></div>
+                                    <div class="prob-bar-fill" style="width: 7%; background: linear-gradient(90deg, #3b82f6, #60a5fa);"></div>
                                 </div>
                                 <div class="prob-meta">
-                                    <span class="prob-value">4.9%</span>
+                                    <span class="prob-value">7.0%</span>
                                 </div>
                             </div>
 
                             <div class="prob-row" style="margin-bottom: 16px;">
                                 <div class="prob-label">
-                                    <span class="prob-dot" style="background: #f43f5e; box-shadow: 0 0 8px #f43f5e;"></span>
-                                    <span class="prob-name">Nước ngọt 🥤</span>
+                                    <span class="prob-dot" style="background: #ef4444; box-shadow: 0 0 8px #ef4444;"></span>
+                                    <span class="prob-name">Hắc ám (-1đ) 💀</span>
                                 </div>
                                 <div class="prob-bar-track">
-                                    <div class="prob-bar-fill" style="width: 5%; background: linear-gradient(90deg, #f43f5e, #fb7185);"></div>
+                                    <div class="prob-bar-fill" style="width: 5%; background: linear-gradient(90deg, #ef4444, #f87171);"></div>
                                 </div>
                                 <div class="prob-meta">
                                     <span class="prob-value">5.0%</span>
@@ -1266,26 +1284,97 @@ const RewardsModule = {
 
         const allRewards = await RewardsModule.loadData();
         const record = allRewards.find(r => r.id === recordId && r.username === user.username);
-        if (!record) { Utils.showToast('Không tìm thấy thẻ!', 'error'); return; }
-
-        // Check if it's a rescue card
-        if (record.cardId === 'card_rescue') {
-            RewardsModule.useRescueCard(recordId);
-            return;
-        }
+        if (!record || record.isUsed) { Utils.showToast('Không tìm thấy thẻ hoặc đã dùng!', 'error'); return; }
 
         const card = RewardsModule._catalog.find(c => c.id === record.cardId);
         const cardTitle = card ? card.title : record.title;
+        const cardColor = card ? card.color : '#10b981';
+        const cardIcon = card ? card.icon : 'fa-ticket';
 
-        if (!confirm(`Bạn có chắc muốn SỬ DỤNG thẻ "${cardTitle}"?\n\nThẻ sẽ biến mất sau khi sử dụng!`)) return;
+        // 1. Dựng Modal Premium
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay active';
+        overlay.style.zIndex = '100000';
+        overlay.style.backdropFilter = 'blur(10px)';
 
-        record.isUsed = true;
-        record.usedAt = Date.now();
-        await RewardsModule.saveData(allRewards);
+        const isPhysical = record.cardId === 'card_tea' || record.cardId === 'card_mystery';
 
-        Utils.showToast(`Đã sử dụng thẻ "${cardTitle}" thành công! ✨`, 'success');
-        Utils.notifyTelegram(`🃏 <b>[SỬ DỤNG THẺ]</b>\n👤 <b>${user.username}</b> vừa kích hoạt thẻ <b>${cardTitle}</b>!`);
-        RewardsModule.render();
+        overlay.innerHTML = `
+            <div class="modal glass-card" style="width: 90%; max-width: 400px; padding: 0; overflow: hidden; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); background: rgba(15, 23, 42, 0.9); animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);">
+                <div style="height: 120px; background: linear-gradient(135deg, ${cardColor}, #000); display: flex; align-items: center; justify-content: center; position: relative;">
+                    <i class="fa-solid ${cardIcon}" style="font-size: 60px; color: #fff; filter: drop-shadow(0 0 15px rgba(255,255,255,0.5));"></i>
+                    <div style="position: absolute; bottom: -15px; width: 100%; display: flex; justify-content: center;">
+                        <span style="background: #1e293b; color: #fff; padding: 4px 16px; border-radius: 20px; font-size: 11px; border: 1px solid rgba(255,255,255,0.1); text-transform: uppercase; letter-spacing: 1px;">Ready to Use</span>
+                    </div>
+                </div>
+                
+                <div style="padding: 40px 24px 24px 24px; text-align: center;">
+                    <h3 style="margin: 0; font-size: 22px; font-weight: 800; color: #fff; margin-bottom: 8px;">${cardTitle}</h3>
+                    <p style="margin: 0; color: #94a3b8; font-size: 14px; line-height: 1.5;">${card ? card.desc : 'Thẻ đặc quyền từ hệ thống.'}</p>
+                    
+                    <div style="margin-top: 30px; display: flex; flex-direction: column; gap: 12px;">
+                        ${isPhysical ? `
+                            <button id="card-use-gift" class="btn" style="background: ${cardColor}; color: #fff; font-weight: 700; padding: 14px; border-radius: 12px; border: none; box-shadow: 0 4px 15px ${cardColor}44;">
+                                <i class="fa-solid fa-gift"></i> NHẬN QUÀ TRỰC TIẾP
+                            </button>
+                            <button id="card-use-convert" class="btn" style="background: #10b981; color: #000; font-weight: 700; padding: 14px; border-radius: 12px; border: none; box-shadow: 0 4px 15px rgba(16,185,129,0.3);">
+                                <i class="fa-solid fa-star"></i> ĐỔI LẤY +3 CÔNG ĐỨC
+                            </button>
+                        ` : `
+                            <button id="card-use-standard" class="btn" style="background: ${cardColor}; color: #fff; font-weight: 700; padding: 14px; border-radius: 12px; border: none; box-shadow: 0 4px 15px ${cardColor}44;">
+                                KÍCH HOẠT NGAY
+                            </button>
+                        `}
+                        <button id="card-use-cancel" class="btn btn-text" style="color: #64748b; font-size: 13px; margin-top: 5px;">Để sau</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        const close = () => overlay.remove();
+
+        const processUse = async (mode = 'standard') => {
+            record.isUsed = true;
+            record.usedAt = Date.now();
+            
+            if (mode === 'convert') {
+                // Thêm bản ghi cộng điểm
+                const convertRecord = {
+                    id: 'conv_' + Date.now(),
+                    username: user.username,
+                    timestamp: Date.now(),
+                    cardId: 'merit_reward',
+                    title: `Đổi ${cardTitle} lấy Merit`,
+                    icon: 'fa-star',
+                    color: '#10b981',
+                    cost: -3 // Âm cost = cộng điểm
+                };
+                allRewards.push(convertRecord);
+                Utils.showToast(`Đã đổi thẻ lấy +3 Công đức thành công! ✨`, 'success');
+            } else {
+                Utils.showToast(`Đã sử dụng thẻ "${cardTitle}" thành công! ✨`, 'success');
+                Utils.notifyTelegram(`🃏 <b>[SỬ DỤNG THẺ]</b>\n👤 <b>${user.username}</b> vừa sử dụng thẻ: <b>${cardTitle}</b>`);
+                
+                // Action đặc biệt cho thẻ Leave
+                if (record.cardId === 'card_leave' && typeof RewardsModule._autoApproveLeave === 'function') {
+                    await RewardsModule._autoApproveLeave(user.username);
+                }
+            }
+
+            await RewardsModule.saveData(allRewards);
+            close();
+            RewardsModule.render();
+        };
+
+        if (isPhysical) {
+            document.getElementById('card-use-gift').onclick = () => processUse('standard');
+            document.getElementById('card-use-convert').onclick = () => processUse('convert');
+        } else {
+            document.getElementById('card-use-standard').onclick = () => processUse('standard');
+        }
+        document.getElementById('card-use-cancel').onclick = close;
+        overlay.onclick = (e) => { if (e.target === overlay) close(); };
     },
 
     useRescueCard: async (recordId) => {
@@ -1420,9 +1509,85 @@ const RewardsModule = {
         const allRewards = await RewardsModule.loadData();
         allRewards.push(newRecord);
         await RewardsModule.saveData(allRewards);
-        
-        Utils.showToast("Bơm thành công +50 điểm!", "success");
+        Utils.showToast(`${card.title} đã về tay! ✨`, "success");
         RewardsModule.render();
+    },
+
+    /**
+     * Lấy danh sách thẻ chưa sử dụng của user
+     */
+    getInventory: async (username) => {
+        const all = await RewardsModule.loadData();
+        return all.filter(r => r.username === username && r.cardId && r.cardId.startsWith('card_') && !r.isUsed);
+    },
+
+    /**
+     * Kiểm tra xem hôm nay user có đang kích hoạt WFH không
+     */
+    hasActiveWFH: async (username) => {
+        const all = await RewardsModule.loadData();
+        const today = new Date().toLocaleDateString();
+        return all.some(r => 
+            r.username === username && 
+            r.cardId === 'card_wfh' && 
+            r.isUsed && 
+            new Date(r.usedAt).toLocaleDateString() === today
+        );
+    },
+
+    /**
+     * Sử dụng một thẻ quà tặng
+     */
+    useCard: async (rewardId) => {
+        const user = Auth.currentUser;
+        if (!user) return;
+
+        const allRewards = await RewardsModule.loadData();
+        const rewardIdx = allRewards.findIndex(r => r.id === rewardId && r.username === user.username);
+        
+        if (rewardIdx === -1 || allRewards[rewardIdx].isUsed) {
+            Utils.showToast("Thẻ không khả dụng hoặc đã dùng!", "error");
+            return;
+        }
+
+        const reward = allRewards[rewardIdx];
+        const confirm = await Utils.showConfirm("Xác nhận sử dụng", `Bạn có muốn kích hoạt thẻ [${reward.title}] ngay bây giờ không?`);
+        if (!confirm) return;
+
+        // Đánh dấu đã dùng
+        allRewards[rewardIdx].isUsed = true;
+        allRewards[rewardIdx].usedAt = Date.now();
+
+        await RewardsModule.saveData(allRewards);
+        Utils.showToast(`Đã kích hoạt thẻ: ${reward.title} ✨`, "success");
+
+        // Action đặc biệt tùy loại thẻ
+        if (reward.cardId === 'card_leave') {
+            // Tự động tạo một yêu cầu xin nghỉ phép đã duyệt
+            await RewardsModule._autoApproveLeave(user.username);
+        }
+
+        RewardsModule.render();
+        // Nếu đang ở tab chấm công thì render lại bên đó
+        if (typeof Attendance !== 'undefined') Attendance.render();
+    },
+
+    _autoApproveLeave: async (username) => {
+        const today = new Date();
+        const dateStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+        const newLeave = {
+            id: 'leave_auto_' + Date.now(),
+            username: username,
+            startDate: dateStr,
+            days: 1,
+            reason: "Sử dụng Thẻ Nghỉ Phép May Mắn",
+            status: 'approved',
+            timestamp: Date.now(),
+            resolvedBy: 'system'
+        };
+        const allLeaves = await Attendance.loadLeaveData();
+        allLeaves.push(newLeave);
+        await Attendance.saveLeaveData(allLeaves);
     },
 
     spinWheel: async () => {
@@ -1432,8 +1597,15 @@ const RewardsModule = {
         if (!user) return;
 
         const meritInfo = await RewardsModule.calcUserMerit(user.username);
+        const threshold = 5.0;
+
+        if (meritInfo.current < threshold) {
+            Utils.showToast(`Bạn cần tích lũy tối thiểu ${threshold}đ Công đức để có thể bắt đầu quay hũ!`, "warning");
+            return;
+        }
+
         if (meritInfo.current < 1) {
-            Utils.showToast("Bạn cần ít nhất 1 điểm Công Đức để tham gia!", "error");
+            Utils.showToast("Bạn không đủ Công Đức để quay hũ!", "error");
             return;
         }
 
@@ -1491,39 +1663,36 @@ const RewardsModule = {
             // Tính toán kết quả theo đúng tỷ lệ tĩnh, độc lập 100% được công khai
             const prizes = [
                 { label: 'Hụt rồi!', pts: 0, msg: 'Hụt rồi! May mắn lần sau nhé 😅' },
-                { label: '+1 Điểm', pts: 1, msg: 'Hòa vốn! Bạn nhận lại 1 công đức 🧧' },
-                { label: '+2 Điểm', pts: 2, msg: 'Lãi rồi! Chúc mừng bạn được +2 công đức 🎆' },
-                { label: '10,000 VNĐ', pts: 0, isCash: true, amount: 10000, msg: 'TRÚNG LỚN! Bạn trúng ngay 10,000 VNĐ tiền mặt từ Sếp 💸' },
+                { label: 'Hòa vốn', pts: 1, msg: 'Hòa vốn! Bạn nhận lại 1 công đức 🧧' },
+                { label: 'Lãi nhẹ', pts: 2, msg: 'Lãi rồi! Chúc mừng bạn được +2 công đức 🎆' },
+                { label: 'QUÀ TẶNG', pts: 0, isCash: true, amount: 10000, msg: 'MAY MẮN! Bạn trúng một PHẦN QUÀ (Tiền mặt/Nước) trị giá 10k từ Quản lý 🎁' },
                 { label: 'ĐỘC ĐẮC', pts: 0, isJackpot: true, msg: 'ỐI DỒI ÔI! TRÚNG GIẢI ĐỘC ĐẮC RỒI SẾP ƠI!!! 🎉🎉🎉' },
-                { label: '+5 Điểm', pts: 5, msg: 'XUẤT SẮC! Bạn trúng hũ +5 công đức 💎' },
-                { label: '-1 Điểm', pts: -1, msg: 'ỐI GIỒI ÔI! Mất sạch vốn lẫn lãi (-1đ) 💀' },
-                { label: 'NƯỚC NGỌT', pts: 0, isCard: true, cardId: 'card_tea', msg: 'SIÊU CẤP MAY MẮN! Trúng ngay 1 LON NƯỚC NGỌT 10K 🥤' }
+                { label: 'Hũ lớn', pts: 5, msg: 'XUẤT SẮC! Bạn trúng hũ +5 công đức 💎' },
+                { label: 'Hắc ám', pts: -1, msg: 'ỐI GIỒI ÔI! Mất sạch vốn lẫn lãi (-1đ) 💀' },
+                { label: 'THẺ SỐ', pts: 0, isRandomCard: true, msg: 'SIÊU CẤP TIỆN LỢI! Bạn trúng một THẺ ĐẶC QUYỀN (WFH/Trễ/Cứu Bồ) ngẫu nhiên 🃏' }
             ];
 
             const rand = Math.random();
             let prizeIdx = 0;
             let isVVIP = false;
 
-            if (rand < 0.50) {
-                prizeIdx = 0; // Hụt rồi (50.0%)
-            } else if (rand < 0.62) {
-                prizeIdx = 1; // +1đ (12.0%)
-            } else if (rand < 0.72) {
-                prizeIdx = 2; // +2đ (10.0%)
-            } else if (rand < 0.77) {
-                prizeIdx = 3; // 10,000 VNĐ (5.0%)
-            } else if (rand < 0.871) {
-                prizeIdx = 4; // ĐỘC ĐẮC (10.1% tổng)
-                // Sub-roll cho Siêu Độc Đắc VVIP (0.1% trên tổng 10.1%)
-                if (Math.random() < (0.1 / 10.1)) {
-                    isVVIP = true;
-                }
-            } else if (rand < 0.901) {
-                prizeIdx = 5; // +5đ (3.0%)
+            if (rand < 0.55) {
+                prizeIdx = 0; // Hụt rồi (55.0%)
+            } else if (rand < 0.70) {
+                prizeIdx = 1; // Hòa vốn (15.0%)
+            } else if (rand < 0.78) {
+                prizeIdx = 2; // Lãi nhẹ (8.0%)
+            } else if (rand < 0.84) {
+                prizeIdx = 3; // QUÀ TẶNG (6.0%)
+            } else if (rand < 0.86) {
+                prizeIdx = 4; // ĐỘC ĐẮC (2.0% tổng)
+                if (Math.random() < 0.05) isVVIP = true; 
+            } else if (rand < 0.88) {
+                prizeIdx = 5; // Hũ lớn (2.0%)
             } else if (rand < 0.95) {
-                prizeIdx = 6; // -1đ (4.9%)
+                prizeIdx = 7; // THẺ SỐ (7.0%)
             } else {
-                prizeIdx = 7; // Nước ngọt 10k (5.0%)
+                prizeIdx = 6; // Hắc ám (5.0%)
             }
 
             const prize = prizes[prizeIdx];
@@ -1548,111 +1717,115 @@ const RewardsModule = {
 
             // Đợi quay xong (5s)
             setTimeout(async () => {
-                if (prize.pts > 0) {
-                    const winRecord = {
-                        id: 'spin_win_' + Date.now(),
-                        username: user.username,
-                        timestamp: Date.now(),
-                        cardId: 'wheel_win',
-                        title: `🎡 Thưởng: ${prize.label}`,
-                        icon: 'fa-gift',
-                        color: '#ffd700',
-                        cost: -prize.pts
-                    };
-                    const data = await RewardsModule.loadData();
-                    data.push(winRecord);
-                    await RewardsModule.saveData(data);
-                } else if (prize.pts < 0) {
-                    const lossRecord = {
-                        id: 'spin_loss_' + Date.now(),
-                        username: user.username,
-                        timestamp: Date.now(),
-                        cardId: 'wheel_loss',
-                        title: `🎡 Mất điểm: ${prize.label}`,
-                        icon: 'fa-skull',
-                        color: '#ef4444',
-                        cost: Math.abs(prize.pts) // Phí dương = Trừ điểm
-                    };
-                    const data = await RewardsModule.loadData();
-                    data.push(lossRecord);
-                    await RewardsModule.saveData(data);
-                    Utils.notifyTelegram(`💀 <b>[NHỌ QUÁ NHỌ]</b>\n👤 <b>${user.username}</b> vừa "đen" tới mức quay hũ trúng ngay ô <b>Mất 1 Điểm</b>!`);
-                } else if (prize.isCard) {
-                    const card = RewardsModule._catalog.find(c => c.id === prize.cardId);
-                    const winCardRecord = {
-                        id: 'spin_card_' + Date.now(),
-                        username: user.username,
-                        timestamp: Date.now(),
-                        cardId: card.id,
-                        title: `🎡 Trúng Thẻ: ${card.title}`,
-                        icon: card.icon,
-                        color: card.color,
-                        cost: 0
-                    };
-                    const data = await RewardsModule.loadData();
-                    data.push(winCardRecord);
-                    await RewardsModule.saveData(data);
-                    Utils.notifyTelegram(`🎰 <b>[SIÊU CẤP MAY MẮN]</b>\n👤 <b>${user.username}</b> vừa quay hũ trúng ngay <b>${card.title}</b> miễn phí!`);
-                } else if (prize.isCash) {
-                    const winCashRecord = {
-                        id: 'spin_cash_' + Date.now(),
-                        username: user.username,
-                        timestamp: Date.now(),
-                        cardId: 'wheel_cash_10k',
-                        title: `🎡 Trúng Tiền Mặt: ${prize.label}`,
-                        icon: 'fa-money-bill-1-wave',
-                        color: '#fbbf24',
-                        cost: 0
-                    };
-                    const data = await RewardsModule.loadData();
-                    data.push(winCashRecord);
-                    await RewardsModule.saveData(data);
-                    Utils.notifyTelegram(`💵 <b>[TRÚNG TIỀN MẶT]</b>\n👤 <b>${user.username}</b> vừa quay hũ trúng ngay <b>${prize.label}</b> tiền mặt trao tay cực nóng!`);
-                } else if (prize.isJackpot) {
-                    if (isVVIP) {
-                        const winJackpotRecord = {
-                            id: 'spin_jackpot_vvip_' + Date.now(),
-                            username: user.username,
-                            timestamp: Date.now(),
-                            cardId: 'wheel_jackpot_vvip',
-                            title: '💎 VVIP: Sếp Mời Đi Ăn 1 Chầu (Buffet)',
-                            icon: 'fa-utensils',
-                            color: '#ffd700',
-                            cost: 0
-                        };
-                        const data = await RewardsModule.loadData();
-                        data.push(winJackpotRecord);
-                        await RewardsModule.saveData(data);
-                        Utils.notifyTelegram(`💎 <b>[SIÊU ĐỘC ĐẮC - VVIP]</b>\n👤 <b>${user.username}</b> vừa quay hũ trúng ngay giải <b>SIÊU ĐỘC ĐẮC (Sếp Mời Đi Ăn Buffet)</b>! 🎉🎉🎉 Nhân phẩm vô cực!`);
-                        prize.isVVIP = true; // Mark to show custom message in popup
-                    } else {
-                        const winGachaRecord = {
-                            id: 'spin_gacha_pack_' + Date.now(),
-                            username: user.username,
-                            timestamp: Date.now(),
-                            cardId: 'mystery_pack',
-                            title: '🎁 Gói Thẻ Bí Ẩn (Chưa Mở)',
-                            icon: 'fa-box-open',
-                            color: '#ec4899',
-                            cost: 0,
-                            isUnopened: true
-                        };
-                        const data = await RewardsModule.loadData();
-                        data.push(winGachaRecord);
-                        await RewardsModule.saveData(data);
-                        Utils.notifyTelegram(`🎁 <b>[TRÚNG GÓI THẺ BÍ ẨN]</b>\n👤 <b>${user.username}</b> vừa trúng <b>Gói Thẻ Bí Ẩn</b>! Hãy vào Kho Thưởng để bóc thẻ ngay! 🎫`);
-                        prize.isGacha = true; // Mark to show custom message in popup
-                    }
-                }
-
-                RewardsModule._isSpinning = false;
-                RewardsModule.showWheelResult(prize);
+                const result = await RewardsModule.processWheelResult(prize);
+                RewardsModule.showWheelResult(prize, result?.recordId);
                 RewardsModule.render();
             }, 5100);
         }, 50);
     },
 
-    showWheelResult: (prize) => {
+    processWheelResult: async (prize) => {
+        const user = Auth.currentUser;
+        if (!user) return null;
+
+        const resultId = 'spin_' + (prize.isJackpot ? 'jackpot' : (prize.isCash ? 'gift' : (prize.isRandomCard ? 'card' : 'win'))) + '_' + Date.now();
+        let newRecord = null;
+
+        if (prize.pts > 0) {
+            newRecord = {
+                id: resultId,
+                username: user.username,
+                timestamp: Date.now(),
+                cardId: 'wheel_win',
+                title: `🎡 Thưởng: ${prize.label}`,
+                icon: 'fa-gift',
+                color: '#ffd700',
+                cost: -prize.pts
+            };
+        } else if (prize.pts < 0) {
+            newRecord = {
+                id: resultId,
+                username: user.username,
+                timestamp: Date.now(),
+                cardId: 'wheel_loss',
+                title: `🎡 Mất điểm: ${prize.label}`,
+                icon: 'fa-skull',
+                color: '#ef4444',
+                cost: Math.abs(prize.pts)
+            };
+        } else if (prize.isRandomCard) {
+            const pool = ['card_wfh', 'card_late', 'card_rescue'];
+            const chosenId = pool[Math.floor(Math.random() * pool.length)];
+            const card = RewardsModule._catalog.find(c => c.id === chosenId);
+            newRecord = {
+                id: resultId,
+                username: user.username,
+                timestamp: Date.now(),
+                cardId: card.id,
+                title: `🎡 Thẻ Đặc Quyền: ${card.title}`,
+                icon: card.icon,
+                color: card.color,
+                cost: 0
+            };
+            prize.cardTitle = card.title;
+        } else if (prize.isCash) {
+            newRecord = {
+                id: resultId,
+                username: user.username,
+                timestamp: Date.now(),
+                cardId: 'wheel_gift_10k',
+                title: `🎡 Quà Tặng: ${prize.label}`,
+                icon: 'fa-box',
+                color: '#fbbf24',
+                cost: 0
+            };
+        } else if (prize.isJackpot) {
+            if (prize.isVVIP) {
+                newRecord = {
+                    id: resultId,
+                    username: user.username,
+                    timestamp: Date.now(),
+                    cardId: 'wheel_jackpot_vvip',
+                    title: '💎 VVIP: Quản Lý Mời Chầu Buffet',
+                    icon: 'fa-utensils',
+                    color: '#ffd700',
+                    cost: 0
+                };
+            } else {
+                newRecord = {
+                    id: resultId,
+                    username: user.username,
+                    timestamp: Date.now(),
+                    cardId: 'mystery_pack',
+                    title: '🎁 Gói Thẻ Bí Ẩn (Chưa Mở)',
+                    icon: 'fa-box-open',
+                    color: '#ec4899',
+                    cost: 0,
+                    isUnopened: true
+                };
+                prize.isGacha = true;
+            }
+        }
+
+        if (newRecord) {
+            const data = await RewardsModule.loadData();
+            data.push(newRecord);
+            await RewardsModule.saveData(data);
+            
+            // Telegram notifications
+            if (prize.pts < 0) Utils.notifyTelegram(`💀 <b>[NHỌ QUÁ NHỌ]</b>\n👤 <b>${user.username}</b> vừa trúng ô <b>Mất 1 Điểm</b>!`);
+            if (prize.isRandomCard) Utils.notifyTelegram(`🎰 <b>[THẺ ĐẶC QUYỀN SỐ]</b>\n👤 <b>${user.username}</b> vừa trúng thẻ <b>${prize.cardTitle}</b>!`);
+            if (prize.isCash) Utils.notifyTelegram(`🎁 <b>[TRÚNG QUÀ TẶNG]</b>\n👤 <b>${user.username}</b> vừa trúng <b>Phần Quà 10k</b>!`);
+            if (prize.isJackpot) {
+                if (prize.isVVIP) Utils.notifyTelegram(`💎 <b>[SIÊU ĐỘC ĐẮC - VVIP]</b>\n👤 <b>${user.username}</b> vừa trúng <b>Buffet Hoành Tráng</b>!`);
+                else Utils.notifyTelegram(`🎁 <b>[TRÚNG GÓI THẺ BÍ ẨN]</b>\n👤 <b>${user.username}</b> vừa trúng <b>Gói Thẻ Bí Ẩn</b>!`);
+            }
+        }
+
+        return { recordId: resultId };
+    },
+
+    showWheelResult: (prize, recordId) => {
         const overlay = document.createElement('div');
         overlay.id = 'wheel-result-overlay';
         overlay.style = `
@@ -1662,41 +1835,29 @@ const RewardsModule = {
             animation: fadeIn 0.5s ease; backdrop-filter: blur(10px);
         `;
 
-        const isWin = prize.pts > 0 || prize.isCard || prize.isCash || prize.isJackpot;
+        const isWin = prize.pts > 0 || prize.isCard || prize.isCash || prize.isJackpot || prize.isRandomCard;
         const color = prize.pts < 0 ? '#ef4444' : (prize.isCash ? '#fbbf24' : (prize.isJackpot ? '#ec4899' : (isWin ? '#10b981' : '#64748b')));
         
         let humorMsg = "";
         if (prize.pts < 0) {
-            const painMsgs = [
-                "NHỌ HƠN CÀ PHÊ! ☕ Mất thêm 1đ nữa rồi sếp ơi. Hệ thống này 'cay' thật!",
-                "MẤT CẢ CHÌ LẪN CHÀI! 🔫 Vừa tốn điểm quay vừa bị trừ thêm, đen thôi đỏ quên đi.",
-                "AI KHÓC CHO NỖI ĐAU NÀY? 🕯️ Vòng quay không có mắt, trừ thẳng tay luôn sếp ạ.",
-                "HÔM NAY ĂN GÌ? 🍜 Chắc là ăn hành rồi, -1đ nhé sếp!"
-            ];
-            humorMsg = painMsgs[Math.floor(Math.random() * painMsgs.length)];
+            humorMsg = "NHỌ HƠN CÀ PHÊ! ☕ Mất thêm 1đ nữa rồi sếp ơi. Hệ thống này 'cay' thật!";
         } else if (prize.isCash) {
-            humorMsg = "HỐT BẠC! 💸 Sếp chuẩn bị sẵn 10.000 VNĐ tiền mặt trao tay nhé! Đỉnh của chóp!";
-        } else if (prize.pts === 0 && !prize.isCard && !prize.isJackpot) {
-            const fails = [
-                "NHÂN PHẨM BAY MÀU! 🕯️ Chắc tại nãy đi làm sếp quên thắp nhang rồi.",
-                "TRƯỢT VỎ CHUỐI! 🍌 Gần lắm rồi, chỉ thiếu 0.0001mm là trúng hũ.",
-                "MAY MẮN LẦN SAU! 🍀 Đừng buồn, coi như đóng góp quỹ nước ngọt cho anh em.",
-                "SUÝT THÌ ĐƯỢC! 😂 Thôi nịnh đồng nghiệp kiếm thêm điểm rồi quay tiếp nhen."
-            ];
-            humorMsg = fails[Math.floor(Math.random() * fails.length)];
+            humorMsg = "QUÀ TẶNG! 🎁 Hãy liên hệ Quản lý để nhận một phần quà hoặc lì xì 10k cực nóng nhé!";
+        } else if (prize.isRandomCard) {
+            humorMsg = `TRÚNG THẺ ĐẶC QUYỀN! 🃏 Chúc mừng bạn nhận được thẻ "<b>${prize.cardTitle}</b>" miễn phí. Thẻ đã được thêm vào túi đồ!`;
+        } else if (prize.pts === 0 && !prize.isCard && !prize.isJackpot && !prize.isRandomCard) {
+            humorMsg = "MAY MẮN LẦN SAU! 🍀 Đừng buồn, coi như đóng góp quỹ nước ngọt cho anh em.";
         } else if (prize.pts === 1) {
             humorMsg = "HÒA VỐN! 🧧 May quá, coi như quay miễn phí, làm nháy nữa không sếp?";
         } else if (prize.pts === 2) {
             humorMsg = "LÃI NHẸ +2đ! 📈 Sướng nhất sếp, nhặt được hạt dẻ rồi nhé!";
         } else if (prize.pts === 5) {
             humorMsg = "ĂN ĐẬM +5đ! 💎 TRỜI ƠI TIN ĐƯỢC KHÔNG? Sếp vừa 'hack' hệ thống à?";
-        } else if (prize.isCard) {
-            humorMsg = "TRÚNG NƯỚC NGỌT! 🥤 Đã quá sếp ơi, chuẩn bị nhận 1 lon nước ngọt mát lạnh 10k rồi nhé!";
         } else if (prize.isJackpot) {
             if (prize.isVVIP) {
-                humorMsg = "💎 SIÊU THẦN THOẠI 0.1%! Bạn vừa giật giải độc đắc tối thượng: ĐƯỢC SẾP MỜI BUFFET HOÀNH TRÁNG! 🍾 Sếp sẽ khóc ròng chiêu đãi bạn!";
+                humorMsg = "💎 SIÊU THẦN THOẠI 0.1%! Bạn vừa giật giải độc đắc tối thượng: ĐƯỢC QUẢN LÝ MỜI BUFFET HOÀNH TRÁNG! 🍾";
             } else {
-                humorMsg = "🎁 SIÊU CẤP MAY MẮN! Bạn vừa trúng <b>Gói Thẻ Bí Ẩn</b>! Nhận ngay một bao gacha và hãy vào Lịch Sử Cá Nhân để BÓC BAO THƯ xem nhận thẻ bài gì nhé! 🎫";
+                humorMsg = "🎁 SIÊU CẤP MAY MẮN! Bạn vừa trúng Gói Thẻ Bí Ẩn! Hãy vào Túi Đồ để BÓC BAO THƯ xem nhận thẻ bài gì nhé! 🎫";
             }
         }
 
@@ -1705,7 +1866,6 @@ const RewardsModule = {
                 @keyframes bounceIn {
                     0% { transform: scale(0.3); opacity: 0; }
                     50% { transform: scale(1.1); }
-                    70% { transform: scale(0.9); }
                     100% { transform: scale(1); opacity: 1; }
                 }
                 .result-card {
@@ -1715,7 +1875,6 @@ const RewardsModule = {
                     box-shadow: 0 0 50px ${color};
                     text-align: center; max-width: 90%;
                     animation: bounceIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-                    position: relative;
                 }
                 .result-title {
                     font-size: 80px; font-weight: 900; color: #fff;
@@ -1724,29 +1883,61 @@ const RewardsModule = {
                 }
                 .result-humor {
                     font-size: 28px; color: #cbd5e1;
-                    font-weight: 500; line-height: 1.6;
                     margin-bottom: 30px;
                 }
-                .close-overlay-btn {
-                    padding: 20px 60px;
-                    background: ${color}; color: #000;
-                    border: none; border-radius: 12px;
+                .action-btns { display: flex; gap: 15px; justify-content: center; }
+                .close-overlay-btn, .convert-btn {
+                    padding: 20px 40px; border-radius: 12px;
                     font-weight: 900; cursor: pointer;
                     text-transform: uppercase; letter-spacing: 2px;
-                    font-size: 20px; transition: all 0.2s;
+                    font-size: 18px; transition: all 0.2s; border: none;
                 }
-                .close-overlay-btn:hover {
-                    transform: scale(1.1);
-                    box-shadow: 0 0 30px ${color};
-                }
+                .close-overlay-btn { background: ${color}; color: #000; }
+                .convert-btn { background: #14b8a6; color: #fff; box-shadow: 0 0 15px #14b8a6; }
+                .close-overlay-btn:hover, .convert-btn:hover { transform: scale(1.05); }
             </style>
             <div class="result-card">
                 <div class="result-title">${prize.label}</div>
                 <div class="result-humor">${humorMsg}</div>
-                <button class="close-overlay-btn" onclick="document.getElementById('wheel-result-overlay').remove()">ĐÓNG VÀ QUAY TIẾP</button>
+                <div class="action-btns">
+                    ${prize.isCash ? `
+                        <button class="convert-btn" onclick="RewardsModule.convertGiftToMerit('${recordId}')">
+                            <i class="fa-solid fa-bolt"></i> QUY ĐỔI +5đ CÔNG ĐỨC
+                        </button>
+                    ` : ''}
+                    <button class="close-overlay-btn" onclick="document.getElementById('wheel-result-overlay').remove()">
+                        ${prize.isCash ? 'GIỮ LẠI QUÀ' : 'ĐÓNG'}
+                    </button>
+                </div>
             </div>
         `;
         document.body.appendChild(overlay);
+    },
+
+    convertGiftToMerit: async (recordId) => {
+        const user = Auth.currentUser;
+        if (!user) return;
+
+        const allRewards = await RewardsModule.loadData();
+        const giftIdx = allRewards.findIndex(r => r.id === recordId && r.username === user.username);
+        if (giftIdx === -1) { Utils.showToast('Không tìm thấy quà!', 'error'); return; }
+
+        allRewards[giftIdx] = {
+            id: 'convert_' + Date.now(),
+            username: user.username,
+            timestamp: Date.now(),
+            cardId: 'wheel_win_converted',
+            title: '🎡 Quy đổi: QUÀ TẶNG ➔ +3đ',
+            icon: 'fa-bolt',
+            color: '#14b8a6',
+            cost: -3
+        };
+
+        await RewardsModule.saveData(allRewards);
+        Utils.showToast("Đã quy đổi thành +3 điểm Công Đức! ✨", "success");
+        const overlay = document.getElementById('wheel-result-overlay');
+        if (overlay) overlay.remove();
+        RewardsModule.render();
     },
 
     redeem: async (cardId) => {

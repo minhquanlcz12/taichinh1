@@ -51,6 +51,18 @@ const Utils = {
         return COLORS[Math.abs(h) % COLORS.length];
     },
 
+    // System account filter - excludes admin and company accounts from reports
+    isSystemAccount: (acc) => {
+        if (!acc) return true;
+        if (acc.role === 'admin') return true;
+        const u = (acc.username || '').toLowerCase().replace(/\s+/g, '');
+        const fn = ((acc.profile && acc.profile.fullname) || '').toLowerCase().replace(/\s+/g, '');
+        // Check exact username or fullname matches
+        const systemNames = ['admin', 'congty', 'côngty'];
+        if (systemNames.includes(u) || systemNames.includes(fn)) return true;
+        return false;
+    },
+
     // Formatters
     formatCurrency: (amount) => {
         return new Intl.NumberFormat('vi-VN').format(amount || 0) + 'đ';
@@ -59,6 +71,21 @@ const Utils = {
     formatDate: (dateString) => {
         const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         return new Date(dateString).toLocaleDateString('vi-VN', options);
+    },
+
+    animateValue: (obj, start, end, duration, formatter) => {
+        if (!obj) return;
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            const val = Math.floor(progress * (end - start) + start);
+            obj.innerHTML = formatter ? formatter(val) : val;
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            }
+        };
+        window.requestAnimationFrame(step);
     },
 
     // Fix for Excel Serial dates (e.g. 45082)
@@ -103,6 +130,55 @@ const Utils = {
         const m = String(today.getMonth() + 1).padStart(2, '0');
         const y = today.getFullYear();
         return `${d}/${m}/${y}`;
+    },
+
+    // Get the payroll period (10th of M-1 to 9th of M)
+    getPayrollPeriod: (year, month) => {
+        // month is 0-indexed (0=Jan, 11=Dec)
+        const start = new Date(year, month, 10, 0, 0, 0);
+        const end = new Date(year, month + 1, 9, 23, 59, 59, 999);
+        
+        const formatLocal = (d) => {
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        };
+        
+        return { 
+            start, 
+            end, 
+            startStr: formatLocal(start), 
+            endStr: formatLocal(end) 
+        };
+    },
+
+    // Returns YYYY-MM for the current active payroll month
+    getCurrentPayrollMonth: () => {
+        const now = new Date();
+        const year = now.getFullYear();
+        let month = now.getMonth(); // 0-based
+        if (now.getDate() < 10) {
+            month -= 1;
+        }
+        
+        const d = new Date(year, month, 1);
+        const yStr = d.getFullYear();
+        const mStr = String(d.getMonth() + 1).padStart(2, '0');
+        return `${yStr}-${mStr}`;
+    },
+
+    // Count working days (Mon-Sat) in a specific range
+    getWorkingDaysInRange: (startDate, endDate) => {
+        let count = 0;
+        let cur = new Date(startDate);
+        const end = new Date(endDate);
+        while (cur <= end) {
+            const day = cur.getDay();
+            if (day !== 0) count++; // Not Sunday
+            cur.setDate(cur.getDate() + 1);
+        }
+        return count;
     },
 
     generateId: () => {
@@ -299,7 +375,10 @@ const Utils = {
                                         color: ${isSelected ? '#000' : isCurrent ? 'var(--primary)' : 'rgba(255,255,255,0.7)'};
                                         ${isCurrent && !isSelected ? 'border: 1px solid rgba(0, 240, 255, 0.3);' : ''}
                                     ">
-                                        ${m}
+                                        ${m}<br>
+                                        <span style="font-size: 10px; opacity: 0.8; font-weight: 400; display: block; margin-top: 2px;">
+                                            ${String(Utils.getPayrollPeriod(year, i).start.getDate()).padStart(2,'0')}/${String(Utils.getPayrollPeriod(year, i).start.getMonth()+1).padStart(2,'0')} - ${String(Utils.getPayrollPeriod(year, i).end.getDate()).padStart(2,'0')}/${String(Utils.getPayrollPeriod(year, i).end.getMonth()+1).padStart(2,'0')}
+                                        </span>
                                     </button>
                                 `;
                             }).join('')}
