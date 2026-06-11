@@ -298,21 +298,21 @@ const ChibiModule = {
         ]
     },
 
-    // Style Count configuration (0 index to Max-1)
+    // Style Count configuration (0 index to Max-1) - V11 SPRITE COUNTS
     counts: {
         skin: 8,
-        hair: 20,      // Expanded to 20 styles
-        eyes: 12,      // Expanded to 12 styles
-        mouth: 10,     // Expanded to 10 styles
-        top: 11,      
-        bottom: 8,
-        shoe: 8,       
-        accessory: 15, 
-        gear: 20,
-        wing: 8,
-        mount: 6,      // Added 5th vehicle
-        dragon: 5,     // Added 4th dragon
-        aura: 8        // Expanded to 8 styles
+        hair: 2,       // V11 Sprites: 1, 2
+        eyes: 1,       // V11 Sprites: 1
+        mouth: 1,      
+        top: 1,        // V11 Sprites: 1
+        bottom: 0,     // Integrated in outfit for better shading
+        shoe: 0,
+        accessory: 0, 
+        gear: 0,
+        wing: 0,
+        mount: 0,
+        dragon: 0,
+        aura: 0
     },
 
     // State
@@ -370,14 +370,12 @@ const ChibiModule = {
         }
     },
 
-    // NEW: Full SET Presets
     presets: [
         {
-            id: 'premium-gacha',
-            name: '✨ Gacha Premium (V12)',
-            desc: 'Phong cách minh họa Gacha-Life chất lượng cao nhất.',
-            isSprite: true,
-            config: { gender: 'nữ', hairStyle: 1, hairColor: '#ec4899', topColor: '#ffffff', skinColor: '#ffcd94' }
+            id: 'premium-gacha-v11',
+            name: '✨ Gacha Pro (V11 Sprite)',
+            desc: 'Chất lượng phác thảo 100%. Sprite Layering Engine.',
+            config: { gender: 'nữ', hairStyle: 1, hairColor: '#ec4899', topStyle: 1, topColor: '#ffffff', skinColor: '#ffcd94', eyeStyle: 1 }
         },
         {
             id: 'premium-gacha-old',
