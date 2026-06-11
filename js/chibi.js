@@ -21,6 +21,9 @@ const ChibiModule = {
     // viewBox, so hair/eyes/clothes never render as separate white PNG stickers.
     renderChibiV12: function(config, isDancing = false) {
         const c = config || this.currentConfig || {};
+        const gender = (c.gender || 'nam').toString().toLowerCase();
+        const isFemale = gender === 'nữ' || gender === 'nu' || gender === 'female';
+        const isMale = !isFemale;
         const skin = c.skinColor || '#ffcd94';
         const hairColor = c.hairColor || '#111827';
         const topColor = c.topColor || '#3b82f6';
@@ -62,6 +65,28 @@ const ChibiModule = {
             6: '<path d="M54 59 C64 23 80 13 100 13 C124 13 140 25 146 60 C139 74 129 71 123 49 C114 62 102 72 88 77 C91 62 90 49 86 38 C75 59 66 72 56 76 C51 70 50 64 54 59 Z"/>',
             7: '<path d="M49 62 C56 21 78 10 100 10 C128 10 146 25 151 63 C148 78 139 78 134 64 C120 49 100 42 76 48 C66 53 59 66 55 79 C49 73 47 67 49 62 Z"/>'
         };
+        const maleHairBack = {
+            0: '',
+            1: '<path d="M47 67 C46 26 68 10 100 10 C133 10 154 27 153 68 L149 91 C126 101 74 101 50 91 Z"/>',
+            2: '<path d="M47 65 C49 24 72 8 101 8 C136 9 154 29 151 70 L146 91 C124 101 74 100 51 91 Z"/>',
+            3: '<path d="M45 69 C43 31 65 13 99 12 C131 12 153 30 155 68 L151 94 C129 106 71 106 49 94 Z"/>',
+            4: '<path d="M43 69 C46 20 72 4 102 9 C136 7 158 30 156 73 L151 96 C125 108 71 106 47 94 Z"/>',
+            5: '<path d="M48 66 C48 25 69 9 99 9 C130 9 151 26 153 66 L150 88 C128 101 72 101 50 88 Z"/>',
+            6: '<path d="M47 66 C48 25 70 9 101 9 C136 10 155 31 151 71 L148 93 C127 103 73 103 51 93 Z"/>',
+            7: '<path d="M47 67 C48 24 70 8 101 8 C135 9 154 28 153 67 L148 91 C125 102 73 102 51 91 Z"/>'
+        };
+        const maleHairFront = {
+            0: '',
+            1: '<path d="M50 64 C58 24 78 14 101 14 C128 14 146 29 150 64 C141 73 131 69 126 51 C114 64 100 70 84 73 C88 59 87 48 82 39 C72 59 62 71 52 75 C49 71 48 67 50 64 Z"/>',
+            2: '<path d="M50 64 C58 24 78 12 102 12 C129 12 146 27 150 63 C139 72 129 69 123 51 C112 64 98 71 83 75 C87 60 86 49 80 41 C70 59 61 70 52 74 C49 70 48 67 50 64 Z"/>',
+            3: '<path d="M51 62 C56 24 78 13 100 13 C124 13 143 26 149 61 C143 76 134 73 129 57 C119 68 106 74 89 76 C94 61 94 50 91 39 C80 58 66 70 54 75 C50 70 49 66 51 62 Z"/>',
+            4: '<path d="M47 65 C55 22 80 9 101 11 C128 8 148 24 153 65 C147 57 142 44 132 33 C126 44 119 52 109 58 C107 43 101 31 91 23 C85 42 73 60 54 76 C50 72 48 68 47 65 Z"/>',
+            5: '<path d="M50 62 C59 24 79 13 101 13 C128 13 145 28 150 63 C146 80 135 80 129 62 C116 72 100 75 82 72 C72 72 62 78 55 86 C50 79 48 70 50 62 Z"/>',
+            6: '<path d="M52 63 C60 25 80 13 101 13 C128 13 145 27 149 62 C141 72 132 70 126 53 C115 64 103 70 88 74 C92 61 91 50 87 40 C76 58 66 69 55 74 C51 70 50 66 52 63 Z"/>',
+            7: '<path d="M48 64 C56 23 78 11 101 11 C130 11 148 28 151 64 C145 78 136 77 131 65 C119 56 101 51 78 54 C67 57 59 67 54 79 C49 74 47 68 48 64 Z"/>'
+        };
+        const hairBackMap = isMale ? maleHairBack : hairBack;
+        const hairFrontMap = isMale ? maleHairFront : hairFront;
         const eyes = {
             0: `<g><ellipse cx="78" cy="76" rx="10" ry="13" fill="url(#${uid}eye)"/><ellipse cx="122" cy="76" rx="10" ry="13" fill="url(#${uid}eye)"/><path d="M64 65 Q78 57 92 65 M108 65 Q122 57 136 65" fill="none" stroke="#111827" stroke-width="3" stroke-linecap="round"/><circle cx="74" cy="71" r="4" fill="#fff"/><circle cx="118" cy="71" r="4" fill="#fff"/><circle cx="82" cy="82" r="2" fill="#fff" opacity=".55"/><circle cx="126" cy="82" r="2" fill="#fff" opacity=".55"/></g>`,
             1: `<g><path d="M66 75 Q78 64 90 75 M110 75 Q122 64 134 75" fill="none" stroke="#111827" stroke-width="4" stroke-linecap="round"/></g>`,
@@ -70,15 +95,55 @@ const ChibiModule = {
             4: `<g><ellipse cx="78" cy="76" rx="10" ry="13" fill="url(#${uid}eye)"/><path d="M64 65 Q78 57 92 65" fill="none" stroke="#111827" stroke-width="3" stroke-linecap="round"/><circle cx="74" cy="71" r="4" fill="#fff"/><path d="M112 77 Q122 68 132 77" fill="none" stroke="#111827" stroke-width="4" stroke-linecap="round"/></g>`,
             5: `<g><ellipse cx="78" cy="76" rx="10" ry="9" fill="url(#${uid}eye)"/><ellipse cx="122" cy="76" rx="10" ry="9" fill="url(#${uid}eye)"/><ellipse cx="78" cy="76" rx="3" ry="7" fill="#0f172a" opacity=".65"/><ellipse cx="122" cy="76" rx="3" ry="7" fill="#0f172a" opacity=".65"/></g>`
         };
+        const maleEyes = {
+            0: `<g><ellipse cx="78" cy="77" rx="9" ry="10" fill="url(#${uid}eye)"/><ellipse cx="122" cy="77" rx="9" ry="10" fill="url(#${uid}eye)"/><path d="M63 64 L92 61 M108 61 L137 64" fill="none" stroke="#111827" stroke-width="4" stroke-linecap="round"/><circle cx="75" cy="73" r="3.5" fill="#fff"/><circle cx="119" cy="73" r="3.5" fill="#fff"/></g>`,
+            1: `<g><path d="M65 75 Q78 68 91 75 M109 75 Q122 68 135 75" fill="none" stroke="#111827" stroke-width="4" stroke-linecap="round"/><path d="M64 63 L91 61 M109 61 L136 63" stroke="#111827" stroke-width="3.4" stroke-linecap="round"/></g>`,
+            2: `<g><ellipse cx="78" cy="77" rx="11" ry="11" fill="url(#${uid}eye)"/><ellipse cx="122" cy="77" rx="11" ry="11" fill="url(#${uid}eye)"/><path d="M62 63 Q78 57 94 62 M106 62 Q122 57 138 63" fill="none" stroke="#111827" stroke-width="3.3" stroke-linecap="round"/><circle cx="74" cy="72" r="4" fill="#fff"/><circle cx="118" cy="72" r="4" fill="#fff"/></g>`,
+            3: `<g><ellipse cx="78" cy="77" rx="9" ry="8" fill="url(#${uid}eye)"/><ellipse cx="122" cy="77" rx="9" ry="8" fill="url(#${uid}eye)"/><path d="M64 65 L78 68 L92 65 M108 65 L122 68 L136 65" fill="none" stroke="#111827" stroke-width="3.3" stroke-linecap="round"/></g>`,
+            4: `<g><ellipse cx="78" cy="77" rx="9" ry="10" fill="url(#${uid}eye)"/><path d="M63 64 L91 61" stroke="#111827" stroke-width="4" stroke-linecap="round"/><circle cx="74" cy="73" r="3.5" fill="#fff"/><path d="M112 77 Q122 71 132 77" fill="none" stroke="#111827" stroke-width="4" stroke-linecap="round"/><path d="M108 62 L136 64" stroke="#111827" stroke-width="3.5" stroke-linecap="round"/></g>`,
+            5: `<g><ellipse cx="78" cy="77" rx="10" ry="7" fill="url(#${uid}eye)"/><ellipse cx="122" cy="77" rx="10" ry="7" fill="url(#${uid}eye)"/><path d="M63 64 L92 61 M108 61 L137 64" stroke="#111827" stroke-width="3.6" stroke-linecap="round"/><ellipse cx="78" cy="77" rx="3" ry="6" fill="#0f172a" opacity=".7"/><ellipse cx="122" cy="77" rx="3" ry="6" fill="#0f172a" opacity=".7"/></g>`
+        };
+        const eyeMap = isMale ? maleEyes : eyes;
         const mouths = {
             0: '<path d="M93 99 Q100 105 107 99" fill="none" stroke="#581c87" stroke-width="2" stroke-linecap="round"/>',
             1: '<ellipse cx="100" cy="101" rx="5" ry="4" fill="#32113b"/><path d="M96 100 Q100 98 104 100" fill="none" stroke="#fff" stroke-width="1" opacity=".35"/>',
             2: '<path d="M94 100 L106 100" stroke="#581c87" stroke-width="2" stroke-linecap="round"/>',
             3: '<path d="M94 99 Q97 103 100 99 Q103 103 106 99" fill="none" stroke="#581c87" stroke-width="1.8" stroke-linecap="round"/>'
         };
-        const jacket = topStyle >= 3 ? `<path d="M84 118 L116 118 L118 165 Q100 172 82 165 Z" fill="#0f172a" stroke="#111827" stroke-width="2"/><path d="M74 116 L92 112 L100 124 L108 112 L126 116 L130 166 L113 168 L108 132 L100 142 L92 132 L87 168 L70 166 Z" fill="url(#${uid}top)" stroke="#111827" stroke-width="2.5"/><path d="M82 125 L72 151 M118 125 L128 151 M93 126 L107 126" stroke="${topLight}" stroke-width="2" opacity=".75"/>` : `<path d="M78 116 L122 116 L126 166 Q100 174 74 166 Z" fill="url(#${uid}top)" stroke="#111827" stroke-width="2.5"/><path d="M88 122 Q100 130 112 122 M95 132 L95 158 M105 132 L105 158" stroke="${topDark}" stroke-width="2" opacity=".45"/>`;
-        const bottoms = bottomStyle === 2 ? `<path d="M77 164 L123 164 L132 198 Q100 210 68 198 Z" fill="${bottomColor}" stroke="#111827" stroke-width="2.5"/>` : `<path d="M78 164 L99 164 L96 202 L82 202 Z M101 164 L122 164 L118 202 L104 202 Z" fill="${bottomColor}" stroke="#111827" stroke-width="2.5"/><path d="M100 166 L100 199" stroke="${bottomDark}" stroke-width="1.5" opacity=".6"/>`;
-        const shoes = shoeStyle >= 2 ? `<path d="M75 212 C82 207 94 208 99 215 L98 224 L73 224 Z" fill="${shoeColor}" stroke="#111827" stroke-width="2.5"/><path d="M101 215 C106 208 118 207 125 212 L127 224 L102 224 Z" fill="${shoeColor}" stroke="#111827" stroke-width="2.5"/><path d="M80 216 L94 216 M106 216 L120 216" stroke="${shoeLight}" stroke-width="2"/>` : `<ellipse cx="86" cy="220" rx="13" ry="6" fill="${shoeColor}" stroke="#111827" stroke-width="2.5"/><ellipse cx="114" cy="220" rx="13" ry="6" fill="${shoeColor}" stroke="#111827" stroke-width="2.5"/>`;
+        const jacket = isMale
+            ? (topStyle >= 3
+                ? `<path d="M79 118 L121 118 L126 167 Q100 176 74 167 Z" fill="#0f172a" stroke="#111827" stroke-width="2"/><path d="M69 116 L91 111 L100 123 L109 111 L131 116 L136 166 L119 170 L113 132 L100 143 L87 132 L81 170 L64 166 Z" fill="url(#${uid}top)" stroke="#111827" stroke-width="2.7"/><path d="M78 126 L67 153 M122 126 L133 153 M90 126 L110 126" stroke="${topLight}" stroke-width="2.2" opacity=".75"/>`
+                : `<path d="M74 116 L126 116 L132 166 Q100 177 68 166 Z" fill="url(#${uid}top)" stroke="#111827" stroke-width="2.7"/><path d="M86 123 Q100 130 114 123 M93 132 L93 158 M107 132 L107 158" stroke="${topDark}" stroke-width="2.2" opacity=".5"/>`)
+            : (topStyle >= 3
+                ? `<path d="M84 118 L116 118 L118 165 Q100 172 82 165 Z" fill="#0f172a" stroke="#111827" stroke-width="2"/><path d="M74 116 L92 112 L100 124 L108 112 L126 116 L130 166 L113 168 L108 132 L100 142 L92 132 L87 168 L70 166 Z" fill="url(#${uid}top)" stroke="#111827" stroke-width="2.5"/><path d="M82 125 L72 151 M118 125 L128 151 M93 126 L107 126" stroke="${topLight}" stroke-width="2" opacity=".75"/>`
+                : `<path d="M78 116 L122 116 L126 166 Q100 174 74 166 Z" fill="url(#${uid}top)" stroke="#111827" stroke-width="2.5"/><path d="M88 122 Q100 130 112 122 M95 132 L95 158 M105 132 L105 158" stroke="${topDark}" stroke-width="2" opacity=".45"/>`);
+        const bottoms = isFemale && bottomStyle === 2
+            ? `<path d="M77 164 L123 164 L132 198 Q100 210 68 198 Z" fill="${bottomColor}" stroke="#111827" stroke-width="2.5"/>`
+            : isMale
+                ? `<path d="M76 164 L99 164 L96 203 L80 203 Z M101 164 L124 164 L120 203 L104 203 Z" fill="${bottomColor}" stroke="#111827" stroke-width="2.7"/><path d="M100 166 L100 200" stroke="${bottomDark}" stroke-width="1.8" opacity=".65"/><path d="M80 173 H96 M104 173 H120" stroke="${this.adjustColor(bottomColor, 35)}" stroke-width="1.5" opacity=".45"/>`
+                : `<path d="M78 164 L99 164 L96 202 L82 202 Z M101 164 L122 164 L118 202 L104 202 Z" fill="${bottomColor}" stroke="#111827" stroke-width="2.5"/><path d="M100 166 L100 199" stroke="${bottomDark}" stroke-width="1.5" opacity=".6"/>`;
+        const shoes = shoeStyle >= 2
+            ? (isMale
+                ? `<path d="M72 212 C80 206 94 207 101 215 L100 225 L70 225 Z" fill="${shoeColor}" stroke="#111827" stroke-width="2.7"/><path d="M99 215 C106 207 120 206 128 212 L130 225 L100 225 Z" fill="${shoeColor}" stroke="#111827" stroke-width="2.7"/><path d="M78 216 L96 216 M105 216 L124 216" stroke="${shoeLight}" stroke-width="2.2"/>`
+                : `<path d="M75 212 C82 207 94 208 99 215 L98 224 L73 224 Z" fill="${shoeColor}" stroke="#111827" stroke-width="2.5"/><path d="M101 215 C106 208 118 207 125 212 L127 224 L102 224 Z" fill="${shoeColor}" stroke="#111827" stroke-width="2.5"/><path d="M80 216 L94 216 M106 216 L120 216" stroke="${shoeLight}" stroke-width="2"/>`)
+            : (isMale
+                ? `<ellipse cx="84" cy="220" rx="15" ry="6.5" fill="${shoeColor}" stroke="#111827" stroke-width="2.7"/><ellipse cx="116" cy="220" rx="15" ry="6.5" fill="${shoeColor}" stroke="#111827" stroke-width="2.7"/>`
+                : `<ellipse cx="86" cy="220" rx="13" ry="6" fill="${shoeColor}" stroke="#111827" stroke-width="2.5"/><ellipse cx="114" cy="220" rx="13" ry="6" fill="${shoeColor}" stroke="#111827" stroke-width="2.5"/>`);
+        const armsSvg = isMale
+            ? `<path d="M75 122 C56 135 53 157 60 179" fill="none" stroke="url(#${uid}skin)" stroke-width="14.5" stroke-linecap="round"/><path d="M125 122 C144 135 147 157 140 179" fill="none" stroke="url(#${uid}skin)" stroke-width="14.5" stroke-linecap="round"/><circle cx="60" cy="180" r="6.5" fill="url(#${uid}skin)" stroke="#111827" stroke-width="2"/><circle cx="140" cy="180" r="6.5" fill="url(#${uid}skin)" stroke="#111827" stroke-width="2"/>`
+            : `<path d="M78 122 C60 136 57 157 63 176" fill="none" stroke="url(#${uid}skin)" stroke-width="13" stroke-linecap="round"/><path d="M122 122 C140 136 143 157 137 176" fill="none" stroke="url(#${uid}skin)" stroke-width="13" stroke-linecap="round"/><circle cx="63" cy="177" r="6" fill="url(#${uid}skin)" stroke="#111827" stroke-width="2"/><circle cx="137" cy="177" r="6" fill="url(#${uid}skin)" stroke="#111827" stroke-width="2"/>`;
+        const legsSvg = isMale
+            ? `<path d="M86 190 L82 216 M114 190 L118 216" fill="none" stroke="url(#${uid}skin)" stroke-width="14" stroke-linecap="round"/>`
+            : `<path d="M88 190 L84 216 M112 190 L116 216" fill="none" stroke="url(#${uid}skin)" stroke-width="13" stroke-linecap="round"/>`;
+        const torsoBase = isMale
+            ? `<path d="M76 116 Q100 106 124 116 L129 164 Q100 176 71 164 Z" fill="url(#${uid}skin)" stroke="#111827" stroke-width="2.7"/>`
+            : `<path d="M80 116 Q100 107 120 116 L124 164 Q100 174 76 164 Z" fill="url(#${uid}skin)" stroke="#111827" stroke-width="2.5"/>`;
+        const headSvg = isMale
+            ? `<path d="M52 63 C52 27 73 10 100 10 C127 10 148 27 148 63 C148 99 129 119 100 122 C71 119 52 99 52 63 Z" fill="url(#${uid}skin)" stroke="#111827" stroke-width="3"/>`
+            : `<path d="M52 62 C52 25 72 10 100 10 C128 10 148 25 148 62 C148 103 127 119 100 119 C73 119 52 103 52 62 Z" fill="url(#${uid}skin)" stroke="#111827" stroke-width="3"/>`;
+        const blushSvg = isFemale
+            ? '<circle cx="68" cy="91" r="9" fill="#fb7185" opacity=".18"/><circle cx="132" cy="91" r="9" fill="#fb7185" opacity=".18"/>'
+            : '<path d="M65 92 H75 M125 92 H135" stroke="#fb7185" stroke-width="2" opacity=".12" stroke-linecap="round"/>';
         const accessoryStyle = Number(c.accessory || 0);
         const gearStyle = Number(c.gear || 0);
         const wingStyle = Number(c.wing || 0);
@@ -121,7 +186,7 @@ const ChibiModule = {
             `<g opacity=".95"><path d="M76 104 L37 74 L22 118 L54 128 L72 160 Z" fill="#bae6fd" stroke="#111827" stroke-width="3"/><path d="M124 104 L163 74 L178 118 L146 128 L128 160 Z" fill="#bae6fd" stroke="#111827" stroke-width="3"/><path d="M39 89 L61 121 L28 119 M161 89 L139 121 L172 119" stroke="#38bdf8" stroke-width="3.5" opacity=".8"/></g>`
         ][(wingStyle - 1) % 7];
         const mountSvg = !mountStyle ? '' : `<g transform="translate(0 4)"><path d="M45 196 C62 177 138 177 155 196 L148 216 H52 Z" fill="${bottomColor}" stroke="#111827" stroke-width="3"/><circle cx="70" cy="216" r="10" fill="#020617" stroke="#38bdf8" stroke-width="3"/><circle cx="130" cy="216" r="10" fill="#020617" stroke="#38bdf8" stroke-width="3"/><path d="M78 191 H122" stroke="${topLight}" stroke-width="4" stroke-linecap="round"/></g>`;
-        const dragonSvg = !dragonStyle ? '' : `<g transform="translate(14 28) scale(.94)" opacity=".98"><path d="M63 134 C36 166 4 153 8 118 C19 135 38 128 50 109 C56 98 69 104 72 119 Z" fill="${dragonDark}" stroke="#111827" stroke-width="4"/><path d="M67 73 C32 35 4 55 11 105 C31 91 49 101 64 131 Z" fill="${dragonDark}" stroke="#111827" stroke-width="4"/><path d="M63 87 C78 45 115 36 139 59 C162 82 151 126 113 132 C82 137 53 116 63 87 Z" fill="${dragonColor}" stroke="#111827" stroke-width="4"/><path d="M120 59 C143 32 177 44 180 76 C163 65 149 72 139 94 Z" fill="${dragonDark}" stroke="#111827" stroke-width="4"/><path d="M130 72 C153 52 181 63 184 88 C188 108 169 121 148 111 C130 102 119 86 130 72 Z" fill="${dragonColor}" stroke="#111827" stroke-width="4"/><path d="M145 57 L156 28 L166 61 M168 66 L190 48 L181 78" fill="${dragonLight}" stroke="#111827" stroke-width="3"/><path d="M151 91 L180 81 L176 92 L194 92 L176 105 L181 115 Z" fill="${dragonLight}" stroke="#111827" stroke-width="3"/><path d="M79 68 L96 48 L103 72 L119 50 L121 82" fill="${dragonLight}" stroke="#111827" stroke-width="3"/><path d="M86 132 C69 151 44 151 28 134" fill="none" stroke="${dragonColor}" stroke-width="10" stroke-linecap="round"/><circle cx="151" cy="82" r="5" fill="#fef3c7" stroke="#111827" stroke-width="2"/><path d="M159 96 L175 101" stroke="#fef3c7" stroke-width="3" stroke-linecap="round"/><path d="M75 89 C87 78 104 72 123 78 M75 107 C91 117 110 118 128 106" stroke="#fff" stroke-width="2.2" opacity=".42" stroke-linecap="round"/></g>`;
+        const dragonSvg = !dragonStyle ? '' : `<g transform="translate(-12 16) scale(1.08)" opacity=".97"><path d="M79 89 C38 27 -3 51 6 129 C32 105 55 112 80 153 Z" fill="${dragonDark}" stroke="#111827" stroke-width="4"/><path d="M123 86 C166 25 208 51 197 129 C171 105 148 112 125 154 Z" fill="${dragonDark}" stroke="#111827" stroke-width="4"/><path d="M68 145 C45 174 8 158 9 122 C24 141 43 133 58 111 C65 101 79 109 81 124 Z" fill="${dragonColor}" stroke="#111827" stroke-width="4"/><path d="M69 96 C84 54 124 49 150 80 C174 111 148 153 106 150 C76 148 58 126 69 96 Z" fill="${dragonColor}" stroke="#111827" stroke-width="4"/><path d="M137 76 C158 48 194 60 197 94 C200 117 180 130 157 118 C139 109 127 91 137 76 Z" fill="${dragonColor}" stroke="#111827" stroke-width="4"/><path d="M148 59 L158 29 L169 63 M170 67 L194 48 L184 80" fill="${dragonLight}" stroke="#111827" stroke-width="3"/><path d="M153 91 L182 79 L178 91 L197 92 L178 105 L184 116 Z" fill="${dragonLight}" stroke="#111827" stroke-width="3"/><path d="M78 74 L94 48 L101 74 L119 51 L121 84" fill="${dragonLight}" stroke="#111827" stroke-width="3"/><path d="M32 72 C51 75 68 90 79 115 M169 72 C150 78 134 93 124 118" stroke="${dragonLight}" stroke-width="4" opacity=".55" stroke-linecap="round"/><path d="M86 150 C68 166 43 165 25 144" fill="none" stroke="${dragonColor}" stroke-width="10" stroke-linecap="round"/><circle cx="152" cy="82" r="5" fill="#fef3c7" stroke="#111827" stroke-width="2"/><path d="M159 98 L177 103" stroke="#fef3c7" stroke-width="3" stroke-linecap="round"/><path d="M80 96 C92 84 111 78 131 85 M79 114 C95 125 115 125 132 112" stroke="#fff" stroke-width="2.2" opacity=".42" stroke-linecap="round"/></g>`;
         const auraSvg = !auraStyle ? '' : `<g transform="translate(100 222)" filter="url(#${uid}auraGlow)"><ellipse cx="0" cy="0" rx="55" ry="13" fill="${auraColor}" opacity=".18"/><ellipse cx="0" cy="0" rx="48" ry="11" fill="none" stroke="${auraColor}" stroke-width="5" opacity=".82"/><ellipse cx="0" cy="-2" rx="34" ry="7" fill="none" stroke="#22d3ee" stroke-width="3" opacity=".78"/><ellipse cx="0" cy="3" rx="68" ry="16" fill="none" stroke="#f472b6" stroke-width="2.5" stroke-dasharray="8 7" opacity=".58"/><ellipse cx="0" cy="-7" rx="22" ry="4" fill="${auraHi}" opacity=".5"/><circle cx="-46" cy="-13" r="4" fill="#fde047"/><circle cx="45" cy="-11" r="3" fill="#22d3ee"/><circle cx="-18" cy="-21" r="3" fill="#f472b6"/><circle cx="19" cy="-20" r="3" fill="${auraHi}"/></g>`;
         return `
             <svg viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg" class="${isDancing ? 'chibi-dance-v12' : ''}" style="width:100%;height:100%;display:block;overflow:visible">
@@ -136,19 +201,17 @@ const ChibiModule = {
                 </defs>
                 <style>.chibi-dance-v12{animation:cbV12 2.3s ease-in-out infinite;transform-origin:100px 224px}@keyframes cbV12{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-6px) rotate(1deg)}} @media (prefers-reduced-motion:reduce){.chibi-dance-v12{animation:none}}</style>
                 <g filter="url(#${uid}shadow)">
-                    ${auraSvg}${wingSvg}${mountSvg}${dragonSvg}
-                    <g fill="url(#${uid}hair)" stroke="#111827" stroke-width="3" stroke-linejoin="round">${hairBack[hairStyle] || hairBack[1]}</g>
-                    <path d="M78 122 C60 136 57 157 63 176" fill="none" stroke="url(#${uid}skin)" stroke-width="13" stroke-linecap="round"/>
-                    <path d="M122 122 C140 136 143 157 137 176" fill="none" stroke="url(#${uid}skin)" stroke-width="13" stroke-linecap="round"/>
-                    <circle cx="63" cy="177" r="6" fill="url(#${uid}skin)" stroke="#111827" stroke-width="2"/><circle cx="137" cy="177" r="6" fill="url(#${uid}skin)" stroke="#111827" stroke-width="2"/>
-                    <path d="M88 190 L84 216 M112 190 L116 216" fill="none" stroke="url(#${uid}skin)" stroke-width="13" stroke-linecap="round"/>
-                    <path d="M80 116 Q100 107 120 116 L124 164 Q100 174 76 164 Z" fill="url(#${uid}skin)" stroke="#111827" stroke-width="2.5"/>
+                    ${auraSvg}${dragonSvg}${wingSvg}${mountSvg}
+                    <g fill="url(#${uid}hair)" stroke="#111827" stroke-width="3" stroke-linejoin="round">${hairBackMap[hairStyle] || hairBackMap[1]}</g>
+                    ${armsSvg}
+                    ${legsSvg}
+                    ${torsoBase}
                     ${jacket}${bottoms}${shoes}
-                    <path d="M52 62 C52 25 72 10 100 10 C128 10 148 25 148 62 C148 103 127 119 100 119 C73 119 52 103 52 62 Z" fill="url(#${uid}skin)" stroke="#111827" stroke-width="3"/>
+                    ${headSvg}
                     <ellipse cx="53" cy="74" rx="5" ry="8" fill="url(#${uid}skin)" stroke="#111827" stroke-width="2"/><ellipse cx="147" cy="74" rx="5" ry="8" fill="url(#${uid}skin)" stroke="#111827" stroke-width="2"/>
-                    <circle cx="68" cy="91" r="9" fill="#fb7185" opacity=".18"/><circle cx="132" cy="91" r="9" fill="#fb7185" opacity=".18"/>
-                    ${eyes[eyeStyle] || eyes[0]}<circle cx="100" cy="91" r="1.4" fill="${skinDark}" opacity=".38"/>${mouths[mouthStyle] || mouths[0]}
-                    <g fill="url(#${uid}hair)" stroke="#111827" stroke-width="3" stroke-linejoin="round">${hairFront[hairStyle] || hairFront[1]}</g>
+                    ${blushSvg}
+                    ${eyeMap[eyeStyle] || eyeMap[0]}<circle cx="100" cy="91" r="1.4" fill="${skinDark}" opacity=".38"/>${mouths[mouthStyle] || mouths[0]}
+                    <g fill="url(#${uid}hair)" stroke="#111827" stroke-width="3" stroke-linejoin="round">${hairFrontMap[hairStyle] || hairFrontMap[1]}</g>
                     ${accessorySvg}${gearSvg}
                     <path d="M78 31 Q96 20 115 30" fill="none" stroke="#fff" stroke-width="2.4" opacity=".24" stroke-linecap="round"/>
                     <path d="M85 41 Q98 34 109 40" fill="none" stroke="${hairLight}" stroke-width="2" opacity=".35" stroke-linecap="round"/>
@@ -693,7 +756,7 @@ const ChibiModule = {
 
         renderMiniOption: function(type, index, color) {
         const tempConfig = {
-            gender: 'nam',
+            gender: ChibiModule.currentConfig?.gender || 'nam',
             skinColor: '#ffd1a9',
             hairStyle: 0,
             hairColor: '#343a40',
@@ -1142,7 +1205,20 @@ const ChibiModule = {
                         </div>
                     </div>
                     <div>
-                        <h4 style="margin: 0 0 8px 0; font-size: 13px; color: #94a3b8; text-transform: uppercase;">Lựa Chọn Màu Da</h4>
+                        <h4 style="margin: 0 0 8px 0; font-size: 13px; color: #94a3b8; text-transform: uppercase;">Màu Da Tùy Chọn Full</h4>
+                        <div style="display: grid; grid-template-columns: 64px 1fr; gap: 12px; align-items: center; background: rgba(255,255,255,0.035); padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08);">
+                            <input type="color" value="${ChibiModule.currentConfig.skinColor || '#ffcd94'}"
+                                   oninput="ChibiModule.selectColor('skinColor', this.value, false)"
+                                   onchange="ChibiModule.selectColor('skinColor', this.value)"
+                                   style="width: 56px; height: 44px; cursor: pointer; border: 0; border-radius: 8px; background: transparent; padding: 0;">
+                            <div>
+                                <div style="font-size: 12px; color: #e5e7eb; font-weight: 800;">Chọn bất kỳ màu nào từ bảng màu hệ thống</div>
+                                <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Màu hiện tại: <span style="color: #fff; font-weight: 800;">${ChibiModule.currentConfig.skinColor || '#ffcd94'}</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 style="margin: 0 0 8px 0; font-size: 13px; color: #94a3b8; text-transform: uppercase;">Palette Nhanh</h4>
                         <div style="display: flex; flex-wrap: wrap; gap: 10px;">
                             ${ChibiModule.colors.skin.map((col, idx) => `
                                 <div class="chibi-color-circle ${ChibiModule.currentConfig.skinColor === col ? 'active' : ''}" 
@@ -1150,12 +1226,6 @@ const ChibiModule = {
                                      onclick="ChibiModule.selectColor('skinColor', '${col}')"></div>
                             `).join('')}
                         </div>
-                    </div>
-                    <div style="margin-top: 10px; display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.02); padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
-                        <span style="font-size: 12px; font-weight: bold; color: #cbd5e1;">Màu Tùy Chọn:</span>
-                        <input type="color" value="${ChibiModule.currentConfig.skinColor}" 
-                               onchange="ChibiModule.selectColor('skinColor', this.value)" 
-                               style="background: none; border: none; width: 40px; height: 30px; cursor: pointer; outline: none;">
                     </div>
                 </div>
             `;
@@ -1465,10 +1535,10 @@ const ChibiModule = {
     /**
      * Choose an item color
      */
-    selectColor: function(property, hexColor) {
+    selectColor: function(property, hexColor, refreshTab = true) {
         ChibiModule.currentConfig[property] = hexColor;
         ChibiModule.updatePreview();
-        ChibiModule.switchTab(ChibiModule.activeTab); // Rerender items to update highlight
+        if (refreshTab) ChibiModule.switchTab(ChibiModule.activeTab); // Rerender items to update highlight
     },
 
     /**
