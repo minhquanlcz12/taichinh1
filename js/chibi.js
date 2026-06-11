@@ -1,6 +1,6 @@
 /**
  * Pet Chibi Avatar Builder Module
- * Phong cách Gacha Life - Hybrid Sprite + SVG Engine V11
+ * V12 full-body SVG renderer - no PNG sticker layers
  */
 
 const ChibiModule = {
@@ -16,6 +16,97 @@ const ChibiModule = {
         return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
     },
 
+
+    // V12 full-body SVG renderer. This keeps every selectable part on one shared
+    // viewBox, so hair/eyes/clothes never render as separate white PNG stickers.
+    renderChibiV12: function(config, isDancing = false) {
+        const c = config || this.currentConfig || {};
+        const skin = c.skinColor || '#ffcd94';
+        const hairColor = c.hairColor || '#111827';
+        const topColor = c.topColor || '#3b82f6';
+        const bottomColor = c.bottomColor || '#1f2937';
+        const shoeColor = c.shoeColor || '#111827';
+        const hairStyle = Number(c.hairStyle || 1);
+        const eyeStyle = Number(c.eyeStyle || 0);
+        const mouthStyle = Number(c.mouthStyle || 0);
+        const topStyle = Number(c.topStyle || 1);
+        const bottomStyle = Number(c.bottomStyle || 1);
+        const shoeStyle = Number(c.shoeStyle || 1);
+        const uid = 'cbv12' + Math.random().toString(36).slice(2, 8);
+        const skinDark = this.adjustColor(skin, -22);
+        const skinLight = this.adjustColor(skin, 18);
+        const hairDark = this.adjustColor(hairColor, -48);
+        const hairLight = this.adjustColor(hairColor, 42);
+        const topDark = this.adjustColor(topColor, -34);
+        const topLight = this.adjustColor(topColor, 28);
+        const bottomDark = this.adjustColor(bottomColor, -28);
+        const shoeLight = this.adjustColor(shoeColor, 28);
+        const eyeColor = c.eyeColor || hairColor;
+        const hairBack = {
+            0: '',
+            1: '<path d="M48 68 C46 24 67 9 100 8 C134 9 154 25 152 69 L156 98 C133 112 71 112 44 98 Z"/>',
+            2: '<path d="M45 62 C42 19 65 3 100 4 C137 4 159 22 156 64 C164 118 160 183 145 224 C135 221 137 178 139 143 C123 154 78 154 61 143 C63 178 65 221 55 224 C40 183 36 118 45 62 Z"/>',
+            3: '<path d="M49 67 C47 23 68 8 100 8 C133 8 153 24 151 67 L154 96 C132 111 70 111 46 96 Z"/><path d="M50 78 C30 90 24 123 29 170 C32 199 41 219 50 213 C42 176 41 121 54 90 Z"/><path d="M150 78 C170 90 176 123 171 170 C168 199 159 219 150 213 C158 176 159 121 146 90 Z"/>',
+            4: '<path d="M42 72 C43 18 69 2 100 6 C135 1 158 20 160 72 L165 108 C135 122 66 122 36 108 Z"/>',
+            5: '<path d="M47 65 C46 24 67 8 100 8 C134 8 154 25 153 66 L155 111 C132 128 68 128 45 111 Z"/>',
+            6: '<path d="M49 66 C47 24 68 8 100 8 C133 8 153 24 151 66 L154 94 C132 108 70 108 46 94 Z"/><path d="M137 27 C164 14 176 37 169 79 C164 112 156 139 145 160 C143 119 146 69 137 27 Z"/>',
+            7: '<path d="M48 66 C47 23 68 7 100 7 C134 7 154 24 153 66 L156 108 C132 123 68 123 44 108 Z"/>'
+        };
+        const hairFront = {
+            0: '',
+            1: '<path d="M52 61 C61 24 78 13 100 13 C125 13 141 25 148 62 C139 76 130 72 124 48 C116 64 102 76 86 82 C91 65 93 51 91 39 C81 61 68 74 55 78 C50 72 49 66 52 61 Z"/>',
+            2: '<path d="M51 61 C60 22 78 11 100 10 C126 11 142 24 149 62 C145 80 133 80 127 58 C117 76 103 84 85 86 C88 70 89 55 87 42 C77 65 65 80 54 83 C49 75 48 67 51 61 Z"/>',
+            3: '<path d="M54 60 C64 24 80 13 100 13 C123 13 139 25 146 60 C139 75 129 72 123 50 C115 65 101 76 84 81 C90 63 90 49 86 38 C76 61 66 73 56 77 C51 70 50 65 54 60 Z"/>',
+            4: '<path d="M47 64 C54 20 78 10 100 10 C128 8 148 23 153 65 C155 53 149 37 138 28 C131 23 126 28 123 38 C114 24 101 20 91 29 C82 17 65 23 57 38 C50 46 47 55 47 64 Z"/>',
+            5: '<path d="M51 59 C61 21 80 12 100 12 C123 12 141 24 149 60 C149 80 139 86 132 72 C120 58 105 54 86 58 C75 61 66 72 61 85 C53 82 49 72 51 59 Z"/>',
+            6: '<path d="M54 59 C64 23 80 13 100 13 C124 13 140 25 146 60 C139 74 129 71 123 49 C114 62 102 72 88 77 C91 62 90 49 86 38 C75 59 66 72 56 76 C51 70 50 64 54 59 Z"/>',
+            7: '<path d="M49 62 C56 21 78 10 100 10 C128 10 146 25 151 63 C148 78 139 78 134 64 C120 49 100 42 76 48 C66 53 59 66 55 79 C49 73 47 67 49 62 Z"/>'
+        };
+        const eyes = {
+            0: `<g><ellipse cx="78" cy="76" rx="10" ry="13" fill="url(#${uid}eye)"/><ellipse cx="122" cy="76" rx="10" ry="13" fill="url(#${uid}eye)"/><path d="M64 65 Q78 57 92 65 M108 65 Q122 57 136 65" fill="none" stroke="#111827" stroke-width="3" stroke-linecap="round"/><circle cx="74" cy="71" r="4" fill="#fff"/><circle cx="118" cy="71" r="4" fill="#fff"/><circle cx="82" cy="82" r="2" fill="#fff" opacity=".55"/><circle cx="126" cy="82" r="2" fill="#fff" opacity=".55"/></g>`,
+            1: `<g><path d="M66 75 Q78 64 90 75 M110 75 Q122 64 134 75" fill="none" stroke="#111827" stroke-width="4" stroke-linecap="round"/></g>`,
+            2: `<g><circle cx="78" cy="76" r="13" fill="url(#${uid}eye)"/><circle cx="122" cy="76" r="13" fill="url(#${uid}eye)"/><path d="M62 64 Q78 55 94 64 M106 64 Q122 55 138 64" fill="none" stroke="#111827" stroke-width="3" stroke-linecap="round"/><circle cx="73" cy="71" r="4.5" fill="#fff"/><circle cx="117" cy="71" r="4.5" fill="#fff"/></g>`,
+            3: `<g><ellipse cx="78" cy="76" rx="9" ry="10" fill="url(#${uid}eye)"/><ellipse cx="122" cy="76" rx="9" ry="10" fill="url(#${uid}eye)"/><path d="M65 64 L78 68 L91 64 M109 64 L122 68 L135 64" fill="none" stroke="#111827" stroke-width="3" stroke-linecap="round"/></g>`,
+            4: `<g><ellipse cx="78" cy="76" rx="10" ry="13" fill="url(#${uid}eye)"/><path d="M64 65 Q78 57 92 65" fill="none" stroke="#111827" stroke-width="3" stroke-linecap="round"/><circle cx="74" cy="71" r="4" fill="#fff"/><path d="M112 77 Q122 68 132 77" fill="none" stroke="#111827" stroke-width="4" stroke-linecap="round"/></g>`,
+            5: `<g><ellipse cx="78" cy="76" rx="10" ry="9" fill="url(#${uid}eye)"/><ellipse cx="122" cy="76" rx="10" ry="9" fill="url(#${uid}eye)"/><ellipse cx="78" cy="76" rx="3" ry="7" fill="#0f172a" opacity=".65"/><ellipse cx="122" cy="76" rx="3" ry="7" fill="#0f172a" opacity=".65"/></g>`
+        };
+        const mouths = {
+            0: '<path d="M93 99 Q100 105 107 99" fill="none" stroke="#581c87" stroke-width="2" stroke-linecap="round"/>',
+            1: '<ellipse cx="100" cy="101" rx="5" ry="4" fill="#32113b"/><path d="M96 100 Q100 98 104 100" fill="none" stroke="#fff" stroke-width="1" opacity=".35"/>',
+            2: '<path d="M94 100 L106 100" stroke="#581c87" stroke-width="2" stroke-linecap="round"/>',
+            3: '<path d="M94 99 Q97 103 100 99 Q103 103 106 99" fill="none" stroke="#581c87" stroke-width="1.8" stroke-linecap="round"/>'
+        };
+        const jacket = topStyle >= 3 ? `<path d="M84 118 L116 118 L118 165 Q100 172 82 165 Z" fill="#0f172a" stroke="#111827" stroke-width="2"/><path d="M74 116 L92 112 L100 124 L108 112 L126 116 L130 166 L113 168 L108 132 L100 142 L92 132 L87 168 L70 166 Z" fill="url(#${uid}top)" stroke="#111827" stroke-width="2.5"/><path d="M82 125 L72 151 M118 125 L128 151 M93 126 L107 126" stroke="${topLight}" stroke-width="2" opacity=".75"/>` : `<path d="M78 116 L122 116 L126 166 Q100 174 74 166 Z" fill="url(#${uid}top)" stroke="#111827" stroke-width="2.5"/><path d="M88 122 Q100 130 112 122 M95 132 L95 158 M105 132 L105 158" stroke="${topDark}" stroke-width="2" opacity=".45"/>`;
+        const bottoms = bottomStyle === 2 ? `<path d="M77 164 L123 164 L132 198 Q100 210 68 198 Z" fill="${bottomColor}" stroke="#111827" stroke-width="2.5"/>` : `<path d="M78 164 L99 164 L96 202 L82 202 Z M101 164 L122 164 L118 202 L104 202 Z" fill="${bottomColor}" stroke="#111827" stroke-width="2.5"/><path d="M100 166 L100 199" stroke="${bottomDark}" stroke-width="1.5" opacity=".6"/>`;
+        const shoes = shoeStyle >= 2 ? `<path d="M75 212 C82 207 94 208 99 215 L98 224 L73 224 Z" fill="${shoeColor}" stroke="#111827" stroke-width="2.5"/><path d="M101 215 C106 208 118 207 125 212 L127 224 L102 224 Z" fill="${shoeColor}" stroke="#111827" stroke-width="2.5"/><path d="M80 216 L94 216 M106 216 L120 216" stroke="${shoeLight}" stroke-width="2"/>` : `<ellipse cx="86" cy="220" rx="13" ry="6" fill="${shoeColor}" stroke="#111827" stroke-width="2.5"/><ellipse cx="114" cy="220" rx="13" ry="6" fill="${shoeColor}" stroke="#111827" stroke-width="2.5"/>`;
+        return `
+            <svg viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg" class="${isDancing ? 'chibi-dance-v12' : ''}" style="width:100%;height:100%;display:block;overflow:visible">
+                <defs>
+                    <radialGradient id="${uid}skin" cx="40%" cy="28%" r="72%"><stop offset="0" stop-color="${skinLight}"/><stop offset=".72" stop-color="${skin}"/><stop offset="1" stop-color="${skinDark}"/></radialGradient>
+                    <linearGradient id="${uid}hair" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${hairLight}"/><stop offset=".48" stop-color="${hairColor}"/><stop offset="1" stop-color="${hairDark}"/></linearGradient>
+                    <radialGradient id="${uid}eye" cx="40%" cy="25%" r="75%"><stop offset="0" stop-color="#fff" stop-opacity=".85"/><stop offset=".35" stop-color="${this.adjustColor(eyeColor, 45)}"/><stop offset="1" stop-color="${this.adjustColor(eyeColor, -45)}"/></radialGradient>
+                    <linearGradient id="${uid}top" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${topLight}"/><stop offset="1" stop-color="${topDark}"/></linearGradient>
+                    <filter id="${uid}shadow" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="2" stdDeviation="1.4" flood-color="#020617" flood-opacity=".32"/></filter>
+                </defs>
+                <style>.chibi-dance-v12{animation:cbV12 2.3s ease-in-out infinite;transform-origin:100px 224px}@keyframes cbV12{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-6px) rotate(1deg)}} @media (prefers-reduced-motion:reduce){.chibi-dance-v12{animation:none}}</style>
+                <g filter="url(#${uid}shadow)">
+                    <g fill="url(#${uid}hair)" stroke="#111827" stroke-width="3" stroke-linejoin="round">${hairBack[hairStyle] || hairBack[1]}</g>
+                    <path d="M78 122 C60 136 57 157 63 176" fill="none" stroke="url(#${uid}skin)" stroke-width="13" stroke-linecap="round"/>
+                    <path d="M122 122 C140 136 143 157 137 176" fill="none" stroke="url(#${uid}skin)" stroke-width="13" stroke-linecap="round"/>
+                    <circle cx="63" cy="177" r="6" fill="url(#${uid}skin)" stroke="#111827" stroke-width="2"/><circle cx="137" cy="177" r="6" fill="url(#${uid}skin)" stroke="#111827" stroke-width="2"/>
+                    <path d="M88 190 L84 216 M112 190 L116 216" fill="none" stroke="url(#${uid}skin)" stroke-width="13" stroke-linecap="round"/>
+                    <path d="M80 116 Q100 107 120 116 L124 164 Q100 174 76 164 Z" fill="url(#${uid}skin)" stroke="#111827" stroke-width="2.5"/>
+                    ${jacket}${bottoms}${shoes}
+                    <path d="M52 62 C52 25 72 10 100 10 C128 10 148 25 148 62 C148 103 127 119 100 119 C73 119 52 103 52 62 Z" fill="url(#${uid}skin)" stroke="#111827" stroke-width="3"/>
+                    <ellipse cx="53" cy="74" rx="5" ry="8" fill="url(#${uid}skin)" stroke="#111827" stroke-width="2"/><ellipse cx="147" cy="74" rx="5" ry="8" fill="url(#${uid}skin)" stroke="#111827" stroke-width="2"/>
+                    <circle cx="68" cy="91" r="9" fill="#fb7185" opacity=".18"/><circle cx="132" cy="91" r="9" fill="#fb7185" opacity=".18"/>
+                    ${eyes[eyeStyle] || eyes[0]}<circle cx="100" cy="91" r="1.4" fill="${skinDark}" opacity=".38"/>${mouths[mouthStyle] || mouths[0]}
+                    <g fill="url(#${uid}hair)" stroke="#111827" stroke-width="3" stroke-linejoin="round">${hairFront[hairStyle] || hairFront[1]}</g>
+                    <path d="M78 31 Q96 20 115 30" fill="none" stroke="#fff" stroke-width="2.4" opacity=".24" stroke-linecap="round"/>
+                    <path d="M85 41 Q98 34 109 40" fill="none" stroke="${hairLight}" stroke-width="2" opacity=".35" stroke-linecap="round"/>
+                </g>
+            </svg>`;
+    },
     /**
      * Sprite Asset Mapping (indices to filenames) - V11
      */
@@ -247,8 +338,8 @@ const ChibiModule = {
      * Returns SVG for backward compatibility with existing UI.
      */
     render: function(config, isDancing = false, points = 0) {
-        // V11 Upgrade: Switch to Sprite rendering by default for higher quality
-        return ChibiModule.renderChibiSprite(config, isDancing);
+        // Use the code-native full-body renderer to avoid mismatched PNG sticker layers.
+        return ChibiModule.renderChibiV12(config, isDancing);
     },
 
     /**
@@ -387,12 +478,12 @@ const ChibiModule = {
     // Style Count configuration (0 index to Max-1) - V11 SPRITE COUNTS
     counts: {
         skin: 8,
-        hair: 5,       // V11 Sprites: 1-5 (including virtuals)
-        eyes: 2,       // V11 Sprites: 1-2
-        mouth: 1,      
-        top: 3,        // V11 Sprites: 1-3
-        bottom: 0,
-        shoe: 0,
+        hair: 8,       // V12 full-body SVG styles, including bald
+        eyes: 6,       // V12 SVG eye styles
+        mouth: 4,      
+        top: 5,        // V12 SVG top variants
+        bottom: 3,
+        shoe: 3,
         accessory: 0, 
         gear: 0,
         wing: 0,
