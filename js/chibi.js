@@ -27,10 +27,14 @@ const ChibiModule = {
         },
         hair: {
             1: 'assets/chibi/hair_front_1.png',
-            2: 'assets/chibi/hair_front_2.png'
+            2: 'assets/chibi/hair_front_2.png',
+            3: 'assets/chibi/hair_front_1.png', // Virtual Green
+            4: 'assets/chibi/hair_front_2.png', // Virtual Purple
+            5: 'assets/chibi/hair_front_1.png'  // Virtual Gold
         },
         eyes: {
-            1: 'assets/chibi/eyes_1.png'
+            1: 'assets/chibi/eyes_1.png',
+            2: 'assets/chibi/eyes_1.png' // Virtual Blue-tint
         }
     },
 
@@ -51,10 +55,15 @@ const ChibiModule = {
         const hairFile = this.spriteAssets.hair[hs] || this.spriteAssets.hair[1];
         const eyeFile = this.spriteAssets.eyes[es] || this.spriteAssets.eyes[1];
 
-        // Dynamic Filtering
-        const skinFilter = `hue-rotate(${this.getHueShift(c.skinColor, '#ffcd94')}deg) brightness(${this.getBrightnessShift(c.skinColor, '#ffcd94')})`;
-        const hairFilter = `hue-rotate(${this.getHueShift(c.hairColor, '#ec4899')}deg) saturate(1.2)`;
-        const outfitFilter = `hue-rotate(${this.getHueShift(c.topColor, '#ffffff')}deg)`;
+        // Dynamic Filtering with Virtual Override
+        let hairFilter = `hue-rotate(${this.getHueShift(c.hairColor, '#ec4899')}deg) saturate(1.2)`;
+        if (hs === 3) hairFilter = `hue-rotate(120deg) saturate(1.5)`; // Green
+        if (hs === 4) hairFilter = `hue-rotate(280deg) saturate(1.5)`; // Purple
+        if (hs === 5) hairFilter = `hue-rotate(60deg) brightness(1.2)`; // Gold
+
+        let outfitFilter = `hue-rotate(${this.getHueShift(c.topColor, '#ffffff')}deg)`;
+        if (outfit === 2) outfitFilter = `hue-rotate(0deg) brightness(0.7)`; // Dark
+        if (outfit === 3) outfitFilter = `hue-rotate(330deg) saturate(1.5)`; // Red-ish
 
         return `
             <div class="chibi-v11-container ${isDancing ? 'chibi-dance' : ''}" style="width:100%; height:100%; position:relative; aspect-ratio: 200/240;">
@@ -378,11 +387,11 @@ const ChibiModule = {
     // Style Count configuration (0 index to Max-1) - V11 SPRITE COUNTS
     counts: {
         skin: 8,
-        hair: 2,       // V11 Sprites: 1, 2
-        eyes: 1,       // V11 Sprites: 1
+        hair: 5,       // V11 Sprites: 1-5 (including virtuals)
+        eyes: 2,       // V11 Sprites: 1-2
         mouth: 1,      
-        top: 1,        // V11 Sprites: 1
-        bottom: 0,     // Integrated in outfit for better shading
+        top: 3,        // V11 Sprites: 1-3
+        bottom: 0,
         shoe: 0,
         accessory: 0, 
         gear: 0,
