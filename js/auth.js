@@ -22,7 +22,7 @@ const Auth = {
         }
 
         try {
-            Auth.checkLogin();
+            await Auth.checkLogin();
             Auth.setupListeners();
         } catch (e) {
             console.error('[Auth] Lỗi khởi chạy Auth UI:', e);
@@ -49,14 +49,14 @@ const Auth = {
         await DB.saveAccounts(accounts);
     },
 
-    checkLogin: () => {
+    checkLogin: async () => {
         try {
             const user = Utils.storage.get(Auth.currentUserKey);
             if (user) {
                 Auth.currentUser = user;
                 if (!Auth.currentUser.profile) Auth.currentUser.profile = {};
                 if (!Auth.currentUser.achievements) Auth.currentUser.achievements = [];
-                Auth.showApp();
+                await Auth.showApp();
             } else {
                 Auth.showLogin();
             }
@@ -151,7 +151,7 @@ const Auth = {
         document.getElementById('forgot-password-modal').style.display = 'flex';
     },
 
-    showApp: () => {
+    showApp: async () => {
         document.getElementById('auth-overlay').style.display = 'none';
         document.querySelector('.app-container').style.display = 'flex';
 
@@ -170,6 +170,14 @@ const Auth = {
             profileEl.style.boxShadow = '';
         }
         profileEl.setAttribute('title', `Role: ${Auth.currentUser.role}`);
+
+        // VIP Name Effect for Topbar
+        const isVip = await Auth.isVip(Auth.currentUser.username);
+        if (isVip) {
+            profileEl.classList.add('vip-neon-name');
+        } else {
+            profileEl.classList.remove('vip-neon-name');
+        }
 
         // Wallet Balance Badge
         let walletBadge = document.getElementById('wallet-balance-badge');
@@ -209,7 +217,7 @@ const Auth = {
             Auth.currentUser = { username: found.username, role: found.role, profile: found.profile || {}, balance: found.balance || 0, purchasedBots: found.purchasedBots || [], exp: found.exp || 0, level: found.level || 1, selectedTitleLevel: found.selectedTitleLevel ?? null, selectedTitleKey: found.selectedTitleKey ?? null, achievements: found.achievements || [] };
             Utils.storage.set(Auth.currentUserKey, Auth.currentUser); // Keep current user locally for session
             Utils.showToast('Đăng nhập thành công!', 'success');
-            Auth.showApp();
+            await Auth.showApp();
         } else {
             document.getElementById('login-error').textContent = 'Tên đăng nhập hoặc mật khẩu không đúng.';
         }
@@ -335,6 +343,24 @@ const Auth = {
                 },
                 'ĐÃ HIỂU'
             );
+        }
+    },
+    
+    isVip: async (username) => {
+        if (typeof RewardsModule === 'undefined' || !username) return false;
+        try {
+            const allRewards = await RewardsModule.loadData();
+            const lowerUser = username.toLowerCase();
+            // Filter rewards for this user that are 'card_vip', used, and within 30 days
+            return allRewards.some(r => 
+                r.username && r.username.toLowerCase() === lowerUser && 
+                r.cardId === 'card_vip' && 
+                r.isUsed && 
+                (Date.now() - (r.usedAt || 0) < 30 * 24 * 60 * 60 * 1000)
+            );
+        } catch (e) {
+            console.error("[Auth] Error checking VIP status:", e);
+            return false;
         }
     },
 

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chibi High-Fidelity Proof of Concept</title>
+    <style>
+        body {
+            background: #0f172a;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+        .container {
+            position: relative;
+            width: 400px;
+            height: 450px;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, rgba(0,0,0,0.4) 100%);
+            border-radius: 30px;
+            border: 1px solid rgba(139,92,246,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 40px rgba(0,0,0,0.5);
+        }
+        .label {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, #00f3ff, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .desc {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 5px;
+            text-align: center;
+            max-width: 300px;
+        }
+        svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5));
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .chibi-main {
+            animation: float 3s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <svg viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <!-- Skin Gradient (Multi-layered for depth) -->
+                <radialGradient id="skinGrad" cx="40%" cy="40%" r="60%">
+                    <stop offset="0%" stop-color="#ffe0bd" />
+                    <stop offset="70%" stop-color="#ffcd94" />
+                    <stop offset="100%" stop-color="#e0ac69" />
+                </radialGradient>
+                
+                <!-- Hair Gradient (Glossy) -->
+                <linearGradient id="hairGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#4b5563" />
+                    <stop offset="40%" stop-color="#1f2937" />
+                    <stop offset="100%" stop-color="#111827" />
+                </linearGradient>
+                
+                <!-- Eye Glow -->
+                <filter id="eyeGlow">
+                    <feGaussianBlur stdDeviation="1.5" result="blur"/>
+                    <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+                </filter>
+                
+                <!-- Shadow Mask -->
+                <mask id="headMask">
+                    <circle cx="100" cy="85" r="45" fill="white" />
+                </mask>
+            </defs>
+            
+            <g class="chibi-main">
+                <!-- 1. Back Hair (Behind Head) -->
+                <path d="M 50 100 Q 100 180 150 100 L 160 140 Q 100 220 40 140 Z" fill="#111827" opacity="0.9" />
+                
+                <!-- 2. Body -->
+                <g class="body">
+                    <!-- Neck -->
+                    <rect x="92" y="120" width="16" height="15" fill="#e0ac69" rx="5" />
+                    <!-- Torso -->
+                    <path d="M 80 130 Q 100 125 120 130 L 125 180 Q 100 190 75 180 Z" fill="#3b82f6" />
+                    <!-- Arms (Simple but shaded) -->
+                    <path d="M 80 135 L 60 160" stroke="#ffe0bd" stroke-width="10" stroke-linecap="round" />
+                    <path d="M 120 135 L 140 160" stroke="#ffe0bd" stroke-width="10" stroke-linecap="round" />
+                    <!-- Legs -->
+                    <path d="M 85 180 L 80 210" stroke="#1e2937" stroke-width="12" stroke-linecap="round" />
+                    <path d="M 115 180 L 120 210" stroke="#1e2937" stroke-width="12" stroke-linecap="round" />
+                </g>
+
+                <!-- 3. Head (The "Face" Base) -->
+                <g class="head">
+                    <circle cx="100" cy="85" r="45" fill="url(#skinGrad)" stroke="#d97706" stroke-width="0.5" />
+                    <!-- Cheeks Blush -->
+                    <circle cx="75" cy="100" r="8" fill="#f43f5e" opacity="0.3" filter="url(#eyeGlow)" />
+                    <circle cx="125" cy="100" r="8" fill="#f43f5e" opacity="0.3" filter="url(#eyeGlow)" />
+                </g>
+                
+                <!-- 4. Face Features (High Fidelty) -->
+                <g class="face">
+                    <!-- Left Eye -->
+                    <g transform="translate(75, 85)">
+                        <circle r="8" fill="#111" />
+                        <circle r="3" cx="-2" cy="-2" fill="#fff" /> <!-- Sparkle -->
+                        <circle r="1" cx="2" cy="3" fill="#fff" opacity="0.5" /> <!-- Sub-sparkle -->
+                    </g>
+                    <!-- Right Eye -->
+                    <g transform="translate(125, 85)">
+                        <circle r="8" fill="#111" />
+                        <circle r="3" cx="-2" cy="-2" fill="#fff" />
+                        <circle r="1" cx="2" cy="3" fill="#fff" opacity="0.5" />
+                    </g>
+                    <!-- Mouth -->
+                    <path d="M 92 110 Q 100 118 108 110" fill="none" stroke="#6b21a8" stroke-width="2.5" stroke-linecap="round" />
+                    <path d="M 100 114 Q 100 117 100 114" fill="#a855f7" opacity="0.5" stroke-width="1" /> <!-- Tongue peek -->
+                </g>
+                
+                <!-- 5. Front Hair (Styles) -->
+                <g class="front-hair">
+                    <!-- A stylized fringe with multiple paths for depth -->
+                    <path d="M 55 80 Q 100 10 145 80 L 155 105 Q 100 125 45 105 Z" fill="url(#hairGrad)" />
+                    <!-- Strands/Highlights -->
+                    <path d="M 70 45 Q 100 20 130 45" fill="none" stroke="#6b7280" stroke-width="2" opacity="0.2" />
+                    <path d="M 65 65 Q 85 40 80 85" fill="none" stroke="#fff" stroke-width="1" opacity="0.1" />
+                </g>
+            </g>
+        </svg>
+    </div>
+    
+    <div class="label">True High-Fidelity SVG</div>
+    <div class="desc">Minh chứng: Gradient 3 tầng trên da, Tóc có đổ bóng nội bộ và Mắt có điểm sáng đa tầng hoàn toàn có thể thực thi mượt mà.</div>
+</body>
+</html>

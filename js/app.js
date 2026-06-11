@@ -624,7 +624,7 @@ const app = {
                 const allRewards = await RewardsModule.loadData();
                 vipUsers = new Set(allRewards
                     .filter(r => r.cardId === 'card_vip' && r.isUsed && (Date.now() - (r.usedAt || 0) < 30 * 24 * 60 * 60 * 1000))
-                    .map(r => r.username)
+                    .map(r => r.username ? r.username.toLowerCase() : '')
                 );
             }
         } catch(e) { console.warn("Fetch vip check error:", e); }

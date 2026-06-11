@@ -22,7 +22,8 @@ window.LobbyNeon = {
         marqueeInterval: null,
         unsubscribeMissions: null,
         notifiedMissionIds: new Set(),
-        activeQuestTab: 'new'
+        activeQuestTab: 'new',
+        vipUsers: new Set()
     },
 
     init: () => {
@@ -45,6 +46,17 @@ window.LobbyNeon = {
             x: Math.floor(Math.random() * (w - 200)) + 100,
             y: Math.floor(Math.random() * (h - 300)) + 80
         };
+
+        // Cache VIP users for neon name effects
+        try {
+            if (typeof RewardsModule !== 'undefined') {
+                const allRewards = await RewardsModule.loadData();
+                LobbyNeon.state.vipUsers = new Set(allRewards
+                    .filter(r => r.cardId === 'card_vip' && r.isUsed && (Date.now() - (r.usedAt || 0) < 30 * 24 * 60 * 60 * 1000))
+                    .map(r => r.username ? r.username.toLowerCase() : '')
+                );
+            }
+        } catch (e) { console.warn("Lobby VIP fetch error:", e); }
 
         LobbyNeon.renderLobbyBase();
         LobbyNeon.state.isConnected = true;
@@ -89,11 +101,15 @@ window.LobbyNeon = {
         const user = Auth.currentUser;
         if (!user) return;
         try {
+            const isVip = LobbyNeon.state.vipUsers.has(user.username.toLowerCase());
             await DB.updateLobbyPresence({
                 username: user.username,
                 x: LobbyNeon.state.myPos.x,
                 y: LobbyNeon.state.myPos.y,
-                chibiConfig: user.profile?.chibiConfig || {}
+                chibiConfig: user.profile?.chibiConfig || {},
+                level: user.level || 1,
+                isVip: isVip,
+                titleInfo: Auth.getDisplayTitle(user)
             });
         } catch (e) {
             console.error("syncMyPresence error:", e);
@@ -116,7 +132,7 @@ window.LobbyNeon = {
                     }
                 }
                 if (username !== me) {
-                    LobbyNeon.renderUser(username, data.x, data.y, data.chibiConfig);
+                    LobbyNeon.renderUser(username, data.x, data.y, data.chibiConfig, false, data);
                 }
             });
             // Update online player list in hub!
@@ -461,7 +477,7 @@ window.LobbyNeon = {
         `;
     },
 
-    renderUser: (username, x, y, config, forceRefresh) => {
+    renderUser: (username, x, y, config, forceRefresh, extraData) => {
         const map = document.getElementById('lobby-map');
         if (!map) return;
 
@@ -495,13 +511,15 @@ window.LobbyNeon = {
         // PARTIAL UPDATE to preserve child elements like chat bubbles
         let nameEl = el.querySelector('.lobby-user-name');
         if (!nameEl || forceRefresh) {
-            const userLevel = Auth.currentUser?.level || 1;
-            const titleInfo = isMe ? Auth.getDisplayTitle(Auth.currentUser) : Auth.getLevelTitle(1);
+            const userLevel = extraData?.level || (isMe ? Auth.currentUser?.level : 1);
+            const titleInfo = extraData?.titleInfo || (isMe ? Auth.getDisplayTitle(Auth.currentUser) : Auth.getLevelTitle(1));
             // Preserve chat bubbles during force refresh
             const existingBubble = el.querySelector('.lobby-chat-bubble');
+            const isVip = extraData?.isVip ?? LobbyNeon.state.vipUsers.has(username ? username.toLowerCase() : '');
+            
             el.innerHTML = `
                 <div class="lobby-user-name" ${isMe ? 'onclick="event.stopPropagation(); Auth.openTitleSelector();" style="cursor: pointer;"' : ''}>
-                    ${username}
+                    ${isVip ? `<span class="vip-neon-name" title="VIP Legend"><i class="fa-solid fa-crown" style="color: #fcd34d; margin-right: 3px; font-size: 10px;"></i>${username}</span>` : username}
                     <span style="font-size: 8px; color: #fbbf24; font-weight: 900; background: rgba(0,0,0,0.4); padding: 1px 5px; border-radius: 8px; margin-left: 3px;">Lv.${userLevel}</span>
                     <br><span style="font-size: 9px; color: ${titleInfo.color}; font-weight: 900; opacity: 0.9;">${titleInfo.title}</span>
                 </div>
