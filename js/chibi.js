@@ -17,49 +17,88 @@ const ChibiModule = {
     },
 
     /**
-     * Sprite Asset Mapping (indices to filenames)
+     * Sprite Asset Mapping (indices to filenames) - V11
      */
     spriteAssets: {
-        body: { male: 'body_male.png', female: 'body_female.png' },
-        outfit: { 1: 'outfit_1.png' },
-        hairFront: { 1: 'hair_front_1.png' },
-        face: { 1: 'face_1.png' }
+        body: 'assets/chibi/body_base.png',
+        head: 'assets/chibi/head_base.png',
+        outfit: {
+            1: 'assets/chibi/outfit_cyber.png'
+        },
+        hair: {
+            1: 'assets/chibi/hair_front_1.png',
+            2: 'assets/chibi/hair_front_2.png'
+        },
+        eyes: {
+            1: 'assets/chibi/eyes_1.png'
+        }
     },
 
     /**
-     * Main Chibi Sprite Renderer (V12 - PURE SPRITE FIDELITY)
+     * Main Chibi Sprite Renderer (V11 - ULTRA FIDELITY)
+     * Renders stacked PNG layers with CSS transforms and filters
      */
-    renderChibiSprite: function(config) {
+    renderChibiSprite: function(config, isDancing = false) {
         const c = config || this.currentConfig || {};
-        const gender = c.gender || 'nam';
-        const bodyFile = gender === 'nam' ? this.spriteAssets.body.male : this.spriteAssets.body.female;
-        const outfitFile = this.spriteAssets.outfit[1] || null; // Fallback to hero
-        const hairFile = this.spriteAssets.hairFront[1] || null; 
-        const faceFile = this.spriteAssets.face[1] || null;
+        const hs = c.hairStyle || 1;
+        const es = c.eyeStyle || 1;
+        const outfit = c.topStyle || 1; // Assuming topStyle maps to outfit in V11
 
-        // CSS Filters for coloring
-        const skinFilter = `hue-rotate(${this.getHueForColor(c.skinColor, '#ffcd94')}deg) brightness(${this.getBrightnessForColor(c.skinColor)})`;
-        const hairFilter = `hue-rotate(${this.getHueForColor(c.hairColor, '#ec4899')}deg) saturate(1.2)`;
-        const topFilter = `hue-rotate(${this.getHueForColor(c.topColor, '#ffffff')}deg)`;
+        // Resolve files
+        const bodyFile = this.spriteAssets.body;
+        const headFile = this.spriteAssets.head;
+        const outfitFile = this.spriteAssets.outfit[outfit] || this.spriteAssets.outfit[1];
+        const hairFile = this.spriteAssets.hair[hs] || this.spriteAssets.hair[1];
+        const eyeFile = this.spriteAssets.eyes[es] || this.spriteAssets.eyes[1];
+
+        // Dynamic Filtering
+        const skinFilter = `hue-rotate(${this.getHueShift(c.skinColor, '#ffcd94')}deg) brightness(${this.getBrightnessShift(c.skinColor, '#ffcd94')})`;
+        const hairFilter = `hue-rotate(${this.getHueShift(c.hairColor, '#ec4899')}deg) saturate(1.2)`;
+        const outfitFilter = `hue-rotate(${this.getHueShift(c.topColor, '#ffffff')}deg)`;
 
         return `
-            <div class="chibi-sprite-container" style="width:100%; height:100%; position:relative; overflow:hidden;">
-                <!-- 1. Body Base -->
-                <img src="assets/sprites/${bodyFile}" class="chibi-layer" style="z-index:2; filter: ${skinFilter};" />
+            <div class="chibi-v11-container ${isDancing ? 'chibi-dance' : ''}" style="width:100%; height:100%; position:relative; aspect-ratio: 200/240;">
+                <style>
+                    .chibi-v11-container .chibi-layer {
+                        position: absolute;
+                        top: 0; left: 0;
+                        width: 100%; height: 100%;
+                        object-fit: contain;
+                        pointer-events: none;
+                    }
+                    .chibi-dance { animation: cbV11 2.5s infinite ease-in-out; transform-origin: bottom center; }
+                    @keyframes cbV11 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+                </style>
                 
-                <!-- 2. Outfit -->
-                ${outfitFile ? `<img src="assets/sprites/${outfitFile}" class="chibi-layer" style="z-index:4; filter: ${topFilter};" />` : ''}
+                <!-- 1. Body -->
+                <img src="${bodyFile}" class="chibi-layer" style="z-index:2; filter: ${skinFilter};" />
                 
-                <!-- 3. Face Expression -->
-                ${faceFile ? `<img src="assets/sprites/${faceFile}" class="chibi-layer" style="z-index:5;" />` : ''}
+                <!-- 2. Head -->
+                <img src="${headFile}" class="chibi-layer" style="z-index:3; filter: ${skinFilter};" />
                 
-                <!-- 4. Hair Front -->
-                ${hairFile ? `<img src="assets/sprites/${hairFile}" class="chibi-layer" style="z-index:6; filter: ${hairFilter};" />` : ''}
+                <!-- 3. Outfit -->
+                <img src="${outfitFile}" class="chibi-layer" style="z-index:4; filter: ${outfitFilter};" />
                 
-                <!-- Placeholder for effects (Sprite-based glow) -->
-                ${c.dragon > 0 ? `<div class="chibi-aura-sprite" style="z-index:1;"></div>` : ''}
+                <!-- 4. Eyes/Face -->
+                <img src="${eyeFile}" class="chibi-layer" style="z-index:5;" />
+                
+                <!-- 5. Hair (Front) -->
+                <img src="${hairFile}" class="chibi-layer" style="z-index:6; filter: ${hairFilter};" />
             </div>
         `;
+    },
+
+    /**
+     * Simple Hue/Brightness shift calculation for filters
+     */
+    getHueShift: function(hex, base) {
+        if (!hex || hex === base) return 0;
+        // Placeholder: deterministic shift for dev/demo
+        return (parseInt(hex.replace('#',''), 16) % 360) - 180;
+    },
+    getBrightnessShift: function(hex, base) {
+        if (!hex) return 1;
+        return 1.0; // Keep original brightness for now
     },
 
     /**
@@ -122,7 +161,8 @@ const ChibiModule = {
      * Returns SVG for backward compatibility with existing UI.
      */
     render: function(config, isDancing = false, points = 0) {
-        return ChibiModule.renderChibiSVG(config, isDancing, points);
+        // V11 Upgrade: Switch to Sprite rendering by default for higher quality
+        return ChibiModule.renderChibiSprite(config, isDancing);
     },
 
     /**
