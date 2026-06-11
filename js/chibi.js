@@ -86,7 +86,10 @@ const ChibiModule = {
         const dragonStyle = Number(c.dragon || 0);
         const auraStyle = Number(c.aura || 0);
         const auraColor = this.colors.aura[auraStyle] || '#8b5cf6';
-        const wingColor = wingStyle % 2 ? '#e0f2fe' : '#312e81';
+        const auraHi = this.adjustColor(auraColor, 68);
+        const dragonColor = this.colors.dragons[Math.max(0, (dragonStyle - 1) % this.colors.dragons.length)] || auraColor;
+        const dragonDark = this.adjustColor(dragonColor, -48);
+        const dragonLight = this.adjustColor(dragonColor, 44);
         const accessorySvg = !accessoryStyle ? '' : accessoryStyle % 5 === 1
             ? '<g><path d="M64 76 H91 M109 76 H136" stroke="#111827" stroke-width="5" stroke-linecap="round"/><rect x="66" y="68" width="24" height="14" rx="5" fill="#020617" opacity=".85"/><rect x="110" y="68" width="24" height="14" rx="5" fill="#020617" opacity=".85"/></g>'
             : accessoryStyle % 5 === 2
@@ -96,17 +99,30 @@ const ChibiModule = {
                     : accessoryStyle % 5 === 4
                         ? `<ellipse cx="100" cy="18" rx="34" ry="9" fill="none" stroke="${auraColor}" stroke-width="4" opacity=".9"/>`
                         : '<g><path d="M76 14 H124 L117 32 H83 Z" fill="#fbbf24" stroke="#111827" stroke-width="3"/><circle cx="100" cy="12" r="5" fill="#ef4444" stroke="#111827" stroke-width="2"/></g>';
-        const gearSvg = !gearStyle ? '' : gearStyle % 4 === 1
-            ? `<g><path d="M145 108 L170 63" stroke="${topLight}" stroke-width="7" stroke-linecap="round"/><path d="M138 121 L151 101" stroke="#111827" stroke-width="5" stroke-linecap="round"/><path d="M162 55 L176 43" stroke="#e5e7eb" stroke-width="4" stroke-linecap="round"/></g>`
-            : gearStyle % 4 === 2
-                ? '<g><path d="M139 135 L177 125 L179 137 L147 146 Z" fill="#1f2937" stroke="#111827" stroke-width="3"/><path d="M151 142 L158 156" stroke="#111827" stroke-width="5" stroke-linecap="round"/><circle cx="178" cy="130" r="3" fill="#38bdf8"/></g>'
-                : gearStyle % 4 === 3
-                    ? `<g><path d="M49 92 L30 158" stroke="${topLight}" stroke-width="6" stroke-linecap="round"/><circle cx="28" cy="164" r="8" fill="${topColor}" stroke="#111827" stroke-width="3"/></g>`
-                    : '<g><path d="M43 111 L33 180" stroke="#92400e" stroke-width="6" stroke-linecap="round"/><path d="M27 180 Q36 189 47 180" stroke="#fbbf24" stroke-width="4" fill="none"/></g>';
-        const wingSvg = !wingStyle ? '' : `<g opacity=".9"><path d="M75 105 C38 74 17 100 25 145 C43 126 58 134 73 160 Z" fill="${wingColor}" stroke="#111827" stroke-width="3"/><path d="M125 105 C162 74 183 100 175 145 C157 126 142 134 127 160 Z" fill="${wingColor}" stroke="#111827" stroke-width="3"/><path d="M36 121 C47 119 59 124 70 139 M164 121 C153 119 141 124 130 139" fill="none" stroke="#fff" stroke-width="2" opacity=".45"/></g>`;
+        const gearSvg = !gearStyle ? '' : [
+            `<g filter="url(#${uid}gearGlow)"><path d="M143 113 L176 57 L184 63 L153 123 Z" fill="${topLight}" stroke="#111827" stroke-width="3"/><path d="M137 126 L153 111" stroke="#111827" stroke-width="6" stroke-linecap="round"/><path d="M164 72 L179 79" stroke="#fff" stroke-width="2.5" opacity=".8"/></g>`,
+            `<g filter="url(#${uid}gearGlow)"><path d="M136 133 L183 117 L188 132 L149 151 Z" fill="#1f2937" stroke="#111827" stroke-width="3"/><path d="M147 148 L158 162" stroke="#111827" stroke-width="6" stroke-linecap="round"/><path d="M177 122 L193 119" stroke="#38bdf8" stroke-width="4" stroke-linecap="round"/><circle cx="188" cy="126" r="4" fill="#22d3ee"/></g>`,
+            `<g filter="url(#${uid}gearGlow)"><path d="M48 97 L28 166" stroke="#334155" stroke-width="7" stroke-linecap="round"/><path d="M22 158 C27 139 43 137 54 151 C42 155 35 165 34 181 C29 173 24 166 22 158 Z" fill="${topLight}" stroke="#111827" stroke-width="3"/></g>`,
+            `<g filter="url(#${uid}gearGlow)"><path d="M41 96 L29 182" stroke="#7c2d12" stroke-width="7" stroke-linecap="round"/><circle cx="38" cy="94" r="10" fill="${auraColor}" stroke="#111827" stroke-width="3"/><path d="M30 87 L46 101 M30 101 L46 87" stroke="#fff" stroke-width="2" opacity=".85"/></g>`,
+            `<g filter="url(#${uid}gearGlow)"><path d="M55 124 L32 151 L39 158 L66 133 Z M145 124 L168 151 L161 158 L134 133 Z" fill="#e5e7eb" stroke="#111827" stroke-width="3"/><path d="M34 151 L24 163 M166 151 L176 163" stroke="${topLight}" stroke-width="4" stroke-linecap="round"/></g>`,
+            `<g filter="url(#${uid}gearGlow)"><path d="M136 128 L180 90" stroke="#92400e" stroke-width="8" stroke-linecap="round"/><path d="M169 82 L189 102 M170 101 L188 83" stroke="#fbbf24" stroke-width="6" stroke-linecap="round"/><circle cx="180" cy="92" r="8" fill="#f97316" stroke="#111827" stroke-width="3"/></g>`,
+            `<g filter="url(#${uid}gearGlow)"><path d="M53 82 C24 107 22 156 54 184" fill="none" stroke="${topLight}" stroke-width="6" stroke-linecap="round"/><path d="M51 83 L50 183" stroke="#111827" stroke-width="3"/><path d="M51 128 L83 104 L77 128 L84 152 Z" fill="#e5e7eb" stroke="#111827" stroke-width="3"/></g>`,
+            `<g filter="url(#${uid}gearGlow)"><path d="M141 164 L185 63" stroke="#64748b" stroke-width="7" stroke-linecap="round"/><path d="M178 54 L194 55 L187 72 Z" fill="${topLight}" stroke="#111827" stroke-width="3"/><path d="M151 137 L170 144" stroke="${auraColor}" stroke-width="4" stroke-linecap="round"/></g>`,
+            `<g filter="url(#${uid}gearGlow)"><path d="M48 87 L34 185" stroke="#111827" stroke-width="7" stroke-linecap="round"/><path d="M37 91 C66 72 88 88 76 111 C64 101 51 101 39 114 Z" fill="${topLight}" stroke="#111827" stroke-width="3"/><path d="M30 178 L45 182" stroke="#e5e7eb" stroke-width="4" stroke-linecap="round"/></g>`,
+            `<g filter="url(#${uid}gearGlow)"><path d="M137 118 L178 81 L185 88 L148 130 Z" fill="#e5e7eb" stroke="#111827" stroke-width="3"/><path d="M128 134 L148 117" stroke="#111827" stroke-width="6" stroke-linecap="round"/><path d="M166 91 L181 105 M172 84 L188 99" stroke="${auraColor}" stroke-width="3" opacity=".8"/></g>`
+        ][(gearStyle - 1) % 10];
+        const wingSvg = !wingStyle ? '' : [
+            `<g opacity=".95"><path d="M77 103 C36 68 15 96 24 147 C43 126 57 132 75 161 Z" fill="#e0f2fe" stroke="#111827" stroke-width="3"/><path d="M123 103 C164 68 185 96 176 147 C157 126 143 132 125 161 Z" fill="#e0f2fe" stroke="#111827" stroke-width="3"/><path d="M36 121 C49 116 61 125 70 142 M164 121 C151 116 139 125 130 142" fill="none" stroke="#fff" stroke-width="3" opacity=".65"/></g>`,
+            `<g opacity=".95"><path d="M75 107 C35 78 17 101 28 151 L55 137 L76 164 Z" fill="#312e81" stroke="#111827" stroke-width="3"/><path d="M125 107 C165 78 183 101 172 151 L145 137 L124 164 Z" fill="#312e81" stroke="#111827" stroke-width="3"/><path d="M38 121 L56 132 L32 144 M162 121 L144 132 L168 144" stroke="#a78bfa" stroke-width="2"/></g>`,
+            `<g opacity=".95"><path d="M75 101 C33 63 12 91 22 151 C43 123 57 129 75 162 Z" fill="#fef3c7" stroke="#111827" stroke-width="3"/><path d="M125 101 C167 63 188 91 178 151 C157 123 143 129 125 162 Z" fill="#fef3c7" stroke="#111827" stroke-width="3"/><path d="M38 112 C54 105 66 116 72 137 M162 112 C146 105 134 116 128 137" stroke="#fbbf24" stroke-width="3" opacity=".8"/></g>`,
+            `<g opacity=".95"><path d="M76 104 C37 68 12 91 18 136 C38 129 52 145 71 166 C62 139 61 119 76 104 Z" fill="#93c5fd" stroke="#111827" stroke-width="3"/><path d="M124 104 C163 68 188 91 182 136 C162 129 148 145 129 166 C138 139 139 119 124 104 Z" fill="#c4b5fd" stroke="#111827" stroke-width="3"/><path d="M35 107 L71 128 M165 107 L129 128" stroke="#fff" stroke-width="2.5" opacity=".7"/></g>`,
+            `<g opacity=".95"><path d="M78 105 C40 82 18 97 20 145 C43 139 58 145 74 166 C64 137 59 121 78 105 Z" fill="#f97316" stroke="#111827" stroke-width="3"/><path d="M122 105 C160 82 182 97 180 145 C157 139 142 145 126 166 C136 137 141 121 122 105 Z" fill="#f97316" stroke="#111827" stroke-width="3"/><path d="M33 109 C46 103 62 112 70 131 M167 109 C154 103 138 112 130 131" stroke="#fde047" stroke-width="3" opacity=".8"/></g>`,
+            `<g opacity=".95"><path d="M75 107 C35 77 15 98 27 154 L48 135 L74 164 Z" fill="#020617" stroke="#111827" stroke-width="3"/><path d="M125 107 C165 77 185 98 173 154 L152 135 L126 164 Z" fill="#020617" stroke="#111827" stroke-width="3"/><path d="M38 119 L54 132 L31 145 M162 119 L146 132 L169 145" stroke="#ef4444" stroke-width="2.5"/></g>`,
+            `<g opacity=".95"><path d="M76 104 L37 74 L22 118 L54 128 L72 160 Z" fill="#bae6fd" stroke="#111827" stroke-width="3"/><path d="M124 104 L163 74 L178 118 L146 128 L128 160 Z" fill="#bae6fd" stroke="#111827" stroke-width="3"/><path d="M39 89 L61 121 L28 119 M161 89 L139 121 L172 119" stroke="#38bdf8" stroke-width="3.5" opacity=".8"/></g>`
+        ][(wingStyle - 1) % 7];
         const mountSvg = !mountStyle ? '' : `<g transform="translate(0 4)"><path d="M45 196 C62 177 138 177 155 196 L148 216 H52 Z" fill="${bottomColor}" stroke="#111827" stroke-width="3"/><circle cx="70" cy="216" r="10" fill="#020617" stroke="#38bdf8" stroke-width="3"/><circle cx="130" cy="216" r="10" fill="#020617" stroke="#38bdf8" stroke-width="3"/><path d="M78 191 H122" stroke="${topLight}" stroke-width="4" stroke-linecap="round"/></g>`;
-        const dragonSvg = !dragonStyle ? '' : `<g transform="translate(136 84) scale(.62)"><path d="M12 48 C10 25 29 12 47 22 C63 31 62 55 45 64 C29 72 15 64 12 48 Z" fill="${auraColor}" stroke="#111827" stroke-width="4"/><path d="M44 23 C59 7 77 14 72 33 C61 28 53 28 44 38 Z" fill="${topLight}" stroke="#111827" stroke-width="3"/><circle cx="34" cy="43" r="4" fill="#fff"/><path d="M13 55 C-4 72 -2 92 19 98" fill="none" stroke="${auraColor}" stroke-width="8" stroke-linecap="round"/></g>`;
-        const auraSvg = !auraStyle ? '' : `<g opacity=".72"><ellipse cx="100" cy="123" rx="78" ry="106" fill="none" stroke="${auraColor}" stroke-width="4" stroke-dasharray="8 10"/><circle cx="54" cy="58" r="4" fill="${auraColor}"/><circle cx="153" cy="78" r="3" fill="${auraColor}"/><circle cx="137" cy="191" r="4" fill="${auraColor}"/></g>`;
+        const dragonSvg = !dragonStyle ? '' : `<g transform="translate(14 28) scale(.94)" opacity=".98"><path d="M63 134 C36 166 4 153 8 118 C19 135 38 128 50 109 C56 98 69 104 72 119 Z" fill="${dragonDark}" stroke="#111827" stroke-width="4"/><path d="M67 73 C32 35 4 55 11 105 C31 91 49 101 64 131 Z" fill="${dragonDark}" stroke="#111827" stroke-width="4"/><path d="M63 87 C78 45 115 36 139 59 C162 82 151 126 113 132 C82 137 53 116 63 87 Z" fill="${dragonColor}" stroke="#111827" stroke-width="4"/><path d="M120 59 C143 32 177 44 180 76 C163 65 149 72 139 94 Z" fill="${dragonDark}" stroke="#111827" stroke-width="4"/><path d="M130 72 C153 52 181 63 184 88 C188 108 169 121 148 111 C130 102 119 86 130 72 Z" fill="${dragonColor}" stroke="#111827" stroke-width="4"/><path d="M145 57 L156 28 L166 61 M168 66 L190 48 L181 78" fill="${dragonLight}" stroke="#111827" stroke-width="3"/><path d="M151 91 L180 81 L176 92 L194 92 L176 105 L181 115 Z" fill="${dragonLight}" stroke="#111827" stroke-width="3"/><path d="M79 68 L96 48 L103 72 L119 50 L121 82" fill="${dragonLight}" stroke="#111827" stroke-width="3"/><path d="M86 132 C69 151 44 151 28 134" fill="none" stroke="${dragonColor}" stroke-width="10" stroke-linecap="round"/><circle cx="151" cy="82" r="5" fill="#fef3c7" stroke="#111827" stroke-width="2"/><path d="M159 96 L175 101" stroke="#fef3c7" stroke-width="3" stroke-linecap="round"/><path d="M75 89 C87 78 104 72 123 78 M75 107 C91 117 110 118 128 106" stroke="#fff" stroke-width="2.2" opacity=".42" stroke-linecap="round"/></g>`;
+        const auraSvg = !auraStyle ? '' : `<g transform="translate(100 222)" filter="url(#${uid}auraGlow)"><ellipse cx="0" cy="0" rx="55" ry="13" fill="${auraColor}" opacity=".18"/><ellipse cx="0" cy="0" rx="48" ry="11" fill="none" stroke="${auraColor}" stroke-width="5" opacity=".82"/><ellipse cx="0" cy="-2" rx="34" ry="7" fill="none" stroke="#22d3ee" stroke-width="3" opacity=".78"/><ellipse cx="0" cy="3" rx="68" ry="16" fill="none" stroke="#f472b6" stroke-width="2.5" stroke-dasharray="8 7" opacity=".58"/><ellipse cx="0" cy="-7" rx="22" ry="4" fill="${auraHi}" opacity=".5"/><circle cx="-46" cy="-13" r="4" fill="#fde047"/><circle cx="45" cy="-11" r="3" fill="#22d3ee"/><circle cx="-18" cy="-21" r="3" fill="#f472b6"/><circle cx="19" cy="-20" r="3" fill="${auraHi}"/></g>`;
         return `
             <svg viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg" class="${isDancing ? 'chibi-dance-v12' : ''}" style="width:100%;height:100%;display:block;overflow:visible">
                 <defs>
@@ -115,6 +131,8 @@ const ChibiModule = {
                     <radialGradient id="${uid}eye" cx="40%" cy="25%" r="75%"><stop offset="0" stop-color="#fff" stop-opacity=".85"/><stop offset=".35" stop-color="${this.adjustColor(eyeColor, 45)}"/><stop offset="1" stop-color="${this.adjustColor(eyeColor, -45)}"/></radialGradient>
                     <linearGradient id="${uid}top" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${topLight}"/><stop offset="1" stop-color="${topDark}"/></linearGradient>
                     <filter id="${uid}shadow" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="2" stdDeviation="1.4" flood-color="#020617" flood-opacity=".32"/></filter>
+                    <filter id="${uid}auraGlow" x="-80%" y="-180%" width="260%" height="360%"><feGaussianBlur stdDeviation="2.4" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                    <filter id="${uid}gearGlow" x="-30%" y="-30%" width="170%" height="170%"><feDropShadow dx="0" dy="0" stdDeviation="2.2" flood-color="${topLight}" flood-opacity=".58"/></filter>
                 </defs>
                 <style>.chibi-dance-v12{animation:cbV12 2.3s ease-in-out infinite;transform-origin:100px 224px}@keyframes cbV12{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-6px) rotate(1deg)}} @media (prefers-reduced-motion:reduce){.chibi-dance-v12{animation:none}}</style>
                 <g filter="url(#${uid}shadow)">
@@ -376,6 +394,7 @@ const ChibiModule = {
      * Render complete composite Chibi SVG (Legacy but kept for fallback)
      */
     renderChibiSVG: function(config, isD = false, pts = 0) {
+        return ChibiModule.renderChibiV12(config, isD);
         const c = config || this.currentConfig || {};
         const sk = c.skinColor || "#ffd1a9";
         const hc = c.hairColor || "#343a40";
@@ -528,25 +547,25 @@ const ChibiModule = {
 
     gearRequirements: {
         gear: {
-            1: { label: "Đại Đao Lửa", requiredLevel: 2 },
-            2: { label: "Súng Vô Cực", requiredLevel: 2 },
-            3: { label: "Kiếm Cyber Laser", requiredLevel: 3 },
-            4: { label: "Thương Heo Tộc", requiredLevel: 1 },
-            5: { label: "Dép Tổ Ong Vàng", requiredLevel: 1 },
-            6: { label: "Chổi Tre Âm Dương", requiredLevel: 2 },
-            7: { label: "Muỗng Mì Hảo Hạng", requiredLevel: 1 },
-            8: { label: "Gậy Selfie Cánh Vàng", requiredLevel: 4 },
-            9: { label: "Cờ Lê Tia Chớp", requiredLevel: 3 },
-            10: { label: "Cây Lau Nhà Ma Thuật", requiredLevel: 2 },
-            11: { label: "Nón Lá Phi Tiêu", requiredLevel: 4 },
-            12: { label: "Vợt Muỗi Điện", requiredLevel: 3 },
-            13: { label: "Ghế Đỏ Quyền Lực", requiredLevel: 5 },
-            14: { label: "Quạt Trúc Thanh Lương", requiredLevel: 2 },
-            15: { label: "Lồng Đèn Hội An", requiredLevel: 3 },
-            16: { label: "Gánh Hàng Rong", requiredLevel: 3 },
-            17: { label: "Bánh Mì Sài Gòn", requiredLevel: 1 },
-            18: { label: "Cà Phê Phin", requiredLevel: 2 },
-            19: { label: "Dép Tổ Ong Huyền Thoại", requiredLevel: 1 }
+            1: { label: "Đại Kiếm Plasma", requiredLevel: 2 },
+            2: { label: "Railgun Hư Không", requiredLevel: 2 },
+            3: { label: "Rìu Chiến Titan", requiredLevel: 3 },
+            4: { label: "Pháp Trượng Sao", requiredLevel: 1 },
+            5: { label: "Song Đao Ánh Sáng", requiredLevel: 1 },
+            6: { label: "Búa Sấm Ares", requiredLevel: 2 },
+            7: { label: "Cung Thiên Hà", requiredLevel: 1 },
+            8: { label: "Thương Long Kích", requiredLevel: 4 },
+            9: { label: "Lưỡi Hái Bóng Đêm", requiredLevel: 3 },
+            10: { label: "Katana Neon", requiredLevel: 2 },
+            11: { label: "Kiếm Ánh Trăng", requiredLevel: 4 },
+            12: { label: "Pháo Vai Cyber", requiredLevel: 3 },
+            13: { label: "Rìu Băng Cực", requiredLevel: 5 },
+            14: { label: "Trượng Hỏa Ngục", requiredLevel: 2 },
+            15: { label: "Song Kiếm Tốc Ảnh", requiredLevel: 3 },
+            16: { label: "Búa Lôi Thần", requiredLevel: 3 },
+            17: { label: "Cung Rồng Xanh", requiredLevel: 1 },
+            18: { label: "Thương Hoàng Kim", requiredLevel: 2 },
+            19: { label: "Hắc Kiếm Vô Ảnh", requiredLevel: 1 }
         },
         mount: {
             1: { label: "🏎️ Siêu Xe Thể Thao V6", requiredLevel: 7 },
@@ -716,11 +735,11 @@ const ChibiModule = {
             bottom: '50 146 100 82',
             shoe: '48 190 104 46',
             accessory: '28 0 144 116',
-            gear: '10 62 180 150',
+            gear: '5 45 195 165',
             wing: '0 42 200 160',
             mount: '0 126 200 110',
-            dragon: '72 46 128 150',
-            aura: '0 0 200 240'
+            dragon: '0 22 200 156',
+            aura: '15 150 170 90'
         };
         const viewBox = viewBoxes[type] || '0 0 200 240';
         const renderStr = ChibiModule.render(tempConfig).replace('viewBox="0 0 200 240"', `viewBox="${viewBox}"`);
@@ -1338,7 +1357,7 @@ const ChibiModule = {
         }
         else if (tabId === 'gear') {
             const options = Array.from({ length: ChibiModule.counts.gear }, (_, i) => i);
-            const gearNames = ['Trống', 'Đại Đao Lửa', 'Súng Vô Cực', 'Kiếm Cyber', 'Thương Heo Tộc', 'Dép Tổ Ong', 'Chổi Tre Pháp Sư', 'Muỗng Mì Thần Thánh', 'Gậy Selfie', 'Cờ Lê Điện', 'Cây Lau Nhà', 'Nón Lá Phi Tiêu', 'Vợt Muỗi Điện', 'Ghế Đỏ Quyền Lực', 'Quạt Trúc', 'Lồng Đèn Hội An', 'Gánh Hàng Rong', 'Bánh Mì Sài Gòn', 'Cà Phê Phin', 'Đôi Dép Trắng'];
+            const gearNames = ['Trống', 'Đại Kiếm Plasma', 'Railgun Hư Không', 'Rìu Chiến Titan', 'Pháp Trượng Sao', 'Song Đao Ánh Sáng', 'Búa Sấm Ares', 'Cung Thiên Hà', 'Thương Long Kích', 'Lưỡi Hái Bóng Đêm', 'Katana Neon', 'Kiếm Ánh Trăng', 'Pháo Vai Cyber', 'Rìu Băng Cực', 'Trượng Hỏa Ngục', 'Song Kiếm Tốc Ảnh', 'Búa Lôi Thần', 'Cung Rồng Xanh', 'Thương Hoàng Kim', 'Hắc Kiếm Vô Ảnh'];
             contentHtml = ChibiModule.renderGrid('gear', options, gearNames, 1.25);
         }
         else if (tabId === 'wing') {
