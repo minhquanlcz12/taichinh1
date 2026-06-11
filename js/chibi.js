@@ -79,6 +79,34 @@ const ChibiModule = {
         const jacket = topStyle >= 3 ? `<path d="M84 118 L116 118 L118 165 Q100 172 82 165 Z" fill="#0f172a" stroke="#111827" stroke-width="2"/><path d="M74 116 L92 112 L100 124 L108 112 L126 116 L130 166 L113 168 L108 132 L100 142 L92 132 L87 168 L70 166 Z" fill="url(#${uid}top)" stroke="#111827" stroke-width="2.5"/><path d="M82 125 L72 151 M118 125 L128 151 M93 126 L107 126" stroke="${topLight}" stroke-width="2" opacity=".75"/>` : `<path d="M78 116 L122 116 L126 166 Q100 174 74 166 Z" fill="url(#${uid}top)" stroke="#111827" stroke-width="2.5"/><path d="M88 122 Q100 130 112 122 M95 132 L95 158 M105 132 L105 158" stroke="${topDark}" stroke-width="2" opacity=".45"/>`;
         const bottoms = bottomStyle === 2 ? `<path d="M77 164 L123 164 L132 198 Q100 210 68 198 Z" fill="${bottomColor}" stroke="#111827" stroke-width="2.5"/>` : `<path d="M78 164 L99 164 L96 202 L82 202 Z M101 164 L122 164 L118 202 L104 202 Z" fill="${bottomColor}" stroke="#111827" stroke-width="2.5"/><path d="M100 166 L100 199" stroke="${bottomDark}" stroke-width="1.5" opacity=".6"/>`;
         const shoes = shoeStyle >= 2 ? `<path d="M75 212 C82 207 94 208 99 215 L98 224 L73 224 Z" fill="${shoeColor}" stroke="#111827" stroke-width="2.5"/><path d="M101 215 C106 208 118 207 125 212 L127 224 L102 224 Z" fill="${shoeColor}" stroke="#111827" stroke-width="2.5"/><path d="M80 216 L94 216 M106 216 L120 216" stroke="${shoeLight}" stroke-width="2"/>` : `<ellipse cx="86" cy="220" rx="13" ry="6" fill="${shoeColor}" stroke="#111827" stroke-width="2.5"/><ellipse cx="114" cy="220" rx="13" ry="6" fill="${shoeColor}" stroke="#111827" stroke-width="2.5"/>`;
+        const accessoryStyle = Number(c.accessory || 0);
+        const gearStyle = Number(c.gear || 0);
+        const wingStyle = Number(c.wing || 0);
+        const mountStyle = Number(c.mount || 0);
+        const dragonStyle = Number(c.dragon || 0);
+        const auraStyle = Number(c.aura || 0);
+        const auraColor = this.colors.aura[auraStyle] || '#8b5cf6';
+        const wingColor = wingStyle % 2 ? '#e0f2fe' : '#312e81';
+        const accessorySvg = !accessoryStyle ? '' : accessoryStyle % 5 === 1
+            ? '<g><path d="M64 76 H91 M109 76 H136" stroke="#111827" stroke-width="5" stroke-linecap="round"/><rect x="66" y="68" width="24" height="14" rx="5" fill="#020617" opacity=".85"/><rect x="110" y="68" width="24" height="14" rx="5" fill="#020617" opacity=".85"/></g>'
+            : accessoryStyle % 5 === 2
+                ? '<g><path d="M72 18 L83 2 L94 25 Z M106 25 L117 2 L128 18 Z" fill="#f9a8d4" stroke="#111827" stroke-width="3"/></g>'
+                : accessoryStyle % 5 === 3
+                    ? `<g><circle cx="51" cy="78" r="9" fill="${topColor}" stroke="#111827" stroke-width="3"/><circle cx="149" cy="78" r="9" fill="${topColor}" stroke="#111827" stroke-width="3"/><path d="M51 69 Q100 33 149 69" fill="none" stroke="#111827" stroke-width="4"/><path d="M140 86 L153 98" stroke="#111827" stroke-width="3" stroke-linecap="round"/></g>`
+                    : accessoryStyle % 5 === 4
+                        ? `<ellipse cx="100" cy="18" rx="34" ry="9" fill="none" stroke="${auraColor}" stroke-width="4" opacity=".9"/>`
+                        : '<g><path d="M76 14 H124 L117 32 H83 Z" fill="#fbbf24" stroke="#111827" stroke-width="3"/><circle cx="100" cy="12" r="5" fill="#ef4444" stroke="#111827" stroke-width="2"/></g>';
+        const gearSvg = !gearStyle ? '' : gearStyle % 4 === 1
+            ? `<g><path d="M145 108 L170 63" stroke="${topLight}" stroke-width="7" stroke-linecap="round"/><path d="M138 121 L151 101" stroke="#111827" stroke-width="5" stroke-linecap="round"/><path d="M162 55 L176 43" stroke="#e5e7eb" stroke-width="4" stroke-linecap="round"/></g>`
+            : gearStyle % 4 === 2
+                ? '<g><path d="M139 135 L177 125 L179 137 L147 146 Z" fill="#1f2937" stroke="#111827" stroke-width="3"/><path d="M151 142 L158 156" stroke="#111827" stroke-width="5" stroke-linecap="round"/><circle cx="178" cy="130" r="3" fill="#38bdf8"/></g>'
+                : gearStyle % 4 === 3
+                    ? `<g><path d="M49 92 L30 158" stroke="${topLight}" stroke-width="6" stroke-linecap="round"/><circle cx="28" cy="164" r="8" fill="${topColor}" stroke="#111827" stroke-width="3"/></g>`
+                    : '<g><path d="M43 111 L33 180" stroke="#92400e" stroke-width="6" stroke-linecap="round"/><path d="M27 180 Q36 189 47 180" stroke="#fbbf24" stroke-width="4" fill="none"/></g>';
+        const wingSvg = !wingStyle ? '' : `<g opacity=".9"><path d="M75 105 C38 74 17 100 25 145 C43 126 58 134 73 160 Z" fill="${wingColor}" stroke="#111827" stroke-width="3"/><path d="M125 105 C162 74 183 100 175 145 C157 126 142 134 127 160 Z" fill="${wingColor}" stroke="#111827" stroke-width="3"/><path d="M36 121 C47 119 59 124 70 139 M164 121 C153 119 141 124 130 139" fill="none" stroke="#fff" stroke-width="2" opacity=".45"/></g>`;
+        const mountSvg = !mountStyle ? '' : `<g transform="translate(0 4)"><path d="M45 196 C62 177 138 177 155 196 L148 216 H52 Z" fill="${bottomColor}" stroke="#111827" stroke-width="3"/><circle cx="70" cy="216" r="10" fill="#020617" stroke="#38bdf8" stroke-width="3"/><circle cx="130" cy="216" r="10" fill="#020617" stroke="#38bdf8" stroke-width="3"/><path d="M78 191 H122" stroke="${topLight}" stroke-width="4" stroke-linecap="round"/></g>`;
+        const dragonSvg = !dragonStyle ? '' : `<g transform="translate(136 84) scale(.62)"><path d="M12 48 C10 25 29 12 47 22 C63 31 62 55 45 64 C29 72 15 64 12 48 Z" fill="${auraColor}" stroke="#111827" stroke-width="4"/><path d="M44 23 C59 7 77 14 72 33 C61 28 53 28 44 38 Z" fill="${topLight}" stroke="#111827" stroke-width="3"/><circle cx="34" cy="43" r="4" fill="#fff"/><path d="M13 55 C-4 72 -2 92 19 98" fill="none" stroke="${auraColor}" stroke-width="8" stroke-linecap="round"/></g>`;
+        const auraSvg = !auraStyle ? '' : `<g opacity=".72"><ellipse cx="100" cy="123" rx="78" ry="106" fill="none" stroke="${auraColor}" stroke-width="4" stroke-dasharray="8 10"/><circle cx="54" cy="58" r="4" fill="${auraColor}"/><circle cx="153" cy="78" r="3" fill="${auraColor}"/><circle cx="137" cy="191" r="4" fill="${auraColor}"/></g>`;
         return `
             <svg viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg" class="${isDancing ? 'chibi-dance-v12' : ''}" style="width:100%;height:100%;display:block;overflow:visible">
                 <defs>
@@ -90,6 +118,7 @@ const ChibiModule = {
                 </defs>
                 <style>.chibi-dance-v12{animation:cbV12 2.3s ease-in-out infinite;transform-origin:100px 224px}@keyframes cbV12{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-6px) rotate(1deg)}} @media (prefers-reduced-motion:reduce){.chibi-dance-v12{animation:none}}</style>
                 <g filter="url(#${uid}shadow)">
+                    ${auraSvg}${wingSvg}${mountSvg}${dragonSvg}
                     <g fill="url(#${uid}hair)" stroke="#111827" stroke-width="3" stroke-linejoin="round">${hairBack[hairStyle] || hairBack[1]}</g>
                     <path d="M78 122 C60 136 57 157 63 176" fill="none" stroke="url(#${uid}skin)" stroke-width="13" stroke-linecap="round"/>
                     <path d="M122 122 C140 136 143 157 137 176" fill="none" stroke="url(#${uid}skin)" stroke-width="13" stroke-linecap="round"/>
@@ -102,6 +131,7 @@ const ChibiModule = {
                     <circle cx="68" cy="91" r="9" fill="#fb7185" opacity=".18"/><circle cx="132" cy="91" r="9" fill="#fb7185" opacity=".18"/>
                     ${eyes[eyeStyle] || eyes[0]}<circle cx="100" cy="91" r="1.4" fill="${skinDark}" opacity=".38"/>${mouths[mouthStyle] || mouths[0]}
                     <g fill="url(#${uid}hair)" stroke="#111827" stroke-width="3" stroke-linejoin="round">${hairFront[hairStyle] || hairFront[1]}</g>
+                    ${accessorySvg}${gearSvg}
                     <path d="M78 31 Q96 20 115 30" fill="none" stroke="#fff" stroke-width="2.4" opacity=".24" stroke-linecap="round"/>
                     <path d="M85 41 Q98 34 109 40" fill="none" stroke="${hairLight}" stroke-width="2" opacity=".35" stroke-linecap="round"/>
                 </g>
@@ -484,12 +514,12 @@ const ChibiModule = {
         top: 5,        // V12 SVG top variants
         bottom: 3,
         shoe: 3,
-        accessory: 0, 
-        gear: 0,
-        wing: 0,
-        mount: 0,
-        dragon: 0,
-        aura: 0
+        accessory: 15,
+        gear: 20,
+        wing: 8,
+        mount: 6,
+        dragon: 5,
+        aura: 7
     },
 
     // State
@@ -678,19 +708,26 @@ const ChibiModule = {
         else if (type === 'dragon') tempConfig.dragon = index;
         else if (type === 'aura') tempConfig.aura = index;
 
-        // Zoom into relevant parts for the grid (Adapted for Sprite)
-        const renderStr = ChibiModule.render(tempConfig);
-        
-        // Since Sprite uses <img> in <div>, we wrap it in a zoomed wrapper
-        let scale = 1, top = 0, left = 0;
-        if (type === 'hair') { scale = 2; top = -10; }
-        else if (type === 'eyes') { scale = 3; top = -70; }
-        else if (type === 'mouth') { scale = 4; top = -90; }
-        else if (type === 'top') { scale = 2; top = -130; }
+        const viewBoxes = {
+            hair: '25 0 150 112',
+            eyes: '50 44 100 72',
+            mouth: '72 78 56 48',
+            top: '45 96 110 86',
+            bottom: '50 146 100 82',
+            shoe: '48 190 104 46',
+            accessory: '28 0 144 116',
+            gear: '10 62 180 150',
+            wing: '0 42 200 160',
+            mount: '0 126 200 110',
+            dragon: '72 46 128 150',
+            aura: '0 0 200 240'
+        };
+        const viewBox = viewBoxes[type] || '0 0 200 240';
+        const renderStr = ChibiModule.render(tempConfig).replace('viewBox="0 0 200 240"', `viewBox="${viewBox}"`);
         
         return `
-            <div style="width:100%; height:100%; overflow:hidden; position:relative;">
-                <div style="transform: scale(${scale}) translateY(${top}px); transform-origin: top center;">
+            <div style="width:100%; height:100%; overflow:hidden; position:relative; display:flex; align-items:center; justify-content:center;">
+                <div style="width:100%; height:100%;">
                     ${renderStr}
                 </div>
             </div>
@@ -1090,7 +1127,7 @@ const ChibiModule = {
                         <div style="display: flex; flex-wrap: wrap; gap: 10px;">
                             ${ChibiModule.colors.skin.map((col, idx) => `
                                 <div class="chibi-color-circle ${ChibiModule.currentConfig.skinColor === col ? 'active' : ''}" 
-                                     style="background: ${col};"" 
+                                     style="background: ${col};"
                                      onclick="ChibiModule.selectColor('skinColor', '${col}')"></div>
                             `).join('')}
                         </div>
@@ -1132,7 +1169,7 @@ const ChibiModule = {
                         <div style="display: flex; flex-wrap: wrap; gap: 10px;">
                             ${ChibiModule.colors.hair.map(col => `
                                 <div class="chibi-color-circle ${ChibiModule.currentConfig.hairColor === col ? 'active' : ''}" 
-                                     style="background: ${col};"" 
+                                     style="background: ${col};"
                                      onclick="ChibiModule.selectColor('hairColor', '${col}')"></div>
                             `).join('')}
                         </div>
@@ -1434,9 +1471,7 @@ const ChibiModule = {
         const isDancing = document.getElementById('chibi-dance-toggle')?.checked ?? true;
         const config = ChibiModule.currentConfig;
 
-        // Use HIGH-FIDELITY Sprite renderer for the Builder preview
-        const spriteHtml = ChibiModule.renderChibiSprite(config);
-        container.innerHTML = `<div class="${isDancing ? 'chibi-dance' : ''}" style="width:100%;height:100%;">${spriteHtml}</div>`;
+        container.innerHTML = ChibiModule.render(config, isDancing);
     },
 
     /**
