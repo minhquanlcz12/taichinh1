@@ -1,25 +1,208 @@
 /**
  * Pet Chibi Avatar Builder Module
- * Phong cách Zepeto / Gacha Life - SVG Composite Layers
+ * Phong cách Gacha Life - Hybrid Sprite + SVG Engine V11
  */
 
 const ChibiModule = {
-    // Utility to adjust color brightness
+    // Robust color adjustment utility
     adjustColor: function(hex, amt) {
-        let usePound = false;
-        if (hex[0] === "#") {
-            hex = hex.slice(1);
-            usePound = true;
-        }
-        let num = parseInt(hex, 16);
-        let r = (num >> 16) + amt;
-        if (r > 255) r = 255; else if (r < 0) r = 0;
-        let b = ((num >> 8) & 0x00FF) + amt;
-        if (b > 255) b = 255; else if (b < 0) b = 0;
-        let g = (num & 0x0000FF) + amt;
-        if (g > 255) g = 255; else if (g < 0) g = 0;
-        return (usePound ? "#" : "") + (g | (b << 8) | (r << 16)).toString(16).padStart(6, '0');
+        if (!hex) return "#000000";
+        let c = hex.replace("#", "");
+        if (c.length === 3) c = c.split('').map(s => s + s).join('');
+        let num = parseInt(c, 16);
+        let r = Math.min(255, Math.max(0, (num >> 16) + amt));
+        let g = Math.min(255, Math.max(0, ((num >> 8) & 0x00FF) + amt));
+        let b = Math.min(255, Math.max(0, (num & 0x0000FF) + amt));
+        return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
     },
+
+    /**
+     * Sprite Asset Mapping (indices to filenames)
+     */
+    spriteAssets: {
+        body: { male: 'body_male.png', female: 'body_female.png' },
+        outfit: { 1: 'outfit_1.png' },
+        hairFront: { 1: 'hair_front_1.png' },
+        face: { 1: 'face_1.png' }
+    },
+
+    /**
+     * Main Chibi Sprite Renderer (V12 - PURE SPRITE FIDELITY)
+     */
+    renderChibiSprite: function(config) {
+        const c = config || this.currentConfig || {};
+        const gender = c.gender || 'nam';
+        const bodyFile = gender === 'nam' ? this.spriteAssets.body.male : this.spriteAssets.body.female;
+        const outfitFile = this.spriteAssets.outfit[1] || null; // Fallback to hero
+        const hairFile = this.spriteAssets.hairFront[1] || null; 
+        const faceFile = this.spriteAssets.face[1] || null;
+
+        // CSS Filters for coloring
+        const skinFilter = `hue-rotate(${this.getHueForColor(c.skinColor, '#ffcd94')}deg) brightness(${this.getBrightnessForColor(c.skinColor)})`;
+        const hairFilter = `hue-rotate(${this.getHueForColor(c.hairColor, '#ec4899')}deg) saturate(1.2)`;
+        const topFilter = `hue-rotate(${this.getHueForColor(c.topColor, '#ffffff')}deg)`;
+
+        return `
+            <div class="chibi-sprite-container" style="width:100%; height:100%; position:relative; overflow:hidden;">
+                <!-- 1. Body Base -->
+                <img src="assets/sprites/${bodyFile}" class="chibi-layer" style="z-index:2; filter: ${skinFilter};" />
+                
+                <!-- 2. Outfit -->
+                ${outfitFile ? `<img src="assets/sprites/${outfitFile}" class="chibi-layer" style="z-index:4; filter: ${topFilter};" />` : ''}
+                
+                <!-- 3. Face Expression -->
+                ${faceFile ? `<img src="assets/sprites/${faceFile}" class="chibi-layer" style="z-index:5;" />` : ''}
+                
+                <!-- 4. Hair Front -->
+                ${hairFile ? `<img src="assets/sprites/${hairFile}" class="chibi-layer" style="z-index:6; filter: ${hairFilter};" />` : ''}
+                
+                <!-- Placeholder for effects (Sprite-based glow) -->
+                ${c.dragon > 0 ? `<div class="chibi-aura-sprite" style="z-index:1;"></div>` : ''}
+            </div>
+        `;
+    },
+
+    /**
+     * Helpers for CSS Filters (Simplified for prototype)
+     */
+    getHueForColor: function(hex, baseHex) { 
+        // This is a placeholder. Real hue calculation would convert both to HSL and return the difference.
+        // For now, return a deterministic shift based on the hex value.
+        if (!hex || hex === baseHex) return 0;
+        return (parseInt(hex.replace('#',''), 16) % 360); 
+    },
+    getBrightnessForColor: function(hex) {
+        if (!hex) return 1;
+        const num = parseInt(hex.replace('#',''), 16);
+        const r = (num >> 16);
+        const g = (num >> 8 & 0x00FF);
+        const b = (num & 0x0000FF);
+        const avg = (r + g + b) / 3;
+        return (avg / 128).toFixed(2);
+    },
+    // === ASSET LIBRARY V11: HIGH-FIDELITY PATHS ===
+    assets: {
+        // Head with soft jawline and cheeks
+        head: "M 55 50 Q 55 105 100 115 Q 145 105 145 50 Q 145 10 100 10 Q 55 10 55 50 Z",
+        
+        // Detailed Gacha Eyes (Standard)
+        eyes: {
+            0: `
+                <!-- Outer Lashes -->
+                <path d="M 72 82 Q 82 72 92 82" fill="none" stroke="#0f172a" stroke-width="4" stroke-linecap="round" />
+                <path d="M 108 82 Q 118 72 128 82" fill="none" stroke="#0f172a" stroke-width="4" stroke-linecap="round" />
+                <!-- Irises with internal gradients -->
+                <circle cx="82" cy="88" r="8" fill="url(#irisG)" />
+                <circle cx="118" cy="88" r="8" fill="url(#irisG)" />
+                <!-- Main Highlights -->
+                <circle cx="79" cy="85" r="3" fill="#fff" opacity="0.8" />
+                <circle cx="115" cy="85" r="3" fill="#fff" opacity="0.8" />
+                <!-- Lower Bloom -->
+                <circle cx="85" cy="92" r="2" fill="#fff" opacity="0.3" />
+                <circle cx="121" cy="92" r="2" fill="#fff" opacity="0.3" />
+            `,
+            1: `<!-- Sparkle Eyes (Wink/Cute) -->
+                <path d="M 72 85 Q 82 75 92 85" fill="none" stroke="#0f172a" stroke-width="4" />
+                <path d="M 115 88 L 125 78 M 115 78 L 125 88" stroke="#0f172a" stroke-width="3" />
+            `
+        },
+        
+        // Body Structure (Anime Proportions)
+        body: {
+            torso: "M 85 110 L 115 110 L 120 180 Q 100 190 80 180 Z",
+            armL: "M 82 120 Q 60 135 65 170",
+            armR: "M 118 120 Q 140 135 135 170",
+            legL: "M 90 180 L 88 220",
+            legR: "M 110 180 L 112 220"
+        }
+    },
+
+    /**
+     * UNIVERSAL RENDERER (Wrapper) — Used by Lobby, NPCs, etc.
+     * Returns SVG for backward compatibility with existing UI.
+     */
+    render: function(config, isDancing = false, points = 0) {
+        return ChibiModule.renderChibiSVG(config, isDancing, points);
+    },
+
+    /**
+     * Render complete composite Chibi SVG (Legacy but kept for fallback)
+     */
+    renderChibiSVG: function(config, isD = false, pts = 0) {
+        const c = config || this.currentConfig || {};
+        const sk = c.skinColor || "#ffd1a9";
+        const hc = c.hairColor || "#343a40";
+        const hs = c.hairStyle || 0;
+        const es = c.eyeStyle || 0;
+        const topCol = c.topColor || "#e83e8c";
+        const botCol = c.bottomColor || "#3b82f6";
+
+        const u = 'v11' + Math.random().toString(36).substr(2, 4);
+        const skG = `${u}sk`, hrG = `${u}hr`, irG = `${u}ir`;
+        const fS = `${u}fs`; // Shadow filter
+
+        return `
+            <svg viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg" class="${isD ? 'chibi-dance' : ''}" style="width:100%; height:100%; display:block;">
+                <defs>
+                    <radialGradient id="${skG}" cx="45%" cy="40%" r="60%">
+                        <stop offset="0%" stop-color="${sk}" />
+                        <stop offset="100%" stop-color="${this.adjustColor(sk, -15)}" />
+                    </radialGradient>
+                    <linearGradient id="${hrG}" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="${hc}" />
+                        <stop offset="100%" stop-color="${this.adjustColor(hc, -40)}" />
+                    </linearGradient>
+                    <radialGradient id="${irG}" cx="50%" cy="30%" r="70%">
+                        <stop offset="0%" stop-color="#fff" stop-opacity="0.2" />
+                        <stop offset="100%" stop-color="#000" />
+                    </radialGradient>
+                    <filter id="${fS}" x="-20%" y="-20%" width="140%" height="140%">
+                        <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.3"/>
+                    </filter>
+                </defs>
+
+                <style>
+                    .chibi-dance { animation: cbV11 2s infinite ease-in-out; transform-origin: bottom center; }
+                    @keyframes cbV11 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px) rotate(1deg)} }
+                </style>
+
+                    <!-- Hair Background -->
+                    <g filter="url(#${fS})">
+                        <path d="M 50 80 Q 50 10 100 10 Q 150 10 150 80 L 155 120 Q 100 140 45 120 Z" fill="url(#${hrG})" />
+                    </g>
+                    
+                    <!-- Body -->
+                    <g filter="url(#${fS})">
+                        <path d="${this.assets.body.armL}" fill="none" stroke="${sk}" stroke-width="12" stroke-linecap="round" />
+                        <path d="${this.assets.body.armR}" fill="none" stroke="${sk}" stroke-width="12" stroke-linecap="round" />
+                        <path d="${this.assets.body.legL}" fill="none" stroke="${sk}" stroke-width="12" stroke-linecap="round" />
+                        <path d="${this.assets.body.legR}" fill="none" stroke="${sk}" stroke-width="12" stroke-linecap="round" />
+                        <path d="${this.assets.body.torso}" fill="${sk}" />
+                        <path d="M 82 115 L 118 115 L 122 155 L 78 155 Z" fill="${topCol}" />
+                        <path d="M 78 155 L 122 155 L 120 185 L 80 185 Z" fill="${botCol}" />
+                    </g>
+
+                    <!-- Head & Face -->
+                    <g filter="url(#${fS})">
+                        <path d="${this.assets.head}" fill="url(#${skG})" />
+                        <circle cx="75" cy="100" r="10" fill="#f43f5e" opacity="0.15" />
+                        <circle cx="125" cy="100" r="10" fill="#f43f5e" opacity="0.15" />
+                        <g class="chibi-eye-group">
+                            ${this.assets.eyes[es === 1 ? 1 : 0].replace(/irisG/g, irG)}
+                        </g>
+                        <path d="M 96 108 Q 100 112 104 108" fill="none" stroke="#4a044e" stroke-width="1.5" stroke-linecap="round" />
+                    </g>
+
+                    <!-- Hair Foreground (Bangs/Fringe) -->
+                    <g filter="url(#${fS})">
+                        <path d="M 52 70 Q 70 20 100 20 Q 130 20 148 70 Q 148 90 135 95 Q 120 70 100 70 Q 80 70 65 95 Q 52 90 52 70 Z" fill="url(#${hrG})" />
+                        <path d="M 75 40 Q 90 32 105 40" fill="none" stroke="#fff" stroke-width="2" opacity="0.15" />
+                    </g>
+                </g>
+            </svg>
+        `;
+    },
+
 
     // Preset Colors
     colors: {
@@ -150,6 +333,21 @@ const ChibiModule = {
     // NEW: Full SET Presets
     presets: [
         {
+            id: 'premium-gacha',
+            name: '✨ Gacha Premium (V12)',
+            desc: 'Phong cách minh họa Gacha-Life chất lượng cao nhất.',
+            isSprite: true,
+            config: { gender: 'nữ', hairStyle: 1, hairColor: '#ec4899', topColor: '#ffffff', skinColor: '#ffcd94' }
+        },
+        {
+            id: 'premium-gacha-old',
+            name: '✨ Gacha Premium (Mới)',
+            desc: 'Phong cách minh họa Gacha-Life chất lượng cao nhất.',
+            isSprite: true,
+            spritePath: 'img/chibi/preset_default.png',
+            config: { gender: 'nữ', hairStyle: 12, hairColor: '#ec4899', topColor: '#ffffff', bottomColor: '#1f2937' }
+        },
+        {
             id: 'tokyo-cyber',
             name: 'Siêu Nhân Điện Quang (Cyber)',
             desc: 'Phong cách Cyberpunk tương lai cực cháy.',
@@ -173,24 +371,11 @@ const ChibiModule = {
             desc: 'Bảo vệ thế giới khỏi bóng tối!',
             config: { gender: 'nam', hairStyle: 7, hairColor: '#facc15', eyeStyle: 7, mouthStyle: 0, topStyle: 8, topColor: '#3b82f6', bottomStyle: 4, bottomColor: '#1e3a8a', shoeStyle: 3, aura: 6, dragon: 3 }
         },
-
         {
             id: 'to-ong-king',
             name: 'Vua Dép Tổ Ong 🐝',
             desc: 'Dân chơi xóm núp lùm!',
             config: { gender: 'nam', hairStyle: 1, hairColor: '#7c2d12', eyeStyle: 9, mouthStyle: 2, topStyle: 1, topColor: '#ffffff', bottomStyle: 3, bottomColor: '#2563eb', shoeStyle: 1, gear: 19, accessory: 11, mount: 4 }
-        },
-        {
-            id: 'angel-divine',
-            name: 'Thiên Thần Thanh Khiết',
-            desc: 'Sức mạnh từ thiên giới.',
-            config: { gender: 'nữ', hairStyle: 12, hairColor: '#ffffff', eyeStyle: 7, mouthStyle: 0, topStyle: 1, topColor: '#ffffff', bottomStyle: 2, bottomColor: '#ffffff', shoeStyle: 6, wing: 1, dragon: 3 }
-        },
-        {
-            id: 'reaper-soul',
-            name: 'Tử Thần Hắc Ám',
-            desc: 'Bóng tối vĩnh hằng...',
-            config: { gender: 'nam', hairStyle: 17, hairColor: '#1e1b4b', eyeStyle: 8, mouthStyle: 4, topStyle: 5, topColor: '#111', bottomStyle: 1, bottomColor: '#111', shoeStyle: 5, wing: 6, dragon: 5 }
         }
     ],
 
@@ -240,165 +425,6 @@ const ChibiModule = {
         return false;
     },
 
-    /**
-     * Robust color adjustment (always returns valid 6-char hex)
-     */
-    adjustColor: function(hex, amt) {
-        if (!hex) return "#000000";
-        let c = hex.replace("#", "");
-        if (c.length === 3) c = c.split('').map(s => s + s).join('');
-        let num = parseInt(c, 16);
-        let r = Math.min(255, Math.max(0, (num >> 16) + amt));
-        let g = Math.min(255, Math.max(0, ((num >> 8) & 0x00FF) + amt));
-        let b = Math.min(255, Math.max(0, (num & 0x0000FF) + amt));
-        return "#" + (b | (g << 8) | (r << 16)).toString(16).padStart(6, '0');
-    },
-
-    /**
-     * Main Chibi SVG Renderer (V11 - PROFESSIONAL LAYERING)
-     * Ensures face features are never obscured by hair.
-     */
-    renderChibiSVG: function(config, isD = false, pts = 0) {
-        const c = config || this.currentConfig || {};
-        const skinColor = c.skinColor || "#ffd1a9";
-        const hc = c.hairColor || "#343a40";
-        const hs = c.hairStyle || 0;
-        const es = c.eyeStyle || 0;
-        const mo = c.mouthStyle || 0;
-        const topCol = c.topColor || "#e83e8c";
-        const botCol = c.bottomColor || "#3b82f6";
-        
-        const uid = 'cb' + Math.random().toString(36).substr(2, 6);
-        const skinG = `${uid}_s`;
-        const hairG = `${uid}_h`;
-        const bladeG = `${uid}_b`;
-        const fGlow = `${uid}_g`;
-        const fEye = `${uid}_e`;
-        const fNeon = `${uid}_n`;
-
-        // 1. Effects & BG
-        let bgHtml = '';
-        if (c.dragon > 0) {
-            const dc = (ChibiModule.colors.dragons && ChibiModule.colors.dragons[c.dragon-1]) || "#fbbf24";
-            bgHtml += `<g style="animation: dragonFloat 4s infinite ease-in-out;">
-                <path d="M 40 140 Q 20 80 60 40 Q 100 0 140 40 Q 180 80 160 140" fill="none" stroke="${dc}" stroke-width="10" filter="url(#${fGlow})" opacity="0.4" />
-            </g>`;
-        }
-        if (pts > 50) {
-            bgHtml += `<circle cx="100" cy="110" r="95" fill="none" stroke="${topCol}" stroke-width="2" opacity="0.2" filter="url(#${fNeon})" style="animation: runeRotate 15s linear infinite;"/>`;
-        }
-
-        // 2. Body & Limbs
-        let bodyHtml = `
-            <g class="chibi-body">
-                <path d="M 80 135 L 60 170" stroke="${skinColor}" stroke-width="12" stroke-linecap="round" />
-                <path d="M 120 135 L 140 170" stroke="${skinColor}" stroke-width="12" stroke-linecap="round" />
-                <path d="M 90 185 L 85 220" stroke="${skinColor}" stroke-width="13" stroke-linecap="round" />
-                <path d="M 110 185 L 115 220" stroke="${skinColor}" stroke-width="13" stroke-linecap="round" />
-                <path d="M 85 115 L 115 115 L 122 190 Q 100 200 78 190 Z" fill="${skinColor}" />
-                <path d="M 82 120 L 118 120 L 122 170 L 78 170 Z" fill="${topCol}" />
-                <path d="M 82 170 L 118 170 L 120 200 L 80 200 Z" fill="${botCol}" />
-            </g>
-        `;
-
-        // 3. Head Base (UNDER HAIR)
-        let headBaseHtml = `<circle cx="100" cy="85" r="45" fill="url(#${skinG})" />`;
-
-        // 4. Back Hair
-        let backHairHtml = '';
-        if ([2, 4, 6, 8, 10, 12, 14, 16, 18, 20].indexOf(hs) !== -1) {
-            backHairHtml = `<path d="M 45 100 Q 100 210 155 100 L 170 160 Q 100 240 30 160 Z" fill="url(#${hairG})" opacity="0.9" />`;
-        }
-
-        // 5. Front Hair (ON TOP OF HEAD BASE, UNDER FACE)
-        let hairHtml = `<path d="M 52 75 Q 100 20 148 75 L 152 110 Q 100 120 48 110 Z" fill="url(#${hairG})" />`;
-        if (hs === 1) { // Spiky
-            hairHtml = `<path d="M 55 80 L 100 15 L 145 80 L 155 115 Q 100 130 45 115 Z" fill="url(#${hairG})" filter="url(#${fGlow})" />`;
-        } else if (hs === 0) {
-            hairHtml = ''; // Bald
-        }
-
-        // 6. Face Features (ALWAYS ON TOP)
-        let faceHtml = `
-            <g class="chibi-face">
-                <!-- Blushing -->
-                <circle cx="75" cy="104" r="8" fill="#f43f5e" opacity="0.2" filter="url(#${fEye})" />
-                <circle cx="125" cy="104" r="8" fill="#f43f5e" opacity="0.2" filter="url(#${fEye})" />
-                <!-- Eyes -->
-                <g class="chibi-blink">
-                    <ellipse cx="80" cy="88" rx="${es === 1 ? '8' : '6'}" ry="${es === 1 ? '9' : '7'}" fill="#0f172a" />
-                    <ellipse cx="120" cy="88" rx="${es === 1 ? '8' : '6'}" ry="${es === 1 ? '9' : '7'}" fill="#0f172a" />
-                    <circle cx="${es === 1 ? '78' : '79'}" cy="85" r="2.5" fill="#fff" />
-                    <circle cx="${es === 1 ? '118' : '119'}" cy="85" r="2.5" fill="#fff" />
-                </g>
-                <!-- Mouth -->
-                <path d="M 94 112 Q 100 118 106 112" fill="none" stroke="#4a044e" stroke-width="2.5" stroke-linecap="round" />
-            </g>
-        `;
-
-        // 7. Wings & Mount
-        let wingHtml = '';
-        const w = c.wing || 0;
-        if (w > 0) {
-            const wc = (w >= 5) ? "#312e81" : "#fff";
-            wingHtml = `<g class="chibi-wing-flap">
-                <path d="M 85 110 Q 15 30 35 150 Q 55 170 85 130 Z" fill="${wc}" opacity="0.7" />
-                <path d="M 115 110 Q 185 30 165 150 Q 145 170 115 130 Z" fill="${wc}" opacity="0.7" />
-            </g>`;
-        }
-
-        let mountHtml = '';
-        if (c.mount > 0) {
-            mountHtml = `<g opacity="0.8"><rect x="35" y="205" width="130" height="20" rx="10" fill="#0f172a" stroke="#00f3ff" filter="url(#${fGlow})" /></g>`;
-        } else {
-            mountHtml = `<ellipse cx="100" cy="220" rx="55" ry="6" fill="#000" opacity="0.1" />`;
-        }
-
-        let gearHtml = '';
-        if (c.gear > 0) {
-            gearHtml = `<g transform="translate(140,130) rotate(10)"><rect x="-5" y="-75" width="10" height="100" fill="url(#${bladeG})" stroke="#111" /></g>`;
-        }
-
-        return `
-            <svg viewBox="0 0 200 240" width="100%" height="100%" class="${isD ? 'chibi-dance' : ''}" xmlns="http://www.w3.org/2000/svg" style="display: block;">
-                <defs>
-                    <radialGradient id="${skinG}" cx="45%" cy="40%" r="65%">
-                        <stop offset="0%" stop-color="${this.adjustColor(skinColor, 20)}" />
-                        <stop offset="100%" stop-color="${this.adjustColor(skinColor, -15)}" />
-                    </radialGradient>
-                    <linearGradient id="${hairG}" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stop-color="${hc}" />
-                        <stop offset="100%" stop-color="${this.adjustColor(hc, -40)}" />
-                    </linearGradient>
-                    <linearGradient id="${bladeG}" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stop-color="#94a3b8" /><stop offset="50%" stop-color="#f8fafc" /><stop offset="100%" stop-color="#94a3b8" />
-                    </linearGradient>
-                    <filter id="${fGlow}"><feGaussianBlur stdDeviation="3.5" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter>
-                    <filter id="${fEye}"><feGaussianBlur stdDeviation="2" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter>
-                    <filter id="${fNeon}"><feGaussianBlur stdDeviation="5" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter>
-                </defs>
-                <style>
-                    .chibi-dance { animation: cbB 2s infinite ease-in-out; transform-origin: bottom center; }
-                    @keyframes cbB { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
-                    .chibi-wing-flap { animation: cbW 3s infinite ease-in-out; transform-origin: center; }
-                    @keyframes cbW { 0%,100%{transform:scaleX(1)} 50%{transform:scaleX(0.85)} }
-                    @keyframes dragonFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
-                    @keyframes runeRotate { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
-                </style>
-                <g>
-                    ${bgHtml}
-                    ${mountHtml}
-                    ${wingHtml}
-                    ${backHairHtml}
-                    ${bodyHtml}
-                    ${headBaseHtml}
-                    ${hairHtml}
-                    ${faceHtml}
-                    ${gearHtml}
-                </g>
-            </svg>
-        `;
-    },
 
 
         renderMiniOption: function(type, index, color) {
@@ -423,67 +449,37 @@ const ChibiModule = {
         };
 
         // Override target property
-        if (type === 'skin') {
-            tempConfig.skinColor = color;
-        } else if (type === 'hair') {
-            tempConfig.hairStyle = index;
-            tempConfig.hairColor = color || '#343a40';
-        } else if (type === 'eyes') {
-            tempConfig.eyeStyle = index;
-        } else if (type === 'mouth') {
-            tempConfig.mouthStyle = index;
-        } else if (type === 'top') {
-            tempConfig.topStyle = index;
-            tempConfig.topColor = color || '#e83e8c';
-        } else if (type === 'bottom') {
-            tempConfig.bottomStyle = index;
-            tempConfig.bottomColor = color || '#007bff';
-        } else if (type === 'shoe') {
-            tempConfig.shoeStyle = index;
-            tempConfig.shoeColor = color || '#1f2937';
-        } else if (type === 'accessory') {
-            tempConfig.accessory = index;
-        } else if (type === 'gear') {
-            tempConfig.gear = index;
-        } else if (type === 'wing') {
-            tempConfig.wing = index;
-        } else if (type === 'mount') {
-            tempConfig.mount = index;
-        } else if (type === 'dragon') {
-            tempConfig.dragon = index;
-        } else if (type === 'aura') {
-            tempConfig.aura = index;
-        }
+        if (type === 'skin') tempConfig.skinColor = color;
+        else if (type === 'hair') { tempConfig.hairStyle = index; tempConfig.hairColor = color || '#343a40'; }
+        else if (type === 'eyes') tempConfig.eyeStyle = index;
+        else if (type === 'mouth') tempConfig.mouthStyle = index;
+        else if (type === 'top') { tempConfig.topStyle = index; tempConfig.topColor = color || '#e83e8c'; }
+        else if (type === 'bottom') { tempConfig.bottomStyle = index; tempConfig.bottomColor = color || '#007bff'; }
+        else if (type === 'shoe') { tempConfig.shoeStyle = index; tempConfig.shoeColor = color || '#1f2937'; }
+        else if (type === 'accessory') tempConfig.accessory = index;
+        else if (type === 'gear') tempConfig.gear = index;
+        else if (type === 'wing') tempConfig.wing = index;
+        else if (type === 'mount') tempConfig.mount = index;
+        else if (type === 'dragon') tempConfig.dragon = index;
+        else if (type === 'aura') tempConfig.aura = index;
 
-        const svgStr = ChibiModule.renderChibiSVG(tempConfig, false, 0);
-
-        // Adjust viewBox to crop/zoom into the relevant body region (V5 PRO)
-        let viewBox = '0 0 200 200';
-        if (type === 'hair') viewBox = '45 20 110 85';
-        else if (type === 'eyes') viewBox = '65 75 70 20';
-        else if (type === 'mouth') viewBox = '85 92 30 18';
-        else if (type === 'top') viewBox = '60 108 80 45';
-        else if (type === 'bottom') viewBox = '65 135 70 45';
-        else if (type === 'shoe') viewBox = '70 165 60 30';
-        else if (type === 'accessory') {
-            if (index >= 11 && index <= 12) viewBox = '35 15 130 85'; // Hats V5
-            else if (index === 13) viewBox = '55 60 90 60'; // Scarf V5
-            else viewBox = '40 20 120 85';
-        } else if (type === 'gear') {
-            if (index === 16) viewBox = '10 70 180 120'; // Vendor Pole
-            else if (index === 15) viewBox = '100 50 80 150'; // Lantern
-            else viewBox = '80 50 110 140';
-        } else if (type === 'wing') {
-            viewBox = '-10 -10 220 220';
-        } else if (type === 'mount') {
-            viewBox = '0 80 200 130';
-        } else if (type === 'aura') {
-            viewBox = '30 150 140 60';
-        } else if (type === 'dragon') {
-            viewBox = '30 0 140 180';
-        }
-
-        return svgStr.replace(/<svg viewBox="[^"]*"/g, `<svg viewBox="${viewBox}"`);
+        // Zoom into relevant parts for the grid (Adapted for Sprite)
+        const renderStr = ChibiModule.render(tempConfig);
+        
+        // Since Sprite uses <img> in <div>, we wrap it in a zoomed wrapper
+        let scale = 1, top = 0, left = 0;
+        if (type === 'hair') { scale = 2; top = -10; }
+        else if (type === 'eyes') { scale = 3; top = -70; }
+        else if (type === 'mouth') { scale = 4; top = -90; }
+        else if (type === 'top') { scale = 2; top = -130; }
+        
+        return `
+            <div style="width:100%; height:100%; overflow:hidden; position:relative;">
+                <div style="transform: scale(${scale}) translateY(${top}px); transform-origin: top center;">
+                    ${renderStr}
+                </div>
+            </div>
+        `;
     },
 
     /**
@@ -658,6 +654,25 @@ const ChibiModule = {
                     border-color: #fff;
                     box-shadow: 0 0 10px #8b5cf6;
                     transform: scale(1.18);
+                }
+                /* SPRITE ENGINE CLASSES */
+                .chibi-sprite-container {
+                    background: transparent;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .chibi-layer {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    object-fit: contain;
+                    pointer-events: none;
+                }
+                .chibi-item-preview-wrap .chibi-sprite-container {
+                    transform: translateY(-5px);
                 }
             `;
             document.head.appendChild(style);
@@ -1201,10 +1216,12 @@ const ChibiModule = {
         const container = document.getElementById('chibi-preview-container');
         if (!container) return;
 
-        const isDacing = document.getElementById('chibi-dance-toggle')?.checked ?? true;
-        
-        // Render with 50 merits for cute sparkles preview in builder
-        container.innerHTML = ChibiModule.renderChibiSVG(ChibiModule.currentConfig, isDacing, 50);
+        const isDancing = document.getElementById('chibi-dance-toggle')?.checked ?? true;
+        const config = ChibiModule.currentConfig;
+
+        // Use HIGH-FIDELITY Sprite renderer for the Builder preview
+        const spriteHtml = ChibiModule.renderChibiSprite(config);
+        container.innerHTML = `<div class="${isDancing ? 'chibi-dance' : ''}" style="width:100%;height:100%;">${spriteHtml}</div>`;
     },
 
     /**

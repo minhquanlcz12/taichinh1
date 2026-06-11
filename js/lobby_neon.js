@@ -500,7 +500,7 @@ window.LobbyNeon = {
 
         let chibiSvg = '';
         try {
-            chibiSvg = ChibiModule.renderChibiSVG(config || {}, false, 0);
+            chibiSvg = ChibiModule.render(config || {}, false, 0);
         } catch (e) {
             chibiSvg = `<div style="font-size: 40px;">👤</div>`;
         }
@@ -583,7 +583,7 @@ window.LobbyNeon = {
             dragon: 3     // Hoàng Long
         };
 
-        let chibiSvg = ChibiModule.renderChibiSVG(npcConfig, true, 88);
+        let chibiSvg = ChibiModule.render(npcConfig, true, 88);
 
         // Position near the throne at the top center
         const tx = 955, ty = 340;
@@ -651,7 +651,7 @@ window.LobbyNeon = {
             dragon: 1             // Hỏa Long bay quanh tượng
         };
 
-        let chibiSvg = ChibiModule.renderChibiSVG(statueConfig, true, 88);
+        let chibiSvg = ChibiModule.render(statueConfig, true, 88);
 
         // Position on the left side of the throne (symmetric with Quest NPC)
         const tx = 755, ty = 340;
@@ -720,7 +720,7 @@ window.LobbyNeon = {
             mount: 0
         };
 
-        let chibiSvg = ChibiModule.renderChibiSVG(npcConfig, true, 99);
+        let chibiSvg = ChibiModule.render(npcConfig, true, 99);
 
         const tx = 350, ty = 420;
         LobbyNeon.state.fashionNpcPos = { x: tx, y: ty };
