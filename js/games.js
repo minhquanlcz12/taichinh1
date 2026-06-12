@@ -2383,32 +2383,15 @@ const GamesModule = {
                     });
                 }
 
-                // --- V4 ABSOLUTE CHARACTER LOCK ---
-                const me = Auth.currentUser?.username;
-                const now = Date.now();
-                const isLocked = mState.isMovingSequentially || (mState.movementLockEndTime && now < mState.movementLockEndTime);
-
                 if (room.players) {
-                    const localPlayers = [...mState.players];
-                    room.players.forEach(remoteP => {
-                        const localIndex = localPlayers.findIndex(p => p.name === remoteP.name);
-                        if (localIndex !== -1) {
-                            // If we are locked, DO NOT update our own position from Firestore
-                            if (isLocked && remoteP.name === me) {
-                                const localP = localPlayers[localIndex];
-                                localPlayers[localIndex] = { 
-                                    ...remoteP, 
-                                    position: localP.position // Force keep local position
-                                };
-                            } else {
-                                localPlayers[localIndex] = remoteP;
-                            }
-                        } else {
-                            // If player doesn't exist locally yet, add them
-                            localPlayers.push(remoteP);
-                        }
-                    });
-                    mState.players = localPlayers;
+                    const localPlayers = mState.players || [];
+                    // Position from Firestore is now the authoritative final tile.
+                    // visualPositions handles the hop animation, so keeping a local
+                    // locked position here can make pawns stop after only 1-2 cells.
+                    mState.players = room.players.map(remoteP => ({
+                        ...(localPlayers.find(p => p.name === remoteP.name) || {}),
+                        ...remoteP
+                    }));
                 }
 
                 mState.currentPlayerIdx = room.currentPlayerIdx;
@@ -2664,14 +2647,19 @@ const GamesModule = {
                 mState.diceValues = [d1, d2];
                 const finalRoll = d1 + d2;
                 
-                GamesModule.processMonopolyTurn(finalRoll);
+                GamesModule.processMonopolyTurn({ total: finalRoll, diceValues: [d1, d2] });
             }
         }, 100);
     },
 
-    processMonopolyTurn: async (roll) => {
+    processMonopolyTurn: async (rollInput) => {
         const mState = GamesModule.monopoly;
         const player = mState.players[mState.currentPlayerIdx];
+        const turnDiceValues = Array.isArray(rollInput?.diceValues) ? rollInput.diceValues : mState.diceValues;
+        const roll = Number.isFinite(rollInput?.total) ? rollInput.total : Number(rollInput);
+        if (Array.isArray(turnDiceValues) && turnDiceValues.length === 2) {
+            mState.diceValues = [...turnDiceValues];
+        }
 
         mState.logs.push(`🎲 <b>@${player.name}</b> đổ ra <b>${roll}</b> nút (${mState.diceValues[0]} - ${mState.diceValues[1]})!`);
 
