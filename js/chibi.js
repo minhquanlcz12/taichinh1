@@ -117,6 +117,22 @@ const ChibiModule = {
             : (topStyle >= 3
                 ? `<path d="M84 118 L116 118 L118 165 Q100 172 82 165 Z" fill="#0f172a" stroke="#111827" stroke-width="2"/><path d="M74 116 L92 112 L100 124 L108 112 L126 116 L130 166 L113 168 L108 132 L100 142 L92 132 L87 168 L70 166 Z" fill="url(#${uid}top)" stroke="#111827" stroke-width="2.5"/><path d="M82 125 L72 151 M118 125 L128 151 M93 126 L107 126" stroke="${topLight}" stroke-width="2" opacity=".75"/>`
                 : `<path d="M78 116 L122 116 L126 166 Q100 174 74 166 Z" fill="url(#${uid}top)" stroke="#111827" stroke-width="2.5"/><path d="M88 122 Q100 130 112 122 M95 132 L95 158 M105 132 L105 158" stroke="${topDark}" stroke-width="2" opacity=".45"/>`);
+        const topDecor = isMale
+            ? [
+                `<path d="M86 125 H114" stroke="#e5e7eb" stroke-width="2" opacity=".7"/>`,
+                `<path d="M88 123 L100 138 L112 123" fill="none" stroke="#e5e7eb" stroke-width="2.3" stroke-linecap="round"/><path d="M100 138 L100 163" stroke="${topDark}" stroke-width="2.2" opacity=".7"/>`,
+                `<path d="M89 119 H111 L117 137 H83 Z" fill="#0f172a" opacity=".82" stroke="#111827" stroke-width="2"/><path d="M100 121 L100 158" stroke="#e5e7eb" stroke-width="2"/>`,
+                `<path d="M69 121 L86 114 L90 128 L73 134 Z M131 121 L114 114 L110 128 L127 134 Z" fill="${this.adjustColor(topColor, 35)}" stroke="#111827" stroke-width="2"/><path d="M84 145 H116" stroke="#22d3ee" stroke-width="3" stroke-linecap="round"/>`,
+                `<path d="M80 120 L120 164 M120 120 L80 164" stroke="#e5e7eb" stroke-width="2.4" opacity=".65"/><path d="M82 160 H118" stroke="#fbbf24" stroke-width="3" stroke-linecap="round"/>`
+            ][Math.max(0, topStyle % 5)]
+            : [
+                `<path d="M89 124 Q100 132 111 124" fill="none" stroke="#fbcfe8" stroke-width="2.2" stroke-linecap="round"/>`,
+                `<path d="M91 123 L100 134 L109 123" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><circle cx="100" cy="136" r="4" fill="#f472b6" stroke="#111827" stroke-width="1.5"/>`,
+                `<path d="M88 120 H112 L116 136 H84 Z" fill="#f8fafc" opacity=".9" stroke="#111827" stroke-width="2"/><path d="M95 122 L100 135 L105 122" stroke="#ec4899" stroke-width="2"/>`,
+                `<path d="M82 126 C91 119 109 119 118 126 L113 165 Q100 172 87 165 Z" fill="${this.adjustColor(topColor, 30)}" opacity=".35"/><path d="M100 125 L100 166" stroke="#f8fafc" stroke-width="2.4" opacity=".8"/>`,
+                `<path d="M79 122 L99 112 L121 122 L114 169 Q100 176 86 169 Z" fill="${this.adjustColor(topColor, 28)}" opacity=".34"/><path d="M91 128 Q100 137 109 128" fill="none" stroke="#fce7f3" stroke-width="2.2"/>`
+            ][Math.max(0, topStyle % 5)];
+        const outfitSvg = jacket + topDecor;
         const bottoms = isFemale && bottomStyle === 2
             ? `<path d="M77 164 L123 164 L132 198 Q100 210 68 198 Z" fill="${bottomColor}" stroke="#111827" stroke-width="2.5"/>`
             : isMale
@@ -185,7 +201,14 @@ const ChibiModule = {
             `<g opacity=".95"><path d="M75 107 C35 77 15 98 27 154 L48 135 L74 164 Z" fill="#020617" stroke="#111827" stroke-width="3"/><path d="M125 107 C165 77 185 98 173 154 L152 135 L126 164 Z" fill="#020617" stroke="#111827" stroke-width="3"/><path d="M38 119 L54 132 L31 145 M162 119 L146 132 L169 145" stroke="#ef4444" stroke-width="2.5"/></g>`,
             `<g opacity=".95"><path d="M76 104 L37 74 L22 118 L54 128 L72 160 Z" fill="#bae6fd" stroke="#111827" stroke-width="3"/><path d="M124 104 L163 74 L178 118 L146 128 L128 160 Z" fill="#bae6fd" stroke="#111827" stroke-width="3"/><path d="M39 89 L61 121 L28 119 M161 89 L139 121 L172 119" stroke="#38bdf8" stroke-width="3.5" opacity=".8"/></g>`
         ][(wingStyle - 1) % 7];
-        const mountSvg = !mountStyle ? '' : `<g transform="translate(0 4)"><path d="M45 196 C62 177 138 177 155 196 L148 216 H52 Z" fill="${bottomColor}" stroke="#111827" stroke-width="3"/><circle cx="70" cy="216" r="10" fill="#020617" stroke="#38bdf8" stroke-width="3"/><circle cx="130" cy="216" r="10" fill="#020617" stroke="#38bdf8" stroke-width="3"/><path d="M78 191 H122" stroke="${topLight}" stroke-width="4" stroke-linecap="round"/></g>`;
+        const mountSvg = !mountStyle ? '' : [
+            `<g transform="translate(0 4)" filter="url(#${uid}gearGlow)"><path d="M38 195 C52 178 148 178 162 195 L154 212 H46 Z" fill="#1e293b" stroke="#111827" stroke-width="3"/><path d="M58 184 H135 L150 196 H46 Z" fill="${topLight}" stroke="#111827" stroke-width="3"/><circle cx="67" cy="214" r="10" fill="#020617" stroke="#38bdf8" stroke-width="3"/><circle cx="133" cy="214" r="10" fill="#020617" stroke="#38bdf8" stroke-width="3"/></g>`,
+            `<g transform="translate(0 5)" filter="url(#${uid}gearGlow)"><path d="M47 204 C64 186 126 186 151 202" fill="none" stroke="${topLight}" stroke-width="9" stroke-linecap="round"/><path d="M75 191 L121 183 L139 198 L83 202 Z" fill="#334155" stroke="#111827" stroke-width="3"/><circle cx="62" cy="214" r="11" fill="#020617" stroke="#38bdf8" stroke-width="3"/><circle cx="141" cy="214" r="11" fill="#020617" stroke="#38bdf8" stroke-width="3"/><path d="M121 184 L142 169" stroke="#e5e7eb" stroke-width="5" stroke-linecap="round"/></g>`,
+            `<g transform="translate(0 6)" filter="url(#${uid}gearGlow)"><path d="M54 194 C67 174 137 174 150 194 C159 209 145 222 126 218 C111 216 89 216 74 218 C55 222 45 209 54 194 Z" fill="#f9a8d4" stroke="#111827" stroke-width="3"/><path d="M60 190 C76 204 124 204 140 190" fill="none" stroke="#fff" stroke-width="4" opacity=".75"/><circle cx="78" cy="214" r="8" fill="#020617" opacity=".35"/><circle cx="122" cy="214" r="8" fill="#020617" opacity=".35"/></g>`,
+            `<g transform="translate(0 5)" filter="url(#${uid}gearGlow)"><path d="M48 202 C62 187 136 187 152 202 L145 216 H55 Z" fill="#2563eb" stroke="#111827" stroke-width="3"/><path d="M65 189 H128 L140 202 H54 Z" fill="#16a34a" stroke="#111827" stroke-width="3"/><path d="M74 188 L92 174 H118 L130 188" fill="#f8fafc" stroke="#111827" stroke-width="3"/><circle cx="70" cy="216" r="10" fill="#020617" stroke="#22d3ee" stroke-width="3"/><circle cx="132" cy="216" r="10" fill="#020617" stroke="#22d3ee" stroke-width="3"/></g>`,
+            `<g transform="translate(0 7)" filter="url(#${uid}gearGlow)"><path d="M46 205 C70 188 130 188 154 205" fill="none" stroke="#475569" stroke-width="9" stroke-linecap="round"/><path d="M59 198 H141 L151 207 L132 216 H68 L49 207 Z" fill="#0f172a" stroke="#111827" stroke-width="3"/><path d="M72 202 H128" stroke="#22d3ee" stroke-width="4" stroke-linecap="round"/><circle cx="55" cy="207" r="4" fill="#f472b6"/><circle cx="145" cy="207" r="4" fill="#f472b6"/></g>`,
+            `<g transform="translate(0 5)" filter="url(#${uid}gearGlow)"><path d="M65 199 C72 178 123 175 140 195 C153 209 141 222 122 217 H74 C55 221 50 209 65 199 Z" fill="${topLight}" stroke="#111827" stroke-width="3"/><path d="M92 178 C116 173 132 183 137 199" fill="none" stroke="#e5e7eb" stroke-width="5" stroke-linecap="round"/><circle cx="72" cy="215" r="10" fill="#020617" stroke="#38bdf8" stroke-width="3"/><circle cx="130" cy="215" r="10" fill="#020617" stroke="#38bdf8" stroke-width="3"/></g>`
+        ][(mountStyle - 1) % 6];
         const dragonSvg = !dragonStyle ? '' : `<g transform="translate(-12 16) scale(1.08)" opacity=".97"><path d="M79 89 C38 27 -3 51 6 129 C32 105 55 112 80 153 Z" fill="${dragonDark}" stroke="#111827" stroke-width="4"/><path d="M123 86 C166 25 208 51 197 129 C171 105 148 112 125 154 Z" fill="${dragonDark}" stroke="#111827" stroke-width="4"/><path d="M68 145 C45 174 8 158 9 122 C24 141 43 133 58 111 C65 101 79 109 81 124 Z" fill="${dragonColor}" stroke="#111827" stroke-width="4"/><path d="M69 96 C84 54 124 49 150 80 C174 111 148 153 106 150 C76 148 58 126 69 96 Z" fill="${dragonColor}" stroke="#111827" stroke-width="4"/><path d="M137 76 C158 48 194 60 197 94 C200 117 180 130 157 118 C139 109 127 91 137 76 Z" fill="${dragonColor}" stroke="#111827" stroke-width="4"/><path d="M148 59 L158 29 L169 63 M170 67 L194 48 L184 80" fill="${dragonLight}" stroke="#111827" stroke-width="3"/><path d="M153 91 L182 79 L178 91 L197 92 L178 105 L184 116 Z" fill="${dragonLight}" stroke="#111827" stroke-width="3"/><path d="M78 74 L94 48 L101 74 L119 51 L121 84" fill="${dragonLight}" stroke="#111827" stroke-width="3"/><path d="M32 72 C51 75 68 90 79 115 M169 72 C150 78 134 93 124 118" stroke="${dragonLight}" stroke-width="4" opacity=".55" stroke-linecap="round"/><path d="M86 150 C68 166 43 165 25 144" fill="none" stroke="${dragonColor}" stroke-width="10" stroke-linecap="round"/><circle cx="152" cy="82" r="5" fill="#fef3c7" stroke="#111827" stroke-width="2"/><path d="M159 98 L177 103" stroke="#fef3c7" stroke-width="3" stroke-linecap="round"/><path d="M80 96 C92 84 111 78 131 85 M79 114 C95 125 115 125 132 112" stroke="#fff" stroke-width="2.2" opacity=".42" stroke-linecap="round"/></g>`;
         const auraSvg = !auraStyle ? '' : `<g transform="translate(100 222)" filter="url(#${uid}auraGlow)"><ellipse cx="0" cy="0" rx="55" ry="13" fill="${auraColor}" opacity=".18"/><ellipse cx="0" cy="0" rx="48" ry="11" fill="none" stroke="${auraColor}" stroke-width="5" opacity=".82"/><ellipse cx="0" cy="-2" rx="34" ry="7" fill="none" stroke="#22d3ee" stroke-width="3" opacity=".78"/><ellipse cx="0" cy="3" rx="68" ry="16" fill="none" stroke="#f472b6" stroke-width="2.5" stroke-dasharray="8 7" opacity=".58"/><ellipse cx="0" cy="-7" rx="22" ry="4" fill="${auraHi}" opacity=".5"/><circle cx="-46" cy="-13" r="4" fill="#fde047"/><circle cx="45" cy="-11" r="3" fill="#22d3ee"/><circle cx="-18" cy="-21" r="3" fill="#f472b6"/><circle cx="19" cy="-20" r="3" fill="${auraHi}"/></g>`;
         return `
@@ -201,18 +224,18 @@ const ChibiModule = {
                 </defs>
                 <style>.chibi-dance-v12{animation:cbV12 2.3s ease-in-out infinite;transform-origin:100px 224px}@keyframes cbV12{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-6px) rotate(1deg)}} @media (prefers-reduced-motion:reduce){.chibi-dance-v12{animation:none}}</style>
                 <g filter="url(#${uid}shadow)">
-                    ${auraSvg}${dragonSvg}${wingSvg}${mountSvg}
+                    ${auraSvg}${dragonSvg}${wingSvg}${mountSvg}${gearSvg}
                     <g fill="url(#${uid}hair)" stroke="#111827" stroke-width="3" stroke-linejoin="round">${hairBackMap[hairStyle] || hairBackMap[1]}</g>
                     ${armsSvg}
                     ${legsSvg}
                     ${torsoBase}
-                    ${jacket}${bottoms}${shoes}
+                    ${outfitSvg}${bottoms}${shoes}
                     ${headSvg}
                     <ellipse cx="53" cy="74" rx="5" ry="8" fill="url(#${uid}skin)" stroke="#111827" stroke-width="2"/><ellipse cx="147" cy="74" rx="5" ry="8" fill="url(#${uid}skin)" stroke="#111827" stroke-width="2"/>
                     ${blushSvg}
                     ${eyeMap[eyeStyle] || eyeMap[0]}<circle cx="100" cy="91" r="1.4" fill="${skinDark}" opacity=".38"/>${mouths[mouthStyle] || mouths[0]}
                     <g fill="url(#${uid}hair)" stroke="#111827" stroke-width="3" stroke-linejoin="round">${hairFrontMap[hairStyle] || hairFrontMap[1]}</g>
-                    ${accessorySvg}${gearSvg}
+                    ${accessorySvg}
                     <path d="M78 31 Q96 20 115 30" fill="none" stroke="#fff" stroke-width="2.4" opacity=".24" stroke-linecap="round"/>
                     <path d="M85 41 Q98 34 109 40" fill="none" stroke="${hairLight}" stroke-width="2" opacity=".35" stroke-linecap="round"/>
                 </g>
@@ -1318,11 +1341,19 @@ const ChibiModule = {
         } 
         else if (tabId === 'clothing') {
             // TOPS, BOTTOMS & SHOES WITH INDEPENDENT STYLE + COLOR
+            const isFemaleConfig = ChibiModule.currentConfig.gender === 'nữ';
             const topOptions = Array.from({ length: ChibiModule.counts.top }, (_, i) => i);
             const bottomOptions = Array.from({ length: ChibiModule.counts.bottom }, (_, i) => i);
             const shoeOptions = Array.from({ length: ChibiModule.counts.shoe }, (_, i) => i);
-            const shoeNames = ['Chan tran', 'Sneaker Neon', 'Giay Tay Xin', 'Ung Cyber', 'Dep To Ong', 'Sandal Dao Pho', 'Giap Chan Titan', 'Hai Co Trang'];
-            const topNames = ['Mặc định', 'Áo Phông Neo', 'Vest Công Sở', 'Giáp Cyber Titan', 'Ronin Kimono', 'Vest Đặc Nhiệm', 'Hoodie Dạo Phố', 'Áo Dài Hoàng Gia 🇻🇳', 'Siêu Nhân Hero', 'Shinobi 🥷', 'Tu Sĩ Rồng', 'Phi Công Tinh Hệ']; 
+            const shoeNames = isFemaleConfig
+                ? ['Mary Jane', 'Boot Nữ Neon', 'Giày Cao Cổ', 'Ủng Pha Lê']
+                : ['Sneaker Nam', 'Boot Chiến Thuật', 'Giày Tây', 'Ủng Cyber'];
+            const topNames = isFemaleConfig
+                ? ['Áo Nữ Basic', 'Áo Nơ Công Chúa', 'Blazer Nữ', 'Giáp Nữ Cyber', 'Áo Dài / Kimono']
+                : ['Áo Nam Basic', 'Áo Phông Nam', 'Vest Nam', 'Giáp Nam Titan', 'Ronin / Tactical'];
+            const bottomNames = isFemaleConfig
+                ? ['Quần Nữ Basic', 'Quần Tây Nữ', 'Váy Xếp Ly']
+                : ['Quần Nam Basic', 'Quần Tây Nam', 'Quần Cargo'];
 
             contentHtml = `
                 <div style="display: flex; flex-direction: column; gap: 20px;">
@@ -1361,7 +1392,6 @@ const ChibiModule = {
                         <h4 style="margin: 0 0 10px 0; font-size: 13px; color: #94a3b8; text-transform: uppercase;">Kiểu Quần / Váy (Bottoms)</h4>
                         <div class="chibi-item-grid" style="margin-bottom: 12px;">
                             ${bottomOptions.map(i => {
-                                const bottomNames = ['Mặc định', 'Quần Tây', 'Váy Xếp Ly', 'Quần Short', 'Quần Jogger', 'Giáp Chân Cyber', 'Tech-Cargo', 'Hakama Võ Sĩ', 'Quần Vảy Rồng'];
                                 const activeClass = ChibiModule.currentConfig.bottomStyle === i ? 'active' : '';
                                 const miniSvg = ChibiModule.renderMiniOption('bottom', i, ChibiModule.currentConfig.bottomColor);
                                 return `
@@ -1545,7 +1575,29 @@ const ChibiModule = {
      * Choose gender (nam/nữ)
      */
     selectGender: function(gender) {
+        const previousGender = ChibiModule.currentConfig.gender;
         ChibiModule.currentConfig.gender = gender;
+        if (previousGender !== gender) {
+            if (gender === 'nữ') {
+                Object.assign(ChibiModule.currentConfig, {
+                    hairStyle: 2,
+                    hairColor: '#22d3ee',
+                    topStyle: 4,
+                    topColor: '#ec4899',
+                    bottomStyle: 2,
+                    shoeStyle: 2
+                });
+            } else {
+                Object.assign(ChibiModule.currentConfig, {
+                    hairStyle: 1,
+                    hairColor: '#7c2d12',
+                    topStyle: 3,
+                    topColor: '#2563eb',
+                    bottomStyle: 1,
+                    shoeStyle: 2
+                });
+            }
+        }
         ChibiModule.updatePreview();
         ChibiModule.switchTab(ChibiModule.activeTab);
     },
