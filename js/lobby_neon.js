@@ -19,11 +19,33 @@ window.LobbyNeon = {
         leaderboardPos: { x: 755, y: 340 },
         fashionNpcPos: { x: 350, y: 420 },
         lastFashionNpcTalkTime: 0,
+        npcBanterInterval: null,
         marqueeInterval: null,
         unsubscribeMissions: null,
         notifiedMissionIds: new Set(),
         activeQuestTab: 'new',
         vipUsers: new Set()
+    },
+
+    npcBanterQuotes: {
+        'npc-admin': [
+            "Thánh chỉ hôm nay: làm việc chăm, đừng mở tab giải trí quá lộ nha!",
+            "Nhiệm vụ mới nóng hổi đây. Ai nhận rồi bỏ quên là tôi ghi sổ đó!",
+            "Đi qua nhận nhiệm vụ đi, đứng ngắm tôi lâu quá tôi ngại!",
+            "Hoàn thành task đi rồi hãy mơ làm trùm sảnh, chiến thần ơi!"
+        ],
+        'npc-leaderboard': [
+            "Bảng vàng còn rộng lắm, tên bạn đâu rồi? Hay đang lạc trong deadline?",
+            "Muốn lên top thì bớt ngắm avatar, thêm vài cú hoàn thành nhiệm vụ nhé!",
+            "Top tháng này căng đấy. Ai chậm tay là tôi cho đứng hàng ghế nhựa!",
+            "Bảng vinh danh không tự sáng đâu, phải có thành tích đổ vào mới lấp lánh!"
+        ],
+        'npc-fashion': [
+            "Bộ đồ ổn rồi, nhưng thần thái thì cần thêm 200% tự tin nữa!",
+            "Tóc hơi cháy, outfit hơi ngầu, ví tiền thì tôi không chịu trách nhiệm!",
+            "Vào chỉnh avatar đi, đừng để nhân vật mặc đồ như vừa chạy deadline!",
+            "Gu thời trang của bạn đang tải... mạng hơi yếu nhưng còn cứu được!"
+        ]
     },
 
     init: () => {
@@ -68,6 +90,7 @@ window.LobbyNeon = {
             LobbyNeon.renderQuestNPC();
             LobbyNeon.renderLeaderboardMonument();
             LobbyNeon.renderFashionNPC();
+            LobbyNeon.startNpcBanterLoop();
         }, 500);
 
         LobbyNeon.startPresenceListening();
@@ -92,6 +115,10 @@ window.LobbyNeon = {
         if (LobbyNeon.state.unsubscribeChat) LobbyNeon.state.unsubscribeChat();
         if (LobbyNeon.state.unsubscribeMissions) LobbyNeon.state.unsubscribeMissions();
         if (LobbyNeon.state.heartbeatInterval) clearInterval(LobbyNeon.state.heartbeatInterval);
+        if (LobbyNeon.state.npcBanterInterval) {
+            clearInterval(LobbyNeon.state.npcBanterInterval);
+            LobbyNeon.state.npcBanterInterval = null;
+        }
         LobbyNeon.state.isConnected = false;
         LobbyNeon.state.currentGameId = null;
     },
@@ -307,6 +334,22 @@ window.LobbyNeon = {
                 @keyframes float { 0%, 100% { transform: translate(-50%, 0); } 50% { transform: translate(-50%, -15px); } }
                 .lobby-user-wrapper.npc { z-index: 100 !important; }
                 .lobby-user-wrapper.npc .lobby-chibi-container svg { overflow: visible !important; }
+                .npc-banter-bubble {
+                    bottom: 172px !important;
+                    background: rgba(15, 23, 42, 0.96) !important;
+                    color: #fff !important;
+                    border: 2px solid rgba(0, 243, 255, 0.8) !important;
+                    box-shadow: 0 10px 25px rgba(0,0,0,0.45), 0 0 18px rgba(0,243,255,0.32) !important;
+                    min-width: 190px;
+                    max-width: 260px;
+                    font-size: 12px !important;
+                    line-height: 1.35;
+                    pointer-events: none;
+                }
+                .npc-banter-bubble::after {
+                    background: rgba(15, 23, 42, 0.96) !important;
+                    box-shadow: 8px 8px 0 -2px rgba(15, 23, 42, 0.96) !important;
+                }
 
                 /* GLOBAL MARQUEE STYLES */
                 .lobby-marquee-bar {
@@ -488,6 +531,7 @@ window.LobbyNeon = {
             el = document.createElement('div');
             el.id = `user-${username}`;
             el.className = `lobby-user-wrapper ${isMe ? 'me' : ''}`;
+            el.addEventListener('mousedown', (e) => e.stopPropagation());
             if (!isMe) {
                 el.style.cursor = 'pointer';
                 el.onclick = (e) => {
@@ -556,6 +600,7 @@ window.LobbyNeon = {
             el.className = 'lobby-user-wrapper npc';
             el.style.position = 'absolute';
             el.style.cursor = 'help';
+            el.addEventListener('mousedown', (e) => e.stopPropagation());
             el.onclick = (e) => {
                 e.stopPropagation();
                 LobbyNeon.openQuestBoard();
@@ -623,6 +668,7 @@ window.LobbyNeon = {
             el.className = 'lobby-user-wrapper npc';
             el.style.position = 'absolute';
             el.style.cursor = 'help';
+            el.addEventListener('mousedown', (e) => e.stopPropagation());
             el.onclick = (e) => {
                 e.stopPropagation();
                 LobbyNeon.openGeneralLeaderboard();
@@ -691,6 +737,7 @@ window.LobbyNeon = {
             el.className = 'lobby-user-wrapper npc';
             el.style.position = 'absolute';
             el.style.cursor = 'help';
+            el.addEventListener('mousedown', (e) => e.stopPropagation());
             el.onclick = (e) => {
                 e.stopPropagation();
                 if (typeof ChibiModule !== 'undefined') ChibiModule.openBuilder();
@@ -741,6 +788,51 @@ window.LobbyNeon = {
         console.log("Fashion NPC render complete at", tx, ty);
     },
 
+    startNpcBanterLoop: () => {
+        if (LobbyNeon.state.npcBanterInterval) clearInterval(LobbyNeon.state.npcBanterInterval);
+
+        const speak = () => {
+            const availableNpcIds = Object.keys(LobbyNeon.npcBanterQuotes)
+                .filter(id => document.getElementById(id));
+            if (!availableNpcIds.length) return;
+            const npcId = availableNpcIds[Math.floor(Math.random() * availableNpcIds.length)];
+            LobbyNeon.showNpcBanter(npcId);
+        };
+
+        setTimeout(speak, 1800);
+        LobbyNeon.state.npcBanterInterval = setInterval(speak, 8500);
+    },
+
+    showNpcBanter: (npcId, forceQuote) => {
+        const npcEl = document.getElementById(npcId);
+        if (!npcEl) return;
+
+        const quotes = LobbyNeon.npcBanterQuotes[npcId] || [];
+        const quote = forceQuote || quotes[Math.floor(Math.random() * quotes.length)];
+        if (!quote) return;
+
+        const oldBubble = npcEl.querySelector('.lobby-chat-bubble');
+        if (oldBubble) oldBubble.remove();
+
+        const bubble = document.createElement('div');
+        bubble.className = 'lobby-chat-bubble npc-banter-bubble';
+        if (npcId === 'npc-admin') {
+            bubble.style.borderColor = '#fbbf24';
+            bubble.style.boxShadow = '0 10px 25px rgba(0,0,0,0.45), 0 0 18px rgba(251,191,36,0.34)';
+        } else if (npcId === 'npc-fashion') {
+            bubble.style.borderColor = '#ff0055';
+            bubble.style.boxShadow = '0 10px 25px rgba(0,0,0,0.45), 0 0 18px rgba(255,0,85,0.34)';
+        }
+        bubble.textContent = quote;
+        npcEl.appendChild(bubble);
+
+        setTimeout(() => {
+            if (!bubble.parentNode) return;
+            bubble.classList.add('fade-out');
+            setTimeout(() => bubble.remove(), 500);
+        }, 5600);
+    },
+
     triggerFashionNpcDialogue: (isDirectClick) => {
         const now = Date.now();
         // Prevent bubble spamming unless direct click (cooldown of 4s for proximity)
@@ -749,10 +841,6 @@ window.LobbyNeon = {
 
         const npcEl = document.getElementById('npc-fashion');
         if (!npcEl) return;
-
-        // Remove old bubble if any
-        const oldBubble = npcEl.querySelector('.lobby-chat-bubble');
-        if (oldBubble) oldBubble.remove();
 
         const userLevel = Auth.currentUser?.level || 1;
 
@@ -774,35 +862,35 @@ window.LobbyNeon = {
             ? lowLevelQuotes[Math.floor(Math.random() * lowLevelQuotes.length)]
             : highLevelQuotes[Math.floor(Math.random() * highLevelQuotes.length)];
 
-        const bubble = document.createElement('div');
-        bubble.className = 'lobby-chat-bubble';
-        
-        // Customized neon styling for Fashion Bubble
-        bubble.style.cssText = `
-            bottom: 175px;
-            background: rgba(15, 23, 42, 0.95);
-            color: #fff;
-            border: 2px solid #ff0055;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5), 0 0 15px rgba(255, 0, 85, 0.4);
-            font-weight: 800;
-            font-size: 12.5px;
-            padding: 10px 15px;
-            min-width: 180px;
-        `;
-        bubble.textContent = quote;
-
-        npcEl.appendChild(bubble);
-
-        // Auto remove after 5s
-        setTimeout(() => {
-            bubble.classList.add('fade-out');
-            setTimeout(() => bubble.remove(), 500);
-        }, 5000);
+        LobbyNeon.showNpcBanter('npc-fashion', quote);
     },
 
     // ========== MOVEMENT ==========
+    isNonFloorClickTarget: (target) => {
+        if (!target) return true;
+        return !!target.closest([
+            '.lobby-user-wrapper',
+            '.lobby-game-hub',
+            '.lobby-hub-toggle',
+            '.lobby-chat-overlay',
+            '.caro-modal',
+            '.modal-overlay',
+            '.modal',
+            '.hub-tab',
+            '.hub-content',
+            'button',
+            'a',
+            'input',
+            'textarea',
+            'select',
+            'form',
+            '[role="button"]',
+            '[onclick]'
+        ].join(','));
+    },
+
     handleMapClick: (e) => {
-        if (e.target.closest('.lobby-chat-overlay') || e.target.closest('.caro-modal')) return;
+        if (e.button !== 0 || LobbyNeon.isNonFloorClickTarget(e.target)) return;
 
         const rect = e.currentTarget.getBoundingClientRect();
         const x = e.clientX - rect.left;
