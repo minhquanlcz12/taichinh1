@@ -1681,6 +1681,9 @@ const GamesModule = {
                 // When visual hopping completes for the active player, focus the center panel on the landed property
                 const activePlayer = mState.players[mState.currentPlayerIdx];
                 if (playerName === activePlayer?.name) {
+                    mState.isMovingSequentially = false;
+                    mState.movementLockEndTime = null;
+
                     const destTile = mState.tiles[activePlayer.position];
                     if (destTile && destTile.type === 'property') {
                         GamesModule.monopoly.centerDeedTileId = destTile.id;
@@ -2715,9 +2718,35 @@ const GamesModule = {
             }
         }
 
-        // --- V4 TRUE SEQUENTIAL LOGICAL MOVEMENT ---
+        // --- V5 ATOMIC LOGICAL MOVEMENT + VISUAL HOPPING ---
         mState.isMovingSequentially = true;
-        mState.movementLockEndTime = Date.now() + (roll * 450) + 2000;
+        mState.movementLockEndTime = Date.now() + (roll * 320) + 1800;
+
+        // Keep logical state atomic, then let visualPositions animate to the final tile.
+        // Syncing every intermediate tile caused Firestore snapshots to race and pawns
+        // could appear to stop at the first cell for every player.
+        {
+            const boardSize = mState.tiles.length;
+            const oldPos = player.position;
+            const finalPos = (oldPos + roll) % boardSize;
+            const passedStart = oldPos + roll >= boardSize;
+
+            player.position = finalPos;
+
+            if (passedStart) {
+                const bonus = mState.startBonus || 5;
+                player.cash += bonus;
+                mState.logs.push(`ðŸš© <b>@${player.name}</b> Ä‘i qua Ã´ Báº®T Äáº¦U, HR thÆ°á»Ÿng nÃ³ng +${bonus}Ä‘ CÃ´ng Äá»©c!`);
+            }
+
+            const tile = mState.tiles[player.position];
+            mState.logs.push(`ðŸ“ <b>@${player.name}</b> Ä‘Ã£ dá»«ng chÃ¢n táº¡i Ã´ <b>${tile.name}</b>.`);
+            mState.awaitingAction = true;
+
+            await GamesModule.syncRoomToFirestore();
+            GamesModule.renderTabContent();
+            return;
+        }
 
         let stepsRemaining = roll;
         const moveOneStep = async () => {
