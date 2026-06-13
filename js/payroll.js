@@ -682,7 +682,7 @@ const PayrollModule = {
             });
 
             const dailyRate = baseSalary / workingDays;
-            const paidDays = onTimeDays + lateExcusedDays + lateDays + approvedLeaveDays;
+            const paidDays = onTimeDays + lateExcusedDays + lateDays;
             
             const attendancePay = paidDays * dailyRate;
             const latePenaltyTotal = lateCount * PayrollModule.LATE_PENALTY;
@@ -818,14 +818,14 @@ const PayrollModule = {
 
                 // 3. Calculation
                 const dailyRate = baseSalary / workingDays;
-                const paidDays = onTimeDays + lateExcusedDays + lateDays + approvedLeaveDays;
+                const paidDays = onTimeDays + lateExcusedDays + lateDays;
                 
                 const attendancePay = paidDays * dailyRate;
                 const latePenaltyTotal = lateCount * PayrollModule.LATE_PENALTY;
                 
                 // Thưởng chuyên cần: 200k nếu đi muộn 0 lần và có đi làm ít nhất 15 ngày
                 let eligibleForBonus = false;
-                if (lateCount === 0 && (onTimeDays + approvedLeaveDays) >= 15) {
+                if (lateCount === 0 && (onTimeDays) >= 15) {
                     eligibleForBonus = true;
                 }
 
