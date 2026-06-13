@@ -188,13 +188,6 @@ const app = {
         targetView.classList.add('active');
         app.state.currentView = viewId;
 
-        // Trigger staggered animations
-        const cascades = targetView.querySelectorAll('.animate-cascade');
-        cascades.forEach(c => {
-            c.classList.remove('active');
-            void c.offsetWidth; // Force reflow
-            c.classList.add('active');
-        });
 
         // Sync Ambient Music
         if (typeof AttendanceMusic !== 'undefined') AttendanceMusic.updateTabState(viewId);
@@ -292,6 +285,14 @@ const app = {
         if (app.state.currentView === 'lobby-view' && viewId !== 'lobby-view') {
             if (typeof LobbyNeon !== 'undefined') LobbyNeon.leaveLobby();
         }
+
+        // Trigger staggered animations (Must be at the very end to catch dynamic renders)
+        const cascades = targetView.querySelectorAll('.animate-cascade');
+        cascades.forEach(c => {
+            c.classList.remove('active');
+            void c.offsetWidth; // Force reflow
+            c.classList.add('active');
+        });
     },
 
     saveTelegramSettings: async () => {

@@ -131,6 +131,12 @@ const PromptModule = {
 
         html += `</div>`;
         container.innerHTML = html;
+
+        // Trigger animations for inner elements
+        setTimeout(() => {
+            const cascades = container.querySelectorAll('.animate-cascade');
+            cascades.forEach(c => c.classList.add('active'));
+        }, 10);
     },
 
     showPreview: (src, imgElem) => {

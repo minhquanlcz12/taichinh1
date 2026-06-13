@@ -1252,6 +1252,12 @@ const Attendance = {
                 }
             }
         </style>`;
+
+        // Trigger animations for inner elements
+        setTimeout(() => {
+            const cascades = container.querySelectorAll('.animate-cascade');
+            cascades.forEach(c => c.classList.add('active'));
+        }, 10);
     },
 
     /* --- Wooden Fish Sound Engine --- */
