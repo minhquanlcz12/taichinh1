@@ -764,10 +764,15 @@ const Attendance = {
                             ${userHistory.length === 0 ? '<tr><td colspan="2" style="text-align:center;color:rgba(218,165,32,0.3);">Chưa có công đức nào</td></tr>' : ''}
                             ${userHistory.map(r => {
                                 const isOld = r.dateStr < RESET_DATE;
-                                const pts = (r.status === 'on_time' || r.status === 'late_excused') ? 0.5 : -0.5;
+                                const isErrorDate = (r.dateStr === '2026-06-13');
+                                
+                                // Nếu là ngày lỗi 13/06, coi như Đúng giờ 0.5 hoặc ít nhất không trừ điểm
+                                let pts = (r.status === 'on_time' || r.status === 'late_excused' || isErrorDate) ? 0.5 : -0.5;
                                 let badgeHtml = '';
-                                if (r.status === 'on_time') {
-                                    badgeHtml = '<span class="badge bg-success">Đúng giờ</span>';
+                                
+                                if (r.status === 'on_time' || isErrorDate) {
+                                    badgeHtml = `<span class="badge bg-success">${isErrorDate ? 'Sự cố hệ thống' : 'Đúng giờ'}</span>`;
+                                    if (isErrorDate) pts = 0.5; // Đảm bảo luôn +0.5
                                 } else if (r.status === 'late_excused') {
                                     badgeHtml = '<span class="badge" style="background:#00adb5; color:#fff; font-weight:bold;">Muộn phép</span>';
                                 } else {
@@ -926,6 +931,11 @@ const Attendance = {
         const summary = {};
         allData.forEach(r => {
             if (r.dateStr >= startStr && r.dateStr <= endStr) {
+                // Sửa lỗi ngày 13/06 trực tiếp trong bộ nhớ
+                if (/2026-0?6-1?3/.test(String(r.dateStr).trim()) && r.status !== 'on_time') { console.log('[ATT-v4] Force normalizing:', r.username, r.dateStr, r.status); r.status = 'on_time'; r.lateMinutes = 0;
+                    r.status = 'on_time';
+                    r.lateMinutes = 0;
+                }
                 if (!summary[r.username]) {
                     summary[r.username] = { totalDays: 0, onTime: 0, late: 0, lateExcused: 0, totalLateMinutes: 0 };
                 }
@@ -936,8 +946,14 @@ const Attendance = {
                 } else if (r.status === 'late_excused') {
                     summary[r.username].lateExcused += weight;
                 } else {
-                    summary[r.username].late += weight;
-                    summary[r.username].totalLateMinutes += r.lateMinutes || 0;
+                    // BỎ QUA NGÀY 13/06/2026 DO LỖI HỆ THỐNG
+                    if (!/2026-0?6-1?3/.test(String(r.dateStr).trim())) {
+                        summary[r.username].late += weight;
+                        summary[r.username].totalLateMinutes += r.lateMinutes || 0;
+                    } else {
+                        // Nếu là ngày 13/06 mà bị late, đếm vào onTime để không bị coi là Vắng
+                        summary[r.username].onTime += weight;
+                    }
                 }
             }
         });
@@ -968,11 +984,11 @@ const Attendance = {
         const securityHtml = await Attendance.renderAttendanceSecurityPanel(security);
         
         let adminHtml = `
-            <div class="glass-panel admin-cyber-box" style="padding: 24px; border: 1px solid rgba(100, 255, 218, 0.5); box-shadow: 0 0 10px rgba(100, 255, 218, 0.1);">
+            <div class="glass-panel admin-cyber-box animate-cascade" style="padding: 24px; border: 1px solid rgba(100, 255, 218, 0.5); box-shadow: 0 0 10px rgba(100, 255, 218, 0.1);">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
                     <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
                         <h2 style="color: var(--primary); font-size: 18px; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; margin: 0;">
-                            <i class="fa-solid fa-list-check"></i> Tổng hợp Chấm Công
+                            <i class="fa-solid fa-list-check"></i> Tổng hợp Chấm Công v4
                         </h2>
                         
                         <div style="display: flex; gap: 8px; background: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
@@ -1643,6 +1659,11 @@ const Attendance = {
         const summary = {};
         allData.forEach(r => {
             if (r.dateStr >= startStr && r.dateStr <= endStr) {
+                // Sửa lỗi ngày 13/06 trực tiếp trong bộ nhớ
+                if (/2026-0?6-1?3/.test(String(r.dateStr).trim()) && r.status !== 'on_time') { console.log('[ATT-v4] Force normalizing:', r.username, r.dateStr, r.status); r.status = 'on_time'; r.lateMinutes = 0;
+                    r.status = 'on_time';
+                    r.lateMinutes = 0;
+                }
                 if (!summary[r.username]) summary[r.username] = { totalDays: 0, onTime: 0, late: 0, totalLateMinutes: 0 };
                 const weight = r.type ? 0.5 : 1.0;
                 summary[r.username].totalDays += weight;
@@ -2099,6 +2120,11 @@ const Attendance = {
         const summary = {};
         allData.forEach(r => {
             if (r.dateStr >= startStr && r.dateStr <= endStr) {
+                // Sửa lỗi ngày 13/06 trực tiếp trong bộ nhớ
+                if (/2026-0?6-1?3/.test(String(r.dateStr).trim()) && r.status !== 'on_time') { console.log('[ATT-v4] Force normalizing:', r.username, r.dateStr, r.status); r.status = 'on_time'; r.lateMinutes = 0;
+                    r.status = 'on_time';
+                    r.lateMinutes = 0;
+                }
                 if (!summary[r.username]) {
                     summary[r.username] = { totalDays: 0, onTime: 0, late: 0, lateExcused: 0, totalLateMinutes: 0 };
                 }
@@ -2109,8 +2135,14 @@ const Attendance = {
                 } else if (r.status === 'late_excused') {
                     summary[r.username].lateExcused += weight;
                 } else {
-                    summary[r.username].late += weight;
-                    summary[r.username].totalLateMinutes += r.lateMinutes || 0;
+                    // BỎ QUA NGÀY 13/06/2026 DO LỖI HỆ THỐNG
+                    if (!/2026-0?6-1?3/.test(String(r.dateStr).trim())) {
+                        summary[r.username].late += weight;
+                        summary[r.username].totalLateMinutes += r.lateMinutes || 0;
+                    } else {
+                        // Nếu là ngày 13/06 mà bị late, đếm vào onTime để không bị coi là Vắng
+                        summary[r.username].onTime += weight;
+                    }
                 }
             }
         });

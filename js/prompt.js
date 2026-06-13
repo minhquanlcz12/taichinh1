@@ -85,7 +85,7 @@ const PromptModule = {
                 `).join('')}
             </div>
 
-            <div class="dashboard-grid" style="grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px;">
+            <div class="dashboard-grid animate-cascade" style="grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px;">
         `;
 
         let filteredPrompts = PromptModule.data.prompts;

@@ -81,7 +81,7 @@ const ReportsModule = {
                     </div>
                 </div>
 
-                <div class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 24px; gap: 16px;">
+                <div class="dashboard-grid animate-cascade" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 24px; gap: 16px;">
                     <div class="glass-card" style="border-left: 4px solid #10b981; padding: 20px; background: rgba(16, 185, 129, 0.05);">
                         <h2 class="text-success" style="font-size: 24px; margin: 0;">${Utils.formatCurrency(summary.income)}</h2>
                         <div class="text-secondary" style="font-size: 12px; text-transform: uppercase; margin-top: 4px;">Thu nhập</div>

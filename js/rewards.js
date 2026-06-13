@@ -1,15 +1,15 @@
 const RewardsModule = {
     _catalog: [
-        { id: 'card_wfh', title: 'Làm Việc Tại Nhà', icon: 'fa-house-laptop', cost: 15, color: '#10b981', desc: 'Sử dụng để WFH 1 ngày không bị tính vắng.' },
-        { id: 'card_late', title: 'Đi Muộn Miễn Phạt', icon: 'fa-clock', cost: 10, color: '#f59e0b', desc: 'Cứu cánh khi ngủ nướng, miễn phạt 1 lần đi muộn.' },
-        { id: 'card_early', title: 'Về Sớm 1 Tiếng', icon: 'fa-person-running', cost: 8, color: '#3b82f6', desc: 'Xin sếp về sớm 1 chút để xử lý việc cá nhân.' },
-        { id: 'card_leave', title: 'Nghỉ Phép Thêm 1 Ngày', icon: 'fa-umbrella-beach', cost: 25, color: '#a855f7', desc: 'Có ngay 1 ngày phép hưởng nguyên lương.' },
-        { id: 'card_tea', title: '1 Lon Nước Ngọt 10k', icon: 'fa-glass-water', cost: 5, color: '#f43f5e', desc: 'Sếp bao 1 lon nước ngọt mát lạnh trị giá 10k.' },
-        { id: 'card_rescue', title: 'Thánh Nhân Cứu Bồ', icon: 'fa-handshake-angle', cost: 5, color: '#ec4899', desc: 'Dùng để bảo lãnh/xoá án phạt đi muộn cho 1 NGƯỜI KHÁC (Tăng tình kết nghĩa anh em).' },
-        { id: 'card_mystery', title: 'Quà Bất Ngờ', icon: 'fa-gift', cost: 30, color: '#ffd700', desc: 'Một món quà bí mật và giá trị do Quản lý chuẩn bị.' },
-        { id: 'card_x2', title: 'Nhân Bản Công Đức', icon: 'fa-angles-up', cost: 50, color: '#fbbf24', desc: 'X2 điểm thưởng (+1.0đ) mỗi khi đi làm đúng giờ (Hiệu lực 30 ngày).' },
-        { id: 'card_flex', title: 'Giờ Làm Linh Hoạt', icon: 'fa-clock-rotate-left', cost: 50, color: '#06b6d4', desc: 'Cho phép đi muộn 1 tiếng (tới 9:30) không bị phạt (Hiệu lực 7 ngày).' },
-        { id: 'card_vip', title: 'VIP Nametag Legend', icon: 'fa-crown', cost: 50, color: '#ec4899', desc: 'Tên đổi màu Neon lấp lánh + Giảm 20% giá mua mọi thẻ bài (Hiệu lực 30 ngày).' }
+        { id: 'card_wfh', title: 'Làm Việc Tại Nhà', icon: 'fa-house-laptop', cost: 15, color: '#10b981', weight: 10, desc: 'Sử dụng để WFH 1 ngày không bị tính vắng.' },
+        { id: 'card_late', title: 'Đi Muộn Miễn Phạt', icon: 'fa-clock', cost: 10, color: '#f59e0b', weight: 12, desc: 'Cứu cánh khi ngủ nướng, miễn phạt 1 lần đi muộn.' },
+        { id: 'card_early', title: 'Về Sớm 1 Tiếng', icon: 'fa-person-running', cost: 8, color: '#3b82f6', weight: 15, desc: 'Xin sếp về sớm 1 chút để xử lý việc cá nhân.' },
+        { id: 'card_leave', title: 'Nghỉ Phép Thêm 1 Ngày', icon: 'fa-umbrella-beach', cost: 25, color: '#a855f7', weight: 8, desc: 'Có ngay 1 ngày phép hưởng nguyên lương.' },
+        { id: 'card_tea', title: '1 Lon Nước Ngọt 10k', icon: 'fa-glass-water', cost: 5, color: '#f43f5e', weight: 25, desc: 'Sếp bao 1 lon nước ngọt mát lạnh trị giá 10k.' },
+        { id: 'card_rescue', title: 'Thánh Nhân Cứu Bồ', icon: 'fa-handshake-angle', cost: 5, color: '#ec4899', weight: 25, desc: 'Dùng để bảo lãnh/xoá án phạt đi muộn cho 1 NGƯỜI KHÁC (Tăng tình kết nghĩa anh em).' },
+        { id: 'card_mystery', title: 'Quà Bất Ngờ', icon: 'fa-gift', cost: 30, color: '#ffd700', weight: 0, desc: 'Bóc bao nhận thẻ Đặc Quyền ngẫu nhiên. Tỷ lệ thẻ Cực hiếm (50đ) ~7%.' },
+        { id: 'card_x2', title: 'Nhân Bản Công Đức', icon: 'fa-angles-up', cost: 50, color: '#fbbf24', weight: 2.3, desc: 'X2 điểm thưởng (+1.0đ) mỗi khi đi làm đúng giờ (Hiệu lực 30 ngày).' },
+        { id: 'card_flex', title: 'Giờ Làm Linh Hoạt', icon: 'fa-clock-rotate-left', cost: 50, color: '#06b6d4', weight: 2.3, desc: 'Cho phép đi muộn 1 tiếng (tới 9:30) không bị phạt (Hiệu lực 7 ngày).' },
+        { id: 'card_vip', title: 'VIP Nametag Legend', icon: 'fa-crown', cost: 50, color: '#ec4899', weight: 2.3, desc: 'Tên đổi màu Neon lấp lánh + Giảm 20% giá mua mọi thẻ bài (Hiệu lực 30 ngày).' }
     ],
     
     _isSpinning: false,
@@ -1323,7 +1323,7 @@ const RewardsModule = {
                                 { name: 'HỤT RỒI! 😅', prob: 55, color: '#6366f1', sub: '' },
                                 { name: 'Hòa vốn (+1đ)', prob: 15, color: '#10b981', sub: '' },
                                 { name: 'Lãi nhẹ (+2đ)', prob: 8, color: '#14b8a6', sub: '' },
-                                { name: 'Thẻ Đặc Quyền 🃏', prob: 7, color: '#3b82f6', sub: '' },
+                                { name: 'Thẻ Đặc Quyền 🃏', prob: 7, color: '#3b82f6', sub: 'Tỷ lệ thẻ Hiếm ~7%' },
                                 { name: 'Quà Tặng 🎁', prob: 6, color: '#f59e0b', sub: '' },
                                 { name: 'Hắc ám (-1đ) 💀', prob: 5, color: '#ef4444', sub: '' },
                                 { name: 'ĐỘC ĐẮC 💎', prob: 2, color: '#ec4899', sub: 'Jackpot VVIP 0.1% | Thẻ Đặc Biệt 1.9%' },
@@ -1960,9 +1960,20 @@ const RewardsModule = {
                 cost: Math.abs(prize.pts)
             };
         } else if (prize.isRandomCard) {
-            const pool = ['card_wfh', 'card_late', 'card_rescue'];
-            const chosenId = pool[Math.floor(Math.random() * pool.length)];
-            const card = RewardsModule._catalog.find(c => c.id === chosenId);
+            // Sử dụng cùng logic gacha có trọng số như mở gói bí ẩn
+            const validCards = RewardsModule._catalog.filter(c => c.id !== 'card_mystery' && (c.weight || 0) > 0);
+            const totalWeight = validCards.reduce((sum, c) => sum + c.weight, 0);
+            let rand = Math.random() * totalWeight;
+            let card = validCards[validCards.length - 1];
+
+            for (const c of validCards) {
+                if (rand < c.weight) {
+                    card = c;
+                    break;
+                }
+                rand -= c.weight;
+            }
+
             newRecord = {
                 id: resultId,
                 username: user.username,
@@ -2207,9 +2218,19 @@ const RewardsModule = {
             return;
         }
 
-        // Chọn ngẫu nhiên 1 thẻ đặc quyền từ cửa hàng (loại trừ card_mystery bản thân nó để tránh vô hạn)
-        const validCards = RewardsModule._catalog.filter(c => c.id !== 'card_mystery');
-        const luckyCard = validCards[Math.floor(Math.random() * validCards.length)];
+        // Chọn ngẫu nhiên có trọng số từ catalog (loại trừ mystery và thẻ có weight = 0)
+        const validCards = RewardsModule._catalog.filter(c => c.id !== 'card_mystery' && (c.weight || 0) > 0);
+        const totalWeight = validCards.reduce((sum, c) => sum + c.weight, 0);
+        let rand = Math.random() * totalWeight;
+        let luckyCard = validCards[validCards.length - 1]; // Default fallback
+
+        for (const c of validCards) {
+            if (rand < c.weight) {
+                luckyCard = c;
+                break;
+            }
+            rand -= c.weight;
+        }
 
         // Cập nhật bản ghi thành thẻ được mở
         packRecord.cardId = luckyCard.id;

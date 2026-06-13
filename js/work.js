@@ -183,7 +183,7 @@ const WorkModule = {
             </div>
             
             <div class="dashboard-content-grid" style="grid-template-columns: 1fr;">
-                <div class="glass-card" style="padding: 16px;">
+                <div class="glass-card animate-cascade" style="padding: 16px;">
                     <div class="card-header" style="margin-bottom: 8px;">
                         <h3 id="work-date-display">Tất cả Kế hoạch</h3>
                     </div>

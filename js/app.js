@@ -110,6 +110,9 @@ const app = {
                 navItems.forEach(nav => nav.classList.remove('active'));
                 e.currentTarget.classList.add('active');
 
+                // Move Indicator
+                app.moveNavIndicator(e.currentTarget);
+
                 app.navigateTo(target);
 
                 // Auto close mobile sidebar
@@ -119,6 +122,26 @@ const app = {
                 if (overlay) overlay.classList.remove('active');
             });
         });
+
+        // Initialize indicator position on first load
+        const activeItem = document.querySelector('.nav-item.active');
+        if (activeItem) {
+            setTimeout(() => app.moveNavIndicator(activeItem), 500);
+        }
+    },
+
+    moveNavIndicator: (element) => {
+        const indicator = document.getElementById('nav-indicator');
+        if (!indicator || !element) return;
+        
+        indicator.style.display = 'block';
+        const rect = element.getBoundingClientRect();
+        const parentRect = element.parentElement.getBoundingClientRect();
+        
+        const top = element.offsetTop;
+        const height = element.offsetHeight;
+        
+        indicator.style.top = `${top + (height / 2) - 20}px`; // Center 40px indicator
     },
 
     setupThemeToggle: () => {
@@ -161,8 +184,17 @@ const app = {
         });
 
         // Show target view
-        document.getElementById(viewId).classList.add('active');
+        const targetView = document.getElementById(viewId);
+        targetView.classList.add('active');
         app.state.currentView = viewId;
+
+        // Trigger staggered animations
+        const cascades = targetView.querySelectorAll('.animate-cascade');
+        cascades.forEach(c => {
+            c.classList.remove('active');
+            void c.offsetWidth; // Force reflow
+            c.classList.add('active');
+        });
 
         // Sync Ambient Music
         if (typeof AttendanceMusic !== 'undefined') AttendanceMusic.updateTabState(viewId);
@@ -1029,6 +1061,11 @@ const app = {
             if (log.status === 'late') {
                 const logDate = new Date(log.timestamp);
                 const RESET_DATE = '2026-06-10';
+                
+                // BỎ QUA NGÀY 13/06/2026 DO LỖI HỆ THỐNG
+                const dateStr = log.dateStr || (logDate.toISOString().slice(0, 10));
+                if (dateStr === '2026-06-13') return;
+
                 if (logDate >= new Date(RESET_DATE) && logDate.getMonth() === currentMonth && logDate.getFullYear() === currentYear) {
                     const u = log.username;
                     if (!lateStats[u]) lateStats[u] = { count: 0, totalMinutes: 0 };

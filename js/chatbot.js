@@ -172,7 +172,7 @@ const ChatbotModule = {
                 </div>
             </div>
 
-            <div class="dashboard-grid" style="grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;">
+            <div class="dashboard-grid animate-cascade" style="grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;">
                 ${cardsHtml}
             </div>
             

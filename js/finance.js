@@ -147,7 +147,7 @@ const FinanceModule = {
                 </div>
             </div>
             
-            <div class="glass-card">
+            <div class="glass-card animate-cascade">
                 <div class="transaction-list full-list" id="finance-list-container">
                     <!-- Danh sách giao dịch full -->
                 </div>

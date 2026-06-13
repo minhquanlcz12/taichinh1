@@ -25,6 +25,7 @@
 
     --transition-fast: 0.2s ease;
     --transition-normal: 0.3s ease;
+    --transition-slow: 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 body.dark-theme {
@@ -92,6 +93,94 @@ body {
     transition: background-color var(--transition-normal), color var(--transition-normal);
     min-height: 100vh;
     overflow: hidden;
+    position: relative;
+}
+
+/* --- AMBIENT CYBER BACKGROUND --- */
+.cyber-bg-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    pointer-events: none;
+    overflow: hidden;
+    opacity: 0.3;
+}
+
+.dark-theme .cyber-bg-overlay {
+    opacity: 0.5;
+}
+
+/* Scanning Grid */
+.cyber-grid {
+    position: absolute;
+    width: 200%;
+    height: 200%;
+    top: -50%;
+    left: -50%;
+    background-image: 
+        linear-gradient(rgba(16, 185, 129, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(16, 185, 129, 0.05) 1px, transparent 1px);
+    background-size: 50px 50px;
+    transform: perspective(500px) rotateX(60deg);
+    animation: grid-scroll 20s linear infinite;
+}
+
+@keyframes grid-scroll {
+    from { transform: perspective(500px) rotateX(60deg) translateY(0); }
+    to { transform: perspective(500px) rotateX(60deg) translateY(50px); }
+}
+
+/* Global Scanning Line */
+.cyber-scan-line {
+    position: absolute;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(to right, transparent, var(--primary), transparent);
+    opacity: 0.1;
+    top: -10%;
+    left: 0;
+    animation: scan-move 8s linear infinite;
+}
+
+@keyframes scan-move {
+    0% { top: -10%; }
+    100% { top: 110%; }
+}
+
+/* --- STAGGERED ENTRY ANIMATIONS --- */
+.animate-cascade > * {
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+.animate-cascade.active > * {
+    animation: fadeInUp var(--transition-slow) forwards;
+}
+
+/* Stagger delays up to 10 items */
+.animate-cascade.active > *:nth-child(1) { animation-delay: 0.1s; }
+.animate-cascade.active > *:nth-child(2) { animation-delay: 0.15s; }
+.animate-cascade.active > *:nth-child(3) { animation-delay: 0.2s; }
+.animate-cascade.active > *:nth-child(4) { animation-delay: 0.25s; }
+.animate-cascade.active > *:nth-child(5) { animation-delay: 0.3s; }
+.animate-cascade.active > *:nth-child(6) { animation-delay: 0.35s; }
+.animate-cascade.active > *:nth-child(7) { animation-delay: 0.4s; }
+.animate-cascade.active > *:nth-child(8) { animation-delay: 0.45s; }
+.animate-cascade.active > *:nth-child(9) { animation-delay: 0.5s; }
+.animate-cascade.active > *:nth-child(10) { animation-delay: 0.55s; }
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Skip Link for Accessibility */
@@ -392,9 +481,24 @@ body {
     background: rgba(0, 240, 255, 0.3) !important;
     box-shadow: 0 0 20px rgba(0, 240, 255, 0.4) !important;
     text-shadow: 0 0 5px #00f0ff;
+    transform: translateY(-1px);
+}
+.cyber-btn:active {
+    transform: translateY(1px) scale(0.98);
 }
 .cyber-btn:hover::before {
     left: 150%;
+}
+
+/* Button Pulse for primary actions */
+.btn-primary.cyber-btn {
+    animation: btn-glow-pulse 2s infinite;
+}
+
+@keyframes btn-glow-pulse {
+    0% { box-shadow: 0 0 5px rgba(0, 240, 255, 0.3); }
+    50% { box-shadow: 0 0 15px rgba(0, 240, 255, 0.6); }
+    100% { box-shadow: 0 0 5px rgba(0, 240, 255, 0.3); }
 }
 
 /* Glassmorphism Utilities */
@@ -604,6 +708,25 @@ body {
     list-style: none;
     padding: 0 12px;
     flex: 1;
+    position: relative; /* For indicator */
+}
+
+/* Sidebar Active Indicator */
+.nav-indicator {
+    position: absolute;
+    left: 4px;
+    width: 4px;
+    height: 40px;
+    background: var(--primary);
+    border-radius: 99px;
+    box-shadow: 0 0 15px var(--primary);
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    z-index: 5;
+    pointer-events: none;
+    display: none; /* Shown via JS */
+}
+.sidebar.dark-theme .nav-indicator, .dark-theme .sidebar .nav-indicator {
+    box-shadow: 0 0 20px var(--primary), 0 0 40px var(--primary);
 }
 
 .nav-item {

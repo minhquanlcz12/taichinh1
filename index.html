@@ -64,7 +64,11 @@
 </head>
 
 <body class="dark-theme">
-
+    <!-- AMBIENT BACKGROUND SYSTEM -->
+    <div class="cyber-bg-overlay">
+        <div class="cyber-grid"></div>
+        <div class="cyber-scan-line"></div>
+    </div>
 
     <!-- Auth Overlay -->
     <div id="auth-overlay" class="auth-overlay">
@@ -219,6 +223,7 @@
             </div>
 
             <ul class="nav-links">
+                <div class="nav-indicator" id="nav-indicator"></div>
                 <li class="nav-item active" data-target="dashboard-view">
                     <i class="fa-solid fa-chart-pie"></i>
                     <span>Tổng quan</span>
@@ -305,7 +310,7 @@
             <div class="view-container">
                 <!-- Dashboard View -->
                 <div id="dashboard-view" class="view active">
-                    <div class="dashboard-grid">
+                    <div class="dashboard-grid animate-cascade">
                         <!-- Summary Cards -->
                         <div class="summary-card neon-card-yellow">
                             <div class="card-inner">

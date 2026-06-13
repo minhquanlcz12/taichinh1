@@ -1116,7 +1116,13 @@ window.LobbyNeon = {
                 if (change.type === 'removed') return; // Bỏ qua các game bị xoá hoặc đã kết thúc
                 const game = change.doc.data();
                 const gameId = change.doc.id;
+                
                 if (game.player2 === me && !game.p2Accepted) {
+                    // Lọc bỏ các lời mời cũ hơn 3 phút để tránh thông báo "ma"
+                    const now = Date.now();
+                    const created = game.createdAt ? (game.createdAt.toDate ? game.createdAt.toDate().getTime() : game.createdAt) : now;
+                    if (now - created > 180000) return; 
+                    
                     LobbyNeon.showIncomingInvite(gameId, game.player1);
                 } else if ((game.player1 === me || game.player2 === me) && game.p2Accepted) {
                     LobbyNeon.openCaroBoard(gameId, game);

@@ -775,7 +775,10 @@ const PayrollModule = {
                             else if (a.status === 'late_excused') lateExcusedDays += weight;
                             else if (a.status === 'late') {
                                 lateDays += weight;
-                                lateCount++;
+                                // BỎ QUA PHẠT MUỘN CHO NGÀY 13/06/2026 DO LỖI HỆ THỐNG
+                                if (a.dateStr !== '2026-06-13') {
+                                    lateCount++;
+                                }
                             }
                         }
                     }
@@ -1384,7 +1387,10 @@ const PayrollModule = {
                         else if (a.status === 'late_excused') lateExcusedDays += weight;
                         else if (a.status === 'late') {
                             lateDays += weight;
-                            lateCount++;
+                            // BỎ QUA PHẠT MUỘN CHO NGÀY 13/06/2026 DO LỖI HỆ THỐNG
+                            if (a.dateStr !== '2026-06-13') {
+                                lateCount++;
+                            }
                         }
                     }
                 }
@@ -1482,7 +1488,10 @@ const PayrollModule = {
                         else if (a.status === 'late_excused') lateExcusedDays += weight;
                         else if (a.status === 'late') {
                             lateDays += weight;
-                            lateCount++;
+                            // BỎ QUA PHẠT MUỘN CHO NGÀY 13/06/2026 DO LỖI HỆ THỐNG
+                            if (a.dateStr !== '2026-06-13') {
+                                lateCount++;
+                            }
                         }
                     }
                 }

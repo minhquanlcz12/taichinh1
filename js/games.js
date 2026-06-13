@@ -104,20 +104,20 @@ const GamesModule = {
             { id: 3, name: 'Phòng MC / Host 🎙️', type: 'property', cost: 4, rent: 1.5, owner: null, color: '#3b82f6' },
             { id: 4, name: 'Thuế Thu Nhập 💸', type: 'tax', cost: 2, desc: 'Làm mất tài liệu phạt -2đ Công Đức' },
             { id: 5, name: 'Căn Tin ☕', type: 'property', cost: 5, rent: 2, owner: null, color: '#10b981' },
-            { id: 6, name: 'Phòng Design 🎨', type: 'property', cost: 5, rent: 2, owner: null, color: '#10b981' },
+            { id: 6, name: 'Kênh TikTok 📈', type: 'property', cost: 6, rent: 2.5, owner: null, color: '#eab308' },
             { id: 7, name: 'Vận May 🍀', type: 'lucky', color: '#00f3ff' },
-            { id: 8, name: 'Kênh TikTok 📈', type: 'property', cost: 6, rent: 2.5, owner: null, color: '#eab308' },
-            { id: 9, name: 'Phòng Server 🖥️', type: 'property', cost: 6, rent: 2.5, owner: null, color: '#eab308' },
+            { id: 8, name: 'Phòng Content 📝', type: 'property', cost: 7, rent: 3, owner: null, color: '#fda4af' },
+            { id: 9, name: 'Phòng Marketing 📊', type: 'property', cost: 9, rent: 4, owner: null, color: '#f97316' },
             { id: 10, name: 'Đi Trễ Phạt Đứng 🔒', type: 'jail', desc: 'Mất lượt trừ khi nộp 2đ Công Đức cho HR' },
-            { id: 11, name: 'Phòng Content 📝', type: 'property', cost: 7, rent: 3, owner: null, color: '#fda4af' },
+            { id: 11, name: 'Phòng Họp VIP 👑', type: 'property', cost: 13, rent: 6, owner: null, color: '#a855f7' },
             { id: 12, name: 'Cơ Hội ❓', type: 'chance', color: '#a855f7' },
-            { id: 13, name: 'Studio Live 🎥', type: 'property', cost: 8, rent: 3.5, owner: null, color: '#fda4af' },
+            { id: 13, name: 'Xe Máy Của Sếp 🏎️', type: 'property', cost: 11, rent: 5, owner: null, color: '#a855f7' },
             { id: 14, name: 'Sếp Bao Trưa 🍔', type: 'buff', desc: 'Thử việc xuất sắc được Sếp mời ăn +2đ' },
-            { id: 15, name: 'Phòng Marketing 📊', type: 'property', cost: 9, rent: 4, owner: null, color: '#f97316' },
-            { id: 16, name: 'Phòng Manager 💼', type: 'property', cost: 9, rent: 4, owner: null, color: '#f97316' },
+            { id: 15, name: 'Phòng Manager 💼', type: 'property', cost: 9, rent: 4, owner: null, color: '#f97316' },
+            { id: 16, name: 'Studio Live 🎥', type: 'property', cost: 8, rent: 3.5, owner: null, color: '#fda4af' },
             { id: 17, name: 'Vận May 🍀', type: 'lucky', color: '#00f3ff' },
-            { id: 18, name: 'Xe Máy Của Sếp 🏎️', type: 'property', cost: 11, rent: 5, owner: null, color: '#a855f7' },
-            { id: 19, name: 'Phòng Họp VIP 👑', type: 'property', cost: 13, rent: 6, owner: null, color: '#a855f7' }
+            { id: 18, name: 'Phòng Server 🖥️', type: 'property', cost: 6, rent: 2.5, owner: null, color: '#eab308' },
+            { id: 19, name: 'Phòng Design 🎨', type: 'property', cost: 5, rent: 2, owner: null, color: '#10b981' }
         ],
         players: [], 
         currentPlayerIdx: 0,
@@ -376,93 +376,224 @@ const GamesModule = {
                 display: grid;
                 grid-template-columns: 1.5fr repeat(4, 1fr) 1.5fr;
                 grid-template-rows: 1.5fr repeat(4, 1fr) 1.5fr;
-                gap: 2px;
-                background: linear-gradient(145deg, #060d1e 0%, #130830 45%, #080e20 100%);
-                border: 3px solid;
-                border-image: linear-gradient(135deg, #8b5cf6, #a855f7, #ec4899, #06b6d4, #8b5cf6) 1;
-                padding: 3px;
+                gap: 4px;
+                background:
+                    radial-gradient(circle at 18% 18%, rgba(34,211,238,0.16), transparent 26%),
+                    radial-gradient(circle at 82% 78%, rgba(236,72,153,0.16), transparent 30%),
+                    linear-gradient(145deg, #111b34 0%, #15102f 48%, #07111f 100%);
+                border: 1px solid rgba(125,211,252,0.28);
+                border-radius: 20px;
+                padding: 10px;
                 width: 100%;
-                max-width: min(920px, 80vh);
+                max-width: min(960px, 82vh);
                 margin: 0 auto;
                 aspect-ratio: 1;
                 box-shadow:
-                    0 0 50px rgba(139,92,246,0.12),
-                    0 0 100px rgba(139,92,246,0.06),
-                    0 10px 40px rgba(0,0,0,0.7),
-                    inset 0 0 30px rgba(0,0,0,0.5);
+                    0 24px 80px rgba(0,0,0,0.72),
+                    0 0 0 3px rgba(139,92,246,0.24),
+                    0 0 42px rgba(6,182,212,0.18),
+                    0 0 80px rgba(236,72,153,0.14),
+                    inset 0 0 0 2px rgba(255,255,255,0.08),
+                    inset 0 0 45px rgba(0,0,0,0.55);
                 position: relative;
+                isolation: isolate;
             }
             .mono-board::before {
                 content: '';
                 position: absolute;
-                inset: 0;
-                background: radial-gradient(circle at 50% 50%, rgba(139,92,246,0.05) 0%, transparent 60%);
+                inset: -14px;
+                border-radius: 26px;
+                background:
+                    linear-gradient(135deg, rgba(34,211,238,0.35), rgba(139,92,246,0.2), rgba(236,72,153,0.35)),
+                    radial-gradient(circle at 50% 50%, rgba(139,92,246,0.14), transparent 60%);
+                filter: blur(12px);
+                pointer-events: none;
+                z-index: -1;
+                opacity: 0.78;
+            }
+            .mono-board::after {
+                content: '';
+                position: absolute;
+                inset: 10px;
+                border-radius: 14px;
+                border: 1px solid rgba(255,255,255,0.08);
+                box-shadow: inset 0 0 22px rgba(34,211,238,0.08);
                 pointer-events: none;
                 z-index: 0;
             }
 
             /* Individual Tile */
             .mono-tile {
-                background: rgba(16,24,48,0.92);
-                border: 1px solid rgba(255,255,255,0.06);
-                padding: 2px;
+                background:
+                    linear-gradient(160deg, rgba(34,43,74,0.98), rgba(12,20,42,0.98) 54%, rgba(9,14,30,0.98)),
+                    radial-gradient(circle at 50% 0%, rgba(255,255,255,0.1), transparent 52%);
+                border: 1px solid rgba(148,163,184,0.16);
+                border-radius: 10px;
+                padding: 5px 4px;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
-                gap: 1px;
+                gap: 2px;
                 position: relative;
                 overflow: hidden;
                 transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
-                z-index: 1;
+                z-index: 2;
                 cursor: default;
+                box-shadow:
+                    inset 0 1px 0 rgba(255,255,255,0.14),
+                    inset 0 -10px 16px rgba(0,0,0,0.28),
+                    0 6px 0 rgba(3,7,18,0.75),
+                    0 12px 18px rgba(0,0,0,0.25);
+            }
+            .mono-tile > * {
+                position: relative;
+                z-index: 2;
+            }
+            .mono-tile::before {
+                content: '';
+                position: absolute;
+                inset: 1px;
+                border-radius: 9px;
+                background:
+                    linear-gradient(135deg, rgba(255,255,255,0.08), transparent 35%),
+                    repeating-linear-gradient(90deg, rgba(255,255,255,0.025) 0 1px, transparent 1px 10px);
+                pointer-events: none;
+                z-index: 0;
+            }
+            .mono-tile.property::after {
+                content: '';
+                position: absolute;
+                inset: auto 10px 9px 10px;
+                height: 3px;
+                border-radius: 999px;
+                background: var(--bar-color);
+                box-shadow: 0 0 12px var(--bar-color);
+                opacity: 0.45;
+                z-index: 1;
             }
             .mono-tile:hover {
                 z-index: 10;
-                box-shadow: 0 0 20px rgba(139,92,246,0.3), inset 0 0 15px rgba(139,92,246,0.08);
-                border-color: rgba(139,92,246,0.4);
-                transform: scale(1.06);
+                box-shadow:
+                    0 0 24px rgba(34,211,238,0.22),
+                    0 0 34px rgba(139,92,246,0.26),
+                    inset 0 0 20px rgba(139,92,246,0.12),
+                    0 8px 0 rgba(3,7,18,0.75);
+                border-color: rgba(125,211,252,0.45);
+                transform: translateY(-3px) scale(1.045);
             }
             .mono-tile.has-player {
-                box-shadow: 0 0 12px rgba(255,255,255,0.08);
+                border-color: rgba(34,211,238,0.5);
+                box-shadow:
+                    0 0 18px rgba(34,211,238,0.28),
+                    inset 0 0 18px rgba(34,211,238,0.08),
+                    0 6px 0 rgba(3,7,18,0.75);
+            }
+            .mono-tile.start {
+                background:
+                    radial-gradient(circle at 50% 44%, rgba(34,211,238,0.2), transparent 43%),
+                    linear-gradient(135deg, rgba(15,118,110,0.72), rgba(30,41,59,0.98));
+                border-color: rgba(34,211,238,0.48);
+            }
+            .mono-tile.jail {
+                background:
+                    repeating-linear-gradient(45deg, rgba(251,191,36,0.12) 0 8px, rgba(15,23,42,0.08) 8px 16px),
+                    linear-gradient(135deg, rgba(88,28,135,0.85), rgba(30,10,32,0.98));
+                border-color: rgba(251,191,36,0.42);
+            }
+            .mono-tile.chance {
+                background:
+                    radial-gradient(circle at 50% 38%, rgba(168,85,247,0.28), transparent 46%),
+                    linear-gradient(135deg, rgba(59,7,100,0.84), rgba(15,23,42,0.98));
+                border-color: rgba(168,85,247,0.46);
+            }
+            .mono-tile.lucky {
+                background:
+                    radial-gradient(circle at 50% 38%, rgba(45,212,191,0.22), transparent 48%),
+                    linear-gradient(135deg, rgba(8,47,73,0.86), rgba(6,78,59,0.78));
+                border-color: rgba(45,212,191,0.44);
+            }
+            .mono-tile.tax {
+                background:
+                    radial-gradient(circle at 50% 34%, rgba(248,113,113,0.18), transparent 44%),
+                    linear-gradient(135deg, rgba(69,10,10,0.76), rgba(15,23,42,0.98));
+                border-color: rgba(248,113,113,0.38);
+            }
+            .mono-tile.buff {
+                background:
+                    radial-gradient(circle at 50% 36%, rgba(251,191,36,0.2), transparent 46%),
+                    linear-gradient(135deg, rgba(113,63,18,0.78), rgba(15,23,42,0.98));
+                border-color: rgba(251,191,36,0.4);
             }
 
             /* Corner Tiles */
             .mono-tile.corner-tile {
-                background: linear-gradient(135deg, rgba(22,18,55,0.95), rgba(18,28,52,0.95));
-                border-color: rgba(139,92,246,0.25);
+                background:
+                    radial-gradient(circle at 50% 35%, rgba(251,191,36,0.13), transparent 45%),
+                    linear-gradient(135deg, rgba(39,31,89,0.98), rgba(13,26,49,0.98));
+                border-color: rgba(251,191,36,0.32);
+                box-shadow:
+                    inset 0 0 18px rgba(251,191,36,0.08),
+                    0 6px 0 rgba(3,7,18,0.75),
+                    0 0 20px rgba(139,92,246,0.14);
             }
 
             /* Color bars on property tiles facing center */
             .mono-color-bar {
                 position: absolute;
-                background: var(--bar-color);
-                box-shadow: 0 0 8px var(--bar-color);
-                z-index: 2;
+                background: linear-gradient(90deg, rgba(255,255,255,0.35), var(--bar-color), rgba(255,255,255,0.18));
+                box-shadow: 0 0 14px var(--bar-color), inset 0 0 5px rgba(255,255,255,0.35);
+                z-index: 3;
             }
-            .side-top .mono-color-bar { bottom: 0; left: 0; right: 0; height: 5px; }
-            .side-right .mono-color-bar { top: 0; left: 0; bottom: 0; width: 5px; }
-            .side-bottom .mono-color-bar { top: 0; left: 0; right: 0; height: 5px; }
-            .side-left .mono-color-bar { top: 0; right: 0; bottom: 0; width: 5px; }
+            .side-top .mono-color-bar { bottom: 0; left: 8px; right: 8px; height: 7px; border-radius: 999px 999px 0 0; }
+            .side-right .mono-color-bar { top: 8px; left: 0; bottom: 8px; width: 7px; border-radius: 0 999px 999px 0; }
+            .side-bottom .mono-color-bar { top: 0; left: 8px; right: 8px; height: 7px; border-radius: 0 0 999px 999px; }
+            .side-left .mono-color-bar { top: 8px; right: 0; bottom: 8px; width: 7px; border-radius: 999px 0 0 999px; }
+
+            .mono-step-badge {
+                position: absolute;
+                top: 5px;
+                left: 6px;
+                min-width: 18px;
+                height: 18px;
+                padding: 0 5px;
+                border-radius: 999px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 9px;
+                font-weight: 950;
+                color: #67e8f9;
+                background: rgba(2,6,23,0.72);
+                border: 1px solid rgba(34,211,238,0.34);
+                box-shadow: 0 0 10px rgba(34,211,238,0.18);
+                z-index: 4;
+            }
 
             .mono-tile-name {
                 font-weight: 800;
                 color: #e2e8f0;
-                font-size: 8px;
+                font-size: 8.6px;
                 text-align: center;
-                line-height: 1.15;
+                line-height: 1.12;
                 max-width: 100%;
-                padding: 0 1px;
+                padding: 0 2px;
+                text-shadow: 0 1px 2px rgba(0,0,0,0.88), 0 0 8px rgba(148,163,184,0.1);
             }
             .corner-tile .mono-tile-name {
-                font-size: 9px;
-                color: #a78bfa;
+                font-size: 10px;
+                color: #fde68a;
+                text-shadow: 0 0 12px rgba(251,191,36,0.24);
             }
             .mono-tile-cost {
-                font-size: 9px;
+                font-size: 9.4px;
                 font-weight: 900;
                 color: #fbbf24;
-                text-shadow: 0 0 5px rgba(251,191,36,0.25);
+                text-shadow: 0 0 8px rgba(251,191,36,0.35);
+                background: rgba(2,6,23,0.48);
+                border: 1px solid rgba(251,191,36,0.14);
+                border-radius: 999px;
+                padding: 1px 6px;
             }
             .mono-tile-owner {
                 position: absolute;
@@ -733,10 +864,11 @@ const GamesModule = {
                 grid-column: 2 / 6;
                 grid-row: 2 / 6;
                 background:
-                    radial-gradient(ellipse at 50% 50%, rgba(139,92,246,0.07) 0%, transparent 65%),
-                    linear-gradient(145deg, rgba(10,15,30,0.98), rgba(14,10,35,0.98));
-                border: 1.5px dashed rgba(139,92,246,0.18);
-                border-radius: 8px;
+                    radial-gradient(circle at 50% 38%, rgba(34,211,238,0.14), transparent 18%),
+                    radial-gradient(ellipse at 50% 50%, rgba(139,92,246,0.18) 0%, transparent 66%),
+                    linear-gradient(145deg, rgba(5,9,22,0.98), rgba(17,10,42,0.98));
+                border: 1.5px solid rgba(139,92,246,0.24);
+                border-radius: 18px;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
@@ -744,7 +876,10 @@ const GamesModule = {
                 padding: 12px;
                 gap: 8px;
                 text-align: center;
-                box-shadow: inset 0 0 50px rgba(0,0,0,0.6);
+                box-shadow:
+                    inset 0 0 60px rgba(0,0,0,0.7),
+                    inset 0 0 0 1px rgba(255,255,255,0.05),
+                    0 0 38px rgba(139,92,246,0.16);
                 position: relative;
                 z-index: 1;
                 overflow: hidden;
@@ -756,6 +891,19 @@ const GamesModule = {
                 background: conic-gradient(from 0deg, transparent 0%, rgba(139,92,246,0.03) 12%, transparent 25%, rgba(236,72,153,0.03) 37%, transparent 50%, rgba(6,182,212,0.03) 62%, transparent 75%, rgba(139,92,246,0.03) 87%, transparent 100%);
                 animation: rotGlow 30s linear infinite;
                 pointer-events: none;
+            }
+            .mono-center-panel::after {
+                content: '';
+                position: absolute;
+                inset: 14px;
+                border-radius: 14px;
+                border: 1px dashed rgba(34,211,238,0.18);
+                background:
+                    linear-gradient(90deg, transparent 49%, rgba(34,211,238,0.08) 50%, transparent 51%),
+                    linear-gradient(0deg, transparent 49%, rgba(236,72,153,0.06) 50%, transparent 51%);
+                background-size: 34px 34px;
+                pointer-events: none;
+                opacity: 0.46;
             }
             @keyframes rotGlow { to { transform: rotate(360deg); } }
 
@@ -770,22 +918,38 @@ const GamesModule = {
             .mono-dice {
                 width: 80px;
                 height: 80px;
-                background: linear-gradient(135deg, #1e1b4b 0%, #311042 100%);
-                border: 3.5px solid #c084fc;
-                border-radius: 16px;
-                box-shadow: 0 0 25px rgba(192, 132, 252, 0.5), inset 0 0 12px rgba(0,0,0,0.85);
+                background:
+                    radial-gradient(circle at 28% 24%, rgba(255,255,255,0.26), transparent 19%),
+                    linear-gradient(145deg, #1c2365 0%, #33124b 62%, #120923 100%);
+                border: 3px solid #d8b4fe;
+                border-radius: 18px;
+                box-shadow:
+                    0 12px 0 rgba(43,16,75,0.8),
+                    0 0 30px rgba(192,132,252,0.56),
+                    inset 0 2px 0 rgba(255,255,255,0.25),
+                    inset 0 -14px 18px rgba(0,0,0,0.62);
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 position: relative;
                 transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                transform: perspective(260px) rotateX(7deg) rotateY(-7deg);
+            }
+            .mono-dice::before {
+                content: '';
+                position: absolute;
+                inset: 8px 10px auto 10px;
+                height: 20px;
+                border-radius: 999px;
+                background: linear-gradient(90deg, transparent, rgba(255,255,255,0.24), transparent);
+                pointer-events: none;
             }
             .mono-dice.rolling {
                 animation: diceShake3D 0.2s infinite alternate;
             }
             @keyframes diceShake3D {
-                0% { transform: scale(0.95) rotateX(15deg) rotateY(-15deg) rotateZ(5deg) translateY(-2px); }
-                100% { transform: scale(1.05) rotateX(-15deg) rotateY(15deg) rotateZ(-5deg) translateY(2px); }
+                0% { transform: perspective(260px) scale(0.96) rotateX(21deg) rotateY(-18deg) rotateZ(6deg) translateY(-3px); }
+                100% { transform: perspective(260px) scale(1.06) rotateX(-18deg) rotateY(18deg) rotateZ(-7deg) translateY(3px); }
             }
             .mono-dice-face {
                 width: 100%;
@@ -797,8 +961,8 @@ const GamesModule = {
                 position: absolute;
                 width: 12px;
                 height: 12px;
-                background: #00ffff;
-                box-shadow: 0 0 8px #00ffff;
+                background: #22ffff;
+                box-shadow: 0 0 7px #22ffff, 0 0 18px rgba(34,255,255,0.72);
                 border-radius: 50%;
                 transform: translate(-50%, -50%);
             }
@@ -1568,6 +1732,7 @@ const GamesModule = {
 
             return `
                 <div class="mono-tile ${tile.type} ${sideClass} ${lvlClass} ${isCorner ? 'corner-tile' : ''} ${hasPawns ? 'has-player' : ''}" ${tileClickHtml} style="--bar-color: ${tile.color || 'transparent'}; ${gridPos} ${ownerTileStyle}">
+                    <div class="mono-step-badge">${idx}</div>
                     ${tile.type === 'property' ? '<div class="mono-color-bar"></div>' : ''}
                     <div class="mono-tile-name">${tile.name}</div>
                     ${tile.type === 'property' ? `<div class="mono-tile-cost">${levelIcon}${tile.cost}đ ${stars ? `<span style="color:#fbbf24; font-weight: 900;">${stars}</span>` : ''}</div>` : ''}
