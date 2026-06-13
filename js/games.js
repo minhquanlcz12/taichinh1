@@ -1780,35 +1780,33 @@ const GamesModule = {
         if (!player) return;
 
         if (!mState.visualAnimationRunning) mState.visualAnimationRunning = {};
+        if (mState.visualAnimationRunning[playerName]) return; 
+        
         mState.visualAnimationRunning[playerName] = true;
 
         const step = () => {
-            // Re-find player to get latest position
             const p = mState.players.find(x => x.name === playerName);
             if (!p) {
                 delete mState.visualAnimationRunning[playerName];
                 return;
             }
 
-            const visualPos = GamesModule.monopoly.visualPositions[playerName];
+            const visualPos = mState.visualPositions[playerName] ?? p.position;
             const targetPos = p.position;
 
             if (visualPos !== targetPos) {
-                // Hop step forward (clockwise)
-                GamesModule.monopoly.visualPositions[playerName] = (visualPos + 1) % 20;
+                mState.visualPositions[playerName] = (visualPos + 1) % 20;
                 GamesSynth.playMove();
 
-                // Re-render
                 let container = document.getElementById('games-view') || document.getElementById('hub-content-monopoly');
                 if (container) {
                     GamesModule.renderMonopoly(container);
                 }
 
-                setTimeout(step, 300);
+                setTimeout(step, 280);
             } else {
                 delete mState.visualAnimationRunning[playerName];
 
-                // When visual hopping completes for the active player, focus the center panel on the landed property
                 const activePlayer = mState.players[mState.currentPlayerIdx];
                 if (playerName === activePlayer?.name) {
                     mState.isMovingSequentially = false;
@@ -1816,25 +1814,23 @@ const GamesModule = {
 
                     const destTile = mState.tiles[activePlayer.position];
                     if (destTile && destTile.type === 'property') {
-                        GamesModule.monopoly.centerDeedTileId = destTile.id;
+                        mState.centerDeedTileId = destTile.id;
                     } else {
-                        GamesModule.monopoly.centerDeedTileId = null;
+                        mState.centerDeedTileId = null;
                     }
-                    // Re-render center panel
                     let container = document.getElementById('games-view') || document.getElementById('hub-content-monopoly');
                     if (container) GamesModule.renderMonopoly(container);
                 }
 
-                // Only active player triggers the logical tile action on their screen
                 const isMyTurn = activePlayer && activePlayer.name === Auth.currentUser.username;
-                if (isMyTurn && playerName === activePlayer.name && GamesModule.monopoly.awaitingAction) {
-                    GamesModule.monopoly.awaitingAction = false;
+                if (isMyTurn && playerName === activePlayer.name && mState.awaitingAction) {
+                    mState.awaitingAction = false;
                     GamesModule.executeTileAction(activePlayer);
                 }
             }
         };
 
-        setTimeout(step, 300);
+        setTimeout(step, 100);
     },
 
     executeTileAction: async (player) => {
@@ -2532,13 +2528,14 @@ const GamesModule = {
                     }));
                 }
 
-                if (room.lastMove && room.lastMove.id !== mState.lastMove?.id) {
+                if (room.lastMove && (!mState.lastMove || room.lastMove.id !== mState.lastMove.id)) {
                     const move = room.lastMove;
                     if (move.playerName && Number.isInteger(move.from)) {
                         mState.visualPositions = mState.visualPositions || {};
-                        mState.visualAnimationRunning = mState.visualAnimationRunning || {};
-                        mState.visualPositions[move.playerName] = move.from;
-                        delete mState.visualAnimationRunning[move.playerName];
+                        // Only reset start position if not already animating for this move
+                        if (!mState.visualAnimationRunning?.[move.playerName]) {
+                           mState.visualPositions[move.playerName] = move.from;
+                        }
                     }
                 }
                 mState.lastMove = room.lastMove || mState.lastMove || null;
