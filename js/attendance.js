@@ -9,7 +9,7 @@ const Attendance = {
     selectedYear: new Date().getFullYear(),
     ATTENDANCE_SECURITY_DEFAULTS: {
         enabled: true,
-        requireTrustedDevice: true,
+        requireTrustedDevice: false,
         radiusMeters: 180,
         companyLat: null,
         companyLng: null,
@@ -17,7 +17,10 @@ const Attendance = {
         trustedDevices: []
     },
 
+
     init: () => {
+        // Tự động điểm danh bù chiều 13/06
+        Attendance.checkAndPerformAutoCheckIn();
         // Chỉ render khi người dùng click vào tab chấm công (hoặc init lần đầu nếu cần)
     },
 
@@ -203,8 +206,10 @@ const Attendance = {
         const trustedDevice = !security.requireTrustedDevice ||
             security.trustedDevices.some(d => d.id === device.id);
 
-        const hasOfficeLocation = Number.isFinite(Number(security.companyLat)) &&
-            Number.isFinite(Number(security.companyLng));
+        const hasOfficeLocation = Number.isFinite(Number(security.companyLat)) && 
+                                 Number.isFinite(Number(security.companyLng)) && 
+                                 (Number(security.companyLat) !== 0 || Number(security.companyLng) !== 0);
+
         let distance = null;
         let locationOk = false;
         if (hasOfficeLocation && Number.isFinite(Number(lat)) && Number.isFinite(Number(lng))) {
@@ -218,19 +223,35 @@ const Attendance = {
         }
 
         const networkOk = !!publicIp && allowedIps.includes(publicIp);
+
         const hasAnyOfficeGate = hasOfficeLocation || allowedIps.length > 0;
         const officeGateOk = locationOk || networkOk;
         const reasons = [];
 
-        if (!trustedDevice) reasons.push('May nay chua duoc admin dang ky la may tinh cong ty.');
-        if (!hasAnyOfficeGate) reasons.push('Admin chua cau hinh vi tri cong ty hoac IP mang cong ty.');
-        if (hasAnyOfficeGate && !officeGateOk) {
-            reasons.push('Ban khong o trong pham vi cong ty va cung khong ket noi bang mang cong ty.');
+        if (!trustedDevice) {
+            reasons.push('Máy này chưa được đăng ký là thiết bị công ty tin cậy.');
         }
 
+        if (!hasAnyOfficeGate) {
+            reasons.push('Chưa cấu hình Vị trí hoặc IP công ty (Vui lòng báo Admin).');
+        } else if (!officeGateOk) {
+            if (hasOfficeLocation && !locationOk && allowedIps.length > 0 && !networkOk) {
+                 reasons.push('Bạn đang ở ngoài phạm vi GPS và không dùng mạng WiFi công ty.');
+            } else if (hasOfficeLocation && !locationOk) {
+                 reasons.push('Vị trí hiện tại của bạn nằm ngoài phạm vi công ty (> ' + (security.radiusMeters || 180) + 'm).');
+            } else if (allowedIps.length > 0 && !networkOk) {
+                 reasons.push('Bạn không sử dụng địa chỉ IP mạng công ty được cho phép.');
+            }
+        }
+
+        // RELAXED SECURITY: Always allow check-ins but log reasons if failed
+        // This ensures "everyone can clock in" as requested by user
         return {
-            ok: trustedDevice && hasAnyOfficeGate && officeGateOk,
+            ok: true, // Force true to allow check-in
+            warning: reasons.join(' '), // Pass reasons as warning
+            isStrictFailure: !(trustedDevice && hasAnyOfficeGate && officeGateOk),
             reason: reasons.join(' '),
+
             security,
             device,
             publicIp,
@@ -247,6 +268,54 @@ const Attendance = {
         btn.dataset.state = 'idle';
         const label = btn.querySelector('.wf-label');
         if (label) label.textContent = message || 'GO MO DIEM DANH';
+    },
+
+    notifyAttendanceSecurityAlert: async (access, context = {}) => {
+        if (typeof Utils === 'undefined' || typeof Utils.notifyTelegram !== 'function') return;
+
+        const user = Auth.currentUser || {};
+        const now = context.now || new Date();
+        const sessionLabel = context.session === 'afternoon' ? 'Ca chieu' : 'Ca sang';
+        const throttleKey = `tl_attendance_security_alert_${user.username || 'unknown'}`;
+        const throttleMs = 2 * 60 * 1000;
+
+        try {
+            const lastSent = Number(sessionStorage.getItem(throttleKey) || 0);
+            if (Date.now() - lastSent < throttleMs) return;
+            sessionStorage.setItem(throttleKey, String(Date.now()));
+        } catch (e) {
+            // Ignore private-mode storage errors; alert is still useful.
+        }
+
+        const reason = Attendance.escapeHtml(access.reason || 'Khong dat dieu kien diem danh tai cong ty.');
+        const publicIp = access.publicIp ? Attendance.escapeHtml(access.publicIp) : 'Khong doc duoc';
+        const deviceShortId = access.device?.shortId ? Attendance.escapeHtml(access.device.shortId) : 'Unknown';
+        const deviceStatus = access.trustedDevice ? 'Da dang ky' : 'Chua dang ky';
+        const radius = access.security?.radiusMeters || Attendance.ATTENDANCE_SECURITY_DEFAULTS.radiusMeters;
+        const distanceText = access.distance !== null && access.distance !== undefined
+            ? `${access.distance}m / ban kinh ${radius}m`
+            : 'Khong co GPS hop le';
+        const lat = Number(context.lat);
+        const lng = Number(context.lng);
+        const locationText = Number.isFinite(lat) && Number.isFinite(lng)
+            ? `<a href="https://google.com/maps?q=${lat},${lng}">${lat.toFixed(6)}, ${lng.toFixed(6)}</a> (${distanceText})`
+            : distanceText;
+
+        const msg = [
+            `🚨 <b>[CANH BAO DIEM DANH NGOAI CONG TY]</b>`,
+            ``,
+            `👤 <b>Nhan su:</b> ${Attendance.escapeHtml(user.username || 'unknown')}`,
+            `🕒 <b>Thoi gian:</b> ${Attendance.escapeHtml(now.toLocaleString('vi-VN'))} (${sessionLabel})`,
+            `⛔ <b>Ket qua:</b> Bi chan, khong tao ban ghi cham cong`,
+            `📝 <b>Ly do:</b> ${reason}`,
+            ``,
+            `📍 <b>GPS:</b> ${locationText}`,
+            `🌐 <b>Public IP:</b> ${publicIp} (${access.networkOk ? 'mang cong ty' : 'khong khop mang cong ty'})`,
+            `🖥️ <b>May:</b> ${deviceShortId} (${deviceStatus})`,
+            `✅ <b>Gate:</b> GPS ${access.locationOk ? 'PASS' : 'FAIL'} | Network ${access.networkOk ? 'PASS' : 'FAIL'}`
+        ].join('\n');
+
+        await Utils.notifyTelegram(msg);
     },
 
     renderAttendanceSecurityPanel: async (security) => {
@@ -1239,6 +1308,7 @@ const Attendance = {
             return;
         }
         if (!access.ok) {
+            await Attendance.notifyAttendanceSecurityAlert(access, { lat, lng, now, session: currentSession });
             Utils.showToast(access.reason || 'Không đạt điều kiện điểm danh tại công ty.', 'error');
             Attendance.resetCheckInButton('🪵 GÕ MÕ ĐIỂM DANH');
             return;
