@@ -886,21 +886,22 @@ const GamesModule = {
             /* Building models on property tiles */
             .mono-building-container {
                 position: absolute;
-                top: 45%;
+                top: 52%;
                 left: 50%;
                 transform: translate(-50%, -50%);
-                display: flex;
+                display: grid;
+                place-items: center;
                 justify-content: center;
                 align-items: flex-end;
-                height: 38px;
-                width: 38px;
+                height: 54px;
+                width: 64px;
                 pointer-events: none;
-                z-index: 2;
+                z-index: 4;
                 opacity: 0.95;
-                animation: buildingRise 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+                animation: buildingRise 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
             }
             @keyframes buildingRise {
-                from { transform: translate(-50%, -20%) scale(0); opacity: 0; }
+                from { transform: translate(-50%, -14%) scale(0.35); opacity: 0; }
                 to { transform: translate(-50%, -50%) scale(1); opacity: 0.95; }
             }
             .mono-building {
@@ -909,67 +910,150 @@ const GamesModule = {
                 flex-direction: column;
                 align-items: center;
                 justify-content: flex-end;
-                width: 24px;
+                width: 56px;
+                height: 44px;
                 transition: all 0.3s;
+                filter: drop-shadow(0 7px 10px rgba(0,0,0,0.62));
             }
-            .building-body {
-                width: 18px;
-                height: 10px;
-                background: linear-gradient(to top, rgba(15,23,42,0.9), rgba(30,41,59,0.85));
-                border: 1.5px solid var(--owner-color);
-                box-shadow: 0 0 8px var(--owner-color);
-                border-radius: 3px;
-                margin-top: -1px;
-                position: relative;
-            }
-            .building-body::before {
-                content: '';
+            .building-ground {
                 position: absolute;
-                inset: 2px;
-                background-image: radial-gradient(circle, #fff 15%, transparent 25%);
-                background-size: 4px 4px;
+                left: 5px;
+                right: 5px;
+                bottom: 0;
+                height: 8px;
+                border-radius: 50%;
+                background: radial-gradient(ellipse at center, var(--owner-color), transparent 72%);
                 opacity: 0.8;
+                filter: blur(1px);
             }
-            .building-roof {
-                width: 20px;
-                height: 3px;
-                background: var(--owner-color);
-                box-shadow: 0 0 6px var(--owner-color);
-                border-radius: 2px;
+            .building-pad {
+                position: relative;
+                width: 46px;
+                height: 12px;
+                border-radius: 5px 5px 8px 8px;
+                background: linear-gradient(180deg, #94a3b8, #334155 62%, #111827);
+                border: 2px solid var(--owner-color);
+                box-shadow: 0 0 12px var(--owner-color), inset 0 3px 0 rgba(255,255,255,0.22);
+                transform: perspective(60px) rotateX(22deg);
                 z-index: 3;
             }
-            .mono-building.lvl-2 .building-body.body-2 {
-                width: 14px;
-                height: 9px;
-                border-color: #00f3ff;
-                box-shadow: 0 0 8px #00f3ff;
+            .building-rebar {
+                position: absolute;
+                bottom: 11px;
+                width: 4px;
+                height: 18px;
+                border-radius: 3px;
+                background: linear-gradient(180deg, #fbbf24, #64748b);
+                box-shadow: 0 0 6px rgba(251,191,36,0.7);
             }
-            .mono-building.lvl-2 .building-roof {
-                background: #00f3ff;
-                box-shadow: 0 0 6px #00f3ff;
-                width: 16px;
-            }
-            .mono-building.lvl-3 .building-body.body-3 {
-                width: 11px;
-                height: 9px;
-                border-color: #fbbf24;
-                box-shadow: 0 0 10px #fbbf24;
-            }
-            .mono-building.lvl-3 .building-body.body-2 {
-                border-color: #ec4899;
-                box-shadow: 0 0 8px #ec4899;
-            }
-            .mono-building.lvl-3 .building-roof {
-                background: #fbbf24;
-                box-shadow: 0 0 8px #fbbf24;
-                width: 13px;
-            }
-            .building-spire {
-                width: 2px;
-                height: 6px;
-                background: #fbbf24;
-                box-shadow: 0 0 8px #fbbf24;
+            .building-rebar.r1 { left: 14px; height: 14px; }
+            .building-rebar.r2 { left: 26px; height: 21px; }
+            .building-rebar.r3 { right: 13px; height: 16px; }
+            .house-roof {
+                width: 46px;
+                height: 18px;
+                clip-path: polygon(50% 0, 100% 100%, 0 100%);
+                background: linear-gradient(135deg, var(--owner-color), #fbbf24);
+                border-radius: 4px 4px 0 0;
+                box-shadow: 0 0 12px var(--owner-color);
                 z-index: 4;
+                margin-bottom: -2px;
+            }
+            .house-body {
+                position: relative;
+                width: 40px;
+                height: 24px;
+                border-radius: 5px 5px 8px 8px;
+                border: 2px solid var(--owner-color);
+                background: linear-gradient(180deg, rgba(226,232,240,0.96), rgba(100,116,139,0.92));
+                box-shadow: inset 0 -8px 0 rgba(15,23,42,0.25), 0 0 12px var(--owner-color);
+                z-index: 3;
+            }
+            .house-body::before,
+            .house-body::after {
+                content: '';
+                position: absolute;
+                top: 7px;
+                width: 8px;
+                height: 7px;
+                border-radius: 2px;
+                background: #22d3ee;
+                box-shadow: 0 0 8px #22d3ee;
+            }
+            .house-body::before { left: 7px; }
+            .house-body::after { right: 7px; }
+            .house-door {
+                position: absolute;
+                left: 50%;
+                bottom: -1px;
+                width: 9px;
+                height: 13px;
+                transform: translateX(-50%);
+                border-radius: 4px 4px 2px 2px;
+                background: #111827;
+                border: 1px solid rgba(255,255,255,0.22);
+            }
+            .tower-spire {
+                width: 5px;
+                height: 10px;
+                border-radius: 5px 5px 0 0;
+                background: #fbbf24;
+                box-shadow: 0 0 10px #fbbf24;
+                z-index: 6;
+            }
+            .tower-roof {
+                width: 42px;
+                height: 8px;
+                border-radius: 8px 8px 3px 3px;
+                background: linear-gradient(90deg, #fbbf24, #ec4899, #22d3ee);
+                box-shadow: 0 0 14px #fbbf24;
+                z-index: 5;
+            }
+            .tower-body {
+                position: relative;
+                width: 46px;
+                height: 34px;
+                border-radius: 6px 6px 8px 8px;
+                border: 2px solid #fbbf24;
+                background:
+                    repeating-linear-gradient(90deg, rgba(255,255,255,0.1) 0 2px, transparent 2px 9px),
+                    linear-gradient(180deg, rgba(30,41,59,0.98), rgba(88,28,135,0.94));
+                box-shadow: 0 0 16px #fbbf24, inset 0 0 12px rgba(34,211,238,0.25);
+                z-index: 4;
+            }
+            .tower-body::before {
+                content: '';
+                position: absolute;
+                inset: 6px 7px;
+                background-image: radial-gradient(circle, #fde68a 22%, transparent 25%);
+                background-size: 9px 8px;
+                filter: drop-shadow(0 0 4px #fbbf24);
+            }
+            .villa-wing {
+                position: absolute;
+                bottom: 8px;
+                width: 18px;
+                height: 20px;
+                border: 1.5px solid #ec4899;
+                background: rgba(15,23,42,0.92);
+                box-shadow: 0 0 9px rgba(236,72,153,0.6);
+                z-index: 3;
+            }
+            .villa-wing.left { left: 0; border-radius: 5px 0 5px 5px; }
+            .villa-wing.right { right: 0; border-radius: 0 5px 5px 5px; }
+            .building-stage-label {
+                position: absolute;
+                right: -3px;
+                bottom: -2px;
+                padding: 2px 5px;
+                border-radius: 999px;
+                background: rgba(2,6,23,0.86);
+                border: 1px solid rgba(251,191,36,0.65);
+                color: #fbbf24;
+                font-size: 7px;
+                font-weight: 900;
+                line-height: 1;
+                z-index: 8;
             }
         `;
         document.head.appendChild(style);
@@ -1424,34 +1508,41 @@ const GamesModule = {
                 if (lvl === 1) {
                     ownerTileStyle = `border: 2px solid ${oColor} !important; box-shadow: inset 0 0 8px ${oColor}25, 0 0 10px ${oColor}20 !important; background: linear-gradient(135deg, ${oColor}18, rgba(16,24,48,0.92)) !important;`;
                     buildingHtml = `
-                        <div class="mono-building-container">
+                        <div class="mono-building-container" title="Nha 1 sao - mong nha">
                             <div class="mono-building lvl-1" style="--owner-color: ${oColor}">
-                                <div class="building-roof"></div>
-                                <div class="building-body"></div>
+                                <div class="building-ground"></div>
+                                <div class="building-rebar r1"></div>
+                                <div class="building-rebar r2"></div>
+                                <div class="building-rebar r3"></div>
+                                <div class="building-pad"></div>
+                                <div class="building-stage-label">1*</div>
                             </div>
                         </div>
                     `;
                 } else if (lvl === 2) {
                     ownerTileStyle = `border: 2.2px solid #00f3ff !important; box-shadow: inset 0 0 10px ${oColor}25, 0 0 15px rgba(0, 243, 255, 0.4) !important; background: linear-gradient(135deg, ${oColor}18, rgba(16,24,48,0.92)) !important;`;
                     buildingHtml = `
-                        <div class="mono-building-container">
+                        <div class="mono-building-container" title="Nha 2 sao - nha cap 4">
                             <div class="mono-building lvl-2" style="--owner-color: ${oColor}">
-                                <div class="building-roof"></div>
-                                <div class="building-body body-2"></div>
-                                <div class="building-body body-1"></div>
+                                <div class="building-ground"></div>
+                                <div class="house-roof"></div>
+                                <div class="house-body"><span class="house-door"></span></div>
+                                <div class="building-stage-label">2*</div>
                             </div>
                         </div>
                     `;
                 } else if (lvl === 3) {
                     ownerTileStyle = `border: 2.5px solid #fbbf24 !important; box-shadow: inset 0 0 12px ${oColor}25, 0 0 20px rgba(251, 191, 36, 0.5) !important; background: linear-gradient(135deg, rgba(31,10,50,0.95), ${oColor}15, rgba(15,23,42,0.95)) !important;`;
                     buildingHtml = `
-                        <div class="mono-building-container">
+                        <div class="mono-building-container" title="Nha 3 sao - biet thu cao oc">
                             <div class="mono-building lvl-3" style="--owner-color: ${oColor}">
-                                <div class="building-spire"></div>
-                                <div class="building-roof"></div>
-                                <div class="building-body body-3"></div>
-                                <div class="building-body body-2"></div>
-                                <div class="building-body body-1"></div>
+                                <div class="building-ground"></div>
+                                <div class="villa-wing left"></div>
+                                <div class="villa-wing right"></div>
+                                <div class="tower-spire"></div>
+                                <div class="tower-roof"></div>
+                                <div class="tower-body"></div>
+                                <div class="building-stage-label">3*</div>
                             </div>
                         </div>
                     `;
@@ -1497,6 +1588,7 @@ const GamesModule = {
             return;
         }
         const isMyTurn = activePlayer && activePlayer.name === Auth.currentUser.username;
+        const isRollLocked = mState.isRolling || mState.awaitingAction || mState.isMovingSequentially;
 
         // Custom Dice rendering HTML
         const getDiceFaceHtml = (v) => {
@@ -1547,7 +1639,7 @@ const GamesModule = {
 
                 <div style="width: 100%; max-width: 200px; position: relative; z-index: 1; margin-top: 6px;">
                     ${isMyTurn ? `
-                        <button onclick="GamesModule.rollMonopolyDice()" ${mState.isRolling ? 'disabled' : ''} style="width: 100%; padding: 12px; background: linear-gradient(135deg, #8b5cf6, #ec4899); border: none; border-radius: 12px; color: #fff; font-weight: 900; font-size: 14px; cursor: pointer; box-shadow: 0 4px 20px rgba(139,92,246,0.4); text-transform: uppercase; letter-spacing: 1px; transition: all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 25px rgba(139,92,246,0.5)'" onmouseout="this.style.transform=''; this.style.boxShadow='0 4px 20px rgba(139,92,246,0.4)'">
+                        <button onclick="GamesModule.rollMonopolyDice()" ${isRollLocked ? 'disabled' : ''} style="width: 100%; padding: 12px; background: linear-gradient(135deg, #8b5cf6, #ec4899); border: none; border-radius: 12px; color: #fff; font-weight: 900; font-size: 14px; cursor: ${isRollLocked ? 'not-allowed' : 'pointer'}; opacity: ${isRollLocked ? '0.58' : '1'}; box-shadow: 0 4px 20px rgba(139,92,246,0.4); text-transform: uppercase; letter-spacing: 1px; transition: all 0.2s;" onmouseover="if(!this.disabled){this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 25px rgba(139,92,246,0.5)'}" onmouseout="this.style.transform=''; this.style.boxShadow='0 4px 20px rgba(139,92,246,0.4)'">
                             🎲 ĐỔ XÚC XẮC
                         </button>
                     ` : `
@@ -1642,6 +1734,44 @@ const GamesModule = {
 
     getTileUpgradeCost: (tile) => {
         return Math.round((tile.cost || 5) * 0.8);
+    },
+
+    getMonopolyRollInfo: (rollInput) => {
+        const diceValues = Array.isArray(rollInput?.diceValues)
+            ? rollInput.diceValues.map(v => Number(v))
+            : (Array.isArray(GamesModule.monopoly.diceValues) ? GamesModule.monopoly.diceValues.map(v => Number(v)) : []);
+        const safeDiceValues = diceValues.length === 2 && diceValues.every(v => Number.isInteger(v) && v >= 1 && v <= 6)
+            ? diceValues
+            : null;
+        const total = safeDiceValues
+            ? safeDiceValues[0] + safeDiceValues[1]
+            : Number(rollInput?.total ?? rollInput);
+
+        const fallbackFirstDie = Number.isInteger(total) && total >= 2
+            ? Math.max(1, Math.min(6, total - 1))
+            : 1;
+        const fallbackSecondDie = Number.isInteger(total) && total >= 2
+            ? Math.max(1, Math.min(6, total - fallbackFirstDie))
+            : 1;
+
+        return {
+            diceValues: safeDiceValues || [fallbackFirstDie, fallbackSecondDie],
+            total,
+            isDouble: !!safeDiceValues && safeDiceValues[0] === safeDiceValues[1],
+            isValid: Number.isInteger(total) && total > 0
+        };
+    },
+
+    calculateMonopolyMove: (startPosition, steps, boardSize = 20) => {
+        const start = Number(startPosition) || 0;
+        const totalSteps = Number(steps) || 0;
+        const size = Number(boardSize) || 20;
+        return {
+            start,
+            steps: totalSteps,
+            end: ((start + totalSteps) % size + size) % size,
+            passedStart: start + totalSteps >= size
+        };
     },
 
     animateVisualPawn: (playerName) => {
@@ -2356,7 +2486,15 @@ const GamesModule = {
 
     // Cài đặt listener theo dõi phòng online và cập nhật State local
     joinRoomState: (roomId) => {
+        const isNewRoom = GamesModule.monopoly.activeRoomId !== roomId;
         GamesModule.monopoly.activeRoomId = roomId;
+        if (isNewRoom) {
+            GamesModule.monopoly.visualPositions = {};
+            GamesModule.monopoly.visualAnimationRunning = {};
+            GamesModule.monopoly.awaitingAction = false;
+            GamesModule.monopoly.centerDeedTileId = null;
+            GamesModule.monopoly.lastMove = null;
+        }
 
         if (GamesModule.monopoly.roomListener) GamesModule.monopoly.roomListener();
 
@@ -2393,6 +2531,17 @@ const GamesModule = {
                         ...remoteP
                     }));
                 }
+
+                if (room.lastMove && room.lastMove.id !== mState.lastMove?.id) {
+                    const move = room.lastMove;
+                    if (move.playerName && Number.isInteger(move.from)) {
+                        mState.visualPositions = mState.visualPositions || {};
+                        mState.visualAnimationRunning = mState.visualAnimationRunning || {};
+                        mState.visualPositions[move.playerName] = move.from;
+                        delete mState.visualAnimationRunning[move.playerName];
+                    }
+                }
+                mState.lastMove = room.lastMove || mState.lastMove || null;
 
                 mState.currentPlayerIdx = room.currentPlayerIdx;
                 mState.diceValues = room.diceValues;
@@ -2431,6 +2580,10 @@ const GamesModule = {
         GamesModule.monopoly.activeRoomId = null;
         GamesModule.monopoly.gameActive = false;
         GamesModule.monopoly.players = [];
+        GamesModule.monopoly.visualPositions = {};
+        GamesModule.monopoly.visualAnimationRunning = {};
+        GamesModule.monopoly.awaitingAction = false;
+        GamesModule.monopoly.lastMove = null;
 
         if (message) Utils.showToast(message, "warning");
         GamesModule.renderTabContent();
@@ -2593,6 +2746,7 @@ const GamesModule = {
             diceValues: mState.diceValues,
             isRolling: mState.isRolling,
             logs: mState.logs,
+            lastMove: mState.lastMove || null,
             tiles: mState.tiles.map(t => ({ id: t.id, ownerName: t.owner ? t.owner.name : null, level: t.level || 1 }))
         };
 
@@ -2608,6 +2762,8 @@ const GamesModule = {
         if (mState.isRolling) return;
 
         const player = mState.players[mState.currentPlayerIdx];
+        if (!player || player.name !== Auth.currentUser?.username || mState.awaitingAction || mState.isMovingSequentially) return;
+
         if (player.isJailed && (player.jailTurns !== undefined && player.jailTurns <= 0)) {
             player.isJailed = false;
             player.jailTurns = 0;
@@ -2647,7 +2803,7 @@ const GamesModule = {
                 mState.diceValues = [d1, d2];
                 const finalRoll = d1 + d2;
                 
-                GamesModule.processMonopolyTurn({ total: finalRoll, diceValues: [d1, d2] });
+                await GamesModule.processMonopolyTurn({ total: finalRoll, diceValues: [d1, d2] });
             }
         }, 100);
     },
@@ -2655,122 +2811,98 @@ const GamesModule = {
     processMonopolyTurn: async (rollInput) => {
         const mState = GamesModule.monopoly;
         const player = mState.players[mState.currentPlayerIdx];
-        const turnDiceValues = Array.isArray(rollInput?.diceValues) ? rollInput.diceValues : mState.diceValues;
-        const roll = Number.isFinite(rollInput?.total) ? rollInput.total : Number(rollInput);
-        if (Array.isArray(turnDiceValues) && turnDiceValues.length === 2) {
-            mState.diceValues = [...turnDiceValues];
-        }
+        const rollInfo = GamesModule.getMonopolyRollInfo(rollInput);
 
-        mState.logs.push(`🎲 <b>@${player.name}</b> đổ ra <b>${roll}</b> nút (${mState.diceValues[0]} - ${mState.diceValues[1]})!`);
-
-        // Check if Jailed
-        if (player.isJailed) {
-            const isDouble = mState.diceValues[0] === mState.diceValues[1];
-            if (mState.jailRollAttempt) {
-                // Tried rolling for doubles
-                if (isDouble) {
-                    player.isJailed = false;
-                    player.jailTurns = 0;
-                    mState.logs.push(`🔓 CÚ ĐÚP TUYỆT VỜI! <b>@${player.name}</b> đã gieo cú đúp thoát án Tạm Giam thành công và di chuyển!`);
-                } else {
-                    player.jailTurns = (player.jailTurns || 2) - 1;
-                    mState.jailChoiceMade = false;
-                    mState.jailRollAttempt = false;
-
-                    mState.logs.push(`🔒 Gieo đúp thất bại! <b>@${player.name}</b> tiếp tục chịu án Phạt Đi Muộn (Còn lại ${player.jailTurns} lượt). Lượt chơi kết thúc.`);
-                    await GamesModule.finishMonopolyTurn();
-                    return;
-                }
-            }
-        } else {
-            // Check if double roll
-            const isDouble = mState.diceValues[0] === mState.diceValues[1];
-            if (isDouble) {
-                mState.doubleRollCount = (mState.doubleRollCount || 0) + 1;
-                if (mState.doubleRollCount === 3) {
-                    mState.doubleRollCount = 0;
-                    mState.rollAgain = false;
-                    player.isJailed = true;
-                    player.jailTurns = 2;
-                    player.position = 10; // Jail tile
-                    mState.logs.push(`🚨 QUÁ TAM BA BẬN! <b>@${player.name}</b> gieo cú đúp 3 lần liên tiếp, HR bắt quả tang giam giữ phạt đứng tại đây!`);
-                    await GamesModule.finishMonopolyTurn();
-                    return;
-                } else {
-                    mState.rollAgain = true;
-                    mState.logs.push(`🎲 CÚ ĐÚP HOÀN HẢO! <b>@${player.name}</b> được thêm lượt đổ xúc xắc!`);
-                }
-            } else {
-                mState.doubleRollCount = 0;
-                mState.rollAgain = false;
-            }
-        }
-
-        // --- V5 ATOMIC LOGICAL MOVEMENT + VISUAL HOPPING ---
-        mState.isMovingSequentially = true;
-        mState.movementLockEndTime = Date.now() + (roll * 320) + 1800;
-
-        // Keep logical state atomic, then let visualPositions animate to the final tile.
-        // Syncing every intermediate tile caused Firestore snapshots to race and pawns
-        // could appear to stop at the first cell for every player.
-        {
-            const boardSize = mState.tiles.length;
-            const oldPos = player.position;
-            const finalPos = (oldPos + roll) % boardSize;
-            const passedStart = oldPos + roll >= boardSize;
-
-            player.position = finalPos;
-
-            if (passedStart) {
-                const bonus = mState.startBonus || 5;
-                player.cash += bonus;
-                mState.logs.push(`ðŸš© <b>@${player.name}</b> Ä‘i qua Ã´ Báº®T Äáº¦U, HR thÆ°á»Ÿng nÃ³ng +${bonus}Ä‘ CÃ´ng Äá»©c!`);
-            }
-
-            const tile = mState.tiles[player.position];
-            mState.logs.push(`ðŸ“ <b>@${player.name}</b> Ä‘Ã£ dá»«ng chÃ¢n táº¡i Ã´ <b>${tile.name}</b>.`);
-            mState.awaitingAction = true;
-
+        if (!player || !rollInfo.isValid) {
+            console.warn('[Monopoly] Invalid roll ignored:', rollInput);
+            mState.isRolling = false;
             await GamesModule.syncRoomToFirestore();
             GamesModule.renderTabContent();
             return;
         }
 
-        let stepsRemaining = roll;
-        const moveOneStep = async () => {
-            if (stepsRemaining <= 0) {
-                mState.isMovingSequentially = false;
-                const tile = mState.tiles[player.position];
-                mState.logs.push(`📍 <b>@${player.name}</b> đã dừng chân tại ô <b>${tile.name}</b>.`);
-                mState.awaitingAction = true;
-                await GamesModule.syncRoomToFirestore();
+        const roll = rollInfo.total;
+        mState.diceValues = [...rollInfo.diceValues];
+        mState.isRolling = false;
+        mState.awaitingAction = false;
+        mState.logs.push(`DICE: <b>@${player.name}</b> rolled <b>${roll}</b> steps (${mState.diceValues[0]} - ${mState.diceValues[1]}).`);
+
+        if (player.isJailed) {
+            if (mState.jailRollAttempt) {
+                if (rollInfo.isDouble) {
+                    player.isJailed = false;
+                    player.jailTurns = 0;
+                    mState.logs.push(`JAIL BREAK: <b>@${player.name}</b> rolled doubles and can move ${roll} steps.`);
+                } else {
+                    player.jailTurns = Math.max(0, (player.jailTurns || 2) - 1);
+                    mState.jailChoiceMade = false;
+                    mState.jailRollAttempt = false;
+                    mState.logs.push(`JAIL: <b>@${player.name}</b> did not roll doubles. Remaining jail turns: ${player.jailTurns}.`);
+                    await GamesModule.finishMonopolyTurn();
+                    return;
+                }
+            }
+        } else if (rollInfo.isDouble) {
+            mState.doubleRollCount = (mState.doubleRollCount || 0) + 1;
+            if (mState.doubleRollCount >= 3) {
+                mState.doubleRollCount = 0;
+                mState.rollAgain = false;
+                player.isJailed = true;
+                player.jailTurns = 2;
+                mState.visualPositions = mState.visualPositions || {};
+                mState.visualPositions[player.name] = player.position;
+                player.position = 10;
+                mState.lastMove = {
+                    id: `${player.name}_${Date.now()}_jail`,
+                    playerName: player.name,
+                    from: mState.visualPositions[player.name],
+                    to: player.position,
+                    roll: 0,
+                    diceValues: [...mState.diceValues],
+                    reason: 'triple-double-jail'
+                };
+                mState.logs.push(`TRIPLE DOUBLE: <b>@${player.name}</b> rolled doubles 3 times and goes to jail.`);
+                await GamesModule.finishMonopolyTurn();
                 return;
             }
+            mState.rollAgain = true;
+            mState.logs.push(`DOUBLE: <b>@${player.name}</b> will roll again after this tile is resolved.`);
+        } else {
+            mState.doubleRollCount = 0;
+            mState.rollAgain = false;
+        }
 
-            // Logical Move
-            const oldPos = player.position;
-            player.position = (oldPos + 1) % 20;
+        const move = GamesModule.calculateMonopolyMove(player.position, roll, mState.tiles.length);
+        mState.visualPositions = mState.visualPositions || {};
+        mState.visualAnimationRunning = mState.visualAnimationRunning || {};
+        mState.visualPositions[player.name] = move.start;
+        delete mState.visualAnimationRunning[player.name];
 
-            // Pass Go Bonus
-            if (player.position === 0) {
-                const bonus = mState.startBonus || 5;
-                player.cash += bonus;
-                mState.logs.push(`🚩 <b>@${player.name}</b> đi qua ô BẮT ĐẦU, HR thưởng nóng +${bonus}đ Công Đức!`);
-            }
-
-            stepsRemaining--;
-            
-            // Sync current step to Firestore so others see the progress
-            await GamesModule.syncRoomToFirestore();
-            
-            // Re-render locally triggers animateVisualPawn for the 1-tile hop
-            GamesModule.renderTabContent();
-
-            // Recursive step with delay (slightly longer than visual hop)
-            setTimeout(moveOneStep, 450); 
+        player.position = move.end;
+        mState.isMovingSequentially = true;
+        mState.movementLockEndTime = Date.now() + (move.steps * 320) + 1800;
+        mState.lastMove = {
+            id: `${player.name}_${Date.now()}_${move.start}_${move.end}_${roll}`,
+            playerName: player.name,
+            from: move.start,
+            to: move.end,
+            roll,
+            diceValues: [...mState.diceValues],
+            passedStart: move.passedStart
         };
 
-        moveOneStep();
+        if (move.passedStart) {
+            const bonus = mState.startBonus || 5;
+            player.cash += bonus;
+            mState.logs.push(`START BONUS: <b>@${player.name}</b> passed Start and received +${bonus}d.`);
+        }
+
+        const tile = mState.tiles[player.position];
+        mState.logs.push(`LAND: <b>@${player.name}</b> stopped at <b>${tile.name}</b> after exactly ${roll} steps.`);
+        mState.awaitingAction = true;
+
+        await GamesModule.syncRoomToFirestore();
+        GamesModule.renderTabContent();
     },
 
     handlePropertyTile: (player, tile) => {

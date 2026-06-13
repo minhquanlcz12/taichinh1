@@ -7,6 +7,15 @@ const Attendance = {
 
     selectedMonth: new Date().getMonth(),
     selectedYear: new Date().getFullYear(),
+    ATTENDANCE_SECURITY_DEFAULTS: {
+        enabled: true,
+        requireTrustedDevice: true,
+        radiusMeters: 180,
+        companyLat: null,
+        companyLng: null,
+        allowedPublicIps: [],
+        trustedDevices: []
+    },
 
     init: () => {
         // Chỉ render khi người dùng click vào tab chấm công (hoặc init lần đầu nếu cần)
@@ -53,6 +62,346 @@ const Attendance = {
             console.error("Lỗi lưu dữ liệu chấm công:", e);
             localStorage.setItem('tl_attendance', JSON.stringify(data));
         }
+    },
+
+    getAttendanceSecuritySettings: async () => {
+        let settings = {};
+        try {
+            if (typeof DB !== 'undefined' && typeof DB.getSettings === 'function') {
+                settings = await DB.getSettings() || {};
+            } else if (typeof app !== 'undefined' && app.state) {
+                settings = app.state.settings || {};
+            }
+        } catch (e) {
+            settings = (typeof app !== 'undefined' && app.state) ? (app.state.settings || {}) : {};
+        }
+
+        const raw = settings.attendanceSecurity || {};
+        return {
+            ...Attendance.ATTENDANCE_SECURITY_DEFAULTS,
+            ...raw,
+            allowedPublicIps: Array.isArray(raw.allowedPublicIps) ? raw.allowedPublicIps : [],
+            trustedDevices: Array.isArray(raw.trustedDevices) ? raw.trustedDevices : []
+        };
+    },
+
+    saveAttendanceSecuritySettings: async (security) => {
+        const current = (typeof DB !== 'undefined' && typeof DB.getSettings === 'function')
+            ? await DB.getSettings() || {}
+            : ((typeof app !== 'undefined' && app.state) ? (app.state.settings || {}) : {});
+        const next = {
+            ...current,
+            attendanceSecurity: {
+                ...Attendance.ATTENDANCE_SECURITY_DEFAULTS,
+                ...security,
+                updatedAt: Date.now(),
+                updatedBy: Auth.currentUser?.username || 'admin'
+            }
+        };
+
+        if (typeof DB !== 'undefined' && typeof DB.saveSettings === 'function') {
+            await DB.saveSettings(next);
+        }
+        if (typeof app !== 'undefined' && app.state) {
+            app.state.settings = next;
+        }
+    },
+
+    getOrCreateDeviceSeed: () => {
+        const key = 'tl_attendance_device_seed';
+        let seed = localStorage.getItem(key);
+        if (!seed) {
+            const webCrypto = window.crypto || window.msCrypto;
+            seed = (webCrypto && webCrypto.randomUUID)
+                ? webCrypto.randomUUID()
+                : `dev_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+            localStorage.setItem(key, seed);
+        }
+        return seed;
+    },
+
+    sha256: async (text) => {
+        const webCrypto = window.crypto || window.msCrypto;
+        if (webCrypto?.subtle && window.TextEncoder) {
+            const data = new TextEncoder().encode(text);
+            const hash = await webCrypto.subtle.digest('SHA-256', data);
+            return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+        let hash = 0;
+        for (let i = 0; i < text.length; i++) {
+            hash = ((hash << 5) - hash) + text.charCodeAt(i);
+            hash |= 0;
+        }
+        return Math.abs(hash).toString(16);
+    },
+
+    escapeHtml: (value) => String(value ?? '').replace(/[&<>"']/g, ch => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    }[ch])),
+
+    getCurrentDeviceProfile: async () => {
+        const seed = Attendance.getOrCreateDeviceSeed();
+        const raw = [
+            seed,
+            navigator.userAgent || '',
+            navigator.platform || '',
+            screen?.width || 0,
+            screen?.height || 0,
+            Intl.DateTimeFormat().resolvedOptions().timeZone || ''
+        ].join('|');
+        const id = await Attendance.sha256(raw);
+        return {
+            id,
+            shortId: id.slice(0, 10).toUpperCase(),
+            label: `${navigator.platform || 'Company PC'} ${screen?.width || ''}x${screen?.height || ''}`.trim(),
+            userAgent: (navigator.userAgent || '').slice(0, 140)
+        };
+    },
+
+    getPublicIp: async () => {
+        try {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 4500);
+            const res = await fetch('https://api.ipify.org?format=json', {
+                cache: 'no-store',
+                signal: controller.signal
+            });
+            clearTimeout(timeout);
+            if (!res.ok) return null;
+            const data = await res.json();
+            return (data.ip || '').trim();
+        } catch (e) {
+            return null;
+        }
+    },
+
+    distanceMeters: (lat1, lng1, lat2, lng2) => {
+        const toRad = deg => deg * Math.PI / 180;
+        const earth = 6371000;
+        const dLat = toRad(lat2 - lat1);
+        const dLng = toRad(lng2 - lng1);
+        const a = Math.sin(dLat / 2) ** 2 +
+            Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+            Math.sin(dLng / 2) ** 2;
+        return Math.round(earth * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+    },
+
+    verifyCheckInAccess: async (lat, lng) => {
+        const security = await Attendance.getAttendanceSecuritySettings();
+        const device = await Attendance.getCurrentDeviceProfile();
+        const allowedIps = security.allowedPublicIps.map(ip => String(ip).trim()).filter(Boolean);
+        const publicIp = allowedIps.length > 0 ? await Attendance.getPublicIp() : null;
+
+        if (!security.enabled) {
+            return { ok: true, reason: 'security-disabled', security, device, publicIp };
+        }
+
+        const trustedDevice = !security.requireTrustedDevice ||
+            security.trustedDevices.some(d => d.id === device.id);
+
+        const hasOfficeLocation = Number.isFinite(Number(security.companyLat)) &&
+            Number.isFinite(Number(security.companyLng));
+        let distance = null;
+        let locationOk = false;
+        if (hasOfficeLocation && Number.isFinite(Number(lat)) && Number.isFinite(Number(lng))) {
+            distance = Attendance.distanceMeters(
+                Number(lat),
+                Number(lng),
+                Number(security.companyLat),
+                Number(security.companyLng)
+            );
+            locationOk = distance <= Number(security.radiusMeters || Attendance.ATTENDANCE_SECURITY_DEFAULTS.radiusMeters);
+        }
+
+        const networkOk = !!publicIp && allowedIps.includes(publicIp);
+        const hasAnyOfficeGate = hasOfficeLocation || allowedIps.length > 0;
+        const officeGateOk = locationOk || networkOk;
+        const reasons = [];
+
+        if (!trustedDevice) reasons.push('May nay chua duoc admin dang ky la may tinh cong ty.');
+        if (!hasAnyOfficeGate) reasons.push('Admin chua cau hinh vi tri cong ty hoac IP mang cong ty.');
+        if (hasAnyOfficeGate && !officeGateOk) {
+            reasons.push('Ban khong o trong pham vi cong ty va cung khong ket noi bang mang cong ty.');
+        }
+
+        return {
+            ok: trustedDevice && hasAnyOfficeGate && officeGateOk,
+            reason: reasons.join(' '),
+            security,
+            device,
+            publicIp,
+            trustedDevice,
+            locationOk,
+            networkOk,
+            distance
+        };
+    },
+
+    resetCheckInButton: (message) => {
+        const btn = document.getElementById('btn-check-in');
+        if (!btn) return;
+        btn.dataset.state = 'idle';
+        const label = btn.querySelector('.wf-label');
+        if (label) label.textContent = message || 'GO MO DIEM DANH';
+    },
+
+    renderAttendanceSecurityPanel: async (security) => {
+        const currentDevice = await Attendance.getCurrentDeviceProfile();
+        const publicIp = await Attendance.getPublicIp();
+        const deviceTrusted = security.trustedDevices.some(d => d.id === currentDevice.id);
+        const ipTrusted = publicIp && security.allowedPublicIps.includes(publicIp);
+        const locationConfigured = Number.isFinite(Number(security.companyLat)) && Number.isFinite(Number(security.companyLng));
+        const deviceList = security.trustedDevices.length
+            ? security.trustedDevices.map(d => `
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:8px 10px;">
+                    <span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${Attendance.escapeHtml(d.label || 'Company PC')} <small style="color:#94a3b8;">${String(d.id).slice(0, 10).toUpperCase()}</small></span>
+                    <button class="btn btn-sm" style="padding:5px 8px;border-color:rgba(239,68,68,0.5);color:#f87171;" onclick="Attendance.removeTrustedDevice('${d.id}')"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            `).join('')
+            : '<div style="color:#f59e0b;font-size:12px;">Chua co may cong ty nao duoc dang ky.</div>';
+        const ipList = security.allowedPublicIps.length
+            ? security.allowedPublicIps.map(ip => `
+                <span style="display:inline-flex;align-items:center;gap:6px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.25);color:#86efac;border-radius:999px;padding:5px 8px;font-weight:700;">
+                    ${ip}
+                    <button style="background:transparent;border:0;color:#f87171;cursor:pointer;font-weight:900;" onclick="Attendance.removeAllowedIp('${ip}')">&times;</button>
+                </span>
+            `).join('')
+            : '<span style="color:#f59e0b;font-size:12px;">Chua co IP mang cong ty.</span>';
+
+        return `
+            <div class="glass-panel" style="margin: 0 0 18px 0; padding: 16px; border: 1px solid rgba(34,211,238,0.28); background: linear-gradient(135deg, rgba(8,47,73,0.45), rgba(15,23,42,0.75));">
+                <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;margin-bottom:12px;">
+                    <div>
+                        <h3 style="margin:0 0 4px;color:#67e8f9;font-size:15px;text-transform:uppercase;letter-spacing:.7px;"><i class="fa-solid fa-shield-halved"></i> Bao mat diem danh</h3>
+                        <div style="color:#94a3b8;font-size:12px;">Dieu kien: may cong ty da dang ky + dung GPS cong ty hoac dung IP mang cong ty.</div>
+                    </div>
+                    <button class="btn btn-sm" style="border-color:${security.enabled ? '#22c55e' : '#64748b'};color:${security.enabled ? '#86efac' : '#cbd5e1'};" onclick="Attendance.toggleAttendanceSecurity()">
+                        <i class="fa-solid ${security.enabled ? 'fa-lock' : 'fa-lock-open'}"></i> ${security.enabled ? 'Dang bat' : 'Dang tat'}
+                    </button>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;">
+                    <div style="background:rgba(0,0,0,0.18);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px;">
+                        <div style="font-size:12px;color:#cbd5e1;font-weight:800;margin-bottom:8px;"><i class="fa-solid fa-desktop"></i> May hien tai</div>
+                        <div style="font-size:12px;color:${deviceTrusted ? '#86efac' : '#fbbf24'};margin-bottom:8px;">ID: ${currentDevice.shortId} - ${deviceTrusted ? 'Da dang ky' : 'Chua dang ky'}</div>
+                        <button class="btn btn-sm btn-primary" onclick="Attendance.registerCurrentDevice()" style="width:100%;"><i class="fa-solid fa-plus"></i> Dang ky may nay</button>
+                        <div style="display:flex;flex-direction:column;gap:6px;margin-top:10px;max-height:112px;overflow:auto;">${deviceList}</div>
+                    </div>
+                    <div style="background:rgba(0,0,0,0.18);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px;">
+                        <div style="font-size:12px;color:#cbd5e1;font-weight:800;margin-bottom:8px;"><i class="fa-solid fa-location-dot"></i> Vi tri cong ty</div>
+                        <div style="font-size:12px;color:${locationConfigured ? '#86efac' : '#fbbf24'};margin-bottom:8px;">
+                            ${locationConfigured ? `${Number(security.companyLat).toFixed(6)}, ${Number(security.companyLng).toFixed(6)} - ban kinh ${security.radiusMeters}m` : 'Chua luu GPS cong ty'}
+                        </div>
+                        <div style="display:flex;gap:8px;">
+                            <button class="btn btn-sm btn-primary" onclick="Attendance.saveCurrentCompanyLocation()" style="flex:1;"><i class="fa-solid fa-crosshairs"></i> Luu GPS hien tai</button>
+                            <button class="btn btn-sm" onclick="Attendance.updateAttendanceRadius()" style="flex:0 0 auto;">${security.radiusMeters}m</button>
+                        </div>
+                    </div>
+                    <div style="background:rgba(0,0,0,0.18);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px;">
+                        <div style="font-size:12px;color:#cbd5e1;font-weight:800;margin-bottom:8px;"><i class="fa-solid fa-wifi"></i> Mang cong ty</div>
+                        <div style="font-size:12px;color:${ipTrusted ? '#86efac' : '#94a3b8'};margin-bottom:8px;">IP hien tai: ${publicIp || 'Khong doc duoc'} ${ipTrusted ? '(da cho phep)' : ''}</div>
+                        <button class="btn btn-sm btn-primary" onclick="Attendance.addCurrentNetworkIp()" style="width:100%;"><i class="fa-solid fa-plus"></i> Them IP hien tai</button>
+                        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;">${ipList}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    },
+
+    registerCurrentDevice: async () => {
+        try {
+            const security = await Attendance.getAttendanceSecuritySettings();
+            const device = await Attendance.getCurrentDeviceProfile();
+            const label = prompt('Nhap ten may cong ty:', device.label || 'Company PC') || device.label;
+            const trustedDevices = security.trustedDevices.filter(d => d.id !== device.id);
+            trustedDevices.push({
+                id: device.id,
+                label,
+                addedAt: Date.now(),
+                addedBy: Auth.currentUser?.username || 'admin'
+            });
+            await Attendance.saveAttendanceSecuritySettings({ ...security, trustedDevices });
+            Utils.showToast('Da dang ky may nay la may cong ty.', 'success');
+            Attendance.render();
+        } catch (e) {
+            Utils.showToast('Khong dang ky duoc may hien tai.', 'error');
+        }
+    },
+
+    removeTrustedDevice: async (deviceId) => {
+        const security = await Attendance.getAttendanceSecuritySettings();
+        await Attendance.saveAttendanceSecuritySettings({
+            ...security,
+            trustedDevices: security.trustedDevices.filter(d => d.id !== deviceId)
+        });
+        Utils.showToast('Da go may khoi danh sach cong ty.', 'success');
+        Attendance.render();
+    },
+
+    saveCurrentCompanyLocation: async () => {
+        if (!navigator.geolocation) {
+            Utils.showToast('Trinh duyet khong ho tro GPS.', 'error');
+            return;
+        }
+        Utils.showToast('Dang lay GPS hien tai...', 'info');
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+            const security = await Attendance.getAttendanceSecuritySettings();
+            await Attendance.saveAttendanceSecuritySettings({
+                ...security,
+                companyLat: pos.coords.latitude,
+                companyLng: pos.coords.longitude,
+                radiusMeters: Number(security.radiusMeters || 180)
+            });
+            Utils.showToast('Da luu vi tri cong ty.', 'success');
+            Attendance.render();
+        }, () => Utils.showToast('Khong lay duoc GPS hien tai.', 'error'), {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+        });
+    },
+
+    updateAttendanceRadius: async () => {
+        const security = await Attendance.getAttendanceSecuritySettings();
+        const value = prompt('Nhap ban kinh GPS hop le (met):', String(security.radiusMeters || 180));
+        if (value === null) return;
+        const radius = Math.max(30, Math.min(2000, Number(value) || 180));
+        await Attendance.saveAttendanceSecuritySettings({ ...security, radiusMeters: radius });
+        Utils.showToast(`Da cap nhat ban kinh ${radius}m.`, 'success');
+        Attendance.render();
+    },
+
+    addCurrentNetworkIp: async () => {
+        const ip = await Attendance.getPublicIp();
+        if (!ip) {
+            Utils.showToast('Khong doc duoc public IP hien tai.', 'error');
+            return;
+        }
+        const security = await Attendance.getAttendanceSecuritySettings();
+        const allowedPublicIps = Array.from(new Set([...security.allowedPublicIps, ip]));
+        await Attendance.saveAttendanceSecuritySettings({ ...security, allowedPublicIps });
+        Utils.showToast(`Da them IP cong ty: ${ip}`, 'success');
+        Attendance.render();
+    },
+
+    removeAllowedIp: async (ip) => {
+        const security = await Attendance.getAttendanceSecuritySettings();
+        await Attendance.saveAttendanceSecuritySettings({
+            ...security,
+            allowedPublicIps: security.allowedPublicIps.filter(x => x !== ip)
+        });
+        Utils.showToast('Da go IP khoi danh sach mang cong ty.', 'success');
+        Attendance.render();
+    },
+
+    toggleAttendanceSecurity: async () => {
+        const security = await Attendance.getAttendanceSecuritySettings();
+        await Attendance.saveAttendanceSecuritySettings({ ...security, enabled: !security.enabled });
+        Utils.showToast(`Bao mat diem danh da ${!security.enabled ? 'bat' : 'tat'}.`, 'success');
+        Attendance.render();
     },
 
     render: async () => {
@@ -206,6 +555,7 @@ const Attendance = {
                     <h3><i class="fa-solid fa-circle-check" style="color:#2ecc71;margin-right:8px;"></i> ${sessionName} hôm nay đã ghi nhận</h3>
                     <p>Gõ mõ lúc: <strong style="color:#daa520;">${new Date(sessionRecord.timestamp).toLocaleTimeString('vi-VN')}</strong></p>
                     ${sessionRecord.location ? `<p style="font-size:12px;"><i class="fa-solid fa-location-dot" style="color:#daa520;"></i> GPS xác minh vị trí tại công ty</p>` : ''}
+                    ${sessionRecord.security?.networkOk ? `<p style="font-size:12px;"><i class="fa-solid fa-wifi" style="color:#64ffda;"></i> Mạng công ty đã xác minh</p>` : ''}
                     <span class="wf-badge ${badgeClass}">
                         ${statusText}
                     </span>
@@ -257,7 +607,7 @@ const Attendance = {
                         <span class="wf-label"><i class="fa-solid fa-gavel" style="margin-right:6px;"></i> GÕ MÕ ĐIỂM DANH</span>
                     </button>
                     <p style="margin-top:28px;color:#daa520;font-weight:600;font-size:14px;">🙏 Gõ mõ để tích công đức đi làm ${sessLabel}!</p>
-                    <small style="color:rgba(255,255,255,0.35);display:block;margin-top:6px;"><i class="fa-solid fa-location-dot" style="color:#daa520;"></i> GPS xác minh vị trí tại công ty</small>
+                    <small style="color:rgba(255,255,255,0.35);display:block;margin-top:6px;"><i class="fa-solid fa-shield-halved" style="color:#daa520;"></i> Máy công ty + GPS hoặc mạng công ty</small>
                 </div>
             `;
         }
@@ -532,6 +882,9 @@ const Attendance = {
                 usersList.push(u);
             }
         });
+
+        const security = await Attendance.getAttendanceSecuritySettings();
+        const securityHtml = await Attendance.renderAttendanceSecurityPanel(security);
         
         let adminHtml = `
             <div class="glass-panel admin-cyber-box" style="padding: 24px; border: 1px solid rgba(100, 255, 218, 0.5); box-shadow: 0 0 10px rgba(100, 255, 218, 0.1);">
@@ -557,6 +910,8 @@ const Attendance = {
                         <button class="btn btn-outline" style="border-color: #f1c40f; color: #f1c40f;" onclick="Attendance.exportAttendancePDF()"><i class="fa-solid fa-file-pdf" style="margin-right: 6px;"></i> PDF</button>
                     </div>
                 </div>
+
+                ${securityHtml}
                 
                 <div style="display: flex; gap: 24px; align-items: stretch; flex-wrap: wrap;">
                     <!-- Cục Nhân sự bên trái -->
@@ -847,19 +1202,18 @@ const Attendance = {
         // --- State: loading ---
         btn.dataset.state = 'loading';
         const label = btn.querySelector('.wf-label');
-        if (label) label.textContent = '📍 Đang lấy GPS...';
+        if (label) label.textContent = 'Đang xác minh máy/GPS...';
 
         if (!navigator.geolocation) {
-            Utils.showToast('Trình duyệt không hỗ trợ GPS.', 'error');
-            btn.dataset.state = 'idle';
-            if (label) label.textContent = '🪵 GÕ MÕ ĐIỂM DANH';
+            Utils.showToast('GPS không khả dụng. Sẽ thử xác minh bằng mạng công ty.', 'warning');
+            Attendance._runCheckin(null, null);
             return;
         }
 
         navigator.geolocation.getCurrentPosition(
             async (pos) => Attendance._runCheckin(pos.coords.latitude, pos.coords.longitude),
             async () => {
-                Utils.showToast('GPS không khả dụng. Chấm công không vị trí.', 'warning');
+                Utils.showToast('GPS không khả dụng. Sẽ thử xác minh bằng mạng công ty.', 'warning');
                 Attendance._runCheckin(null, null);
             },
             { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
@@ -874,6 +1228,21 @@ const Attendance = {
 
         const currentHour = now.getHours();
         const currentSession = currentHour < 12 ? 'morning' : 'afternoon';
+
+        let access;
+        try {
+            access = await Attendance.verifyCheckInAccess(lat, lng);
+        } catch (e) {
+            console.error('Attendance security check failed:', e);
+            Utils.showToast('Không xác minh được máy/vị trí/mạng công ty.', 'error');
+            Attendance.resetCheckInButton('🪵 GÕ MÕ ĐIỂM DANH');
+            return;
+        }
+        if (!access.ok) {
+            Utils.showToast(access.reason || 'Không đạt điều kiện điểm danh tại công ty.', 'error');
+            Attendance.resetCheckInButton('🪵 GÕ MÕ ĐIỂM DANH');
+            return;
+        }
         
         const deadline = new Date(now);
         if (currentSession === 'morning') {
@@ -957,7 +1326,16 @@ const Attendance = {
             timestamp: now.getTime(), dateStr, status, lateMinutes,
             location: lat ? { lat, lng } : null, note: '',
             lateExcuse: lateExcuseDetails,
-            type: currentSession
+            type: currentSession,
+            security: {
+                deviceId: access.device?.id || null,
+                deviceShortId: access.device?.shortId || null,
+                publicIp: access.publicIp || null,
+                trustedDevice: !!access.trustedDevice,
+                locationOk: !!access.locationOk,
+                networkOk: !!access.networkOk,
+                distanceMeters: access.distance
+            }
         };
 
         try {
