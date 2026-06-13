@@ -1,4 +1,4 @@
-﻿const Attendance = {
+const Attendance = {
     // Thá»i háº¡n cháº¥m cÃ´ng Ä‘Ãºng giá»
     DEADLINE_HOURS: 8,
     DEADLINE_MINUTES: 30,
@@ -30,7 +30,7 @@
         const y = now.getFullYear();
         const m = now.getMonth() + 1;
         const d = now.getDate();
-        const dateStr = `${y}-`${String(m).padStart(2, '0')}-`${String(d).padStart(2, '0')};
+        const dateStr = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
         if (dateStr === '2026-06-13' && now.getHours() >= 12) {
             const flagKey = 'tl_auto_checkin_jun13_v2';
             if (localStorage.getItem(flagKey) === 'done') return;
@@ -43,7 +43,7 @@
                     const hasRecord = allAttendance.some(r => r.username === acc.username && r.dateStr === dateStr && r.type === 'afternoon');
                     if (!hasRecord) {
                         allAttendance.push({
-                            id: `auto_`${acc.username}_`${Date.now()},
+                            id: `auto_${acc.username}_${Date.now()}`,
                             username: acc.username,
                             dateStr: dateStr,
                             timestamp: Date.now(),
