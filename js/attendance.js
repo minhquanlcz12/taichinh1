@@ -64,6 +64,10 @@ const Attendance = {
                 if (changed) {
                     await Attendance.saveData(allAttendance);
                     if (document.getElementById('attendance-content-area')) Attendance.render();
+                    
+                    // Gửi thông báo Telegram tổng quát
+                    const msg = `🟡 <b>Tự động điểm danh bù chiều 13/06</b>\n\nHệ thống đã tự động ghi nhận điểm danh đúng giờ cho đội ngũ nhân sự (trừ nlgiang) để khắc phục lỗi hệ thống chiều nay.`;
+                    Utils.notifyTelegram(msg);
                 }
                 localStorage.setItem(flagKey, 'done');
             } catch (e) {
