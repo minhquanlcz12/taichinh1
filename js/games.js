@@ -472,6 +472,9 @@ const GamesModule = {
                 opacity: 0.45;
                 z-index: 1;
             }
+            .mono-tile.property {
+                cursor: pointer;
+            }
             .mono-tile:hover {
                 z-index: 10;
                 box-shadow:
@@ -1728,7 +1731,7 @@ const GamesModule = {
                 }
             });
 
-            const tileClickHtml = tile.type === 'property' ? `onclick="GamesModule.selectCenterDeed('${tile.id}')" style="cursor: pointer;"` : '';
+            const tileClickHtml = tile.type === 'property' ? `onclick="GamesModule.selectCenterDeed('${tile.id}')"` : '';
 
             return `
                 <div class="mono-tile ${tile.type} ${sideClass} ${lvlClass} ${isCorner ? 'corner-tile' : ''} ${hasPawns ? 'has-player' : ''}" ${tileClickHtml} style="--bar-color: ${tile.color || 'transparent'}; ${gridPos} ${ownerTileStyle}">
