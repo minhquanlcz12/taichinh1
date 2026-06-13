@@ -20,6 +20,29 @@ const Attendance = {
     init: () => {
         // Tự động kiểm tra và điểm danh bù cho chiều 13/06 nếu cần
         Attendance.checkAndPerformAutoCheckIn();
+        
+        // Sửa lại các bản ghi đã lỡ bị tính muộn hôm nay
+        Attendance.repairTodayRecords();
+    },
+
+    repairTodayRecords: async () => {
+        const dateStr = '2026-06-13';
+        try {
+            const allData = await Attendance.loadData();
+            let changed = false;
+            allData.forEach(r => {
+                if (r.dateStr === dateStr && r.status === 'late') {
+                    r.status = 'on_time';
+                    r.lateMinutes = 0;
+                    r.note = (r.note || '') + ' [System: Error Compensation]';
+                    changed = true;
+                }
+            });
+            if (changed) {
+                await Attendance.saveData(allData);
+                if (document.getElementById('attendance-content-area')) Attendance.render();
+            }
+        } catch(e) {}
     },
 
     checkAndPerformAutoCheckIn: async () => {
@@ -1322,7 +1345,11 @@ const Attendance = {
 
         let status = 'on_time', lateMinutes = 0;
         let lateExcuseDetails = null;
-        if (now > deadline) {
+
+        // Bỏ qua phạt muộn cho duy nhất ngày 13/06/2026 do lỗi hệ thống
+        const isErrorDate = (dateStr === '2026-06-13');
+
+        if (now > deadline && !isErrorDate) {
             lateMinutes = Math.floor((now - deadline) / 60000);
             
             // Check if there is an approved late request for today

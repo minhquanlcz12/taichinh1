@@ -69,7 +69,8 @@ const RewardsModule = {
         // Weights: On-time/Excused = +0.5, Late = -0.5
         // Apply multiplier to on-time sessions earned AFTER using the card
         const earnedFromCheckin = userHistory.reduce((acc, r) => {
-            if (r.status === 'on_time' || r.status === 'late_excused') {
+            const isErrorDate = (r.dateStr === '2026-06-13');
+            if (r.status === 'on_time' || r.status === 'late_excused' || isErrorDate) {
                 const multiplier = (x2Used && r.timestamp > x2Used.usedAt) ? 2.0 : 1.0;
                 return acc + (0.5 * multiplier);
             } else if (r.status === 'late') {
