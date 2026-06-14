@@ -566,7 +566,7 @@ const Auth = {
                     <button class="btn btn-primary" onclick="app.saveReportSettings()" style="flex: 1; min-width: 180px;">
                         <i class="fa-solid fa-floppy-disk"></i> Lưu Cấu Hình Báo Cáo
                     </button>
-                    <button class="btn btn-outline" id="btn-test-report" onclick="app.triggerTestReport()" style="border-color: var(--warning); color: var(--warning); font-weight: bold; padding: 10px 15px; display: flex; align-items: center; gap: 6px;">
+                    <button class="btn btn-outline" id="btn-test-report" onclick="alert('Debug Info:\n- typeof app: ' + typeof app + '\n- typeof app.triggerTestReport: ' + typeof app?.triggerTestReport); app.triggerTestReport()" style="border-color: var(--warning); color: var(--warning); font-weight: bold; padding: 10px 15px; display: flex; align-items: center; gap: 6px;">
                         <i class="fa-solid fa-paper-plane"></i> Gửi Báo Cáo Thử Nghiệm
                     </button>
                 </div>
