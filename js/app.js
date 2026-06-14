@@ -375,8 +375,24 @@ const app = {
                 Utils.showToast(`Lỗi kích hoạt: Mã ${response.status}. Kiểm tra lại token của bạn.`, "error");
             }
         } catch (e) {
-            console.error("Network Error when triggering report:", e);
-            Utils.showToast("Lỗi mạng khi kết nối GitHub API", "error");
+            console.error("Network/CORS Error when triggering report:", e);
+            Utils.showModal(
+                '🔐 KÍCH HOẠT HỆ THỐNG ACTIONS',
+                `
+                <div style="text-align: left; line-height: 1.6; font-size: 14px;">
+                    <p>Do cơ chế bảo mật của trình duyệt (CORS), GitHub chặn không cho phép kích hoạt trực tiếp Actions từ bên ngoài trang web của họ để bảo vệ tài khoản của bạn.</p>
+                    <p style="font-weight: bold; color: var(--warning); margin-bottom: 12px;">Bạn vui lòng kích hoạt chạy báo cáo thủ công trực tiếp trên GitHub:</p>
+                    <ol style="padding-left: 20px; color: var(--text-secondary);">
+                        <li>Click truy cập nhanh: <a href="https://github.com/minhquanlcz12/taichinh1/actions/workflows/periodic_report.yml" target="_blank" style="color: #64ffda; text-decoration: underline; font-weight: bold;">Trang kích hoạt Báo Cáo trên GitHub</a>.</li>
+                        <li>Ở góc phải giao diện, chọn nút <strong>Run workflow</strong>.</li>
+                        <li>Tích chọn <strong>Bypass frequency check...</strong> và bấm nút <strong>Run workflow</strong> màu xanh để gửi báo cáo.</li>
+                    </ol>
+                    <p style="margin-top: 10px; font-size: 12px; color: var(--text-secondary);">* Báo cáo sẽ được gửi về Email và Telegram của bạn sau khoảng 1-2 phút kể từ khi Action chạy thành công.</p>
+                </div>
+                `,
+                null,
+                'ĐÃ HIỂU'
+            );
         } finally {
             btn.innerHTML = originalText;
             btn.disabled = false;
