@@ -541,6 +541,28 @@ const Auth = {
                 </button>
             `, isOpen('acc-bot', false));
 
+            html += Auth.createAccordionBlock('acc-report', 'Cấu hình Báo cáo Tự động (Email & Telegram)', 'fa-chart-pie', `
+                <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 20px; margin-top: 0; line-height: 1.6;">
+                    Thiết lập danh sách email nhận báo cáo tổng hợp cuối ngày và tần suất gửi báo cáo.
+                </p>
+                <div class="form-group">
+                    <label>1. Danh sách Email nhận báo cáo <span style="font-weight: normal; font-size: 11px; color: var(--warning);">(Cách nhau bởi dấu phẩy)</span></label>
+                    <input type="text" id="setting-report-emails" class="form-control" placeholder="Ví dụ: sep@gmail.com, ketoan@gmail.com" value="${app.state.settings.reportEmails || ''}">
+                </div>
+                <div class="form-group" style="margin-top: 16px;">
+                    <label>2. Tần suất gửi báo cáo</label>
+                    <select id="setting-report-frequency" class="form-control" style="background: rgba(0,0,0,0.2); color:#fff; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 10px; width: 100%;">
+                        <option value="daily" ${app.state.settings.reportFrequency === 'daily' ? 'selected' : ''}>Hàng ngày (20:00 tối)</option>
+                        <option value="weekly" ${(app.state.settings.reportFrequency === 'weekly' || app.state.settings.reportFrequency === '7days') ? 'selected' : ''}>7 ngày 1 lần (Hàng tuần)</option>
+                        <option value="monthly" ${app.state.settings.reportFrequency === 'monthly' ? 'selected' : ''}>30 ngày 1 lần (Hàng tháng)</option>
+                        <option value="disabled" ${app.state.settings.reportFrequency === 'disabled' ? 'selected' : ''}>Tắt báo cáo</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" onclick="app.saveReportSettings()" style="margin-top: 16px;">
+                    <i class="fa-solid fa-floppy-disk"></i> Lưu Cấu Hình Báo Cáo
+                </button>
+            `, isOpen('acc-report', false));
+
             html += Auth.createAccordionBlock('acc-users', 'Quản lý Người dùng', 'fa-users', `
                 <p style="color:var(--text-secondary); margin-bottom: 16px; margin-top: 0;">Danh sách các tài khoản đã đăng ký trên máy này.</p>
                 

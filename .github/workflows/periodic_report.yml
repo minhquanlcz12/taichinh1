@@ -1,0 +1,39 @@
+name: Periodic Automated Report
+
+on:
+  schedule:
+    # Run daily at 20:00 (Vietnam time = UTC+7, so 20:00 - 7 hours = 13:00 UTC)
+    - cron: '0 13 * * *'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Bypass frequency check and force send report immediately'
+        type: boolean
+        required: false
+        default: false
+
+jobs:
+  run-report:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: |
+          npm install firebase-admin nodemailer
+
+      - name: Run Send Report Script
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          EMAIL_USER: ${{ secrets.EMAIL_USER }}
+          EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
+          REPORT_RECIPIENT: ${{ secrets.REPORT_RECIPIENT }}
+          FORCE_SEND: ${{ github.event.inputs.force }}
+        run: node .github/scripts/send_report.js

@@ -304,6 +304,19 @@ const app = {
         Utils.showToast("Đã lưu cấu hình Telegram Bot thành công!", "success");
     },
 
+    saveReportSettings: async () => {
+        const emails = document.getElementById('setting-report-emails').value.trim();
+        const frequency = document.getElementById('setting-report-frequency').value;
+        
+        if (!app.state.settings) app.state.settings = {};
+        app.state.settings.reportEmails = emails;
+        app.state.settings.reportFrequency = frequency;
+        
+        await DB.saveSettings(app.state.settings);
+        Utils.showToast("Đã lưu cấu hình Báo cáo tự động thành công!", "success");
+    },
+
+
     sendAdminBroadcast: async () => {
         const input = document.getElementById('admin-broadcast-text');
         if (!input) return;
