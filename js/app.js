@@ -307,13 +307,80 @@ const app = {
     saveReportSettings: async () => {
         const emails = document.getElementById('setting-report-emails').value.trim();
         const frequency = document.getElementById('setting-report-frequency').value;
+        const ghToken = document.getElementById('setting-report-ghtoken').value.trim();
         
         if (!app.state.settings) app.state.settings = {};
         app.state.settings.reportEmails = emails;
         app.state.settings.reportFrequency = frequency;
+        app.state.settings.reportGhToken = ghToken;
         
         await DB.saveSettings(app.state.settings);
         Utils.showToast("Đã lưu cấu hình Báo cáo tự động thành công!", "success");
+    },
+
+    triggerTestReport: async () => {
+        const ghToken = (app.state.settings && app.state.settings.reportGhToken) || '';
+        if (!ghToken) {
+            Utils.showModal(
+                'Cần GitHub Personal Access Token (PAT)',
+                `
+                <div style="text-align: left; line-height: 1.6; font-size: 14px;">
+                    <p>Để kích hoạt nút chạy thử nghiệm từ xa trực tiếp từ website, hệ thống cần quyền gọi API GitHub của bạn.</p>
+                    <ol style="padding-left: 20px; color: var(--text-secondary);">
+                        <li>Truy cập <a href="https://github.com/settings/tokens" target="_blank" style="color: #64ffda; text-decoration: underline;">GitHub Tokens (Classic)</a>.</li>
+                        <li>Bấm <strong>Generate new token (classic)</strong>.</li>
+                        <li>Đặt tên (ví dụ: "Thanh Long Work Test"), tích chọn quyền <strong>workflow</strong>.</li>
+                        <li>Bấm <strong>Generate token</strong> và copy chuỗi bắt đầu bằng <code>ghp_</code>.</li>
+                        <li>Dán vào ô <strong>GitHub Personal Access Token (PAT)</strong> ở bên trên và bấm <strong>Lưu Cấu Hình</strong> trước khi test.</li>
+                    </ol>
+                    <p style="margin-top: 10px; font-style: italic; color: var(--warning);">* Lưu ý: Nếu không muốn tạo Token, bạn có thể vào trực tiếp tab <strong>Actions</strong> trên GitHub của bạn, chọn workflow "Periodic Automated Report" và bấm <strong>Run workflow</strong>.</p>
+                </div>
+                `,
+                null,
+                'ĐÃ HIỂU'
+            );
+            return;
+        }
+
+        const btn = document.getElementById('btn-test-report');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang gọi...';
+        btn.disabled = true;
+
+        try {
+            const owner = 'minhquanlcz12';
+            const repo = 'taichinh1';
+            const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/periodic_report.yml/dispatches`;
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `token ${ghToken}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    ref: 'main',
+                    inputs: {
+                        force: 'true'
+                    }
+                })
+            });
+
+            if (response.status === 204) {
+                Utils.showToast("🚀 Đã kích hoạt GitHub Actions gửi báo cáo! Vui lòng kiểm tra Email/Telegram sau 1-2 phút.", "success");
+            } else {
+                const errText = await response.text();
+                console.error("GitHub Actions Trigger Error:", errText);
+                Utils.showToast(`Lỗi kích hoạt: Mã ${response.status}. Kiểm tra lại token của bạn.`, "error");
+            }
+        } catch (e) {
+            console.error("Network Error when triggering report:", e);
+            Utils.showToast("Lỗi mạng khi kết nối GitHub API", "error");
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
     },
 
 

@@ -558,9 +558,18 @@ const Auth = {
                         <option value="disabled" ${app.state.settings.reportFrequency === 'disabled' ? 'selected' : ''}>Tắt báo cáo</option>
                     </select>
                 </div>
-                <button class="btn btn-primary" onclick="app.saveReportSettings()" style="margin-top: 16px;">
-                    <i class="fa-solid fa-floppy-disk"></i> Lưu Cấu Hình Báo Cáo
-                </button>
+                <div class="form-group" style="margin-top: 16px;">
+                    <label>3. GitHub Personal Access Token (PAT) <span style="font-weight: normal; font-size: 11px; color: var(--warning);">(Để kích hoạt nút Test bên dưới)</span></label>
+                    <input type="password" id="setting-report-ghtoken" class="form-control" placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" value="${app.state.settings.reportGhToken || ''}" autocomplete="off">
+                </div>
+                <div style="display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap;">
+                    <button class="btn btn-primary" onclick="app.saveReportSettings()" style="flex: 1; min-width: 180px;">
+                        <i class="fa-solid fa-floppy-disk"></i> Lưu Cấu Hình Báo Cáo
+                    </button>
+                    <button class="btn btn-outline" id="btn-test-report" onclick="app.triggerTestReport()" style="border-color: var(--warning); color: var(--warning); font-weight: bold; padding: 10px 15px; display: flex; align-items: center; gap: 6px;">
+                        <i class="fa-solid fa-paper-plane"></i> Gửi Báo Cáo Thử Nghiệm
+                    </button>
+                </div>
             `, isOpen('acc-report', false));
 
             html += Auth.createAccordionBlock('acc-users', 'Quản lý Người dùng', 'fa-users', `
