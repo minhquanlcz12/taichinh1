@@ -383,9 +383,9 @@ async function run() {
     }
 
     // 11. Gửi báo cáo Email HTML
-    let emailRecipients = settings.reportEmails ? settings.reportEmails.split(',').map(e => e.trim()).filter(Boolean) : [];
+    let emailRecipients = settings.reportEmails ? settings.reportEmails.split(/[,\n\r]+/).map(e => e.trim()).filter(Boolean) : [];
     if (emailRecipients.length === 0 && process.env.REPORT_RECIPIENT) {
-        emailRecipients = process.env.REPORT_RECIPIENT.split(',').map(e => e.trim()).filter(Boolean);
+        emailRecipients = process.env.REPORT_RECIPIENT.split(/[,\n\r]+/).map(e => e.trim()).filter(Boolean);
     }
     if (emailRecipients.length === 0 && process.env.EMAIL_USER) {
         emailRecipients = [process.env.EMAIL_USER];
