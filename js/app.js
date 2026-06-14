@@ -372,7 +372,11 @@ const app = {
             } else {
                 const errText = await response.text();
                 console.error("GitHub Actions Trigger Error:", errText);
-                Utils.showToast(`Lỗi kích hoạt: Mã ${response.status}. Kiểm tra lại token của bạn.`, "error");
+                if (response.status === 403 || response.status === 401) {
+                    Utils.showToast(`Lỗi ${response.status}: Token GitHub của bạn không đúng hoặc thiếu quyền 'Actions' (Write).`, "error");
+                } else {
+                    Utils.showToast(`Lỗi kích hoạt: Mã ${response.status}. Kiểm tra lại token của bạn.`, "error");
+                }
             }
         } catch (e) {
             console.error("Network/CORS Error when triggering report:", e);
