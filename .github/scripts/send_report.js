@@ -151,6 +151,10 @@ async function run() {
     let txsToday = [];
 
     transactions.forEach(tx => {
+        // Chỉ tính các giao dịch thuộc tài khoản CONGTY
+        const owner = (tx.owner || '').toLowerCase().trim().replace(/\s/g, '');
+        if (owner !== 'congty' && owner !== 'côngty') return;
+
         const amount = parseFloat(tx.amount) || 0;
         // Tính số dư lũy kế toàn thời gian
         if (tx.type === 'income') {
