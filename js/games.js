@@ -92,7 +92,9 @@ const GamesModule = {
         gameMode: 'ai', 
         gameActive: true,
         winner: null,
-        winLine: [] 
+        winLine: [],
+        hackMode: false,
+        hackPlayer: 'O'
     },
 
     // === Monopoly State ===
@@ -1360,6 +1362,35 @@ const GamesModule = {
                         </div>
                     </div>
 
+                    ${(typeof Auth !== 'undefined' && Auth.currentUser && (Auth.currentUser.role === 'admin' || Auth.currentUser.username === 'admin')) ? `
+                        <div style="border: 1px solid rgba(239, 68, 68, 0.25); background: rgba(239, 68, 68, 0.05); border-radius: 12px; padding: 14px; margin-top: 10px;">
+                            <h4 style="margin: 0 0 10px 0; color: #ef4444; font-size: 13px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">
+                                <i class="fa-solid fa-ghost"></i> Admin Hack Mode 😈
+                            </h4>
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <label style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; font-size: 12px; color: #cbd5e1;">
+                                    <span>Bật tự động đi hộ (Hack):</span>
+                                    <input type="checkbox" id="caro-hack-toggle" ${cState.hackMode ? 'checked' : ''} onchange="GamesModule.toggleCaroHack(this.checked)" style="width: 16px; height: 16px; accent-color: #ef4444; cursor: pointer;">
+                                </label>
+                                ${cState.hackMode ? `
+                                    <div style="display: flex; align-items: center; justify-content: space-between; font-size: 11px; margin-top: 4px;">
+                                        <span style="color: #94a3b8;">Chọn quân tự động đi:</span>
+                                        <select onchange="GamesModule.setCaroHackPlayer(this.value)" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; border-radius: 4px; padding: 2px 6px; font-size: 11px; outline: none; cursor: pointer;">
+                                            <option value="O" ${cState.hackPlayer === 'O' ? 'selected' : ''}>Quân O</option>
+                                            <option value="X" ${cState.hackPlayer === 'X' ? 'selected' : ''}>Quân X</option>
+                                        </select>
+                                    </div>
+                                    <div style="color: #ef4444; font-size: 9.5px; font-style: italic; margin-top: 2px; line-height: 1.3;">
+                                        * Sếp AI siêu khó sẽ tự động đi hộ khi đến lượt của quân bài được chọn.
+                                    </div>
+                                ` : ''}
+                                <button onclick="GamesModule.makeCaroAiMove()" class="btn btn-outline" style="width: 100%; font-size: 11px; padding: 6px 12px; border-color: rgba(255,255,255,0.15); color: #fff; margin-top: 6px; display: flex; align-items: center; justify-content: center; gap: 6px; background: rgba(255,255,255,0.02);">
+                                    <i class="fa-solid fa-robot"></i> Đi hộ nước cờ này 🤖
+                                </button>
+                            </div>
+                        </div>
+                    ` : ''}
+
                     <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.06); margin: 0;">
 
                     <div>
@@ -1399,14 +1430,48 @@ const GamesModule = {
         GamesModule.restartCaro();
     },
 
+    toggleCaroHack: (val) => {
+        GamesModule.caro.hackMode = val;
+        const cState = GamesModule.caro;
+        if (cState.gameActive && cState.gameMode === 'local' && cState.hackMode && cState.currentPlayer === cState.hackPlayer) {
+            setTimeout(() => {
+                GamesModule.makeCaroAiMove();
+            }, 400);
+        }
+        GamesModule.renderTabContent();
+    },
+
+    setCaroHackPlayer: (player) => {
+        GamesModule.caro.hackPlayer = player;
+        const cState = GamesModule.caro;
+        if (cState.gameActive && cState.gameMode === 'local' && cState.hackMode && cState.currentPlayer === cState.hackPlayer) {
+            setTimeout(() => {
+                GamesModule.makeCaroAiMove();
+            }, 400);
+        }
+        GamesModule.renderTabContent();
+    },
+
     restartCaro: () => {
         GamesModule.resetCaroState();
         GamesModule.renderTabContent();
+
+        const cState = GamesModule.caro;
+        if (cState.gameActive && cState.gameMode === 'local' && cState.hackMode && cState.currentPlayer === cState.hackPlayer) {
+            setTimeout(() => {
+                GamesModule.makeCaroAiMove();
+            }, 400);
+        }
     },
 
     makeCaroMove: (r, c) => {
         const cState = GamesModule.caro;
         if (!cState.gameActive || cState.board[r][c] !== null) return;
+
+        // Chặn người dùng click thủ công khi đang là lượt của quân Hack
+        if (cState.gameMode === 'local' && cState.hackMode && cState.currentPlayer === cState.hackPlayer) {
+            return;
+        }
 
         cState.board[r][c] = cState.currentPlayer;
         GamesSynth.playMove();
@@ -1422,10 +1487,16 @@ const GamesModule = {
         cState.currentPlayer = cState.currentPlayer === 'X' ? 'O' : 'X';
         GamesModule.renderTabContent();
 
-        if (cState.gameActive && cState.gameMode === 'ai' && cState.currentPlayer === 'O') {
-            setTimeout(() => {
-                GamesModule.makeCaroAiMove();
-            }, 400);
+        if (cState.gameActive) {
+            if (cState.gameMode === 'ai' && cState.currentPlayer === 'O') {
+                setTimeout(() => {
+                    GamesModule.makeCaroAiMove();
+                }, 400);
+            } else if (cState.gameMode === 'local' && cState.hackMode && cState.currentPlayer === cState.hackPlayer) {
+                setTimeout(() => {
+                    GamesModule.makeCaroAiMove();
+                }, 400);
+            }
         }
     },
 
@@ -1469,13 +1540,17 @@ const GamesModule = {
         let bestScore = -1;
         let bestMoves = [];
 
+        const aiPlayer = cState.currentPlayer;
+        const humanPlayer = aiPlayer === 'X' ? 'O' : 'X';
+
         for (let r = 0; r < cState.boardSize; r++) {
             for (let c = 0; c < cState.boardSize; c++) {
                 if (cState.board[r][c] !== null) continue;
 
-                const scoreO = GamesModule.evaluateCaroCell(r, c, 'O');
-                const scoreX = GamesModule.evaluateCaroCell(r, c, 'X');
-                const score = scoreO + scoreX * 1.1;
+                const scoreAI = GamesModule.evaluateCaroCell(r, c, aiPlayer);
+                const scoreHuman = GamesModule.evaluateCaroCell(r, c, humanPlayer);
+                const defenseWeight = cState.hackMode ? 1.3 : 1.15;
+                const score = scoreAI + scoreHuman * defenseWeight;
 
                 if (score > bestScore) {
                     bestScore = score;
@@ -1488,15 +1563,19 @@ const GamesModule = {
 
         if (bestMoves.length > 0) {
             const [r, c] = bestMoves[Math.floor(Math.random() * bestMoves.length)];
-            cState.board[r][c] = 'O';
+            cState.board[r][c] = aiPlayer;
             GamesSynth.playMove();
 
             if (GamesModule.checkCaroWin(r, c)) {
                 cState.gameActive = false;
-                cState.winner = 'O';
-                GamesSynth.playLose();
+                cState.winner = aiPlayer;
+                if (cState.gameMode === 'ai' && aiPlayer === 'O') {
+                    GamesSynth.playLose();
+                } else {
+                    GamesSynth.playWin();
+                }
             } else {
-                cState.currentPlayer = 'X';
+                cState.currentPlayer = humanPlayer;
             }
         }
 
@@ -1505,47 +1584,79 @@ const GamesModule = {
 
     evaluateCaroCell: (r, c, player) => {
         const cState = GamesModule.caro;
-        const directions = [[0,1], [1,0], [1,1], [1,-1]];
+        const board = cState.board;
+        const size = cState.boardSize;
+        
+        const dirPairs = [
+            [0, 1],   // Ngang
+            [1, 0],   // Dọc
+            [1, 1],   // Chéo xuống-phải
+            [1, -1]   // Chéo xuống-trái
+        ];
+        
         let totalScore = 0;
+        const opponent = player === 'X' ? 'O' : 'X';
 
-        for (const [dr, dc] of directions) {
-            let consecutive = 0;
-            let openEnds = 0;
+        // Giả lập đặt quân cờ xuống để quét thế trận
+        board[r][c] = player;
 
-            let nr = r + dr;
-            let nc = c + dc;
-            while (nr >= 0 && nr < cState.boardSize && nc >= 0 && nc < cState.boardSize && cState.board[nr][nc] === player) {
-                consecutive++;
-                nr += dr;
-                nc += dc;
+        for (const [dr, dc] of dirPairs) {
+            // Lấy chuỗi 9 ô cờ xung quanh (r, c)
+            let line = [];
+            for (let i = -4; i <= 4; i++) {
+                let nr = r + i * dr;
+                let nc = c + i * dc;
+                if (nr >= 0 && nr < size && nc >= 0 && nc < size) {
+                    line.push(board[nr][nc] || '.');
+                } else {
+                    line.push('#'); // Biên bảng
+                }
             }
-            if (nr >= 0 && nr < cState.boardSize && nc >= 0 && nc < cState.boardSize && cState.board[nr][nc] === null) {
-                openEnds++;
-            }
+            let lineStr = line.join('');
+            
+            // Chuận hóa dòng: 'P' là quân mình, 'O' là quân đối thủ
+            let s = lineStr.replace(new RegExp(player, 'g'), 'P')
+                           .replace(new RegExp(opponent, 'g'), 'O');
 
-            nr = r - dr;
-            nc = c - dc;
-            while (nr >= 0 && nr < cState.boardSize && nc >= 0 && nc < cState.boardSize && cState.board[nr][nc] === player) {
-                consecutive++;
-                nr -= dr;
-                nc -= dc;
+            // 1. Đủ 5 quân để thắng
+            if (s.includes('PPPPP')) {
+                totalScore += 100000;
             }
-            if (nr >= 0 && nr < cState.boardSize && nc >= 0 && nc < cState.boardSize && cState.board[nr][nc] === null) {
-                openEnds++;
+            // 2. Bốn quân mở 2 đầu (Live 4)
+            else if (s.includes('.PPPP.')) {
+                totalScore += 30000;
             }
-
-            if (consecutive >= 4) {
-                totalScore += 10000;
-            } else if (consecutive === 3) {
-                totalScore += openEnds === 2 ? 2000 : (openEnds === 1 ? 500 : 0);
-            } else if (consecutive === 2) {
-                totalScore += openEnds === 2 ? 300 : (openEnds === 1 ? 80 : 0);
-            } else if (consecutive === 1) {
-                totalScore += openEnds === 2 ? 50 : (openEnds === 1 ? 10 : 0);
+            // 3. Bốn quân bị chặn 1 đầu hoặc có lỗ hổng (Rush 4 / Gapped 4)
+            else if (s.includes('PPPP.') || s.includes('.PPPP') || 
+                     s.includes('P.PPP') || s.includes('PP.PP') || s.includes('PPP.P')) {
+                totalScore += 8000;
+            }
+            // 4. Ba quân mở 2 đầu (Live 3)
+            else if (s.includes('.PPP..') || s.includes('..PPP.') || 
+                     s.includes('.P.PP.') || s.includes('.PP.P.')) {
+                totalScore += 3000;
+            }
+            // 5. Ba quân bị chặn hoặc có lỗ hổng (Blocked 3)
+            else if (s.includes('OPPP.') || s.includes('.PPPO') || 
+                     s.includes('#PPP.') || s.includes('.PPP#') || 
+                     s.includes('P.PP') || s.includes('PP.P') || s.includes('P.P.P')) {
+                totalScore += 800;
+            }
+            // 6. Hai quân mở (Live 2)
+            else if (s.includes('.PP..') || s.includes('..PP.') || s.includes('.P.P.')) {
+                totalScore += 200;
+            }
+            // 7. Quân đơn lẻ gần trung tâm
+            else if (s.includes('P')) {
+                totalScore += 10;
             }
         }
 
-        const mid = cState.boardSize / 2;
+        // Trả lại trạng thái ô trống
+        board[r][c] = null;
+
+        // Ưu tiên các nước đi gần trung tâm bàn cờ hơn
+        const mid = size / 2;
         const dist = Math.sqrt(Math.pow(r - mid, 2) + Math.pow(c - mid, 2));
         totalScore += (mid - dist) * 0.5;
 
