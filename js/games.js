@@ -94,7 +94,9 @@ const GamesModule = {
         winner: null,
         winLine: [],
         hackMode: false,
-        hackPlayer: 'O'
+        hackPlayer: 'O',
+        hackDelayMs: 1500,
+        hackTimeout: null
     },
 
     // === Monopoly State ===
@@ -1380,6 +1382,10 @@ const GamesModule = {
                                             <option value="X" ${cState.hackPlayer === 'X' ? 'selected' : ''}>Quân X</option>
                                         </select>
                                     </div>
+                                    <div style="display: flex; align-items: center; justify-content: space-between; font-size: 11px; margin-top: 6px;">
+                                        <span style="color: #94a3b8; white-space: nowrap;">Độ trễ đi cờ: <strong style="color:#ef4444" id="caro-local-delay-val">${((cState.hackDelayMs || 1500) / 1000).toFixed(1)}s</strong></span>
+                                        <input type="range" min="500" max="5000" step="500" value="${cState.hackDelayMs || 1500}" oninput="GamesModule.setCaroLocalDelay(this.value)" style="width: 80px; accent-color: #ef4444; height: 4px; cursor: pointer; margin: 0;">
+                                    </div>
                                     <div style="color: #ef4444; font-size: 9.5px; font-style: italic; margin-top: 2px; line-height: 1.3;">
                                         * Sếp AI siêu khó sẽ tự động đi hộ khi đến lượt của quân bài được chọn.
                                     </div>
@@ -1430,38 +1436,54 @@ const GamesModule = {
         GamesModule.restartCaro();
     },
 
+    scheduleCaroAiMove: () => {
+        const cState = GamesModule.caro;
+        if (cState.hackTimeout) {
+            clearTimeout(cState.hackTimeout);
+            cState.hackTimeout = null;
+        }
+        if (cState.gameActive && cState.gameMode === 'local' && cState.hackMode && cState.currentPlayer === cState.hackPlayer) {
+            const delay = cState.hackDelayMs !== undefined ? cState.hackDelayMs : 1500;
+            cState.hackTimeout = setTimeout(() => {
+                cState.hackTimeout = null;
+                GamesModule.makeCaroAiMove();
+            }, delay);
+        }
+    },
+
+    setCaroLocalDelay: (val) => {
+        GamesModule.caro.hackDelayMs = parseInt(val) || 1500;
+        const display = document.getElementById('caro-local-delay-val');
+        if (display) {
+            display.textContent = (GamesModule.caro.hackDelayMs / 1000).toFixed(1) + 's';
+        }
+    },
+
     toggleCaroHack: (val) => {
         GamesModule.caro.hackMode = val;
-        const cState = GamesModule.caro;
-        if (cState.gameActive && cState.gameMode === 'local' && cState.hackMode && cState.currentPlayer === cState.hackPlayer) {
-            setTimeout(() => {
-                GamesModule.makeCaroAiMove();
-            }, 400);
+        if (!val && GamesModule.caro.hackTimeout) {
+            clearTimeout(GamesModule.caro.hackTimeout);
+            GamesModule.caro.hackTimeout = null;
         }
+        GamesModule.scheduleCaroAiMove();
         GamesModule.renderTabContent();
     },
 
     setCaroHackPlayer: (player) => {
         GamesModule.caro.hackPlayer = player;
-        const cState = GamesModule.caro;
-        if (cState.gameActive && cState.gameMode === 'local' && cState.hackMode && cState.currentPlayer === cState.hackPlayer) {
-            setTimeout(() => {
-                GamesModule.makeCaroAiMove();
-            }, 400);
-        }
+        GamesModule.scheduleCaroAiMove();
         GamesModule.renderTabContent();
     },
 
     restartCaro: () => {
+        const cState = GamesModule.caro;
+        if (cState.hackTimeout) {
+            clearTimeout(cState.hackTimeout);
+            cState.hackTimeout = null;
+        }
         GamesModule.resetCaroState();
         GamesModule.renderTabContent();
-
-        const cState = GamesModule.caro;
-        if (cState.gameActive && cState.gameMode === 'local' && cState.hackMode && cState.currentPlayer === cState.hackPlayer) {
-            setTimeout(() => {
-                GamesModule.makeCaroAiMove();
-            }, 400);
-        }
+        GamesModule.scheduleCaroAiMove();
     },
 
     makeCaroMove: (r, c) => {
@@ -1493,9 +1515,7 @@ const GamesModule = {
                     GamesModule.makeCaroAiMove();
                 }, 400);
             } else if (cState.gameMode === 'local' && cState.hackMode && cState.currentPlayer === cState.hackPlayer) {
-                setTimeout(() => {
-                    GamesModule.makeCaroAiMove();
-                }, 400);
+                GamesModule.scheduleCaroAiMove();
             }
         }
     },
@@ -1550,7 +1570,12 @@ const GamesModule = {
                 const scoreAI = GamesModule.evaluateCaroCell(r, c, aiPlayer);
                 const scoreHuman = GamesModule.evaluateCaroCell(r, c, humanPlayer);
                 const defenseWeight = cState.hackMode ? 1.3 : 1.15;
-                const score = scoreAI + scoreHuman * defenseWeight;
+                let score = scoreAI + scoreHuman * defenseWeight;
+
+                // Ưu tiên tuyệt đối nước đi giúp mình chiến thắng ngay lập tức
+                if (scoreAI >= 100000) {
+                    score = 1000000 + scoreAI;
+                }
 
                 if (score > bestScore) {
                     bestScore = score;

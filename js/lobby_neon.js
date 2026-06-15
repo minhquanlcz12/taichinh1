@@ -25,7 +25,9 @@ window.LobbyNeon = {
         notifiedMissionIds: new Set(),
         activeQuestTab: 'new',
         vipUsers: new Set(),
-        caroHackMode: false
+        caroHackMode: false,
+        caroDelayMs: 1500,
+        caroHackTimeout: null
     },
 
     npcBanterQuotes: {
@@ -1244,10 +1246,16 @@ window.LobbyNeon = {
                     </div>
                     <div style="display: flex; gap: 8px; margin-left: 12px; align-items: center;">
                         ${Auth.currentUser.username === 'admin' ? `
-                            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 11px; color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.4); padding: 4px 8px; border-radius: 8px; background: rgba(239, 68, 68, 0.1); user-select: none; margin-right: 4px;">
-                                <input type="checkbox" id="caro-pvp-hack-toggle" ${LobbyNeon.state.caroHackMode ? 'checked' : ''} onchange="LobbyNeon.toggleCaroPvpHack(this.checked)" style="accent-color: #ef4444; cursor: pointer; width: 14px; height: 14px;">
-                                <span>Hack 😈</span>
-                            </label>
+                            <div style="border: 1px solid rgba(239, 68, 68, 0.25); background: rgba(239, 68, 68, 0.05); border-radius: 8px; padding: 6px 10px; display: flex; align-items: center; gap: 8px; user-select: none; margin-right: 4px;">
+                                <label style="display: flex; align-items: center; gap: 4px; cursor: pointer; font-size: 11px; color: #ef4444; margin: 0;">
+                                    <input type="checkbox" id="caro-pvp-hack-toggle" ${LobbyNeon.state.caroHackMode ? 'checked' : ''} onchange="LobbyNeon.toggleCaroPvpHack(this.checked)" style="accent-color: #ef4444; cursor: pointer; width: 14px; height: 14px;">
+                                    <span>Hack 😈</span>
+                                </label>
+                                <div id="caro-pvp-hack-settings" style="display: ${LobbyNeon.state.caroHackMode ? 'flex' : 'none'}; align-items: center; gap: 6px; border-left: 1px solid rgba(239, 68, 68, 0.2); padding-left: 8px;">
+                                    <span style="font-size: 10px; color: #94a3b8; white-space: nowrap;">Trễ: <strong style="color:#ef4444" id="caro-pvp-delay-val">${(LobbyNeon.state.caroDelayMs / 1000).toFixed(1)}s</strong></span>
+                                    <input type="range" min="500" max="5000" step="500" value="${LobbyNeon.state.caroDelayMs}" oninput="LobbyNeon.setCaroPvpDelay(this.value)" style="width: 60px; accent-color: #ef4444; height: 4px; cursor: pointer; margin: 0;">
+                                </div>
+                            </div>
                             <button class="btn-neon" onclick="LobbyNeon.makeCaroPvPAiMove()" style="font-size: 10px; padding: 4px 8px; height: 26px; border-color: #fbbf24; color: #fbbf24; background: rgba(0,0,0,0.2); margin-right: 4px;" title="AI đi hộ nước này">🤖 Gợi ý</button>
                         ` : ''}
                         <button class="btn-neon-danger" id="caro-btn-quit" onclick="LobbyNeon.forfeitGame()" style="font-size: 11px; padding: 6px 12px; height: 32px;">Rút lui</button>
@@ -1452,12 +1460,34 @@ window.LobbyNeon = {
 
     toggleCaroPvpHack: (val) => {
         LobbyNeon.state.caroHackMode = val;
+        
+        // Xoá timeout cũ để tránh trùng lặp hoặc di chuyển ngoài ý muốn
+        if (LobbyNeon.state.caroHackTimeout) {
+            clearTimeout(LobbyNeon.state.caroHackTimeout);
+            LobbyNeon.state.caroHackTimeout = null;
+        }
+        
+        // Show/hide sub-settings dynamically
+        const settingsDiv = document.getElementById('caro-pvp-hack-settings');
+        if (settingsDiv) {
+            settingsDiv.style.display = val ? 'flex' : 'none';
+        }
+
         const game = LobbyNeon.state.currentGameData;
         const me = Auth.currentUser.username;
         if (game && game.status === 'playing' && game.turn === me && LobbyNeon.state.caroHackMode) {
-            setTimeout(() => {
+            LobbyNeon.state.caroHackTimeout = setTimeout(() => {
+                LobbyNeon.state.caroHackTimeout = null;
                 LobbyNeon.makeCaroPvPAiMove();
-            }, 400);
+            }, LobbyNeon.state.caroDelayMs);
+        }
+    },
+
+    setCaroPvpDelay: (val) => {
+        LobbyNeon.state.caroDelayMs = parseInt(val) || 1500;
+        const display = document.getElementById('caro-pvp-delay-val');
+        if (display) {
+            display.textContent = (LobbyNeon.state.caroDelayMs / 1000).toFixed(1) + 's';
         }
     },
 
@@ -1484,7 +1514,12 @@ window.LobbyNeon = {
 
                 const scoreAI = LobbyNeon.evaluateCaroPvPCell(tempBoard, r, c, aiPlayer);
                 const scoreHuman = LobbyNeon.evaluateCaroPvPCell(tempBoard, r, c, humanPlayer);
-                const score = scoreAI + scoreHuman * 1.35; // Chặn đứng cực mạnh
+                let score = scoreAI + scoreHuman * 1.35; // Chặn đứng cực mạnh
+
+                // Ưu tiên tuyệt đối nước đi giúp mình chiến thắng ngay lập tức
+                if (scoreAI >= 100000) {
+                    score = 1000000 + scoreAI;
+                }
 
                 if (score > bestScore) {
                     bestScore = score;
@@ -1824,12 +1859,16 @@ window.LobbyNeon = {
 
             // Tự động kích hoạt Hack đi cờ nếu đến lượt của mình
             if (game.turn === me && LobbyNeon.state.caroHackMode) {
-                setTimeout(() => {
+                if (LobbyNeon.state.caroHackTimeout) {
+                    clearTimeout(LobbyNeon.state.caroHackTimeout);
+                }
+                LobbyNeon.state.caroHackTimeout = setTimeout(() => {
+                    LobbyNeon.state.caroHackTimeout = null;
                     const curGame = LobbyNeon.state.currentGameData;
                     if (curGame && curGame.status === 'playing' && curGame.turn === me && !LobbyNeon.state.isMakingMove) {
                         LobbyNeon.makeCaroPvPAiMove();
                     }
-                }, 500);
+                }, LobbyNeon.state.caroDelayMs);
             }
         }
     },
@@ -1877,6 +1916,12 @@ window.LobbyNeon = {
         if (LobbyNeon.state.unsubscribeCurrentGame) {
             try { LobbyNeon.state.unsubscribeCurrentGame(); } catch(e) {}
             LobbyNeon.state.unsubscribeCurrentGame = null;
+        }
+
+        // Xoá timeout hack đi cờ nếu có
+        if (LobbyNeon.state.caroHackTimeout) {
+            clearTimeout(LobbyNeon.state.caroHackTimeout);
+            LobbyNeon.state.caroHackTimeout = null;
         }
     },
 
