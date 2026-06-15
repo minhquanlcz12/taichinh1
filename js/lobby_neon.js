@@ -24,7 +24,8 @@ window.LobbyNeon = {
         unsubscribeMissions: null,
         notifiedMissionIds: new Set(),
         activeQuestTab: 'new',
-        vipUsers: new Set()
+        vipUsers: new Set(),
+        caroHackMode: false
     },
 
     npcBanterQuotes: {
@@ -1241,7 +1242,14 @@ window.LobbyNeon = {
                         </div>
                         <div style="width: 40px; height: 40px; flex-shrink: 0; filter: drop-shadow(0 0 6px #2ed57380);">${p2Chibi}</div>
                     </div>
-                    <div style="display: flex; gap: 8px; margin-left: 12px;">
+                    <div style="display: flex; gap: 8px; margin-left: 12px; align-items: center;">
+                        ${Auth.currentUser.username === 'admin' ? `
+                            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 11px; color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.4); padding: 4px 8px; border-radius: 8px; background: rgba(239, 68, 68, 0.1); user-select: none; margin-right: 4px;">
+                                <input type="checkbox" id="caro-pvp-hack-toggle" ${LobbyNeon.state.caroHackMode ? 'checked' : ''} onchange="LobbyNeon.toggleCaroPvpHack(this.checked)" style="accent-color: #ef4444; cursor: pointer; width: 14px; height: 14px;">
+                                <span>Hack 😈</span>
+                            </label>
+                            <button class="btn-neon" onclick="LobbyNeon.makeCaroPvPAiMove()" style="font-size: 10px; padding: 4px 8px; height: 26px; border-color: #fbbf24; color: #fbbf24; background: rgba(0,0,0,0.2); margin-right: 4px;" title="AI đi hộ nước này">🤖 Gợi ý</button>
+                        ` : ''}
                         <button class="btn-neon-danger" id="caro-btn-quit" onclick="LobbyNeon.forfeitGame()" style="font-size: 11px; padding: 6px 12px; height: 32px;">Rút lui</button>
                         <button class="btn-neon" onclick="LobbyNeon.closeCaroBoard()" style="font-size: 11px; padding: 6px 12px; height: 32px; background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2);">✖</button>
                     </div>
@@ -1376,7 +1384,7 @@ window.LobbyNeon = {
         }, 3100);
     },
 
-    makeMove: async (index) => {
+    makeMove: async (index, isAuto = false) => {
         if (LobbyNeon.state.isMakingMove) return;
         const gameId = LobbyNeon.state.currentGameId;
         const game = LobbyNeon.state.currentGameData;
@@ -1389,6 +1397,12 @@ window.LobbyNeon = {
             Utils.showToast("Chưa tới lượt của bạn!", "warning");
             return;
         }
+
+        // Chặn người chơi click tay khi đang bật Hack
+        if (LobbyNeon.state.caroHackMode && !isAuto) {
+            return;
+        }
+
         if (game.board[index]) return;
 
         LobbyNeon.state.isMakingMove = true;
@@ -1434,6 +1448,119 @@ window.LobbyNeon = {
         } finally {
             LobbyNeon.state.isMakingMove = false;
         }
+    },
+
+    toggleCaroPvpHack: (val) => {
+        LobbyNeon.state.caroHackMode = val;
+        const game = LobbyNeon.state.currentGameData;
+        const me = Auth.currentUser.username;
+        if (game && game.status === 'playing' && game.turn === me && LobbyNeon.state.caroHackMode) {
+            setTimeout(() => {
+                LobbyNeon.makeCaroPvPAiMove();
+            }, 400);
+        }
+    },
+
+    makeCaroPvPAiMove: async () => {
+        if (LobbyNeon.state.isMakingMove) return;
+        const gameId = LobbyNeon.state.currentGameId;
+        const game = LobbyNeon.state.currentGameData;
+        if (!game || !gameId) return;
+        const me = Auth.currentUser.username;
+        if (game.status !== 'playing') return;
+        if (game.turn !== me) return;
+
+        let bestScore = -1;
+        let bestMoves = [];
+
+        const aiPlayer = (me === game.player1) ? 'X' : 'O';
+        const humanPlayer = aiPlayer === 'X' ? 'O' : 'X';
+        const tempBoard = [...game.board];
+
+        for (let r = 0; r < 15; r++) {
+            for (let c = 0; c < 15; c++) {
+                const idx = r * 15 + c;
+                if (tempBoard[idx] !== null && tempBoard[idx] !== undefined && tempBoard[idx] !== '') continue;
+
+                const scoreAI = LobbyNeon.evaluateCaroPvPCell(tempBoard, r, c, aiPlayer);
+                const scoreHuman = LobbyNeon.evaluateCaroPvPCell(tempBoard, r, c, humanPlayer);
+                const score = scoreAI + scoreHuman * 1.35; // Chặn đứng cực mạnh
+
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMoves = [idx];
+                } else if (score === bestScore) {
+                    bestMoves.push(idx);
+                }
+            }
+        }
+
+        if (bestMoves.length > 0) {
+            const bestIndex = bestMoves[Math.floor(Math.random() * bestMoves.length)];
+            await LobbyNeon.makeMove(bestIndex, true); // Gọi đi tự động
+        }
+    },
+
+    evaluateCaroPvPCell: (board, r, c, player) => {
+        const size = 15;
+        const dirPairs = [
+            [0, 1],   // Ngang
+            [1, 0],   // Dọc
+            [1, 1],   // Chéo xuống-phải
+            [1, -1]   // Chéo xuống-trái
+        ];
+        
+        let totalScore = 0;
+        const opponent = player === 'X' ? 'O' : 'X';
+
+        // Giả lập đặt quân cờ
+        board[r * 15 + c] = player;
+
+        for (const [dr, dc] of dirPairs) {
+            let line = [];
+            for (let i = -4; i <= 4; i++) {
+                let nr = r + i * dr;
+                let nc = c + i * dc;
+                if (nr >= 0 && nr < size && nc >= 0 && nc < size) {
+                    line.push(board[nr * 15 + nc] || '.');
+                } else {
+                    line.push('#');
+                }
+            }
+            let lineStr = line.join('');
+            
+            let s = lineStr.replace(new RegExp(player, 'g'), 'P')
+                           .replace(new RegExp(opponent, 'g'), 'O');
+
+            if (s.includes('PPPPP')) {
+                totalScore += 100000;
+            } else if (s.includes('.PPPP.')) {
+                totalScore += 30000;
+            } else if (s.includes('PPPP.') || s.includes('.PPPP') || 
+                     s.includes('P.PPP') || s.includes('PP.PP') || s.includes('PPP.P')) {
+                totalScore += 8000;
+            } else if (s.includes('.PPP..') || s.includes('..PPP.') || 
+                     s.includes('.P.PP.') || s.includes('.PP.P.')) {
+                totalScore += 3000;
+            } else if (s.includes('OPPP.') || s.includes('.PPPO') || 
+                     s.includes('#PPP.') || s.includes('.PPP#') || 
+                     s.includes('P.PP') || s.includes('PP.P') || s.includes('P.P.P')) {
+                totalScore += 800;
+            } else if (s.includes('.PP..') || s.includes('..PP.') || s.includes('.P.P.')) {
+                totalScore += 200;
+            } else if (s.includes('P')) {
+                totalScore += 10;
+            }
+        }
+
+        // Trả lại ô trống
+        board[r * 15 + c] = null;
+
+        const mid = size / 2;
+        const dist = Math.sqrt(Math.pow(r - mid, 2) + Math.pow(c - mid, 2));
+        totalScore += (mid - dist) * 0.5;
+
+        return totalScore;
     },
 
     drawWinLine: (winCells) => {
@@ -1694,6 +1821,16 @@ window.LobbyNeon = {
             
             // Cập nhật cấp độ và tỉ số trong quá trình chơi cờ
             LobbyNeon.updateMatchStats(game.player1, game.player2);
+
+            // Tự động kích hoạt Hack đi cờ nếu đến lượt của mình
+            if (game.turn === me && LobbyNeon.state.caroHackMode) {
+                setTimeout(() => {
+                    const curGame = LobbyNeon.state.currentGameData;
+                    if (curGame && curGame.status === 'playing' && curGame.turn === me && !LobbyNeon.state.isMakingMove) {
+                        LobbyNeon.makeCaroPvPAiMove();
+                    }
+                }, 500);
+            }
         }
     },
 
