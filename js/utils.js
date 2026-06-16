@@ -203,12 +203,12 @@ const Utils = {
     },
 
     // Modal Builder
-    showModal: (title, contentHtml, onConfirm = null, confirmText = 'Xác nhận', cancelText = 'Hủy') => {
+    showModal: (title, contentHtml, onConfirm = null, confirmText = 'Xác nhận', cancelText = 'Hủy', options = {}) => {
         const overlay = document.getElementById('modal-overlay');
 
         // Remove existing modal if any
         overlay.innerHTML = '';
-        overlay.style.zIndex = '20000'; // Make sure general alert/modal is always on top (above Chibi builder at z-index 10000)
+        overlay.style.zIndex = '20000';
 
         const modalHtml = `
             <div class="modal">
@@ -219,7 +219,7 @@ const Utils = {
                 <div class="modal-body">
                     ${contentHtml}
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer" id="modal-footer" style="${options.hideFooter ? 'display: none;' : ''}">
                     <button class="btn btn-text" id="modal-cancel">${cancelText}</button>
                     ${onConfirm ? `<button class="btn btn-primary" id="modal-confirm">${confirmText}</button>` : ''}
                 </div>
@@ -231,13 +231,15 @@ const Utils = {
 
         // Event listeners
         const closeModal = () => overlay.classList.remove('active');
+        Utils.closeModal = closeModal; // Expose to outside
 
         document.getElementById('modal-close').addEventListener('click', closeModal);
         document.getElementById('modal-cancel').addEventListener('click', closeModal);
 
         if (onConfirm) {
-            document.getElementById('modal-confirm').addEventListener('click', () => {
-                if (onConfirm()) {
+            document.getElementById('modal-confirm').addEventListener('click', async () => {
+                const result = await onConfirm();
+                if (result) {
                     closeModal();
                 }
             });
@@ -247,6 +249,11 @@ const Utils = {
         overlay.addEventListener('click', (e) => {
             if (e.target === overlay) closeModal();
         });
+    },
+
+    closeModal: () => {
+        const overlay = document.getElementById('modal-overlay');
+        if (overlay) overlay.classList.remove('active');
     },
 
     // Custom Prompt Modal (Returns Promise)

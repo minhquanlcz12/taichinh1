@@ -283,7 +283,8 @@ const Attendance = {
         if (typeof Utils.showModal !== 'function') {
             Utils.showToast("Giao diện quét không khả dụng, đang chạy quét ngầm...", "info");
         } else {
-            Utils.showModal("THANH LONG SECURITY SYSTEM", scanContent, null, null, { hideFooter: true });
+            // Sửa tham số truyền vào Utils.showModal để tránh hiển thị [object Object] ở nút Hủy
+            Utils.showModal("THANH LONG SECURITY SYSTEM", scanContent, null, "Xác nhận", "Hủy", { hideFooter: true });
         }
         
         // 2. Chạy hiệu ứng Progress trong 5 giây
@@ -303,6 +304,7 @@ const Attendance = {
 
         await new Promise(resolve => setTimeout(resolve, 5000));
         
+        // LUÔN ĐÓNG MODAL trước khi chuyển bước hoặc kết thúc
         if (typeof Utils.closeModal === 'function') Utils.closeModal();
 
         // 3. Phân tích dữ liệu để tìm ra người vắng không phép
