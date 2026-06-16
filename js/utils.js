@@ -54,12 +54,16 @@ const Utils = {
     // System account filter - excludes admin and company accounts from reports
     isSystemAccount: (acc) => {
         if (!acc) return true;
+        // Role check
         if (acc.role === 'admin') return true;
+        
         const u = (acc.username || '').toLowerCase().replace(/\s+/g, '');
         const fn = ((acc.profile && acc.profile.fullname) || '').toLowerCase().replace(/\s+/g, '');
-        // Check exact username or fullname matches
+        
+        // Only exclude global admin or company account
         const systemNames = ['admin', 'congty', 'côngty'];
         if (systemNames.includes(u) || systemNames.includes(fn)) return true;
+        
         return false;
     },
 

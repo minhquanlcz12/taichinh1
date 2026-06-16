@@ -66,7 +66,7 @@ const Attendance = {
                 let changed = false;
 
                 for (const acc of accounts) {
-                    if (acc.role === 'admin' || acc.username === 'nlgiang' || acc.username === 'nlgiang112' || acc.username === 'congty') {
+                    if (Utils.isSystemAccount(acc)) {
                         continue;
                     }
                     
@@ -185,7 +185,7 @@ const Attendance = {
                 if (localStorage.getItem(flagKey) === 'done') continue;
 
                 for (const acc of accounts) {
-                    if (acc.role === 'admin' || acc.username === 'nlgiang' || acc.username === 'nlgiang112' || acc.username === 'congty' || acc.username === 'admin') {
+                    if (Utils.isSystemAccount(acc)) {
                         continue;
                     }
 
