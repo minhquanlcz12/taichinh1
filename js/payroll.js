@@ -682,6 +682,11 @@ const PayrollModule = {
             allAttendance.forEach(a => {
                 if (a.username === username && a.dateStr < todayStr) {
                     if (a.dateStr >= cycle.startStr && a.dateStr <= cycle.endStr) {
+                        // Bỏ qua Chủ nhật khi tính công đi làm
+                        const parts = a.dateStr.split('-');
+                        const isSunday = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2])).getDay() === 0;
+                        if (isSunday) return;
+
                         const weight = a.type ? 0.5 : 1.0;
                         if (a.status === 'on_time') onTimeDays += weight;
                         else if (a.status === 'late_excused') lateExcusedDays += weight;
@@ -787,10 +792,14 @@ const PayrollModule = {
                 let approvedLeaveDays = 0;
                 let lateCount = 0;
 
-                // Scan attendance
                 allAttendance.forEach(a => {
                     if (a.username === username && a.dateStr < todayStr) {
                         if (a.dateStr >= cycle.startStr && a.dateStr <= cycle.endStr) {
+                            // Bỏ qua Chủ nhật khi tính công đi làm
+                            const parts = a.dateStr.split('-');
+                            const isSunday = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2])).getDay() === 0;
+                            if (isSunday) return;
+
                             const weight = a.type ? 0.5 : 1.0;
                             if (a.status === 'on_time') onTimeDays += weight;
                             else if (a.status === 'late_excused') lateExcusedDays += weight;
@@ -1403,6 +1412,11 @@ const PayrollModule = {
             allAttendance.forEach(a => {
                 if (a.username === username && a.dateStr < todayStr) {
                     if (a.dateStr >= cycle.startStr && a.dateStr <= cycle.endStr) {
+                        // Bỏ qua Chủ nhật khi tính công đi làm
+                        const parts = a.dateStr.split('-');
+                        const isSunday = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2])).getDay() === 0;
+                        if (isSunday) return;
+
                         const weight = a.type ? 0.5 : 1.0;
                         if (a.status === 'on_time') onTimeDays += weight;
                         else if (a.status === 'late_excused') lateExcusedDays += weight;
@@ -1504,6 +1518,11 @@ const PayrollModule = {
             allAttendance.forEach(a => {
                 if (a.username === username && a.dateStr < todayStr) {
                     if (a.dateStr >= cycle.startStr && a.dateStr <= cycle.endStr) {
+                        // Bỏ qua Chủ nhật khi tính công đi làm
+                        const parts = a.dateStr.split('-');
+                        const isSunday = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2])).getDay() === 0;
+                        if (isSunday) return;
+
                         const weight = a.type ? 0.5 : 1.0;
                         if (a.status === 'on_time') onTimeDays += weight;
                         else if (a.status === 'late_excused') lateExcusedDays += weight;
