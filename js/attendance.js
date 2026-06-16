@@ -1008,6 +1008,36 @@ const Attendance = {
                     </div>
                 </div>
 
+                <!-- Bảng Chấm công Thủ công dành cho Admin -->
+                <div class="glass-panel" id="admin-manual-checkin-block" style="margin-bottom: 24px; padding: 18px; border: 1px solid rgba(100, 255, 218, 0.3); background: rgba(10, 25, 40, 0.6); box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+                    <h3 style="margin: 0 0 16px; color: var(--primary); font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px;">
+                        <i class="fa-solid fa-user-pen"></i> Chấm Công Thủ Công (Admin Manual Tool)
+                    </h3>
+                    <div style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 200px;">
+                            <label style="display: block; color: var(--text-secondary); font-size: 12px; margin-bottom: 6px;">Chọn Nhân Viên:</label>
+                            <select id="admin-manual-user" class="btn btn-outline" style="width: 100%; text-align: left; background: rgba(0,0,0,0.4); border-color: rgba(255,255,255,0.1); color: #fff;">
+                                <option value="">-- Chọn nhân sự --</option>
+                                ${usersList.map(u => `<option value="${u}">${Utils.getUserDisplayName(u) || u} (@${u})</option>`).join('')}
+                            </select>
+                        </div>
+                        <div style="width: 150px;">
+                            <label style="display: block; color: var(--text-secondary); font-size: 12px; margin-bottom: 6px;">Ca làm việc:</label>
+                            <select id="admin-manual-session" class="btn btn-outline" style="width: 100%; text-align: left; background: rgba(0,0,0,0.4); border-color: rgba(255,255,255,0.1); color: #fff;">
+                                <option value="morning">Ca Sáng</option>
+                                <option value="afternoon">Ca Chiều</option>
+                            </select>
+                        </div>
+                        <div style="flex: 1; min-width: 200px;">
+                            <label style="display: block; color: var(--text-secondary); font-size: 12px; margin-bottom: 6px;">Ghi chú (Admin):</label>
+                            <input type="text" id="admin-manual-note" placeholder="Nhập lý do hoặc ghi chú..." style="width: 100%; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 8px 12px; border-radius: 6px;">
+                        </div>
+                        <button class="btn btn-primary" onclick="Attendance.performAdminManualCheckIn()" style="padding: 10px 20px; font-weight: 800; background: var(--primary); border: none;">
+                            <i class="fa-solid fa-check"></i> CHẤM CÔNG NGAY
+                        </button>
+                    </div>
+                </div>
+
                 ${securityHtml}
                 
                 <div style="display: flex; gap: 24px; align-items: stretch; flex-wrap: wrap;">
@@ -1258,6 +1288,92 @@ const Attendance = {
             const cascades = container.querySelectorAll('.animate-cascade');
             cascades.forEach(c => c.classList.add('active'));
         }, 10);
+    },
+    
+    performAdminManualCheckIn: async () => {
+        const admin = Auth.currentUser;
+        if (!admin || admin.role !== 'admin') {
+            Utils.showToast("Chỉ Admin mới có quyền thực hiện thao tác này!", "error");
+            return;
+        }
+
+        const username = document.getElementById('admin-manual-user').value;
+        const sessionType = document.getElementById('admin-manual-session').value;
+        const adminNote = document.getElementById('admin-manual-note').value.trim();
+
+        if (!username) {
+            Utils.showToast("Vui lòng chọn nhân viên!", "error");
+            return;
+        }
+
+        const isConfirm = await Utils.showConfirm(
+            "Xác nhận chấm công hộ",
+            `Bạn có chắc chắn muốn chấm công <b>ĐÚNG GIỜ</b> cho <b>${username}</b> (${sessionType === 'morning' ? 'Ca Sáng' : 'Ca Chiều'})?`
+        );
+        if (!isConfirm) return;
+
+        Utils.showToast("Đang xử lý...", "info");
+
+        const now = new Date();
+        const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        
+        try {
+            const allData = await Attendance.loadData();
+            
+            // Kiểm tra xem đã có bản ghi chưa
+            const existingRecord = allData.find(r => 
+                r.username === username && 
+                r.dateStr === dateStr && 
+                (r.type === sessionType || (sessionType === 'morning' && !r.type))
+            );
+
+            if (existingRecord) {
+                Utils.showToast(`Nhân viên ${username} đã có dữ liệu chấm công cho ca này rồi!`, "warning");
+                return;
+            }
+
+            const newRecord = {
+                id: 'att_manual_' + Date.now(),
+                username: username,
+                timestamp: now.getTime(),
+                dateStr: dateStr,
+                status: 'on_time',
+                lateMinutes: 0,
+                type: sessionType,
+                note: adminNote ? `[Admin Override] ${adminNote}` : `[Admin Override] Chấm công trực tiếp bởi Admin`,
+                security: {
+                    adminOverride: true,
+                    overriddenBy: admin.username,
+                    overriddenAt: Date.now()
+                }
+            };
+
+            allData.push(newRecord);
+            await Attendance.saveData(allData);
+
+            // Gửi Telegram thông báo
+            const shiftName = sessionType === 'morning' ? 'CA SÁNG' : 'CA CHIỀU';
+            const msg = `⚡ <b>[ADMIN CHẤM CÔNG TRỰC TIẾP]</b>\n\n` +
+                        `👤 <b>Nhân sự:</b> ${username}\n` +
+                        `🛡️ <b>Người thực hiện:</b> Admin (${admin.username})\n` +
+                        `⏰ <b>Thời gian:</b> ${now.toLocaleTimeString('vi-VN')} (${shiftName})\n` +
+                        `📝 <b>Ghi chú:</b> ${adminNote || 'Chấm công trực tiếp tại văn phòng'}\n\n` +
+                        `<i>"Hệ thống đã ghi nhận trạng thái ĐÚNG GIỜ cho nhân sự này."</i>`;
+            Utils.notifyTelegram(msg);
+
+            Utils.showToast(`Đã chấm công thành công cho ${username}!`, "success");
+            
+            // Reset form UI (optional if we re-render)
+            const userSelect = document.getElementById('admin-manual-user');
+            const noteInput = document.getElementById('admin-manual-note');
+            if (userSelect) userSelect.value = "";
+            if (noteInput) noteInput.value = "";
+            
+            Attendance.render(); // Reload Admin View
+        } catch (e) {
+            console.error("Lỗi chấm công thủ công:", e);
+            Utils.showToast("Đã xảy ra lỗi khi lưu dữ liệu!", "error");
+        }
     },
 
     /* --- Wooden Fish Sound Engine --- */

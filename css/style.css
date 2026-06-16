@@ -3012,4 +3012,16 @@ body.dark-theme .avatar-preview-box {
     font-weight: 500;
 }
 
+/* --- MONOPOLY WINNER ANIMATIONS --- */
+@keyframes chibiScaleIn {
+    0% { transform: scale(0) rotate(-10deg); opacity: 0; }
+    70% { transform: scale(1.1) rotate(5deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+@keyframes bounce {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-15px); }
+}
+
 

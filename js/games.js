@@ -141,7 +141,8 @@ const GamesModule = {
         startingCash: 30,
         visualPositions: {},
         visualAnimationRunning: null,
-        awaitingAction: false
+        awaitingAction: false,
+        winner: null
     },
 
     init: async () => {
@@ -2165,6 +2166,11 @@ const GamesModule = {
                 logArea.scrollTop = logArea.scrollHeight;
             });
         }
+
+        // AUTO-SHOW WINNER MODAL IF EXISTS
+        if (mState.winner && !document.getElementById('mono-winner-overlay')) {
+            GamesModule.renderMonopolyWinnerModal(mState.winner);
+        }
     },
 
     getTileRent: (tile) => {
@@ -2760,6 +2766,86 @@ const GamesModule = {
         await GamesModule.finishMonopolyTurn();
     },
 
+    renderMonopolyWinnerModal: (winner) => {
+        if (document.getElementById('mono-winner-overlay')) return;
+        
+        const overlay = document.createElement('div');
+        overlay.id = 'mono-winner-overlay';
+        overlay.className = 'chance-overlay';
+        overlay.style.zIndex = '999999';
+
+        let chibiHtml = '';
+        if (typeof ChibiModule !== 'undefined' && winner.chibiConfig) {
+            try {
+                const chibiSvg = ChibiModule.renderChibiSVG(winner.chibiConfig, true, 120);
+                chibiHtml = `<div style="margin: 20px 0; filter: drop-shadow(0 0 20px ${winner.color});">${chibiSvg}</div>`;
+            } catch (e) {
+                console.error("Error rendering winner chibi:", e);
+            }
+        }
+
+        overlay.innerHTML = `
+            <div style="background: linear-gradient(135deg, rgba(15,23,42,0.98), rgba(2,6,23,0.99)); border: 3px solid #fbbf24; border-radius: 30px; padding: 40px; max-width: 500px; width: 90%; text-align: center; box-shadow: 0 0 60px rgba(251,191,36,0.6), inset 0 0 20px rgba(251,191,36,0.2); color: #fff; animation: chibiScaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);">
+                <div style="font-size: 64px; margin-bottom: 20px; animation: bounce 1s infinite alternate;">🏆</div>
+                <h2 style="margin: 0; color: #fbbf24; font-size: 28px; font-weight: 950; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 15px rgba(251,191,36,0.4);">
+                    NHÀ VÔ ĐỊCH TỶ PHÚ
+                </h2>
+                
+                ${chibiHtml || `<div style="font-size: 80px; margin: 20px 0;">👑</div>`}
+
+                <div style="font-size: 24px; font-weight: 900; color: ${winner.color}; margin-bottom: 10px; text-shadow: 0 0 10px ${winner.color}80;">
+                    @${winner.name.toUpperCase()}
+                </div>
+                <div style="font-size: 14px; color: #94a3b8; margin-bottom: 30px; font-weight: 700;">
+                    ${winner.displayName}
+                </div>
+
+                <p style="font-size: 15px; color: #cbd5e1; line-height: 1.6; margin-bottom: 32px; background: rgba(0,0,0,0.3); padding: 16px; border-radius: 12px; border: 1px solid rgba(251,191,36,0.2);">
+                    "Bằng bản lĩnh và sự may mắn tuyệt vời, bạn đã thâu tóm toàn bộ phòng ban và giành chiến thắng chung cuộc!"
+                </p>
+
+                <button onclick="GamesModule.closeWinnerModalAndExit()" style="width: 100%; padding: 16px; background: linear-gradient(135deg, #fbbf24, #f59e0b); border: none; border-radius: 12px; color: #000; font-weight: 900; font-size: 15px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 8px 25px rgba(251,191,36,0.4); transition: all 0.3s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+                    🏠 QUAY LẠI SẢNH CHỜ
+                </button>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        GamesSynth.playWin();
+    },
+
+    closeWinnerModalAndExit: async () => {
+        document.getElementById('mono-winner-overlay')?.remove();
+        const mState = GamesModule.monopoly;
+        
+        // Only host can reset the room status to waiting for everyone
+        const currentUser = Auth.currentUser;
+        const activeRoom = mState.lobbyRooms?.find(r => r.id === mState.activeRoomId);
+        
+        if (activeRoom && activeRoom.host === currentUser.username) {
+            // Reset room for a new match
+            mState.gameActive = false;
+            mState.winner = null;
+            mState.players.forEach(p => {
+                p.isBankrupt = false;
+                p.cash = mState.startingCash || 30;
+                p.position = 0;
+                p.isJailed = false;
+            });
+            mState.tiles.forEach(t => { t.owner = null; t.level = 1; });
+            mState.logs = ["🏁 Trận đấu mới đã sẵn sàng!"];
+            await GamesModule.syncRoomToFirestore();
+        } else {
+            // Just return to local standby view
+            mState.gameActive = false;
+            mState.winner = null;
+            GamesModule.renderTabContent();
+        }
+        
+        // Clean up visual positions
+        mState.visualPositions = {};
+        mState.visualAnimationRunning = {};
+    },
+
     // Sảnh Chờ Lobby Danh Sách Các Phòng Đang Mở Real-time
     renderMonopolyLobby: (container) => {
         const mState = GamesModule.monopoly;
@@ -3073,7 +3159,19 @@ const GamesModule = {
                 if (room.status === 'playing') {
                     GamesModule.monopoly.gameActive = true;
                 } else if (room.status === 'waiting') {
-                    GamesModule.monopoly.gameActive = false;
+                    // Only flip gameActive if we don't have a winner modal showing
+                    if (!GamesModule.monopoly.winner) {
+                        GamesModule.monopoly.gameActive = false;
+                    }
+                }
+
+                if (room.winnerName) {
+                    const winP = room.players.find(p => p.name === room.winnerName);
+                    if (winP) {
+                        mState.winner = winP;
+                    }
+                } else {
+                    mState.winner = null;
                 }
 
                 GamesModule.renderTabContent();
@@ -3266,6 +3364,7 @@ const GamesModule = {
             isRolling: mState.isRolling,
             logs: mState.logs,
             lastMove: mState.lastMove || null,
+            winnerName: mState.winner ? mState.winner.name : null,
             tiles: mState.tiles.map(t => ({ id: t.id, ownerName: t.owner ? t.owner.name : null, level: t.level || 1 }))
         };
 
@@ -3885,12 +3984,16 @@ const GamesModule = {
         
         const activePlayers = mState.players.filter(p => !p.isBankrupt);
         if (activePlayers.length === 1) {
-            mState.gameActive = false;
+            // Identify winner but DON'T set gameActive false yet locally
+            // We want the board to stay visible under the winner modal
+            mState.winner = activePlayers[0];
             mState.logs.push(`👑 <b>@${activePlayers[0].name} (${activePlayers[0].displayName})</b> LÀ NGƯỜI CHÚA TỂ PHÒNG BAN MẠNH NHẤT - CHIẾN THẮNG CHUNG CUỘC!`);
-            GamesSynth.playWin();
             
-            // Sync game over to Firestore
+            // Sync winner to Firestore - this tells everyone who won
             await GamesModule.syncRoomToFirestore();
+            
+            // Trigger local winner modal
+            GamesModule.renderMonopolyWinnerModal(mState.winner);
             return;
         }
 

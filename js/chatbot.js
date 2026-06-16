@@ -280,8 +280,8 @@ const ChatbotModule = {
     },
 
     renderEditorModal: () => `
-        <div id="chatbot-modal-overlay" class="modal-overlay" onclick="if(event.target===this)ChatbotModule.closeModal()">
-            <div class="modal glass-card" id="chatbot-modal" style="display:none;max-width:620px;width:94%;padding:0;border-radius:20px;overflow:hidden;">
+        <div id="chatbot-modal-overlay" class="cb-modal-overlay" style="display:none;" onclick="if(event.target===this)ChatbotModule.closeModal()">
+            <div class="cb-modal" id="chatbot-modal">
                 <div class="cb-modal-head">
                     <h3><i class="fa-solid fa-robot" style="color:#34d399;margin-right:8px;"></i><span id="chatbot-modal-title">Thiết lập Chatbot</span></h3>
                     <button type="button" class="cb-icon-btn" onclick="ChatbotModule.closeModal()"><i class="fa-solid fa-xmark"></i></button>
@@ -617,14 +617,14 @@ const ChatbotModule = {
                 : `<i class="fa-solid fa-cloud-arrow-up" style="font-size:24px;color:#22d3ee;"></i><div style="margin-top:8px;">Nhấn hoặc kéo thả ảnh bìa</div>`;
         }
 
-        overlay.classList.add('active');
-        document.getElementById('chatbot-modal').style.display = 'block';
+        overlay.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
     },
 
     closeModal: () => {
-        document.getElementById('chatbot-modal-overlay')?.classList.remove('active');
-        const modal = document.getElementById('chatbot-modal');
-        if (modal) modal.style.display = 'none';
+        const overlay = document.getElementById('chatbot-modal-overlay');
+        if (overlay) overlay.style.display = 'none';
+        document.body.style.overflow = '';
     },
 
     handleImageSelect: (event) => {
