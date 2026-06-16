@@ -245,8 +245,8 @@ async function run() {
         let mPenalty = 0;
         let mClass = 'status-absent';
 
-        if (morningRecord) {
-            presentMorning++; // Có bất kỳ bản ghi nào (on_time hay late) đều tính là có mặt
+        if (morningRecord && morningRecord.status !== 'absent_unexcused') {
+            presentMorning++; 
             if (morningRecord.status === 'on_time') {
                 mStatus = 'Đúng giờ';
                 mClass = 'status-on-time';
@@ -273,8 +273,8 @@ async function run() {
         let aPenalty = 0;
         let aClass = 'status-absent';
 
-        if (afternoonRecord) {
-            presentAfternoon++; // Có bất kỳ bản ghi nào (on_time hay late) đều tính là có mặt
+        if (afternoonRecord && afternoonRecord.status !== 'absent_unexcused') {
+            presentAfternoon++; 
             if (afternoonRecord.status === 'on_time') {
                 aStatus = 'Đúng giờ';
                 aClass = 'status-on-time';
