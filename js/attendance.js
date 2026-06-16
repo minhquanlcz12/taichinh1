@@ -252,28 +252,168 @@ const Attendance = {
     },
 
     runManualAbsentAudit: async () => {
-        const isConfirm = await Utils.showConfirm(
-            "Xác nhận quét vắng mặt",
-            "Hệ thống sẽ kiểm tra tất cả nhân sự chưa điểm danh ca này và tự động phạt 50,000đ. Bạn có chắc chắn muốn chạy quét thủ công ngay bây giờ không?"
-        );
-        if (!isConfirm) return;
-
         const now = new Date();
-        const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
         const currentHour = now.getHours();
         const shift = currentHour < 12 ? 'morning' : 'afternoon';
+        const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+        // 1. Hiển thị giao diện quét (Radar UI)
+        const scanContent = `
+            <div style="text-align: center; padding: 20px;">
+                <div class="scan-radar-container" style="margin: 0 auto 24px; width: 120px; height: 120px; border-radius: 50%; border: 2px solid var(--primary); position: relative; overflow: hidden; background: rgba(0,240,255,0.05); box-shadow: 0 0 20px rgba(0,240,255,0.2);">
+                    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: conic-gradient(from 0deg, transparent 80%, var(--primary)); animation: radar-spin 2s linear infinite; opacity: 0.6;"></div>
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--primary); font-size: 32px; text-shadow: 0 0 10px var(--primary); z-index: 2;">
+                        <i class="fa-solid fa-satellite-dish"></i>
+                    </div>
+                    <div class="radar-dot" style="position: absolute; top: 30%; left: 40%; width: 6px; height: 6px; background: var(--danger); border-radius: 50%; animation: pulse 1s infinite;"></div>
+                    <div class="radar-dot" style="position: absolute; top: 60%; left: 70%; width: 6px; height: 6px; background: var(--danger); border-radius: 50%; animation: pulse 1s infinite 0.5s;"></div>
+                </div>
+                <h3 style="color: var(--primary); margin-bottom: 12px; font-size: 16px; letter-spacing: 2px; font-weight: 800;">ĐANG QUÉT HỆ THỐNG...</h3>
+                <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden; margin-bottom: 16px; border: 1px solid rgba(255,255,255,0.1);">
+                    <div id="scan-progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--primary), #fff); transition: width 0.5s; box-shadow: 0 0 10px var(--primary);"></div>
+                </div>
+                <p id="scan-status-text" style="color: var(--text-secondary); font-size: 13px; font-style: italic;">Đang kiểm tra dữ liệu ${shift === 'morning' ? 'ca sáng' : 'ca chiều'} ngày ${dateStr}...</p>
+            </div>
+            <style>
+                @keyframes radar-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+                @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.3; transform: scale(1.5); } 100% { opacity: 1; transform: scale(1); } }
+            </style>
+        `;
+
+        if (typeof Utils.showModal !== 'function') {
+            Utils.showToast("Giao diện quét không khả dụng, đang chạy quét ngầm...", "info");
+        } else {
+            Utils.showModal("THANH LONG SECURITY SYSTEM", scanContent, null, null, { hideFooter: true });
+        }
         
-        // Xóa flag để cho phép quét lại thủ công
-        const flagKey = `tl_absent_audit_${shift}_${dateStr}_v1`;
-        localStorage.removeItem(flagKey);
+        // 2. Chạy hiệu ứng Progress trong 5 giây
+        let progressValue = 0;
+        const progressTimer = setInterval(() => {
+            progressValue += 2;
+            const bar = document.getElementById('scan-progress-bar');
+            const statusTxt = document.getElementById('scan-status-text');
+            if (bar) bar.style.width = progressValue + '%';
+            
+            if (progressValue === 20 && statusTxt) statusTxt.textContent = "Đang truy vấn database điểm danh...";
+            if (progressValue === 50 && statusTxt) statusTxt.textContent = "Đang đối soát đơn xin nghỉ phép & đi trễ...";
+            if (progressValue === 80 && statusTxt) statusTxt.textContent = "Đang tổng hợp kết quả vi phạm...";
+
+            if (progressValue >= 100) clearInterval(progressTimer);
+        }, 100);
+
+        await new Promise(resolve => setTimeout(resolve, 5000));
         
-        Utils.showToast("Đang thực hiện quét vắng mặt...", "info");
+        if (typeof Utils.closeModal === 'function') Utils.closeModal();
+
+        // 3. Phân tích dữ liệu để tìm ra người vắng không phép
+        const accounts = await Auth.getAccounts();
+        const allAttendance = await Attendance.loadData();
+        const allLeaves = await Attendance.loadLeaveData();
+        const allLateRequests = await Attendance.loadLateRequests();
         
-        // Mock audit time to ensure it passes the check if we use the same function,
-        // or we can refactor. But for now, let's just bypass the time check logic by calling a specialized version or modifying the main one.
-        // Actually, let's just implement a 'force' flag for checkAndPerformAutoAbsentPenalty.
-        await Attendance.checkAndPerformAutoAbsentPenalty(true);
-        Utils.showToast("Đã hoàn thành quét vắng mặt!", "success");
+        let penalizedUsers = [];
+        for (const acc of accounts) {
+            // Loại bỏ admin và các tài khoản đặc biệt
+            if (acc.role === 'admin' || acc.username === 'nlgiang' || acc.username === 'nlgiang112' || acc.username === 'congty' || acc.username === 'admin') continue;
+
+            const hasRecord = allAttendance.some(r => 
+                r.username === acc.username && 
+                r.dateStr === dateStr && 
+                (r.type === shift || (shift === 'morning' && !r.type))
+            );
+            if (hasRecord) continue;
+
+            const hasLeave = allLeaves.some(l => {
+                if (l.username !== acc.username || l.status !== 'approved') return false;
+                const dStart = new Date(l.startDate);
+                const dToday = new Date(dateStr);
+                const diff = Math.floor((dToday - dStart) / (1000 * 60 * 60 * 24));
+                return diff >= 0 && diff < (parseFloat(l.days) || 1);
+            });
+            if (hasLeave) continue;
+
+            const hasLateRequest = allLateRequests.some(r => 
+                r.username === acc.username && 
+                r.date === dateStr && 
+                (r.status === 'approved' || r.status === 'pending')
+            );
+            if (hasLateRequest) continue;
+
+            penalizedUsers.push(acc.username);
+        }
+
+        if (penalizedUsers.length === 0) {
+            Utils.showToast(`KẾT QUẢ: Không phát hiện nhân sự nào nghỉ không phép ${shift === 'morning' ? 'ca sáng' : 'ca chiều'}.`, "success");
+            return;
+        }
+
+        // 4. Hiển thị modal xác nhận phạt
+        const userRows = penalizedUsers.map(u => `
+            <div style="display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); align-items: center;">
+                <span style="color: #fff; font-weight: 600;"><i class="fa-solid fa-user-xmark" style="color: var(--danger); margin-right: 10px;"></i> ${u}</span>
+                <span style="color: var(--danger); font-family: monospace; font-weight: bold;">- 50,000đ</span>
+            </div>
+        `).join('');
+
+        const confirmHtml = `
+            <div style="padding: 10px;">
+                <div style="background: rgba(239, 68, 68, 0.1); border-left: 4px solid var(--danger); padding: 12px; margin-bottom: 20px; border-radius: 4px;">
+                    <p style="color: var(--danger); font-size: 14px; margin: 0; font-weight: bold;">
+                        Hệ thống phát hiện ${penalizedUsers.length} tài khoản nghỉ không phép (${shift === 'morning' ? 'Sáng' : 'Chiều'}).
+                    </p>
+                </div>
+                <div style="background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); max-height: 250px; overflow-y: auto; margin-bottom: 20px;">
+                    ${userRows}
+                </div>
+                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                    <p style="margin-bottom: 8px;"><b>Lưu ý:</b> Sau khi xác nhận, hệ thống sẽ:</p>
+                    <ul style="padding-left: 20px;">
+                        <li>Tạo bản ghi vắng mặt cho từng nhân sự.</li>
+                        <li>Trừ 50.000đ vào quỹ phạt tháng hiện tại.</li>
+                        <li>Gửi báo cáo công khai lên kênh Telegram công ty.</li>
+                    </ul>
+                </div>
+            </div>
+        `;
+
+        Utils.showModal("XÁC NHẬN XỬ PHẠT TỰ ĐỘNG", confirmHtml, async () => {
+            // Thực hiện phạt
+            for (const username of penalizedUsers) {
+                allAttendance.push({
+                    id: `absent_${username}_${shift}_${Date.now()}`,
+                    username: username,
+                    dateStr: dateStr,
+                    timestamp: Date.now(),
+                    status: 'absent_unexcused',
+                    type: shift,
+                    note: `Quét phạt thủ công bởi Admin`,
+                    security: { adminManualAudit: true, auditor: Auth.currentUser.username }
+                });
+                await PayrollModule.applyAbsentPenalty(username, 50000);
+            }
+
+            // Lưu dữ liệu
+            await Attendance.saveData(allAttendance);
+            // Đánh dấu flag để không quét tự động lại cho shift này nữa
+            localStorage.setItem(`tl_absent_audit_${shift}_${dateStr}_v1`, 'done');
+
+            // Render lại bảng
+            if (document.getElementById('attendance-content-area')) Attendance.render();
+
+            // Gửi Telegram
+            let msg = `🚨 <b>[KẾT QUẢ QUÉT PHẠT NGHỈ KHÔNG PHÉP]</b>\n`;
+            msg += `📅 Ngày: ${dateStr} (${shift === 'morning' ? 'Sáng' : 'Chiều'})\n`;
+            msg += `👤 Người quét: <b>${Auth.currentUser.username}</b>\n\n`;
+            msg += `<b>Danh sách xử phạt (-50,000đ/người):</b>\n`;
+            penalizedUsers.forEach(u => {
+                msg += `• <b>${u}</b>\n`;
+            });
+            msg += `\n<i>"Quy định là sức mạnh, thực thi là kỷ luật."</i>`;
+            Utils.notifyTelegram(msg);
+
+            Utils.showToast(`Đã xử phạt ${penalizedUsers.length} nhân sự vắng mặt!`, "success");
+            return true;
+        }, "XÁC NHẬN & PHẠT NGAY");
     },
 
     getAttendanceSecuritySettings: async () => {
