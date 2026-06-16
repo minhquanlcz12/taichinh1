@@ -203,22 +203,22 @@ async function run() {
         const username = staff.username;
         const displayName = staff.profile?.displayName || username;
 
-        // Tìm điểm danh ca sáng & chiều
+        // Tìm điểm danh ca sáng & chiều (Sử dụng toLowerCase để khớp chính xác username)
         const morningRecord = attendance.find(r => 
-            r.username === username && 
+            (r.username || '').toLowerCase() === username.toLowerCase() && 
             r.dateStr === todayStr && 
             (r.type === 'morning' || !r.type)
         );
 
         const afternoonRecord = attendance.find(r => 
-            r.username === username && 
+            (r.username || '').toLowerCase() === username.toLowerCase() && 
             r.dateStr === todayStr && 
             r.type === 'afternoon'
         );
 
         // Kiểm tra xem nhân sự có lịch phép hôm nay không
         const hasApprovedLeave = leaveRequests.some(l => {
-            if (l.username !== username || l.status !== 'approved') return false;
+            if ((l.username || '').toLowerCase() !== username.toLowerCase() || l.status !== 'approved') return false;
             const lDate = l.startDate || l.date || '';
             if (!lDate) return false;
             const start = new Date(lDate + 'T00:00:00');
@@ -650,27 +650,21 @@ async function run() {
 
                     <div class="section-title">👥 Nhân Sự & Chấm Công</div>
                     <div class="cards-grid">
-                        <div class="card-cell">
+                        <div class="card-cell" style="width: 33.3%;">
                             <div class="card" style="background:#ecfdf5; border-color:#a7f3d0;">
-                                <div class="card-label" style="color:#065f46;">Có mặt Sáng/Chiều</div>
-                                <div class="card-value" style="color:#047857;">${presentMorning}/${presentAfternoon}</div>
+                                <div class="card-label" style="color:#065f46;">Mặt ca Sáng</div>
+                                <div class="card-value" style="color:#047857;">${presentMorning}/${activeStaff.length}</div>
                             </div>
                         </div>
-                        <div class="card-cell">
+                        <div class="card-cell" style="width: 33.3%;">
                             <div class="card" style="background:#fffbeb; border-color:#fde68a;">
-                                <div class="card-label" style="color:#92400e;">Đi muộn Sáng/Chiều</div>
-                                <div class="card-value" style="color:#b45309;">${lateMorning}/${lateAfternoon}</div>
+                                <div class="card-label" style="color:#92400e;">Mặt ca Chiều</div>
+                                <div class="card-value" style="color:#b45309;">${presentAfternoon}/${activeStaff.length}</div>
                             </div>
                         </div>
-                        <div class="card-cell">
-                            <div class="card" style="background:#f8fafc; border-color:#cbd5e1;">
-                                <div class="card-label" style="color:#475569;">Vắng Sáng/Chiều</div>
-                                <div class="card-value" style="color:#334155;">${absentMorning}/${absentAfternoon}</div>
-                            </div>
-                        </div>
-                        <div class="card-cell">
+                        <div class="card-cell" style="width: 33.3%;">
                             <div class="card" style="background:#fef2f2; border-color:#fca5a5;">
-                                <div class="card-label" style="color:#991b1b;">Tổng Phạt Chấm Công</div>
+                                <div class="card-label" style="color:#991b1b;">Tổng Phạt VP</div>
                                 <div class="card-value" style="color:#b91c1c;">-${formatCurrency(totalPenaltyToday)}</div>
                             </div>
                         </div>
