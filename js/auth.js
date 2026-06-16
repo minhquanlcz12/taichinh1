@@ -17,6 +17,19 @@ const Auth = {
             if (!hasAdmin) {
                 console.warn('[Auth] Không tìm thấy tài khoản admin trong database. Vui lòng tạo tài khoản admin trực tiếp trong Firebase Console.');
             }
+
+            // Normalization Migration (v5.0): Force all usernames to lowercase
+            let changed = false;
+            accounts.forEach(acc => {
+                if (acc.username && acc.username !== acc.username.toLowerCase()) {
+                    acc.username = acc.username.toLowerCase();
+                    changed = true;
+                }
+            });
+            if (changed) {
+                await DB.saveAccounts(accounts);
+                console.log('[Auth] Đã chuẩn hóa toàn bộ Username về chữ thường (v5.0)');
+            }
         } catch (e) {
             console.error('[Auth] Lỗi trong Auth.init database check:', e);
         }
@@ -206,7 +219,7 @@ const Auth = {
         const passIn = document.getElementById('login-pass').value;
 
         const accounts = await Auth.getAccounts();
-        const found = accounts.find(a => a.username === userIn && a.password === passIn);
+        const found = accounts.find(a => (a.username || '').toLowerCase() === userIn.toLowerCase() && a.password === passIn);
 
         if (found) {
             // Check maintenance mode: only admin can log in when active
@@ -225,7 +238,8 @@ const Auth = {
 
     register: async (e) => {
         e.preventDefault();
-        const userIn = document.getElementById('reg-user').value.trim();
+        const rawUser = document.getElementById('reg-user').value.trim();
+        const userIn = rawUser.toLowerCase();
         const passIn = document.getElementById('reg-pass').value;
         const confirmIn = document.getElementById('reg-confirm').value;
 
@@ -237,8 +251,8 @@ const Auth = {
         }
 
         const accounts = await Auth.getAccounts();
-        if (accounts.find(a => a.username === userIn)) {
-            errorEl.textContent = 'Tên đăng nhập đã tồn tại.';
+        if (accounts.find(a => (a.username || '').toLowerCase() === userIn)) {
+            errorEl.textContent = 'Tên đăng nhập đã tồn tại (không phân biệt hoa/thường).';
             return;
         }
 
@@ -310,10 +324,10 @@ const Auth = {
     
     handleForgotPassword: async (e) => {
         e.preventDefault();
-        const userIn = document.getElementById('forgot-user').value.trim();
+        const userIn = document.getElementById('forgot-user').value.trim().toLowerCase();
         if (userIn) {
             const accounts = await Auth.getAccounts();
-            if(!accounts.find(a => a.username === userIn)) {
+            if(!accounts.find(a => (a.username || '').toLowerCase() === userIn)) {
                 Utils.showToast('Tài khoản không tồn tại.', 'error');
                 return;
             }
