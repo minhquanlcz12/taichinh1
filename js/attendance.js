@@ -1028,6 +1028,13 @@ const Attendance = {
                                 <option value="afternoon">Ca Chiều</option>
                             </select>
                         </div>
+                        <div style="width: 150px;">
+                            <label style="display: block; color: var(--text-secondary); font-size: 12px; margin-bottom: 6px;">Trạng thái:</label>
+                            <select id="admin-manual-status" class="btn btn-outline" style="width: 100%; text-align: left; background: rgba(0,0,0,0.4); border-color: rgba(255,255,255,0.1); color: #fff;">
+                                <option value="on_time">Đúng giờ</option>
+                                <option value="late">Đi muộn (-0.5đ)</option>
+                            </select>
+                        </div>
                         <div style="flex: 1; min-width: 200px;">
                             <label style="display: block; color: var(--text-secondary); font-size: 12px; margin-bottom: 6px;">Ghi chú (Admin):</label>
                             <input type="text" id="admin-manual-note" placeholder="Nhập lý do hoặc ghi chú..." style="width: 100%; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 8px 12px; border-radius: 6px;">
@@ -1299,6 +1306,7 @@ const Attendance = {
 
         const username = document.getElementById('admin-manual-user').value;
         const sessionType = document.getElementById('admin-manual-session').value;
+        const statusType = document.getElementById('admin-manual-status').value;
         const adminNote = document.getElementById('admin-manual-note').value.trim();
 
         if (!username) {
@@ -1306,9 +1314,10 @@ const Attendance = {
             return;
         }
 
+        const statusLabel = statusType === 'late' ? '<span style="color:#ef4444">ĐI MUỘN (-0.5đ)</span>' : '<span style="color:#10b981">ĐÚNG GIỜ</span>';
         const isConfirm = await Utils.showConfirm(
             "Xác nhận chấm công hộ",
-            `Bạn có chắc chắn muốn chấm công <b>ĐÚNG GIỜ</b> cho <b>${username}</b> (${sessionType === 'morning' ? 'Ca Sáng' : 'Ca Chiều'})?`
+            `Bạn có chắc chắn muốn chấm công <b>${statusLabel}</b> cho <b>${username}</b> (${sessionType === 'morning' ? 'Ca Sáng' : 'Ca Chiều'})?`
         );
         if (!isConfirm) return;
 
@@ -1337,8 +1346,8 @@ const Attendance = {
                 username: username,
                 timestamp: now.getTime(),
                 dateStr: dateStr,
-                status: 'on_time',
-                lateMinutes: 0,
+                status: statusType,
+                lateMinutes: statusType === 'late' ? 30 : 0, // Gán tạm 30p nếu trễ
                 type: sessionType,
                 note: adminNote ? `[Admin Override] ${adminNote}` : `[Admin Override] Chấm công trực tiếp bởi Admin`,
                 security: {
@@ -1353,12 +1362,16 @@ const Attendance = {
 
             // Gửi Telegram thông báo
             const shiftName = sessionType === 'morning' ? 'CA SÁNG' : 'CA CHIỀU';
+            const statusText = statusType === 'late' ? '🔴 ĐI MUỘN (Late)' : '🟢 ĐÚNG GIỜ (On Time)';
+            const penaltyText = statusType === 'late' ? '\n⚠️ <b>Hình phạt:</b> Tự động trừ -0.5đ Công Đức' : '';
+            
             const msg = `⚡ <b>[ADMIN CHẤM CÔNG TRỰC TIẾP]</b>\n\n` +
                         `👤 <b>Nhân sự:</b> ${username}\n` +
                         `🛡️ <b>Người thực hiện:</b> Admin (${admin.username})\n` +
                         `⏰ <b>Thời gian:</b> ${now.toLocaleTimeString('vi-VN')} (${shiftName})\n` +
+                        `📊 <b>Trạng thái:</b> ${statusText}${penaltyText}\n` +
                         `📝 <b>Ghi chú:</b> ${adminNote || 'Chấm công trực tiếp tại văn phòng'}\n\n` +
-                        `<i>"Hệ thống đã ghi nhận trạng thái ĐÚNG GIỜ cho nhân sự này."</i>`;
+                        `<i>"Hệ thống đã ghi nhận trạng thái cho nhân sự này. Lưu ý: Mọi trường hợp điểm danh phải nằm trong bán kính 20m của công ty."</i>`;
             Utils.notifyTelegram(msg);
 
             Utils.showToast(`Đã chấm công thành công cho ${username}!`, "success");
