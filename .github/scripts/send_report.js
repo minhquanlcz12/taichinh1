@@ -234,14 +234,13 @@ async function run() {
         let mClass = 'status-absent';
 
         if (morningRecord) {
+            presentMorning++; // Có bất kỳ bản ghi nào (on_time hay late) đều tính là có mặt
             if (morningRecord.status === 'on_time') {
                 mStatus = 'Đúng giờ';
                 mClass = 'status-on-time';
-                presentMorning++;
             } else if (morningRecord.status === 'late_excused') {
                 mStatus = 'Muộn (Có phép)';
                 mClass = 'status-late-excused';
-                presentMorning++;
             } else if (morningRecord.status === 'late') {
                 mStatus = `Muộn (${morningRecord.lateMinutes || 0}p)`;
                 mClass = 'status-late';
@@ -254,6 +253,7 @@ async function run() {
             leaveMorning++;
         } else {
             absentMorning++;
+            mPenalty = 50000; // Nghỉ không phép phạt 50k
         }
 
         // Xử lý Ca Chiều
@@ -262,14 +262,13 @@ async function run() {
         let aClass = 'status-absent';
 
         if (afternoonRecord) {
+            presentAfternoon++; // Có bất kỳ bản ghi nào (on_time hay late) đều tính là có mặt
             if (afternoonRecord.status === 'on_time') {
                 aStatus = 'Đúng giờ';
                 aClass = 'status-on-time';
-                presentAfternoon++;
             } else if (afternoonRecord.status === 'late_excused') {
                 aStatus = 'Muộn (Có phép)';
                 aClass = 'status-late-excused';
-                presentAfternoon++;
             } else if (afternoonRecord.status === 'late') {
                 aStatus = `Muộn (${afternoonRecord.lateMinutes || 0}p)`;
                 aClass = 'status-late';
@@ -282,6 +281,7 @@ async function run() {
             leaveAfternoon++;
         } else {
             absentAfternoon++;
+            aPenalty = 50000; // Nghỉ không phép phạt 50k
         }
 
         const staffPenalty = mPenalty + aPenalty;
@@ -347,14 +347,14 @@ async function run() {
         tgMsg += `✅ Ca Sáng: Đúng giờ/Phép: <b>${presentMorning}</b> | Muộn: <b>${lateMorning}</b> | Vắng: <b>${absentMorning}</b>\n`;
         tgMsg += `⏱️ Ca Chiều: Đúng giờ/Phép: <b>${presentAfternoon}</b> | Muộn: <b>${lateAfternoon}</b> | Vắng: <b>${absentAfternoon}</b>\n`;
         if (totalPenaltyToday > 0) {
-            tgMsg += `💸 Phạt đi muộn phát sinh: <b>-${formatCurrency(totalPenaltyToday)}</b>\n`;
+            tgMsg += `💸 <b>Tổng phạt chấm công phát sinh:</b> <b>-${formatCurrency(totalPenaltyToday)}</b>\n`;
             
             const lateStaff = attendanceDetails.filter(d => d.totalPenalty > 0);
             lateStaff.forEach(s => {
                 tgMsg += `  - <b>${s.displayName}</b>: -${formatCurrency(s.totalPenalty)}\n`;
             });
         } else {
-            tgMsg += `🎉 Hôm nay không phát sinh phạt đi muộn!\n`;
+            tgMsg += `🎉 Hôm nay không phát sinh phạt chấm công!\n`;
         }
         tgMsg += `\n`;
 
@@ -670,7 +670,7 @@ async function run() {
                         </div>
                         <div class="card-cell">
                             <div class="card" style="background:#fef2f2; border-color:#fca5a5;">
-                                <div class="card-label" style="color:#991b1b;">Phạt đi muộn</div>
+                                <div class="card-label" style="color:#991b1b;">Tổng Phạt Chấm Công</div>
                                 <div class="card-value" style="color:#b91c1c;">-${formatCurrency(totalPenaltyToday)}</div>
                             </div>
                         </div>
