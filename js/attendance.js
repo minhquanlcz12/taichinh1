@@ -307,49 +307,89 @@ const Attendance = {
         // LUÔN ĐÓNG MODAL trước khi chuyển bước hoặc kết thúc
         if (typeof Utils.closeModal === 'function') Utils.closeModal();
 
-        // 3. Phân tích dữ liệu để tìm ra người vắng không phép
+        // 3. Phân tích dữ liệu & Thống kê
         const accounts = await Auth.getAccounts();
         const allAttendance = await Attendance.loadData();
         const allLeaves = await Attendance.loadLeaveData();
         const allLateRequests = await Attendance.loadLateRequests();
         
         let penalizedUsers = [];
+        let checkedInCount = 0;
+        let leaveCount = 0;
+        let lateCount = 0;
+        let activeAccountsCount = 0;
+
         for (const acc of accounts) {
             // Loại bỏ admin và các tài khoản đặc biệt
-            if (acc.role === 'admin' || acc.username === 'nlgiang' || acc.username === 'nlgiang112' || acc.username === 'congty' || acc.username === 'admin') continue;
+            if (Utils.isSystemAccount(acc)) continue;
+            activeAccountsCount++;
 
-            const hasRecord = allAttendance.some(r => 
+            const record = allAttendance.find(r => 
                 r.username === acc.username && 
                 r.dateStr === dateStr && 
                 (r.type === shift || (shift === 'morning' && !r.type))
             );
-            if (hasRecord) continue;
 
-            const hasLeave = allLeaves.some(l => {
+            if (record) {
+                checkedInCount++;
+                continue;
+            }
+
+            const leave = allLeaves.find(l => {
                 if (l.username !== acc.username || l.status !== 'approved') return false;
                 const dStart = new Date(l.startDate);
                 const dToday = new Date(dateStr);
                 const diff = Math.floor((dToday - dStart) / (1000 * 60 * 60 * 24));
                 return diff >= 0 && diff < (parseFloat(l.days) || 1);
             });
-            if (hasLeave) continue;
+            if (leave) {
+                leaveCount++;
+                continue;
+            }
 
-            const hasLateRequest = allLateRequests.some(r => 
+            const lateRequest = allLateRequests.find(r => 
                 r.username === acc.username && 
                 r.date === dateStr && 
                 (r.status === 'approved' || r.status === 'pending')
             );
-            if (hasLateRequest) continue;
+            if (lateRequest) {
+                lateCount++;
+                continue;
+            }
 
             penalizedUsers.push(acc.username);
         }
 
+        // 4. Hiển thị modal kết quả
+        const statsHtml = `
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+                <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); padding: 10px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase;">Đã điểm danh</div>
+                    <div style="font-size: 20px; font-weight: 800; color: #10b981;">${checkedInCount}/${activeAccountsCount}</div>
+                </div>
+                <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.2); padding: 10px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase;">Có phép/Đơn trễ</div>
+                    <div style="font-size: 20px; font-weight: 800; color: #f59e0b;">${leaveCount + lateCount}</div>
+                </div>
+            </div>
+        `;
+
         if (penalizedUsers.length === 0) {
-            Utils.showToast(`KẾT QUẢ: Không phát hiện nhân sự nào nghỉ không phép ${shift === 'morning' ? 'ca sáng' : 'ca chiều'}.`, "success");
+            const noViolationHtml = `
+                <div style="padding: 10px; text-align: center;">
+                    ${statsHtml}
+                    <div style="width: 60px; height: 60px; background: rgba(16, 185, 129, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+                        <i class="fa-solid fa-square-check" style="font-size: 32px; color: #10b981;"></i>
+                    </div>
+                    <p style="color: #10b981; font-weight: bold; margin-bottom: 8px;">KẾT QUẢ QUÉT: SẠCH 100%</p>
+                    <p style="color: var(--text-secondary); font-size: 13px;">Không phát hiện nhân sự nào vi phạm vắng mặt không phép ${shift === 'morning' ? 'ca sáng' : 'ca chiều'}.</p>
+                </div>
+            `;
+            Utils.showModal("KẾT QUẢ QUÉT HỆ THỐNG", noViolationHtml, null, null, "Đóng", { hideFooter: false });
             return;
         }
 
-        // 4. Hiển thị modal xác nhận phạt
+        // Nếu có người vi phạm
         const userRows = penalizedUsers.map(u => `
             <div style="display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); align-items: center;">
                 <span style="color: #fff; font-weight: 600;"><i class="fa-solid fa-user-xmark" style="color: var(--danger); margin-right: 10px;"></i> ${u}</span>
@@ -359,29 +399,35 @@ const Attendance = {
 
         const confirmHtml = `
             <div style="padding: 10px;">
+                ${statsHtml}
                 <div style="background: rgba(239, 68, 68, 0.1); border-left: 4px solid var(--danger); padding: 12px; margin-bottom: 20px; border-radius: 4px;">
                     <p style="color: var(--danger); font-size: 14px; margin: 0; font-weight: bold;">
-                        Hệ thống phát hiện ${penalizedUsers.length} tài khoản nghỉ không phép (${shift === 'morning' ? 'Sáng' : 'Chiều'}).
+                        PHÁT HIỆN ${penalizedUsers.length} TRƯỜNG HỢP NGHỈ KHÔNG PHÉP
                     </p>
                 </div>
-                <div style="background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); max-height: 250px; overflow-y: auto; margin-bottom: 20px;">
+                <div style="background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); max-height: 200px; overflow-y: auto; margin-bottom: 20px;">
                     ${userRows}
                 </div>
-                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
-                    <p style="margin-bottom: 8px;"><b>Lưu ý:</b> Sau khi xác nhận, hệ thống sẽ:</p>
-                    <ul style="padding-left: 20px;">
-                        <li>Tạo bản ghi vắng mặt cho từng nhân sự.</li>
-                        <li>Trừ 50.000đ vào quỹ phạt tháng hiện tại.</li>
-                        <li>Gửi báo cáo công khai lên kênh Telegram công ty.</li>
-                    </ul>
+                <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.6; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px;">
+                    <i class="fa-solid fa-circle-info" style="margin-right: 6px; color: var(--primary);"></i>
+                    Sau khi xác nhận, hệ thống sẽ tự động tạo bản ghi vắng, trừ quỹ phạt và công khai danh sách lên Telegram.
                 </div>
             </div>
         `;
 
         Utils.showModal("XÁC NHẬN XỬ PHẠT TỰ ĐỘNG", confirmHtml, async () => {
             // Thực hiện phạt
+            const updatedAttendance = await Attendance.loadData(); // Load fresh
             for (const username of penalizedUsers) {
-                allAttendance.push({
+                // Kiểm tra lại lần cuối để tránh phạt đè
+                const exists = updatedAttendance.some(r => 
+                    r.username === username && 
+                    r.dateStr === dateStr && 
+                    (r.type === shift || (shift === 'morning' && !r.type))
+                );
+                if (exists) continue;
+
+                updatedAttendance.push({
                     id: `absent_${username}_${shift}_${Date.now()}`,
                     username: username,
                     dateStr: dateStr,
@@ -395,8 +441,8 @@ const Attendance = {
             }
 
             // Lưu dữ liệu
-            await Attendance.saveData(allAttendance);
-            // Đánh dấu flag để không quét tự động lại cho shift này nữa
+            await Attendance.saveData(updatedAttendance);
+            // Đánh dấu flag
             localStorage.setItem(`tl_absent_audit_${shift}_${dateStr}_v1`, 'done');
 
             // Render lại bảng
@@ -405,15 +451,15 @@ const Attendance = {
             // Gửi Telegram
             let msg = `🚨 <b>[KẾT QUẢ QUÉT PHẠT NGHỈ KHÔNG PHÉP]</b>\n`;
             msg += `📅 Ngày: ${dateStr} (${shift === 'morning' ? 'Sáng' : 'Chiều'})\n`;
-            msg += `👤 Người quét: <b>${Auth.currentUser.username}</b>\n\n`;
+            msg += `👤 Người thực hiện: <b>${Auth.currentUser.username}</b>\n\n`;
             msg += `<b>Danh sách xử phạt (-50,000đ/người):</b>\n`;
             penalizedUsers.forEach(u => {
                 msg += `• <b>${u}</b>\n`;
             });
-            msg += `\n<i>"Quy định là sức mạnh, thực thi là kỷ luật."</i>`;
+            msg += `\n<i>"Hệ thống đã tự động cập nhật dữ liệu tài chính."</i>`;
             Utils.notifyTelegram(msg);
 
-            Utils.showToast(`Đã xử phạt ${penalizedUsers.length} nhân sự vắng mặt!`, "success");
+            Utils.showToast(`Đã xử phạt ${penalizedUsers.length} nhân sự!`, "success");
             return true;
         }, "XÁC NHẬN & PHẠT NGAY");
     },
