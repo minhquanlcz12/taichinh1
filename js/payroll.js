@@ -637,6 +637,27 @@ const PayrollModule = {
         PayrollModule.calculateAndRenderBody();
     },
 
+    applyAbsentPenalty: async (username, amount) => {
+        try {
+            const monthStr = PayrollModule.getCurrentCycleMonthStr(new Date());
+            const allCustomBonuses = await DB.getCustomBonuses();
+            
+            if (!allCustomBonuses[monthStr]) {
+                allCustomBonuses[monthStr] = {};
+            }
+            
+            const currentBonus = allCustomBonuses[monthStr][username] || 0;
+            allCustomBonuses[monthStr][username] = currentBonus - amount;
+            
+            await DB.saveCustomBonuses(allCustomBonuses);
+            console.log(`[System] Applied absent penalty of ${amount} to ${username}`);
+            return true;
+        } catch (e) {
+            console.error("Error applying absent penalty:", e);
+            return false;
+        }
+    },
+
     calculateUserSalary: async (username, monthStr) => {
         try {
             const accounts = await Auth.getAccounts();

@@ -1137,12 +1137,207 @@
             </div>
         </div>
     </div>
+                <h3><i class="fa-solid fa-person-walking-arrow-right" style="color:var(--success); margin-right: 8px;"></i>Báo cáo Cuối Ngày (Check-out)</h3>
+                <button class="btn-close" onclick="Attendance.closeCheckoutModal()"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="modal-body" style="padding-top: 10px;">
+                <p style="color: var(--text-secondary); margin-bottom: 16px; font-size: 13px;">Hãy tóm tắt ngắn gọn các công việc bạn đã hoàn thành hôm nay trước khi ra về nhé.</p>
+                <form id="checkout-form">
+                    <div class="form-group">
+                        <textarea id="checkout-report" class="form-control" rows="4" placeholder="- Hoàn thành 3 video TikTok
+- Lên xong kịch bản cho tuần sau..." style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-primary); padding: 12px; resize: vertical;" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid var(--border-color); padding-top: 16px;">
+                <button class="btn btn-text" onclick="Attendance.closeCheckoutModal()">Hủy</button>
+                <button class="btn " onclick="Attendance.submitCheckout()" style="background: var(--success); color: #fff; font-weight: bold;"><i class="fa-solid fa-paper-plane" style="margin-right: 6px;"></i>Gửi & Ra về</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ticket View Modal (Phiếu Làm Việc) -->
+    <div class="modal-overlay" id="ticket-modal-overlay" onclick="if(event.target===this) WorkModule.closeTicketModal()">
+        <div class="modal ticket-modal-content" id="ticket-modal" style="width: 90%; max-width: 800px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header" style="background: rgba(4,9,20,0.9); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 10;">
+                <div>
+                    <h3 style="color: var(--primary);"><i class="fa-solid fa-ticket" style="margin-right: 8px;"></i>Phiếu Làm Việc</h3>
+                    <div id="ticket-subtitle" style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">--</div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <button class="btn" onclick="ClaudeModule.assistTaskContent(WorkModule.activeTicketId)" style="background: linear-gradient(135deg, #a855f7, var(--primary)); color: #fff; border: none; font-weight: bold; font-size: 13px; padding: 10px 16px; border-radius: 8px; box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4); display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> CLAUDE AI ASSIST
+                    </button>
+                    <button class="btn-close" onclick="WorkModule.closeTicketModal()"><i class="fa-solid fa-times"></i></button>
+                </div>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+                <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr; gap: 16px;">
+                    
+                    <!-- Left Column -->
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <!-- Ngày Đăng -->
+                            <div class="form-group">
+                                <label style="color: var(--primary); font-size: 11px; font-weight: 600;">NGÀY ĐĂNG</label>
+                                <div id="ticket-ngay" class="ticket-readonly-box"></div>
+                            </div>
+                            <!-- Deadline -->
+                            <div class="form-group">
+                                <label style="color: var(--primary); font-size: 11px; font-weight: 600;">DEADLINE</label>
+                                <div id="ticket-deadline" class="ticket-readonly-box"></div>
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <!-- Mục Tiêu -->
+                            <div class="form-group">
+                                <label style="color: var(--primary); font-size: 11px; font-weight: 600;">MỤC TIÊU</label>
+                                <div id="ticket-muctieu" class="ticket-readonly-box"></div>
+                            </div>
+                            <!-- Chủ Đề -->
+                            <div class="form-group">
+                                <label style="color: var(--primary); font-size: 11px; font-weight: 600;">CHỦ ĐỀ (TRỤ CỘT)</label>
+                                <div id="ticket-trucot" class="ticket-readonly-box"></div>
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <!-- Định Dạng -->
+                            <div class="form-group">
+                                <label style="color: var(--primary); font-size: 11px; font-weight: 600;">ĐỊNH DẠNG</label>
+                                <div id="ticket-dinhdang" class="ticket-readonly-box"></div>
+                            </div>
+                            <!-- Trạng Thái -->
+                            <div class="form-group">
+                                <label style="color: var(--primary); font-size: 11px; font-weight: 600;">TRẠNG THÁI</label>
+                                <select id="ticket-trangthai" class="form-control" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-color);">
+                                    <option value="Planned">Planned</option>
+                                    <option value="Doing">Doing</option>
+                                    <option value="Done">Done</option>
+                                    <option value="Đã lên lịch FB" style="color: var(--warning);">Đã Lên Lịch FB 🕒</option>
+                                    <option value="Đã Đăng FB" style="color: var(--success);">Đã Đăng FB ✅</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Tiêu Đề -->
+                        <div class="form-group">
+                            <label style="color: var(--primary); font-size: 11px; font-weight: 600;">TIÊU ĐỀ</label>
+                            <input type="text" id="ticket-tieude" class="form-control" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-color);">
+                        </div>
+                        
+                        <!-- ĐẶT LỊCH ĐĂNG FB -->
+                        <div class="form-group" style="background: rgba(41, 128, 185, 0.1); border: 1px dashed rgba(41, 128, 185, 0.5); padding: 12px; border-radius: 6px; position: relative;">
+                            <div style="position: absolute; right: 12px; top: 12px; color: #3b5998; font-size: 18px;"><i class="fa-brands fa-facebook"></i></div>
+                            <label style="color: #3b5998; font-size: 12px; font-weight: bold;"><i class="fa-solid fa-robot"></i> ĐẶT LỊCH ĐĂNG (AUTO-PUBLISH)</label>
+                            <input type="datetime-local" id="ticket-schedule-time" class="form-control" style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: #3498db; font-weight: bold; margin-top: 6px;">
+                            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 6px; font-style: italic;">Khi tới giờ, Vercel Server sẽ tự động lấy Ảnh (bên trái) và Nội dung (Tab 3) để xuất bản lên Fanpage.</div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column -->
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <!-- AI GENERATOR BUTTON -->
+                        <button type="button" id="btn-ai-generate" class="btn btn-warning" onclick="WorkModule.generateAILocal()" style="width: 100%; font-weight: bold; background: linear-gradient(135deg, #f1c40f 0%, #d35400 100%); color: #fff; border: none; box-shadow: 0 0 15px rgba(241, 196, 15, 0.4); margin-bottom: 8px;">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> TẠO AI CHO CẢ 5 MỤC (TỰ ĐỘNG)
+                        </button>
+
+                        <div class="ai-tabs-container" style="flex: 1; display: flex; flex-direction: column; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden;">
+                            <div class="ai-tabs-header" style="display: flex; overflow-x: auto; background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--border-color);">
+                                <button class="ai-tab-btn active" onclick="WorkModule.switchAITab('tab-tomtat')">1. Phiếu tóm tắt</button>
+                                <button class="ai-tab-btn" onclick="WorkModule.switchAITab('tab-kichban')">2. Kịch bản video</button>
+                                <button class="ai-tab-btn" onclick="WorkModule.switchAITab('tab-caption')">3. Caption</button>
+                                <button class="ai-tab-btn" onclick="WorkModule.switchAITab('tab-ytuong')">4. Ý tưởng ảnh/video</button>
+                                <button class="ai-tab-btn" onclick="WorkModule.switchAITab('tab-zalo')">5. Tin nhắn Zalo</button>
+                            </div>
+                            
+                            <div class="ai-tabs-body" style="flex: 1; position: relative; overflow-y: auto;">
+                                <!-- Tab 1 -->
+                                <div id="tab-tomtat" class="ai-tab-content active">
+                                    <div id="ai-tomtat" class="ai-rich-content" contenteditable="true" data-placeholder="Nội dung tóm tắt công việc..."></div>
+                                </div>
+                                <!-- Tab 2 -->
+                                <div id="tab-kichban" class="ai-tab-content">
+                                    <div id="ai-kichban" class="ai-rich-content" contenteditable="true" data-placeholder="Kịch bản video chi tiết..."></div>
+                                </div>
+                                <!-- Tab 3 -->
+                                <div id="tab-caption" class="ai-tab-content">
+                                    <!-- Ánh xạ ngược về noiDung cũ để không mất data -->
+                                    <div id="ticket-noidung" class="ai-rich-content" contenteditable="true" data-placeholder="Các mẫu caption bán hàng, branding..."></div>
+                                </div>
+                                <!-- Tab 4 -->
+                                <div id="tab-ytuong" class="ai-tab-content">
+                                    <!-- Ánh xạ ngược về orderBrief cũ -->
+                                    <div id="ticket-order" class="ai-rich-content" contenteditable="true" data-placeholder="Gợi ý concept quay chụp, thiết kế..."></div>
+                                </div>
+                                <!-- Tab 5 -->
+                                <div id="tab-zalo" class="ai-tab-content">
+                                    <div id="ai-zalo" class="ai-rich-content" contenteditable="true" data-placeholder="Tin nhắn chăm sóc khách hàng..."></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Ô Nộp Kết Quả (Ảnh) -->
+                        <div class="form-group" style="margin-top: 12px; margin-bottom: 0; background: rgba(0,0,0,0.15); border: 1px solid var(--border-color); border-radius: 6px; padding: 12px;">
+                            <label style="display: flex; justify-content: space-between; align-items: center; color: var(--primary); font-size: 12px; font-weight: 600; margin-bottom: 12px;">
+                                <span><i class="fa-solid fa-image"></i> ẢNH MINH HỌA / KẾT QUẢ</span>
+                                <div style="display: flex; gap: 8px;">
+                                    <button type="button" class="btn btn-outline btn-sm" onclick="WorkModule.copyActiveTabContent()" style="font-weight: bold; border-color: rgba(255,255,255,0.2);" title="Copy tab đang xem">
+                                        <i class="fa-solid fa-copy"></i> MỤC NÀY
+                                    </button>
+                                    <button type="button" class="btn btn-success btn-sm" onclick="WorkModule.copyAllTabsContent()" style="font-weight: bold; background: linear-gradient(135deg, #10b981, #059669); border: none;" title="Copy toàn bộ 5 tab">
+                                        <i class="fa-solid fa-layer-group"></i> FULL 5 MỤC
+                                    </button>
+                                </div>
+                            </label>
+                            <div style="display: flex; gap: 16px; align-items: center;">
+                                <div id="ticket-img-preview" style="width: 80px; height: 80px; flex-shrink: 0; border: 1px dashed var(--primary); border-radius: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: rgba(0,240,255,0.05); cursor: pointer; transition: 0.3s;" onclick="document.getElementById('ticket-hidden-upload').click()" title="Click để tải ảnh lên">
+                                    <i class="fa-solid fa-plus" style="color: var(--primary); font-size: 24px;"></i>
+                                </div>
+                                <div style="font-size: 12px; color: var(--text-secondary);">
+                                    <p style="margin-bottom: 8px;">Click vào ô bên trái hoặc nút dưới đây để tải ảnh phục vụ chiến dịch.</p>
+                                    <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('ticket-hidden-upload').click()">
+                                        <i class="fa-solid fa-upload"></i> Chọn Ảnh...
+                                    </button>
+                                </div>
+                                <input type="file" id="ticket-hidden-upload" accept="image/*" style="display: none;" onchange="WorkModule.handleTicketImageUpload(event)">
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid var(--border-color); background: rgba(4,9,20,0.9); position: sticky; bottom: 0; z-index: 10; display: flex; justify-content: center; gap: 16px;">
+                <button class="btn btn-text" onclick="WorkModule.closeTicketModal()">Hủy thay đổi</button>
+                <button class="btn btn-primary" onclick="WorkModule.saveTicketModal()"><i class="fa-solid fa-floppy-disk" style="margin-right: 8px;"></i>Lưu Phiếu Việc</button>
+            </div>
+        </div>
+    <!-- Payroll Detail Modal Overlay -->
+    <div class="modal-overlay" id="payroll-detail-modal-overlay" onclick="if(event.target===this) PayrollModule.closeDetailModal()">
+        <div class="modal profile-modal-content" id="payroll-detail-modal" style="width: 90%; max-width: 500px; border-color: rgba(46,204,113,0.3); background: rgba(10,10,18,0.95); box-shadow: 0 12px 40px rgba(0,0,0,0.8);">
+            <div class="modal-header" style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 14px;">
+                <h3 style="display: flex; align-items: center; gap: 8px; font-size: 16px;"><i class="fa-solid fa-calculator" style="color:var(--success);"></i> BÁO CÁO LƯƠNG CHI TIẾT</h3>
+                <button class="btn-close" onclick="PayrollModule.closeDetailModal()"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="modal-body" id="payroll-detail-modal-body" style="padding-top: 15px; max-height: 70vh; overflow-y: auto;">
+                <!-- Content generated dynamically -->
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 14px; display: flex; justify-content: flex-end; gap: 12px;">
+                <button class="btn btn-outline" id="btn-copy-payroll-report" onclick="PayrollModule.copyPayrollReportToClipboard()" style="border-color: var(--success); color: var(--success); font-size: 12px; font-weight: bold; border-radius: 8px;">
+                    <i class="fa-solid fa-copy" style="margin-right: 6px;"></i> Copy Báo Cáo Nhanh
+                </button>
+                <button class="btn btn-primary" onclick="PayrollModule.closeDetailModal()" style="font-size: 12px; font-weight: bold; border-radius: 8px;">Đóng</button>
+            </div>
+        </div>
+    </div>
 
 
     <script src="js/db.js?v=2026.06.10_v3"></script>
     <script src="js/finance.js?v=2026.06.13_v11"></script>
     <script src="js/work.js?v=2026.06.13_v11"></script>
-    <script src="js/attendance.js?v=2026.06.16_admin_late_penalty_v43"></script>
+    <script src="js/attendance.js?v=2026.06.16_auto_absent_penalty_v44"></script>
     <script src="js/chibi.js?v=2026.06.12_v12f"></script>
     <script src="js/rewards.js?v=2026.06.10_v3"></script>
     <script src="js/payroll.js?v=2026.06.10_v3"></script>

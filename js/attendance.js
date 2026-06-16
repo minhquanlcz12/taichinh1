@@ -21,6 +21,9 @@ const Attendance = {
         // Tự động kiểm tra và điểm danh bù cho chiều 13/06 nếu cần
         Attendance.checkAndPerformAutoCheckIn();
         
+        // Tự động quét và hạt nghỉ không phép (-50,000 VNĐ)
+        Attendance.checkAndPerformAutoAbsentPenalty();
+
         // Sửa lại các bản ghi đã lỡ bị tính muộn hôm nay
         Attendance.repairTodayRecords();
     },
@@ -139,6 +142,108 @@ const Attendance = {
         } catch (e) {
             console.error("Lỗi lưu dữ liệu chấm công:", e);
             localStorage.setItem('tl_attendance', JSON.stringify(data));
+        }
+    },
+
+    checkAndPerformAutoAbsentPenalty: async () => {
+        const now = new Date();
+        const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
+        const currentTimeVal = currentHour * 60 + currentMinute;
+
+        // Deadline: Sáng 08:30 (510p), Chiều 14:00 (840p)
+        // Audit (Deadline + 1h): Sáng 09:30 (570p), Chiều 15:00 (900p)
+        const MORNING_AUDIT = 9 * 60 + 30;
+        const AFTERNOON_AUDIT = 15 * 60 + 0;
+
+        const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        
+        // Nghỉ Chủ nhật
+        if (now.getDay() === 0) return;
+
+        const shiftsToAudit = [];
+        if (currentTimeVal >= MORNING_AUDIT) shiftsToAudit.push('morning');
+        if (currentTimeVal >= AFTERNOON_AUDIT) shiftsToAudit.push('afternoon');
+
+        if (shiftsToAudit.length === 0) return;
+
+        try {
+            const accounts = await Auth.getAccounts();
+            const allAttendance = await Attendance.loadData();
+            const allLeaves = await Attendance.loadLeaveData();
+            const allLateRequests = await Attendance.loadLateRequests();
+            
+            let changed = false;
+            let penalizedUsers = [];
+
+            for (const shift of shiftsToAudit) {
+                const flagKey = `tl_absent_audit_${shift}_${dateStr}_v1`;
+                if (localStorage.getItem(flagKey) === 'done') continue;
+
+                for (const acc of accounts) {
+                    if (acc.role === 'admin' || acc.username === 'nlgiang' || acc.username === 'nlgiang112' || acc.username === 'congty' || acc.username === 'admin') {
+                        continue;
+                    }
+
+                    // 1. Kiểm tra đã có record chưa (morning/afternoon)
+                    const hasRecord = allAttendance.some(r => 
+                        r.username === acc.username && 
+                        r.dateStr === dateStr && 
+                        (r.type === shift || (shift === 'morning' && !r.type))
+                    );
+                    if (hasRecord) continue;
+
+                    // 2. Kiểm tra có đơn xin nghỉ phép đã duyệt không
+                    const hasLeave = allLeaves.some(l => {
+                        if (l.username !== acc.username || l.status !== 'approved') return false;
+                        const dStart = new Date(l.startDate);
+                        const dToday = new Date(dateStr);
+                        const diff = Math.floor((dToday - dStart) / (1000 * 60 * 60 * 24));
+                        return diff >= 0 && diff < (parseFloat(l.days) || 1);
+                    });
+                    if (hasLeave) continue;
+
+                    // 3. Kiểm tra có đơn xin đi trễ không (duyệt hoặc đang chờ)
+                    const hasLateRequest = allLateRequests.some(r => 
+                        r.username === acc.username && 
+                        r.date === dateStr && 
+                        (r.status === 'approved' || r.status === 'pending')
+                    );
+                    if (hasLateRequest) continue;
+
+                    // 4. Tạo record vắng không phép & trừ tiền
+                    allAttendance.push({
+                        id: `absent_${acc.username}_${shift}_${Date.now()}`,
+                        username: acc.username,
+                        dateStr: dateStr,
+                        timestamp: Date.now(),
+                        status: 'absent_unexcused',
+                        type: shift,
+                        note: `Hệ thống tự động phạt Nghỉ không phép (Sau 1h quá deadline)`,
+                        security: { autoAudit: true }
+                    });
+
+                    await PayrollModule.applyAbsentPenalty(acc.username, 50000);
+                    penalizedUsers.push({ user: acc.username, shift: shift });
+                    changed = true;
+                }
+                localStorage.setItem(flagKey, 'done');
+            }
+
+            if (changed) {
+                await Attendance.saveData(allAttendance);
+                if (document.getElementById('attendance-content-area')) Attendance.render();
+                
+                let msg = `🚨 <b>[TỰ ĐỘNG PHẠT NGHỈ KHÔNG PHÉP]</b>\n`;
+                msg += `📅 Ngày: ${dateStr}\n\n`;
+                penalizedUsers.forEach(u => {
+                    msg += `• <b>${u.user}</b>: ${u.shift === 'morning' ? 'Sáng' : 'Chiều'} -> Phạt <b>-50,000đ</b>\n`;
+                });
+                msg += `\n<i>Hệ thống tự động quét sau 1 tiếng quá giờ điểm danh quy định.</i>`;
+                Utils.notifyTelegram(msg);
+            }
+        } catch (e) {
+            console.error("Lỗi audit nghỉ không phép:", e);
         }
     },
 
