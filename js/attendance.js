@@ -145,7 +145,7 @@ const Attendance = {
         }
     },
 
-    checkAndPerformAutoAbsentPenalty: async () => {
+    checkAndPerformAutoAbsentPenalty: async (force = false) => {
         const now = new Date();
         const currentHour = now.getHours();
         const currentMinute = now.getMinutes();
@@ -162,8 +162,12 @@ const Attendance = {
         if (now.getDay() === 0) return;
 
         const shiftsToAudit = [];
-        if (currentTimeVal >= MORNING_AUDIT) shiftsToAudit.push('morning');
-        if (currentTimeVal >= AFTERNOON_AUDIT) shiftsToAudit.push('afternoon');
+        if (force) {
+            shiftsToAudit.push(currentHour < 12 ? 'morning' : 'afternoon');
+        } else {
+            if (currentTimeVal >= MORNING_AUDIT) shiftsToAudit.push('morning');
+            if (currentTimeVal >= AFTERNOON_AUDIT) shiftsToAudit.push('afternoon');
+        }
 
         if (shiftsToAudit.length === 0) return;
 
@@ -245,6 +249,31 @@ const Attendance = {
         } catch (e) {
             console.error("Lỗi audit nghỉ không phép:", e);
         }
+    },
+
+    runManualAbsentAudit: async () => {
+        const isConfirm = await Utils.showConfirm(
+            "Xác nhận quét vắng mặt",
+            "Hệ thống sẽ kiểm tra tất cả nhân sự chưa điểm danh ca này và tự động phạt 50,000đ. Bạn có chắc chắn muốn chạy quét thủ công ngay bây giờ không?"
+        );
+        if (!isConfirm) return;
+
+        const now = new Date();
+        const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        const currentHour = now.getHours();
+        const shift = currentHour < 12 ? 'morning' : 'afternoon';
+        
+        // Xóa flag để cho phép quét lại thủ công
+        const flagKey = `tl_absent_audit_${shift}_${dateStr}_v1`;
+        localStorage.removeItem(flagKey);
+        
+        Utils.showToast("Đang thực hiện quét vắng mặt...", "info");
+        
+        // Mock audit time to ensure it passes the check if we use the same function,
+        // or we can refactor. But for now, let's just bypass the time check logic by calling a specialized version or modifying the main one.
+        // Actually, let's just implement a 'force' flag for checkAndPerformAutoAbsentPenalty.
+        await Attendance.checkAndPerformAutoAbsentPenalty(true);
+        Utils.showToast("Đã hoàn thành quét vắng mặt!", "success");
     },
 
     getAttendanceSecuritySettings: async () => {
@@ -1146,6 +1175,9 @@ const Attendance = {
                         </div>
                         <button class="btn btn-primary" onclick="Attendance.performAdminManualCheckIn()" style="padding: 10px 20px; font-weight: 800; background: var(--primary); border: none;">
                             <i class="fa-solid fa-check"></i> CHẤM CÔNG NGAY
+                        </button>
+                        <button class="btn btn-outline" onclick="Attendance.runManualAbsentAudit()" style="padding: 10px 20px; font-weight: 800; border-color: var(--danger); color: var(--danger); background: rgba(239, 68, 68, 0.1);">
+                            <i class="fa-solid fa-magnifying-glass-chart"></i> QUÉT VẮNG MẶT NGAY
                         </button>
                     </div>
                 </div>
