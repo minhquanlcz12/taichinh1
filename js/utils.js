@@ -539,6 +539,11 @@ const Utils = {
         if (now.getDate() === 10 && hours === 9 && minutes >= 0 && minutes <= 30) {
             await Utils.remindPayday();
         }
+
+        // 4. Tự động quét và hạt nghỉ không phép (v4.8)
+        if (typeof Attendance !== 'undefined' && typeof Attendance.checkAndPerformAutoAbsentPenalty === 'function') {
+            await Attendance.checkAndPerformAutoAbsentPenalty();
+        }
     },
 
     remindAttendance: async () => {
