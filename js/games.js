@@ -364,7 +364,98 @@ const GamesModule = {
             .mono-arena {
                 display: flex;
                 flex-direction: column;
-                gap: 20px;
+                gap: 18px;
+                min-height: calc(100vh - 150px);
+                padding: 18px;
+                border-radius: 26px;
+                background:
+                    radial-gradient(circle at 22% 16%, rgba(16,185,129,0.12), transparent 28%),
+                    radial-gradient(circle at 78% 74%, rgba(236,72,153,0.12), transparent 34%),
+                    linear-gradient(135deg, rgba(2,6,23,0.46), rgba(15,23,42,0.16));
+                position: relative;
+                overflow: hidden;
+            }
+            .mono-arena::before {
+                content: '';
+                position: absolute;
+                inset: 0;
+                pointer-events: none;
+                background:
+                    linear-gradient(90deg, rgba(16,185,129,0.035) 1px, transparent 1px),
+                    linear-gradient(0deg, rgba(16,185,129,0.028) 1px, transparent 1px);
+                background-size: 42px 42px;
+                mask-image: radial-gradient(circle at 50% 45%, #000 0%, transparent 72%);
+                opacity: 0.75;
+            }
+            .mono-arena > * {
+                position: relative;
+                z-index: 1;
+            }
+            .mono-match-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 16px;
+                padding: 12px 14px 12px 16px;
+                border-radius: 18px;
+                background: linear-gradient(135deg, rgba(15,23,42,0.72), rgba(17,24,39,0.38));
+                border: 1px solid rgba(148,163,184,0.12);
+                box-shadow: 0 14px 40px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.06);
+                backdrop-filter: blur(14px);
+            }
+            .mono-match-title {
+                color: #fff;
+                margin: 0;
+                font-size: 17px;
+                font-weight: 950;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                letter-spacing: 0.8px;
+                text-transform: uppercase;
+                text-shadow: 0 0 18px rgba(16,185,129,0.22);
+            }
+            .mono-title-orb {
+                width: 34px;
+                height: 34px;
+                border-radius: 12px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                background: linear-gradient(135deg, rgba(16,185,129,0.22), rgba(139,92,246,0.22));
+                border: 1px solid rgba(16,185,129,0.32);
+                box-shadow: 0 0 18px rgba(16,185,129,0.18);
+                font-size: 18px;
+            }
+            .mono-live-chip {
+                font-size: 8px;
+                background: linear-gradient(135deg, rgba(16,185,129,0.24), rgba(6,182,212,0.18));
+                color: #34d399;
+                padding: 4px 9px;
+                border-radius: 999px;
+                font-weight: 900;
+                border: 1px solid rgba(16,185,129,0.32);
+                animation: pulse 2s infinite;
+                box-shadow: 0 0 14px rgba(16,185,129,0.12);
+            }
+            .mono-leave-btn {
+                background: rgba(239,68,68,0.08);
+                border: 1.5px solid rgba(239,68,68,0.36);
+                color: #f87171;
+                padding: 9px 15px;
+                border-radius: 12px;
+                font-size: 11px;
+                cursor: pointer;
+                font-weight: 900;
+                transition: all 0.25s;
+                text-transform: uppercase;
+                box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+            }
+            .mono-leave-btn:hover {
+                background: #ef4444;
+                color: #fff;
+                transform: translateY(-1px);
+                box-shadow: 0 10px 24px rgba(239,68,68,0.22);
             }
             .mono-setup-panel {
                 background: linear-gradient(145deg, rgba(15,23,42,0.85), rgba(22,12,52,0.9));
@@ -380,23 +471,23 @@ const GamesModule = {
                 display: grid;
                 grid-template-columns: 1.5fr repeat(4, 1fr) 1.5fr;
                 grid-template-rows: 1.5fr repeat(4, 1fr) 1.5fr;
-                gap: 4px;
+                gap: 5px;
                 background:
-                    radial-gradient(circle at 18% 18%, rgba(34,211,238,0.16), transparent 26%),
-                    radial-gradient(circle at 82% 78%, rgba(236,72,153,0.16), transparent 30%),
-                    linear-gradient(145deg, #111b34 0%, #15102f 48%, #07111f 100%);
-                border: 1px solid rgba(125,211,252,0.28);
-                border-radius: 20px;
-                padding: 10px;
+                    radial-gradient(circle at 18% 18%, rgba(34,211,238,0.2), transparent 26%),
+                    radial-gradient(circle at 82% 78%, rgba(236,72,153,0.18), transparent 30%),
+                    linear-gradient(145deg, #15203a 0%, #150f31 48%, #07131f 100%);
+                border: 1px solid rgba(125,211,252,0.34);
+                border-radius: 24px;
+                padding: 12px;
                 width: 100%;
-                max-width: min(960px, 82vh);
+                max-width: min(980px, 84vh);
                 margin: 0 auto;
                 aspect-ratio: 1;
                 box-shadow:
-                    0 24px 80px rgba(0,0,0,0.72),
+                    0 30px 90px rgba(0,0,0,0.74),
                     0 0 0 3px rgba(139,92,246,0.24),
-                    0 0 42px rgba(6,182,212,0.18),
-                    0 0 80px rgba(236,72,153,0.14),
+                    0 0 50px rgba(6,182,212,0.22),
+                    0 0 92px rgba(236,72,153,0.16),
                     inset 0 0 0 2px rgba(255,255,255,0.08),
                     inset 0 0 45px rgba(0,0,0,0.55);
                 position: relative;
@@ -405,12 +496,12 @@ const GamesModule = {
             .mono-board::before {
                 content: '';
                 position: absolute;
-                inset: -14px;
-                border-radius: 26px;
+                inset: -18px;
+                border-radius: 32px;
                 background:
                     linear-gradient(135deg, rgba(34,211,238,0.35), rgba(139,92,246,0.2), rgba(236,72,153,0.35)),
                     radial-gradient(circle at 50% 50%, rgba(139,92,246,0.14), transparent 60%);
-                filter: blur(12px);
+                filter: blur(14px);
                 pointer-events: none;
                 z-index: -1;
                 opacity: 0.78;
@@ -418,10 +509,10 @@ const GamesModule = {
             .mono-board::after {
                 content: '';
                 position: absolute;
-                inset: 10px;
-                border-radius: 14px;
-                border: 1px solid rgba(255,255,255,0.08);
-                box-shadow: inset 0 0 22px rgba(34,211,238,0.08);
+                inset: 12px;
+                border-radius: 17px;
+                border: 1px solid rgba(255,255,255,0.1);
+                box-shadow: inset 0 0 28px rgba(34,211,238,0.1);
                 pointer-events: none;
                 z-index: 0;
             }
@@ -429,24 +520,24 @@ const GamesModule = {
             /* Individual Tile */
             .mono-tile {
                 background:
-                    linear-gradient(160deg, rgba(34,43,74,0.98), rgba(12,20,42,0.98) 54%, rgba(9,14,30,0.98)),
+                    linear-gradient(160deg, rgba(39,50,86,0.98), rgba(14,24,50,0.98) 54%, rgba(9,14,30,0.98)),
                     radial-gradient(circle at 50% 0%, rgba(255,255,255,0.1), transparent 52%);
-                border: 1px solid rgba(148,163,184,0.16);
-                border-radius: 10px;
-                padding: 5px 4px;
+                border: 1px solid rgba(148,163,184,0.22);
+                border-radius: 12px;
+                padding: 7px 5px;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
-                gap: 2px;
+                gap: 3px;
                 position: relative;
                 overflow: hidden;
                 transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
                 z-index: 2;
                 cursor: default;
                 box-shadow:
-                    inset 0 1px 0 rgba(255,255,255,0.14),
-                    inset 0 -10px 16px rgba(0,0,0,0.28),
+                    inset 0 1px 0 rgba(255,255,255,0.18),
+                    inset 0 -12px 18px rgba(0,0,0,0.3),
                     0 6px 0 rgba(3,7,18,0.75),
                     0 12px 18px rgba(0,0,0,0.25);
             }
@@ -458,22 +549,22 @@ const GamesModule = {
                 content: '';
                 position: absolute;
                 inset: 1px;
-                border-radius: 9px;
+                border-radius: 11px;
                 background:
-                    linear-gradient(135deg, rgba(255,255,255,0.08), transparent 35%),
-                    repeating-linear-gradient(90deg, rgba(255,255,255,0.025) 0 1px, transparent 1px 10px);
+                    linear-gradient(135deg, rgba(255,255,255,0.12), transparent 38%),
+                    repeating-linear-gradient(90deg, rgba(255,255,255,0.03) 0 1px, transparent 1px 10px);
                 pointer-events: none;
                 z-index: 0;
             }
             .mono-tile.property::after {
                 content: '';
                 position: absolute;
-                inset: auto 10px 9px 10px;
-                height: 3px;
+                inset: auto 12px 10px 12px;
+                height: 4px;
                 border-radius: 999px;
                 background: var(--bar-color);
                 box-shadow: 0 0 12px var(--bar-color);
-                opacity: 0.45;
+                opacity: 0.55;
                 z-index: 1;
             }
             .mono-tile.property {
@@ -482,12 +573,12 @@ const GamesModule = {
             .mono-tile:hover {
                 z-index: 10;
                 box-shadow:
-                    0 0 24px rgba(34,211,238,0.22),
-                    0 0 34px rgba(139,92,246,0.26),
+                    0 0 28px rgba(34,211,238,0.28),
+                    0 0 38px rgba(139,92,246,0.3),
                     inset 0 0 20px rgba(139,92,246,0.12),
                     0 8px 0 rgba(3,7,18,0.75);
                 border-color: rgba(125,211,252,0.45);
-                transform: translateY(-3px) scale(1.045);
+                transform: translateY(-4px) scale(1.04);
             }
             .mono-tile.has-player {
                 border-color: rgba(34,211,238,0.5);
@@ -549,58 +640,59 @@ const GamesModule = {
             .mono-color-bar {
                 position: absolute;
                 background: linear-gradient(90deg, rgba(255,255,255,0.35), var(--bar-color), rgba(255,255,255,0.18));
-                box-shadow: 0 0 14px var(--bar-color), inset 0 0 5px rgba(255,255,255,0.35);
+                box-shadow: 0 0 18px var(--bar-color), inset 0 0 6px rgba(255,255,255,0.38);
                 z-index: 3;
             }
-            .side-top .mono-color-bar { bottom: 0; left: 8px; right: 8px; height: 7px; border-radius: 999px 999px 0 0; }
-            .side-right .mono-color-bar { top: 8px; left: 0; bottom: 8px; width: 7px; border-radius: 0 999px 999px 0; }
-            .side-bottom .mono-color-bar { top: 0; left: 8px; right: 8px; height: 7px; border-radius: 0 0 999px 999px; }
-            .side-left .mono-color-bar { top: 8px; right: 0; bottom: 8px; width: 7px; border-radius: 999px 0 0 999px; }
+            .side-top .mono-color-bar { bottom: 0; left: 9px; right: 9px; height: 8px; border-radius: 999px 999px 0 0; }
+            .side-right .mono-color-bar { top: 9px; left: 0; bottom: 9px; width: 8px; border-radius: 0 999px 999px 0; }
+            .side-bottom .mono-color-bar { top: 0; left: 9px; right: 9px; height: 8px; border-radius: 0 0 999px 999px; }
+            .side-left .mono-color-bar { top: 9px; right: 0; bottom: 9px; width: 8px; border-radius: 999px 0 0 999px; }
 
             .mono-step-badge {
                 position: absolute;
                 top: 5px;
                 left: 6px;
-                min-width: 18px;
-                height: 18px;
+                min-width: 19px;
+                height: 19px;
                 padding: 0 5px;
                 border-radius: 999px;
                 display: inline-flex;
                 align-items: center;
                 justify-content: center;
-                font-size: 9px;
+                font-size: 9.5px;
                 font-weight: 950;
                 color: #67e8f9;
-                background: rgba(2,6,23,0.72);
-                border: 1px solid rgba(34,211,238,0.34);
-                box-shadow: 0 0 10px rgba(34,211,238,0.18);
+                background: rgba(2,6,23,0.82);
+                border: 1px solid rgba(34,211,238,0.42);
+                box-shadow: 0 0 12px rgba(34,211,238,0.22), inset 0 1px 0 rgba(255,255,255,0.12);
                 z-index: 4;
             }
 
             .mono-tile-name {
-                font-weight: 800;
-                color: #e2e8f0;
-                font-size: 8.6px;
+                font-weight: 900;
+                color: #f1f5f9;
+                font-size: 9.2px;
                 text-align: center;
-                line-height: 1.12;
+                line-height: 1.14;
                 max-width: 100%;
                 padding: 0 2px;
-                text-shadow: 0 1px 2px rgba(0,0,0,0.88), 0 0 8px rgba(148,163,184,0.1);
+                text-shadow: 0 1px 2px rgba(0,0,0,0.92), 0 0 10px rgba(148,163,184,0.14);
             }
             .corner-tile .mono-tile-name {
-                font-size: 10px;
+                font-size: 10.6px;
                 color: #fde68a;
                 text-shadow: 0 0 12px rgba(251,191,36,0.24);
             }
             .mono-tile-cost {
-                font-size: 9.4px;
+                font-size: 10px;
                 font-weight: 900;
                 color: #fbbf24;
                 text-shadow: 0 0 8px rgba(251,191,36,0.35);
-                background: rgba(2,6,23,0.48);
-                border: 1px solid rgba(251,191,36,0.14);
+                background: rgba(2,6,23,0.62);
+                border: 1px solid rgba(251,191,36,0.2);
                 border-radius: 999px;
-                padding: 1px 6px;
+                padding: 2px 7px;
+                box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
             }
             .mono-tile-owner {
                 position: absolute;
@@ -871,22 +963,23 @@ const GamesModule = {
                 grid-column: 2 / 6;
                 grid-row: 2 / 6;
                 background:
-                    radial-gradient(circle at 50% 38%, rgba(34,211,238,0.14), transparent 18%),
-                    radial-gradient(ellipse at 50% 50%, rgba(139,92,246,0.18) 0%, transparent 66%),
-                    linear-gradient(145deg, rgba(5,9,22,0.98), rgba(17,10,42,0.98));
-                border: 1.5px solid rgba(139,92,246,0.24);
-                border-radius: 18px;
+                    radial-gradient(circle at 50% 38%, rgba(34,211,238,0.18), transparent 19%),
+                    radial-gradient(ellipse at 50% 50%, rgba(139,92,246,0.24) 0%, transparent 66%),
+                    linear-gradient(145deg, rgba(4,8,20,0.98), rgba(18,10,45,0.98));
+                border: 1.5px solid rgba(139,92,246,0.34);
+                border-radius: 22px;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
                 padding: 12px;
-                gap: 8px;
+                gap: 9px;
                 text-align: center;
                 box-shadow:
                     inset 0 0 60px rgba(0,0,0,0.7),
                     inset 0 0 0 1px rgba(255,255,255,0.05),
-                    0 0 38px rgba(139,92,246,0.16);
+                    0 0 46px rgba(139,92,246,0.2),
+                    0 18px 38px rgba(0,0,0,0.28);
                 position: relative;
                 z-index: 1;
                 overflow: hidden;
@@ -902,15 +995,15 @@ const GamesModule = {
             .mono-center-panel::after {
                 content: '';
                 position: absolute;
-                inset: 14px;
-                border-radius: 14px;
-                border: 1px dashed rgba(34,211,238,0.18);
+                inset: 16px;
+                border-radius: 16px;
+                border: 1px dashed rgba(34,211,238,0.22);
                 background:
                     linear-gradient(90deg, transparent 49%, rgba(34,211,238,0.08) 50%, transparent 51%),
                     linear-gradient(0deg, transparent 49%, rgba(236,72,153,0.06) 50%, transparent 51%);
                 background-size: 34px 34px;
                 pointer-events: none;
-                opacity: 0.46;
+                opacity: 0.5;
             }
             @keyframes rotGlow { to { transform: rotate(360deg); } }
 
@@ -923,16 +1016,17 @@ const GamesModule = {
                 z-index: 1;
             }
             .mono-dice {
-                width: 80px;
-                height: 80px;
+                width: 84px;
+                height: 84px;
                 background:
                     radial-gradient(circle at 28% 24%, rgba(255,255,255,0.26), transparent 19%),
                     linear-gradient(145deg, #1c2365 0%, #33124b 62%, #120923 100%);
-                border: 3px solid #d8b4fe;
-                border-radius: 18px;
+                border: 3px solid #e9d5ff;
+                border-radius: 20px;
                 box-shadow:
-                    0 12px 0 rgba(43,16,75,0.8),
-                    0 0 30px rgba(192,132,252,0.56),
+                    0 13px 0 rgba(43,16,75,0.82),
+                    0 0 34px rgba(192,132,252,0.6),
+                    0 0 52px rgba(34,211,238,0.14),
                     inset 0 2px 0 rgba(255,255,255,0.25),
                     inset 0 -14px 18px rgba(0,0,0,0.62);
                 display: flex;
@@ -966,8 +1060,8 @@ const GamesModule = {
             }
             .dice-dot {
                 position: absolute;
-                width: 12px;
-                height: 12px;
+                width: 13px;
+                height: 13px;
                 background: #22ffff;
                 box-shadow: 0 0 7px #22ffff, 0 0 18px rgba(34,255,255,0.72);
                 border-radius: 50%;
@@ -983,11 +1077,56 @@ const GamesModule = {
 
             /* HUD Panels */
             .mono-hud-players, .mono-hud-logs {
-                background: linear-gradient(145deg, rgba(15,23,42,0.75), rgba(20,12,48,0.7));
-                border: 1px solid rgba(255,255,255,0.06);
-                border-radius: 16px;
+                background:
+                    radial-gradient(circle at 12% 0%, rgba(16,185,129,0.08), transparent 38%),
+                    linear-gradient(145deg, rgba(15,23,42,0.82), rgba(20,12,48,0.74));
+                border: 1px solid rgba(167,139,250,0.14);
+                border-radius: 18px;
                 padding: 18px;
-                backdrop-filter: blur(8px);
+                backdrop-filter: blur(12px);
+                box-shadow: 0 16px 40px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.06);
+                position: relative;
+                overflow: hidden;
+            }
+            .mono-hud-players::before, .mono-hud-logs::before {
+                content: '';
+                position: absolute;
+                left: 14px;
+                right: 14px;
+                top: 0;
+                height: 1px;
+                background: linear-gradient(90deg, transparent, rgba(34,211,238,0.5), transparent);
+                opacity: 0.7;
+            }
+            .mono-hud-title {
+                margin: 0 0 12px 0;
+                color: #c4b5fd;
+                font-size: 11px;
+                font-weight: 900;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                border-bottom: 1px solid rgba(139,92,246,0.18);
+                padding-bottom: 9px;
+                display: flex;
+                align-items: center;
+                gap: 7px;
+            }
+            .mono-player-row {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 11px 12px;
+                border-radius: 12px;
+                transition: all 0.25s;
+                box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+            }
+            .mono-log-entry {
+                line-height: 1.45;
+                padding: 7px 9px;
+                border-radius: 8px;
+                background: rgba(255,255,255,0.024);
+                border-left: 2px solid rgba(139,92,246,0.22);
+                box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
             }
             .mono-hud-logs {
                 display: flex;
@@ -1026,22 +1165,22 @@ const GamesModule = {
             /* Monopoly Board 60-70% Grid Layout */
             .mono-layout-wrapper {
                 display: flex;
-                gap: 24px;
+                gap: 28px;
                 align-items: flex-start;
                 width: 100%;
-                max-width: 1400px;
+                max-width: 1460px;
                 margin: 0 auto;
             }
             .mono-layout-left {
-                flex: 0 0 65%;
+                flex: 0 0 66%;
                 min-width: 340px;
             }
             .mono-layout-right {
-                flex: 0 0 32%;
-                min-width: 260px;
+                flex: 0 0 31%;
+                min-width: 285px;
                 display: flex;
                 flex-direction: column;
-                gap: 14px;
+                gap: 16px;
             }
             @media (max-width: 950px) {
                 .mono-layout-wrapper {
@@ -1957,12 +2096,12 @@ const GamesModule = {
 
         boardContainer.innerHTML = `
             <div class="mono-arena">
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 2px;">
-                    <h3 style="color: #fff; margin: 0; font-size: 16px; font-weight: 900; display: flex; align-items: center; gap: 8px;">
+                <div class="mono-match-header">
+                    <h3 class="mono-match-title">
                         <span style="font-size: 20px;">🎲</span> CỜ TỶ PHÚ VĂN PHÒNG
                         <span style="font-size: 8px; background: linear-gradient(135deg, rgba(16,185,129,0.2), rgba(6,182,212,0.2)); color: #10b981; padding: 3px 8px; border-radius: 10px; font-weight: 800; border: 1px solid rgba(16,185,129,0.3); animation: pulse 2s infinite;">🔴 LIVE</span>
                     </h3>
-                    <button onclick="GamesModule.leaveOnlineRoom()" style="background: rgba(239,68,68,0.08); border: 1.5px solid rgba(239,68,68,0.3); color: #ef4444; padding: 7px 14px; border-radius: 8px; font-size: 11px; cursor: pointer; font-weight: 800; transition: all 0.25s; text-transform: uppercase;" onmouseover="this.style.background='#ef4444'; this.style.color='#fff'" onmouseout="this.style.background='rgba(239,68,68,0.08)'; this.style.color='#ef4444'">
+                    <button class="mono-leave-btn" onclick="GamesModule.leaveOnlineRoom()">
                         🚪 RỜI PHÒNG
                     </button>
                 </div>
@@ -1977,12 +2116,12 @@ const GamesModule = {
 
                     <div class="mono-layout-right">
                         <div class="mono-hud-players">
-                            <h4 style="margin: 0 0 12px 0; color: #a78bfa; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid rgba(139,92,246,0.15); padding-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                            <h4 class="mono-hud-title">
                                 👑 BẢNG XẾP HẠNG CÔNG ĐỨC
                             </h4>
                             <div style="display: flex; flex-direction: column; gap: 8px;">
                                 ${mState.players.map((p, idx) => `
-                                    <div style="display: flex; align-items: center; justify-content: space-between; background: ${idx === mState.currentPlayerIdx && !p.isBankrupt ? `linear-gradient(135deg, ${p.color}12, ${p.color}06)` : 'rgba(255,255,255,0.015)'}; border: 1.5px solid ${idx === mState.currentPlayerIdx && !p.isBankrupt ? p.color + '40' : 'rgba(255,255,255,0.04)'}; padding: 10px 12px; border-radius: 10px; opacity: ${p.isBankrupt ? '0.35' : '1'}; transition: all 0.3s;">
+                                    <div class="mono-player-row" style="background: ${idx === mState.currentPlayerIdx && !p.isBankrupt ? `linear-gradient(135deg, ${p.color}18, ${p.color}07)` : 'rgba(255,255,255,0.018)'}; border: 1.5px solid ${idx === mState.currentPlayerIdx && !p.isBankrupt ? p.color + '52' : 'rgba(255,255,255,0.05)'}; opacity: ${p.isBankrupt ? '0.35' : '1'};">
                                         <div style="display: flex; align-items: center; gap: 8px;">
                                             <div style="width: 26px; height: 26px; border-radius: 50%; background: ${p.color}; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: #fff; box-shadow: 0 0 8px ${p.color}50; flex-shrink: 0;">
                                                 ${p.name.charAt(0).toUpperCase()}
@@ -2003,12 +2142,12 @@ const GamesModule = {
                         </div>
 
                         <div class="mono-hud-logs">
-                            <h4 style="margin: 0 0 10px 0; color: #a78bfa; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid rgba(139,92,246,0.15); padding-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                            <h4 class="mono-hud-title">
                                 📜 NHẬT KÝ TRẬN ĐẤU
                             </h4>
                             <div id="mono-log-area" style="flex: 1; max-height: 200px; min-height: 120px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; font-size: 11px; color: #94a3b8; padding-right: 4px;">
                                 ${mState.logs.map(log => `
-                                    <div style="line-height: 1.4; padding: 4px 8px; border-radius: 5px; background: rgba(255,255,255,0.015); border-left: 2px solid rgba(139,92,246,0.15);">
+                                    <div class="mono-log-entry">
                                         ${log}
                                     </div>
                                 `).join('')}
@@ -2076,6 +2215,67 @@ const GamesModule = {
             end: ((start + totalSteps) % size + size) % size,
             passedStart: start + totalSteps >= size
         };
+    },
+
+    pickWeightedMonopolyCard: (deck) => {
+        const totalWeight = deck.reduce((sum, card) => sum + (card.weight || 1), 0);
+        let roll = Math.random() * totalWeight;
+        for (const card of deck) {
+            roll -= card.weight || 1;
+            if (roll <= 0) return card;
+        }
+        return deck[deck.length - 1];
+    },
+
+    executeMonopolyMoveToTile: async (player, targetTileId, reason = 'special-move') => {
+        const mState = GamesModule.monopoly;
+        const target = Number(targetTileId);
+        if (!Number.isInteger(target) || target < 0 || target >= mState.tiles.length) return;
+
+        const from = player.position;
+        const distance = (target - from + mState.tiles.length) % mState.tiles.length;
+        const move = GamesModule.calculateMonopolyMove(from, distance, mState.tiles.length);
+        move.end = target;
+        move.passedStart = target === 0 || from + distance >= mState.tiles.length;
+
+        mState.visualPositions = mState.visualPositions || {};
+        mState.visualAnimationRunning = mState.visualAnimationRunning || {};
+        mState.visualPositions[player.name] = from;
+        delete mState.visualAnimationRunning[player.name];
+
+        player.position = target;
+        mState.isMovingSequentially = distance > 0;
+        mState.movementLockEndTime = Date.now() + (Math.max(distance, 1) * 320) + 1200;
+        mState.awaitingAction = true;
+        mState.lastMove = {
+            id: `${player.name}_${Date.now()}_${from}_${target}_${reason}`,
+            playerName: player.name,
+            from,
+            to: target,
+            roll: distance,
+            diceValues: [...(mState.diceValues || [1, 1])],
+            passedStart: move.passedStart,
+            reason
+        };
+
+        if (move.passedStart) {
+            const bonus = mState.startBonus || 5;
+            player.cash += bonus;
+            mState.logs.push(`START BONUS: <b>@${player.name}</b> moved through Start and received +${bonus}d.`);
+        }
+
+        const tile = mState.tiles[player.position];
+        mState.logs.push(`SPECIAL MOVE: <b>@${player.name}</b> moved to <b>${tile.name}</b>.`);
+
+        await GamesModule.syncRoomToFirestore();
+        GamesModule.renderTabContent();
+
+        if (distance === 0) {
+            mState.isMovingSequentially = false;
+            mState.movementLockEndTime = null;
+            mState.awaitingAction = false;
+            await GamesModule.executeTileAction(player);
+        }
     },
 
     animateVisualPawn: (playerName) => {
@@ -2158,7 +2358,7 @@ const GamesModule = {
             mState.logs.push(`🔒 Cảnh báo! <b>@${player.name}</b> bị HR phát hiện Đi Muộn không lý do! Bị tạm giam phạt đứng tại đây.`);
             await GamesModule.finishMonopolyTurn();
         } else if (tile.type === 'chance' || tile.type === 'lucky') {
-            GamesModule.drawMonopolyCard(player, tile.type);
+            GamesModule.drawMonopolyCardV2(player, tile.type);
         } else {
             // Check if START tile (position 0)
             if (player.position === 0) {
@@ -2570,7 +2770,13 @@ const GamesModule = {
                 .onSnapshot((snapshot) => {
                     mState.lobbyRooms = [];
                     snapshot.forEach(doc => {
-                        mState.lobbyRooms.push(doc.data());
+                        const room = doc.data();
+                        const players = Array.isArray(room.players) ? room.players : [];
+                        if (players.length === 0) {
+                            doc.ref.delete().catch(e => console.error("Error cleaning empty monopoly room:", e));
+                            return;
+                        }
+                        mState.lobbyRooms.push({ ...room, id: room.id || doc.id, players });
                     });
                     // Re-render only if currently in lobby mode
                     if (GamesModule.activeTab === 'monopoly' && !mState.activeRoomId) {
@@ -2579,9 +2785,11 @@ const GamesModule = {
                 });
         }
 
-        const roomsHtml = mState.lobbyRooms.length === 0 
+        const visibleRooms = mState.lobbyRooms.filter(r => Array.isArray(r.players) && r.players.length > 0);
+
+        const roomsHtml = visibleRooms.length === 0 
             ? `<div style="text-align:center; padding: 40px; color:#64748b; font-size: 13px;">Chưa có phòng đấu nào mở. Hãy làm chủ phòng tạo phòng đầu tiên! 🚀</div>`
-            : mState.lobbyRooms.map(r => {
+            : visibleRooms.map(r => {
                 const isFull = r.players.length >= 4;
                 const canJoin = r.status === 'waiting' && !isFull;
                 return `
@@ -2896,22 +3104,32 @@ const GamesModule = {
         if (!mState.activeRoomId || typeof db === 'undefined') return;
 
         const user = Auth.currentUser;
-        const activeRoom = mState.lobbyRooms.find(r => r.id === mState.activeRoomId) || { host: '' };
-
         if (!confirm("Bạn có chắc chắn muốn rời phòng đấu?")) return;
 
         try {
-            if (activeRoom.host === user.username) {
+            const roomRef = db.collection("monopoly_rooms").doc(mState.activeRoomId);
+            const roomDoc = await roomRef.get();
+            if (!roomDoc.exists) {
+                GamesModule.leaveRoomState("Phong dau da khong con ton tai.");
+                return;
+            }
+
+            const room = roomDoc.data();
+            const players = Array.isArray(room.players) ? room.players : [];
+            const isHost = room.host === user.username || players[0]?.name === user.username;
+
+            if (isHost) {
                 // Host leaves: Delete entire room
-                await db.collection("monopoly_rooms").doc(mState.activeRoomId).delete();
+                await roomRef.delete();
             } else {
                 // Member leaves: Remove player
-                const roomDoc = await db.collection("monopoly_rooms").doc(mState.activeRoomId).get();
-                if (roomDoc.exists) {
-                    const room = roomDoc.data();
-                    room.players = room.players.filter(p => p.name !== user.username);
+                room.players = players.filter(p => p.name !== user.username);
+                if (room.players.length === 0) {
+                    await roomRef.delete();
+                } else {
+                    room.logs = Array.isArray(room.logs) ? room.logs : [];
                     room.logs.push(`🚪 @${user.username} đã rời khỏi sảnh phòng cờ.`);
-                    await db.collection("monopoly_rooms").doc(mState.activeRoomId).set(room);
+                    await roomRef.set(room);
                 }
             }
             GamesModule.leaveRoomState("Đã rời khỏi phòng đấu.");
@@ -3064,6 +3282,11 @@ const GamesModule = {
 
         const player = mState.players[mState.currentPlayerIdx];
         if (!player || player.name !== Auth.currentUser?.username || mState.awaitingAction || mState.isMovingSequentially) return;
+
+        if (player.nextTurnChooseTile) {
+            GamesModule.renderMonopolyChooseTileModal(player);
+            return;
+        }
 
         if (player.isJailed && (player.jailTurns !== undefined && player.jailTurns <= 0)) {
             player.isJailed = false;
@@ -3318,6 +3541,231 @@ const GamesModule = {
         await GamesModule.finishMonopolyTurn();
     },
 
+    renderForcedSellHouseModal: (player) => {
+        const mState = GamesModule.monopoly;
+        const tiles = mState.tiles.filter(t => t.type === 'property' && t.owner?.name === player.name && (t.level || 1) > 1);
+
+        if (tiles.length === 0) {
+            player.cash = Math.max(0, player.cash - 2);
+            mState.logs.push(`🏚️ <b>@${player.name}</b> không có nhà để bán, bị phạt kiểm kê tài sản -2đ.`);
+            GamesModule.checkBankruptcy(player);
+            GamesModule.finishMonopolyTurn();
+            return;
+        }
+
+        const overlay = document.createElement('div');
+        overlay.id = 'mono-forced-sell-overlay';
+        overlay.className = 'chance-overlay';
+        overlay.style.zIndex = '99999';
+        overlay.innerHTML = `
+            <div style="background: rgba(15,23,42,0.97); border: 2px solid #ef4444; border-radius: 16px; padding: 24px; max-width: 430px; width: 90%; color: #fff; box-shadow: 0 0 35px rgba(239,68,68,0.45);">
+                <h3 style="margin:0 0 8px; color:#f87171; text-align:center; font-size:18px; font-weight:900;">🏚️ BẮT BUỘC BÁN 1 NHÀ</h3>
+                <p style="font-size:12px;color:#cbd5e1;text-align:center;margin:0 0 16px;">Chọn một tài sản đã nâng cấp để hạ xuống 1 cấp. Bạn nhận lại 40% phí nâng cấp.</p>
+                <div style="display:flex;flex-direction:column;gap:8px;max-height:260px;overflow:auto;">
+                    ${tiles.map(t => {
+                        const refund = Math.max(1, Math.round(GamesModule.getTileUpgradeCost(t) * 0.4));
+                        return `
+                            <button onclick="GamesModule.confirmForcedSellHouse('${t.id}', ${refund})" style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.35);border-radius:10px;color:#fff;cursor:pointer;">
+                                <span style="text-align:left;"><b>${t.name}</b><br><small style="color:#94a3b8;">Cấp ${t.level || 1} ➜ Cấp ${(t.level || 1) - 1}</small></span>
+                                <b style="color:#fbbf24;">+${refund}đ</b>
+                            </button>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+    },
+
+    confirmForcedSellHouse: async (tileId, refund) => {
+        const mState = GamesModule.monopoly;
+        const player = mState.players[mState.currentPlayerIdx];
+        const tile = mState.tiles.find(t => t.id === parseInt(tileId, 10));
+        if (tile && tile.owner?.name === player.name && (tile.level || 1) > 1) {
+            tile.level = Math.max(1, (tile.level || 1) - 1);
+            player.cash += Number(refund) || 0;
+            mState.logs.push(`🏚️ <b>@${player.name}</b> bị buộc bán bớt nhà tại <b>${tile.name}</b>. Hạ còn cấp ${tile.level}, thu hồi +${refund}đ.`);
+            GamesSynth.playLose();
+        }
+        document.getElementById('mono-forced-sell-overlay')?.remove();
+        await GamesModule.finishMonopolyTurn();
+    },
+
+    renderFreeUpgradeAnyModal: (player) => {
+        const mState = GamesModule.monopoly;
+        const tiles = mState.tiles.filter(t => t.type === 'property' && t.owner?.name === player.name && (t.level || 1) < 3);
+
+        if (tiles.length === 0) {
+            mState.logs.push(`🏗️ <b>@${player.name}</b> nhận quyền xây nhà miễn phí nhưng chưa có tài sản phù hợp.`);
+            GamesModule.finishMonopolyTurn();
+            return;
+        }
+
+        const overlay = document.createElement('div');
+        overlay.id = 'mono-free-upgrade-overlay';
+        overlay.className = 'chance-overlay';
+        overlay.style.zIndex = '99999';
+        overlay.innerHTML = `
+            <div style="background: rgba(15,23,42,0.97); border: 2px solid #10b981; border-radius: 16px; padding: 24px; max-width: 430px; width: 90%; color: #fff; box-shadow: 0 0 35px rgba(16,185,129,0.45);">
+                <h3 style="margin:0 0 8px; color:#34d399; text-align:center; font-size:18px; font-weight:900;">🏗️ XÂY NHÀ MIỄN PHÍ</h3>
+                <p style="font-size:12px;color:#cbd5e1;text-align:center;margin:0 0 16px;">Chọn một tài sản bất kỳ của bạn để nâng cấp miễn phí 1 cấp.</p>
+                <div style="display:flex;flex-direction:column;gap:8px;max-height:260px;overflow:auto;">
+                    ${tiles.map(t => `
+                        <button onclick="GamesModule.confirmFreeUpgradeAny('${t.id}')" style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.35);border-radius:10px;color:#fff;cursor:pointer;">
+                            <span style="text-align:left;"><b>${t.name}</b><br><small style="color:#94a3b8;">Cấp ${t.level || 1} ➜ Cấp ${(t.level || 1) + 1}</small></span>
+                            <b style="color:#34d399;">FREE</b>
+                        </button>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+    },
+
+    confirmFreeUpgradeAny: async (tileId) => {
+        const mState = GamesModule.monopoly;
+        const player = mState.players[mState.currentPlayerIdx];
+        const tile = mState.tiles.find(t => t.id === parseInt(tileId, 10));
+        if (tile && tile.owner?.name === player.name && (tile.level || 1) < 3) {
+            tile.level = (tile.level || 1) + 1;
+            mState.logs.push(`🏗️ <b>@${player.name}</b> xây nhà miễn phí tại <b>${tile.name}</b>, lên cấp ${tile.level}!`);
+            GamesSynth.playWin();
+        }
+        document.getElementById('mono-free-upgrade-overlay')?.remove();
+        await GamesModule.finishMonopolyTurn();
+    },
+
+    renderMonopolyChooseTileModal: (player) => {
+        const mState = GamesModule.monopoly;
+        const overlay = document.createElement('div');
+        overlay.id = 'mono-choose-tile-overlay';
+        overlay.className = 'chance-overlay';
+        overlay.style.zIndex = '99999';
+        overlay.innerHTML = `
+            <div style="background: rgba(15,23,42,0.98); border: 2px solid #22d3ee; border-radius: 16px; padding: 24px; max-width: 560px; width: 92%; color: #fff; box-shadow: 0 0 35px rgba(34,211,238,0.45);">
+                <h3 style="margin:0 0 8px; color:#67e8f9; text-align:center; font-size:18px; font-weight:900;">🧭 CHỌN Ô MUỐN ĐI TỚI</h3>
+                <p style="font-size:12px;color:#cbd5e1;text-align:center;margin:0 0 16px;">Vé điều hướng lượt sau đang kích hoạt. Chọn bất kỳ ô nào trên bàn cờ.</p>
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;max-height:360px;overflow:auto;">
+                    ${mState.tiles.map(t => `
+                        <button onclick="GamesModule.confirmChooseTileMove('${t.id}')" style="padding:10px;background:rgba(34,211,238,0.08);border:1px solid rgba(34,211,238,0.28);border-radius:10px;color:#fff;cursor:pointer;text-align:left;">
+                            <b style="color:#67e8f9;">#${t.id}</b><br>
+                            <span style="font-size:11px;">${t.name}</span>
+                        </button>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+    },
+
+    confirmChooseTileMove: async (tileId) => {
+        const mState = GamesModule.monopoly;
+        const player = mState.players[mState.currentPlayerIdx];
+        if (!player) return;
+        player.nextTurnChooseTile = false;
+        document.getElementById('mono-choose-tile-overlay')?.remove();
+        mState.logs.push(`🧭 <b>@${player.name}</b> dùng vé điều hướng để chọn ô #${tileId}.`);
+        await GamesModule.executeMonopolyMoveToTile(player, parseInt(tileId, 10), 'choose-tile-ticket');
+    },
+
+    drawMonopolyCardV2: (player, cardType) => {
+        const mState = GamesModule.monopoly;
+
+        const chanceCards = [
+            { text: "OT giải cứu dự án, sếp ký thưởng nóng.", amt: 3, weight: 14 },
+            { text: "Prompt lỗi làm server quá tải, đền điểm vận hành.", amt: -2, weight: 16 },
+            { text: "Lỡ lộ bí mật nội bộ trên nhóm chat, bị phạt cảnh cáo.", amt: -1, weight: 16 },
+            { text: "Bàn phím gaming liệt phím, mua đồ mới mất điểm.", amt: -2, weight: 12 },
+            { text: "Phạt thuế văn phòng đột xuất: truy thu 3đ Công Đức.", amt: -3, weight: 12, effect: "taxFine" },
+            { text: "Kiểm toán tài sản bất ngờ: buộc phải bán 1 ngôi nhà đang sở hữu.", amt: 0, weight: 10, effect: "forcedSellHouse" },
+            { text: "Cứu đồng nghiệp gánh task thành công, nhận điểm kết nghĩa.", amt: 2, weight: 12 },
+            { text: "Tìm ra lỗ hổng bảo mật nghiêm trọng, phòng IT thưởng lớn.", amt: 3, weight: 8 }
+        ];
+
+        const luckyCards = [
+            { text: "Sếp bao ăn cả phòng, được hoàn điểm cơm trưa.", amt: 2, weight: 18 },
+            { text: "Nhặt được điểm tích lũy rơi bên máy pha cafe.", amt: 1, weight: 18 },
+            { text: "Được giao đào tạo prompt AI cho người mới, thưởng công.", amt: 3, weight: 16 },
+            { text: "TikTok công ty lên xu hướng, truyền thông tung hoa.", amt: 3, weight: 14 },
+            { text: "Thẻ thần tài: di chuyển về ô BẮT ĐẦU, nhận thưởng và được chọn xây nhà bất kỳ.", amt: 0, weight: 12, effect: "moveToStartFreeUpgrade" },
+            { text: "Vé điều hướng: lượt sau bạn được chọn di chuyển tới 1 ô bất kỳ mong muốn.", amt: 0, weight: 10, effect: "nextTurnChooseTile" }
+        ];
+
+        const deck = cardType === 'chance' ? chanceCards : luckyCards;
+        const card = GamesModule.pickWeightedMonopolyCard(deck);
+        const totalWeight = deck.reduce((sum, item) => sum + (item.weight || 1), 0);
+        const cardRate = Math.round(((card.weight || 1) / totalWeight) * 100);
+        let resultText = card.amt ? `${card.amt >= 0 ? '+' : ''}${card.amt}đ Công Đức` : 'Hiệu ứng đặc biệt';
+        let resultColor = card.amt >= 0 ? '#10b981' : '#ef4444';
+
+        if (card.amt) {
+            player.cash = Math.max(0, player.cash + card.amt);
+        }
+
+        if (card.effect === 'forcedSellHouse') {
+            mState.pendingCardAction = { type: 'forcedSellHouse', playerName: player.name };
+            resultText = 'Phải bán 1 ngôi nhà';
+            resultColor = '#f97316';
+        } else if (card.effect === 'nextTurnChooseTile') {
+            player.nextTurnChooseTile = true;
+            resultText = 'Lượt sau được chọn ô bất kỳ';
+            resultColor = '#22d3ee';
+        } else if (card.effect === 'moveToStartFreeUpgrade') {
+            const from = player.position;
+            const bonus = mState.startBonus || 5;
+            player.position = 0;
+            player.cash += bonus;
+            mState.visualPositions = mState.visualPositions || {};
+            mState.visualPositions[player.name] = from;
+            mState.lastMove = {
+                id: `${player.name}_${Date.now()}_card_start`,
+                playerName: player.name,
+                from,
+                to: 0,
+                roll: (mState.tiles.length - from) % mState.tiles.length,
+                diceValues: [...(mState.diceValues || [1, 1])],
+                passedStart: true,
+                reason: 'card-move-to-start'
+            };
+            mState.pendingCardAction = { type: 'freeUpgradeAny', playerName: player.name };
+            resultText = `Về BẮT ĐẦU +${bonus}đ và chọn xây nhà`;
+            resultColor = '#34d399';
+        }
+
+        const cardName = cardType === 'chance' ? 'CƠ HỘI' : 'VẬN MAY';
+        mState.logs.push(`CARD: <b>@${player.name}</b> rut the <b>${cardName}</b>: "${card.text}" <b>(${resultText})</b>`);
+
+        const overlay = document.createElement('div');
+        overlay.id = 'mono-card-overlay';
+        overlay.className = 'chance-overlay';
+        overlay.style.zIndex = '99999';
+
+        overlay.innerHTML = `
+            <div style="background: rgba(15,23,42,0.96); border: 2.5px solid ${cardType === 'chance' ? '#a855f7' : '#00f3ff'}; border-radius: 20px; padding: 28px; max-width: 420px; width: 90%; text-align: center; box-shadow: 0 0 35px ${cardType === 'chance' ? '#a855f7' : '#00f3ff'}50; color: #fff;">
+                <div style="font-size: 42px; margin-bottom: 12px;">${cardType === 'chance' ? '?' : '*'}</div>
+                <h3 style="margin: 0 0 16px 0; color: ${cardType === 'chance' ? '#a855f7' : '#00f3ff'}; font-size: 20px; font-weight: 900; text-transform: uppercase;">
+                    Thẻ ${cardName}
+                </h3>
+                <div style="display:inline-flex;align-items:center;gap:6px;margin:-6px 0 16px;padding:5px 10px;border-radius:999px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.14);color:#cbd5e1;font-size:11px;font-weight:800;">
+                    Tỉ lệ rút ~${cardRate}%
+                </div>
+                <p style="font-size: 14px; line-height: 1.6; color: #e2e8f0; margin-bottom: 20px; text-align: justify; background: rgba(0,0,0,0.3); padding: 16px; border-radius: 10px; border-left: 3px solid ${cardType === 'chance' ? '#a855f7' : '#00f3ff'};">
+                    "${card.text}"
+                </p>
+                <div style="font-size: 18px; font-weight: 900; color: ${resultColor}; margin-bottom: 24px;">
+                    ${resultText}
+                </div>
+                <button onclick="GamesModule.closeCardModal()" style="width: 100%; padding: 12px; background: linear-gradient(135deg, ${cardType === 'chance' ? '#a855f7' : '#00f3ff'}, #8b5cf6); border: none; border-radius: 8px; color: #fff; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 13px;">
+                    Xác Nhận
+                </button>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+        if (card.amt < 0 || card.effect === 'forcedSellHouse') GamesSynth.playLose();
+        else GamesSynth.playWin();
+    },
+
     drawMonopolyCard: (player, cardType) => {
         const mState = GamesModule.monopoly;
 
@@ -3373,8 +3821,31 @@ const GamesModule = {
     },
 
     closeCardModal: async () => {
+        const mState = GamesModule.monopoly;
+        const player = mState.players[mState.currentPlayerIdx];
+        const pending = mState.pendingCardAction && mState.pendingCardAction.playerName === player?.name
+            ? mState.pendingCardAction
+            : null;
+
         document.getElementById('mono-card-overlay')?.remove();
-        GamesModule.checkBankruptcy(GamesModule.monopoly.players[GamesModule.monopoly.currentPlayerIdx]);
+        if (pending) delete mState.pendingCardAction;
+
+        GamesModule.checkBankruptcy(player);
+        if (player?.isBankrupt) {
+            await GamesModule.finishMonopolyTurn();
+            return;
+        }
+
+        if (pending?.type === 'forcedSellHouse') {
+            GamesModule.renderForcedSellHouseModal(player);
+            return;
+        }
+
+        if (pending?.type === 'freeUpgradeAny') {
+            GamesModule.renderFreeUpgradeAnyModal(player);
+            return;
+        }
+
         await GamesModule.finishMonopolyTurn();
     },
 

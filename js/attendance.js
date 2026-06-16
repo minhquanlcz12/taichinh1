@@ -1367,6 +1367,7 @@ const Attendance = {
 
         let status = 'on_time', lateMinutes = 0;
         let lateExcuseDetails = null;
+        let attendanceTelegramMsg = null;
 
         // Bỏ qua phạt muộn cho duy nhất ngày 13/06/2026 do lỗi hệ thống
         const isErrorDate = (dateStr === '2026-06-13');
@@ -1396,7 +1397,7 @@ const Attendance = {
                     telegramMsg += `📝 <b>Lý do:</b> ${todayApprovedRequest.reason}\n`;
                     telegramMsg += `${locStr}\n\n`;
                     telegramMsg += `<i>"Đã ghi nhận đi muộn có phép. Công đức được cộng +1đ như thường lệ."</i>`;
-                    Utils.notifyTelegram(telegramMsg);
+                    attendanceTelegramMsg = telegramMsg;
                 } else {
                     status = 'late';
                     lateExcuseDetails = {
@@ -1412,7 +1413,7 @@ const Attendance = {
                     telegramMsg += `📉 <b>Trừ công đức:</b> -0.5đ\n`;
                     telegramMsg += `${locStr}\n\n`;
                     telegramMsg += `<i>"Kỷ luật là sức mạnh! Đề nghị sếp ${user.username} rút kinh nghiệm sâu sắc."</i>`;
-                    Utils.notifyTelegram(telegramMsg);
+                    attendanceTelegramMsg = telegramMsg;
                 }
             } else {
                 status = 'late';
@@ -1424,8 +1425,23 @@ const Attendance = {
                 telegramMsg += `📉 <b>Trừ công đức:</b> -1đ\n`;
                 telegramMsg += `${locStr}\n\n`;
                 telegramMsg += `<i>"Kỷ luật là sức mạnh! Đề nghị sếp ${user.username} rút kinh nghiệm sâu sắc."</i>`;
-                Utils.notifyTelegram(telegramMsg);
+                attendanceTelegramMsg = telegramMsg;
             }
+        }
+
+        if (!attendanceTelegramMsg) {
+            const locStr = lat ? `\n📍 <b>Vị trí:</b> <a href="https://google.com/maps?q=${lat},${lng}">Xem bản đồ</a>` : '\n📍 <b>Vị trí:</b> Không lấy được GPS từ trình duyệt';
+            const shiftName = currentSession === 'morning' ? 'CA SÁNG' : 'CA CHIỀU';
+            const statusLine = isErrorDate
+                ? 'ĐÚNG GIỜ (ngày được hệ thống bỏ qua lỗi chấm công)'
+                : 'ĐÚNG GIỜ';
+
+            attendanceTelegramMsg = `✅ <b>[CHẤM CÔNG ${statusLine}]</b>\n\n`;
+            attendanceTelegramMsg += `👤 <b>Nhân sự:</b> ${user.username}\n`;
+            attendanceTelegramMsg += `⏰ <b>Thời gian:</b> ${now.toLocaleTimeString('vi-VN')} (${shiftName})\n`;
+            attendanceTelegramMsg += `🏆 <b>Kết quả:</b> Đúng giờ - cộng Công Đức theo quy định\n`;
+            attendanceTelegramMsg += `${locStr}\n\n`;
+            attendanceTelegramMsg += `<i>"Đã ghi nhận chấm công đúng giờ tự động gửi về Telegram."</i>`;
         }
 
         const newRecord = {
@@ -1460,6 +1476,9 @@ const Attendance = {
             }
             allData.push(newRecord);
             await Attendance.saveData(allData);
+            if (attendanceTelegramMsg) {
+                Utils.notifyTelegram(attendanceTelegramMsg);
+            }
         } catch (err) {
             Utils.showToast('Lỗi lưu dữ liệu. Thử lại!', 'error');
             if (btn) {

@@ -1959,6 +1959,33 @@ body.dark-theme .avatar-preview-box {
     font-weight: 500;
 }
 
+/* Chatbot store must stay visible even when global entry animations are enabled. */
+.chatbot-store-grid {
+    display: grid !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: none !important;
+    animation: none !important;
+    min-height: 340px;
+}
+
+.chatbot-store-grid > .storefront-card,
+.chatbot-store-grid > .glass-card {
+    display: flex !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: none !important;
+    animation: none !important;
+    min-height: 330px;
+    position: relative;
+    z-index: 1;
+}
+
+.chatbot-store-grid > .storefront-card *,
+.chatbot-store-grid > .glass-card * {
+    visibility: visible !important;
+}
+
 /* =========================================================================
    DASHBOARD TASK LIST STYLES (CÃƒâ€NG VIÃ¡Â»â€ C HÃƒâ€M NAY)
    ========================================================================= */
