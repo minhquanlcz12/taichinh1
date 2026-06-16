@@ -5,6 +5,9 @@ const admin = require('firebase-admin');
 const nodemailer = require('nodemailer');
 const https = require('https');
 
+// 1. Cấu hình & Utility Functions
+const normalize = (str) => (str || '').replace(/\s+/g, '').toLowerCase();
+
 // Hỗ trợ định dạng tiền tệ Việt Nam
 function formatCurrency(amount) {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' })
@@ -203,22 +206,31 @@ async function run() {
         const username = staff.username;
         const displayName = staff.profile?.displayName || username;
 
-        // Tìm điểm danh ca sáng & chiều (Sử dụng toLowerCase để khớp chính xác username)
+        const sUser = normalize(username);
+        console.log(`--- Processing staff: ${username} (${displayName}) ---`);
+
+        // Tìm điểm danh ca sáng & chiều (Sử dụng normalize để khớp chính xác username)
         const morningRecord = attendance.find(r => 
-            (r.username || '').toLowerCase() === username.toLowerCase() && 
+            normalize(r.username) === sUser && 
             r.dateStr === todayStr && 
             (r.type === 'morning' || !r.type)
         );
 
         const afternoonRecord = attendance.find(r => 
-            (r.username || '').toLowerCase() === username.toLowerCase() && 
+            normalize(r.username) === sUser && 
             r.dateStr === todayStr && 
             r.type === 'afternoon'
         );
 
+        if (morningRecord) console.log(`  [MORNING] Found: ${morningRecord.status} at ${morningRecord.time}`);
+        else console.log(`  [MORNING] No record found.`);
+
+        if (afternoonRecord) console.log(`  [AFTERNOON] Found: ${afternoonRecord.status} at ${afternoonRecord.time}`);
+        else console.log(`  [AFTERNOON] No record found.`);
+
         // Kiểm tra xem nhân sự có lịch phép hôm nay không
         const hasApprovedLeave = leaveRequests.some(l => {
-            if ((l.username || '').toLowerCase() !== username.toLowerCase() || l.status !== 'approved') return false;
+            if (normalize(l.username) !== sUser || l.status !== 'approved') return false;
             const lDate = l.startDate || l.date || '';
             if (!lDate) return false;
             const start = new Date(lDate + 'T00:00:00');
@@ -373,10 +385,14 @@ async function run() {
         }
 
         try {
-            await sendTelegramMessage(tgToken, tgChatId, tgMsg);
-            console.log("Telegram notification sent successfully.");
+            console.log("Sending to Telegram group:", tgChatId);
+            const result = await sendTelegramMessage(tgToken, tgChatId, tgMsg);
+            console.log("Telegram notification response:", result);
         } catch (err) {
-            console.error("Error sending Telegram message:", err.message);
+            console.error("CRITICAL ERROR sending Telegram message:", err.message);
+            if (err.response) {
+                console.error("Telegram API Error Data:", err.response.data);
+            }
         }
     } else {
         console.log("Telegram Token or Chat ID not configured in database. Skipping Telegram notification.");
