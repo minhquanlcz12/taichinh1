@@ -1656,10 +1656,11 @@ const Attendance = {
         
         try {
             const allData = await Attendance.loadData();
+            const normalizedU = (username || '').toLowerCase().trim();
             
             // Kiểm tra xem đã có bản ghi chưa
             const existingRecord = allData.find(r => 
-                r.username === username && 
+                (r.username || '').toLowerCase().trim() === normalizedU && 
                 r.dateStr === dateStr && 
                 (r.type === sessionType || (sessionType === 'morning' && !r.type))
             );
@@ -1812,7 +1813,8 @@ const Attendance = {
             try {
                 if (typeof RewardsModule !== 'undefined') {
                     const allRewards = await RewardsModule.loadData();
-                    const flexCard = allRewards.find(r => r.username === user.username && r.cardId === 'card_flex' && r.isUsed && (Date.now() - (r.usedAt || 0) < 7 * 24 * 60 * 60 * 1000));
+                    const normalizedU = (user.username || '').toLowerCase().trim();
+                    const flexCard = allRewards.find(r => (r.username || '').toLowerCase().trim() === normalizedU && r.cardId === 'card_flex' && r.isUsed && (Date.now() - (r.usedAt || 0) < 7 * 24 * 60 * 60 * 1000));
                     if (flexCard) {
                         deadline.setHours(deadline.getHours() + 1); 
                     }
@@ -1834,7 +1836,8 @@ const Attendance = {
             
             // Check if there is an approved late request for today
             const lates = await Attendance.loadLateRequests();
-            const todayApprovedRequest = lates.find(r => r.username === user.username && r.date === dateStr && r.status === 'approved');
+            const normalizedU = (user.username || '').toLowerCase().trim();
+            const todayApprovedRequest = lates.find(r => (r.username || '').toLowerCase().trim() === normalizedU && r.date === dateStr && r.status === 'approved');
             const locStr = lat ? `\n📍 <b>Vị trí:</b> <a href="https://google.com/maps?q=${lat},${lng}">Xem bản đồ</a>` : '';
             const shiftName = currentSession === 'morning' ? 'CA SÁNG' : 'CA CHIỀU';
             
@@ -1920,8 +1923,9 @@ const Attendance = {
 
         try {
             const allData = await Attendance.loadData();
+            const normalizedU = (user.username || '').toLowerCase().trim();
             const existingRecord = allData.find(r => 
-                r.username === user.username && 
+                (r.username || '').toLowerCase().trim() === normalizedU && 
                 r.dateStr === dateStr && 
                 (r.type === currentSession || (currentSession === 'morning' && !r.type))
             );
@@ -2011,10 +2015,14 @@ const Attendance = {
             return;
         }
 
+        const now = new Date();
+        const submittedAtStr = now.toLocaleString('vi-VN');
+
         const newLeave = {
             id: 'leave_' + Date.now(),
             username: user.username,
             timestamp: Date.now(),
+            submittedAt: submittedAtStr, // Thêm ngày giờ nộp đơn
             startDate: startDate,
             days: parseFloat(days),
             reason: reason,
@@ -2028,7 +2036,7 @@ const Attendance = {
         Attendance.closeLeaveModal();
         Utils.showToast("Đã gửi yêu cầu xin nghỉ phép thành công!", "success");
 
-        const msg = `📢 <b>[TỜ TRÌNH XIN NGHỈ PHÉP]</b>\n👤 Nhân viên: <b>${user.username}</b>\n📅 Từ ngày: ${startDate}\n⏳ Số ngày nghỉ: ${days}\n📝 Lý do: <i>${reason}</i>\n\n👉 Sếp vào hệ thống kiểm tra và duyệt nhé!`;
+        const msg = `📢 <b>[TỜ TRÌNH XIN NGHỈ PHÉP]</b>\n👤 Nhân viên: <b>${user.username}</b>\n📅 Từ ngày: ${startDate}\n⏳ Số ngày nghỉ: ${days}\n📝 Lý do: <i>${reason}</i>\n🕒 <b>Trình lúc:</b> ${submittedAtStr}\n\n👉 Sếp vào hệ thống kiểm tra và duyệt nhé!`;
         Utils.notifyTelegram(msg);
 
         Attendance.render(); // Tải lại view
@@ -2079,8 +2087,9 @@ const Attendance = {
         const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
         
         const allData = await Attendance.loadData();
-        const todayRecord = allData.find(r => r.username === user.username && r.dateStr === dateStr && r.type === 'afternoon') ||
-                            allData.find(r => r.username === user.username && r.dateStr === dateStr && (r.type === 'morning' || !r.type));
+        const normalizedU = (user.username || '').toLowerCase().trim();
+        const todayRecord = allData.find(r => (r.username || '').toLowerCase().trim() === normalizedU && r.dateStr === dateStr && r.type === 'afternoon') ||
+                            allData.find(r => (r.username || '').toLowerCase().trim() === normalizedU && r.dateStr === dateStr && (r.type === 'morning' || !r.type));
         
         if (todayRecord) {
             todayRecord.checkoutTimestamp = now.getTime();
@@ -2141,18 +2150,20 @@ const Attendance = {
         const summary = {};
         allData.forEach(r => {
             if (r.dateStr >= startStr && r.dateStr <= endStr) {
+                const normalizedRU = (r.username || '').toLowerCase().trim();
                 // Sửa lỗi ngày 13/06 trực tiếp trong bộ nhớ
-                if (/2026-0?6-1?3/.test(String(r.dateStr).trim()) && r.status !== 'on_time') { console.log('[ATT-v4] Force normalizing:', r.username, r.dateStr, r.status); r.status = 'on_time'; r.lateMinutes = 0;
-                    r.status = 'on_time';
+                if (/2026-0?6-1?3/.test(String(r.dateStr).trim()) && r.status !== 'on_time') { 
+                    console.log('[ATT-v4] Force normalizing:', r.username, r.dateStr, r.status); 
+                    r.status = 'on_time'; 
                     r.lateMinutes = 0;
                 }
-                if (!summary[r.username]) summary[r.username] = { totalDays: 0, onTime: 0, late: 0, totalLateMinutes: 0 };
+                if (!summary[normalizedRU]) summary[normalizedRU] = { totalDays: 0, onTime: 0, late: 0, totalLateMinutes: 0 };
                 const weight = r.type ? 0.5 : 1.0;
-                summary[r.username].totalDays += weight;
-                if (r.status === 'on_time') summary[r.username].onTime += weight;
+                summary[normalizedRU].totalDays += weight;
+                if (r.status === 'on_time') summary[normalizedRU].onTime += weight;
                 else {
-                    summary[r.username].late += weight;
-                    summary[r.username].totalLateMinutes += r.lateMinutes || 0;
+                    summary[normalizedRU].late += weight;
+                    summary[normalizedRU].totalLateMinutes += r.lateMinutes || 0;
                 }
             }
         });
@@ -2181,8 +2192,9 @@ const Attendance = {
         csvContent += "Tài xế/Nhân viên,Tổng ngày công đã qua,Đã đi làm,Đúng giờ,Vắng,Nghỉ phép duyệt,Đi muộn (lần),Tổng phút đi muộn\n";
 
         usersList.forEach(u => {
-            const s = summary[u] || { totalDays: 0, onTime: 0, late: 0, totalLateMinutes: 0 };
-            const leaves = approvedLeaves[u] || 0;
+            const normalizedU = u.toLowerCase().trim();
+            const s = summary[normalizedU] || { totalDays: 0, onTime: 0, late: 0, totalLateMinutes: 0 };
+            const leaves = approvedLeaves[normalizedU] || 0;
             let absent = passedWorkingDays - s.totalDays - leaves;
             if (absent < 0) absent = 0;
             
@@ -2211,12 +2223,13 @@ const Attendance = {
         const endStr = cycle.endStr;
         
         // Filter by this user + current payroll cycle
+        const normalizedTargetU = (username || '').toLowerCase().trim();
         const userRecords = allData
-            .filter(r => r.username === username && r.dateStr >= startStr && r.dateStr <= endStr)
+            .filter(r => (r.username || '').toLowerCase().trim() === normalizedTargetU && r.dateStr >= startStr && r.dateStr <= endStr)
             .sort((a, b) => a.dateStr.localeCompare(b.dateStr));
         
         const userLeaves = allLeaves
-            .filter(l => l.username === username && (l.startDate || l.date) >= startStr && (l.startDate || l.date) <= endStr);
+            .filter(l => (l.username || '').toLowerCase().trim() === normalizedTargetU && (l.startDate || l.date) >= startStr && (l.startDate || l.date) <= endStr);
         
         const totalOnTime = userRecords.filter(r => r.status === 'on_time').length;
         const totalExcusedLate = userRecords.filter(r => r.status === 'late_excused').length;

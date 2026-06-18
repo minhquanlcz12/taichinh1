@@ -40,12 +40,16 @@ const FinanceModule = {
 
         if (currentUser.role === 'admin') {
             const filterEl = document.getElementById('finance-user-filter');
-            if (filterEl && filterEl.value !== 'all') {
-                displayTransactions = FinanceModule.data.transactions.filter(t => t.owner === filterEl.value || (!t.owner && filterEl.value === 'admin'));
+            const selectedU = (filterEl ? filterEl.value : 'all').toLowerCase().trim();
+            if (selectedU !== 'all') {
+                displayTransactions = FinanceModule.data.transactions.filter(t => 
+                    ((t.owner || '').toLowerCase().trim() === selectedU) || 
+                    (!t.owner && selectedU === 'admin')
+                );
             }
         } else {
-            // If not admin, only show transactions owned by this user
-            displayTransactions = FinanceModule.data.transactions.filter(t => t.owner === currentUser.username);
+            const currentU = (currentUser.username || '').toLowerCase().trim();
+            displayTransactions = FinanceModule.data.transactions.filter(t => (t.owner || '').toLowerCase().trim() === currentU);
         }
 
         if (app.state && app.state.currentView === 'dashboard-view') {
@@ -78,7 +82,8 @@ const FinanceModule = {
         let txs = transactionsToSummarize || FinanceModule.data.transactions;
         const currentUser = Auth.currentUser;
         if (!transactionsToSummarize && currentUser) {
-            txs = txs.filter(t => t.owner === currentUser.username || (!t.owner && currentUser.username === 'admin'));
+            const currentU = (currentUser.username || '').toLowerCase().trim();
+            txs = txs.filter(t => (t.owner || '').toLowerCase().trim() === currentU || (!t.owner && currentU === 'admin'));
         }
 
         txs.forEach(tx => {
@@ -102,7 +107,8 @@ const FinanceModule = {
         let txs = transactionsToFilter || FinanceModule.data.transactions;
         const currentUser = Auth.currentUser;
         if (!transactionsToFilter && currentUser) {
-            txs = txs.filter(t => t.owner === currentUser.username || (!t.owner && currentUser.username === 'admin'));
+            const currentU = (currentUser.username || '').toLowerCase().trim();
+            txs = txs.filter(t => (t.owner || '').toLowerCase().trim() === currentU || (!t.owner && currentU === 'admin'));
         }
         return [...txs]
             .sort((a, b) => new Date(b.date) - new Date(a.date))
@@ -534,21 +540,22 @@ Admin đã CẤP QUYỀN sửa/xóa giao dịch cho bạn:
 
         if (isAdmin) {
             const userFilter = document.getElementById('finance-user-filter');
-            selectedUser = userFilter ? userFilter.value : 'all';
+            selectedUser = (userFilter ? userFilter.value : 'all').toLowerCase().trim();
             if (selectedUser !== 'all') {
-                txs = txs.filter(t => t.owner === selectedUser || (!t.owner && selectedUser === 'admin'));
+                txs = txs.filter(t => (t.owner || '').toLowerCase().trim() === selectedUser || (!t.owner && selectedUser === 'admin'));
                 userTitle = ` - NV: ${selectedUser}`;
             }
         } else {
-            selectedUser = currentUser.username;
-            txs = txs.filter(t => t.owner === selectedUser);
+            selectedUser = (currentUser.username || '').toLowerCase().trim();
+            txs = txs.filter(t => (t.owner || '').toLowerCase().trim() === selectedUser);
             userTitle = ` - ${selectedUser}`;
         }
 
         // Calculate CUMULATIVE BALANCE (all-time) for the selected group/user
         let allTxs = FinanceModule.data.transactions;
         if (selectedUser !== 'all') {
-            allTxs = allTxs.filter(t => t.owner === selectedUser || (selectedUser === 'admin' && !t.owner));
+            const selU = selectedUser.toLowerCase().trim();
+            allTxs = allTxs.filter(t => (t.owner || '').toLowerCase().trim() === selU || (selU === 'admin' && !t.owner));
         }
         
         const cumulativeSummary = FinanceModule.getSummary(allTxs);

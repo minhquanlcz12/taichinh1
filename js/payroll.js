@@ -1410,7 +1410,9 @@ const PayrollModule = {
             let lateCount = 0;
 
             allAttendance.forEach(a => {
-                if (a.username === username && a.dateStr < todayStr) {
+                const normalizedA = (a.username || '').toLowerCase().trim();
+                const normalizedU = (username || '').toLowerCase().trim();
+                if (normalizedA === normalizedU && a.dateStr < todayStr) {
                     if (a.dateStr >= cycle.startStr && a.dateStr <= cycle.endStr) {
                         // Bỏ qua Chủ nhật khi tính công đi làm
                         const parts = a.dateStr.split('-');
@@ -1432,8 +1434,10 @@ const PayrollModule = {
             });
 
             allLeaves.forEach(l => {
+                const normalizedL = (l.username || '').toLowerCase().trim();
+                const normalizedU = (username || '').toLowerCase().trim();
                 const lDate = l.startDate || l.date || '';
-                if (l.username === username && l.status === 'approved' && lDate < todayStr) {
+                if (normalizedL === normalizedU && l.status === 'approved' && lDate < todayStr) {
                     if (lDate >= cycle.startStr && lDate <= cycle.endStr) {
                         approvedLeaveDays += (parseInt(l.days) || 1);
                     }
@@ -1444,8 +1448,13 @@ const PayrollModule = {
             const paidDays = onTimeDays + lateExcusedDays + lateDays + approvedLeaveDays;
             const attendancePay = paidDays * dailyRate;
             const latePenaltyTotal = lateCount * PayrollModule.LATE_PENALTY;
-            const customBonus = parseFloat(monthlyBonuses[username]) || 0;
-            const advance = parseFloat(monthlyAdvances[username]) || 0;
+            
+            // Tìm thưởng/ứng không phân biệt hoa thường
+            const bonusKey = Object.keys(monthlyBonuses).find(k => k.toLowerCase().trim() === username.toLowerCase().trim());
+            const customBonus = bonusKey ? parseFloat(monthlyBonuses[bonusKey]) : 0;
+            
+            const advanceKey = Object.keys(monthlyAdvances).find(k => k.toLowerCase().trim() === username.toLowerCase().trim());
+            const advance = advanceKey ? parseFloat(monthlyAdvances[advanceKey]) : 0;
             
             const netSalary = attendancePay + customBonus - latePenaltyTotal - advance;
             const roundedNetSalary = Math.round(netSalary > 0 ? Math.round(netSalary / 1000) * 1000 : 0);
@@ -1516,7 +1525,9 @@ const PayrollModule = {
             let lateCount = 0;
 
             allAttendance.forEach(a => {
-                if (a.username === username && a.dateStr < todayStr) {
+                const normalizedA = (a.username || '').toLowerCase().trim();
+                const normalizedU = (username || '').toLowerCase().trim();
+                if (normalizedA === normalizedU && a.dateStr < todayStr) {
                     if (a.dateStr >= cycle.startStr && a.dateStr <= cycle.endStr) {
                         // Bỏ qua Chủ nhật khi tính công đi làm
                         const parts = a.dateStr.split('-');
@@ -1538,8 +1549,10 @@ const PayrollModule = {
             });
 
             allLeaves.forEach(l => {
+                const normalizedL = (l.username || '').toLowerCase().trim();
+                const normalizedU = (username || '').toLowerCase().trim();
                 const lDate = l.startDate || l.date || '';
-                if (l.username === username && l.status === 'approved' && lDate < todayStr) {
+                if (normalizedL === normalizedU && l.status === 'approved' && lDate < todayStr) {
                     if (lDate >= cycle.startStr && lDate <= cycle.endStr) {
                         approvedLeaveDays += (parseInt(l.days) || 1);
                     }
@@ -1557,11 +1570,15 @@ const PayrollModule = {
             if (lateCount === 0 && (onTimeDays + approvedLeaveDays) >= 15) {
                 eligibleForBonus = true;
             }
-            const isApproved = monthlyApprovals[username] === true;
+            const approvalKey = Object.keys(monthlyApprovals).find(k => k.toLowerCase().trim() === username.toLowerCase().trim());
+            const isApproved = approvalKey ? monthlyApprovals[approvalKey] === true : false;
             const punctualityBonusVal = (eligibleForBonus && isApproved) ? 200000 : 0;
 
-            const customBonus = parseFloat(monthlyBonuses[username]) || 0;
-            const advance = parseFloat(monthlyAdvances[username]) || 0;
+            const bonusKey = Object.keys(monthlyBonuses).find(k => k.toLowerCase().trim() === username.toLowerCase().trim());
+            const customBonus = bonusKey ? parseFloat(monthlyBonuses[bonusKey]) : 0;
+            
+            const advanceKey = Object.keys(monthlyAdvances).find(k => k.toLowerCase().trim() === username.toLowerCase().trim());
+            const advance = advanceKey ? parseFloat(monthlyAdvances[advanceKey]) : 0;
 
             const totalDeductions = (dailyRate * absentDays) + advance + latePenaltyTotal + (customBonus < 0 ? Math.abs(customBonus) : 0);
             const totalAdditions = punctualityBonusVal + (customBonus > 0 ? customBonus : 0);

@@ -90,8 +90,12 @@ const WorkModule = {
 
         if (currentUser.role === 'admin') {
             const filterEl = document.getElementById('work-user-filter');
-            if (filterEl && filterEl.value !== 'all') {
-                displayTasks = displayTasks.filter(t => t.owner === filterEl.value || (!t.owner && filterEl.value === 'admin'));
+            const selectedU = (filterEl ? filterEl.value : 'all').toLowerCase().trim();
+            if (selectedU !== 'all') {
+                displayTasks = displayTasks.filter(t => 
+                    ((t.owner || '').toLowerCase().trim() === selectedU) || 
+                    (!t.owner && selectedU === 'admin')
+                );
             }
         } else {
             // Non-admin: xem tất cả công việc, nhưng chỉ sửa trạng thái của công việc được giao cho mình
@@ -563,7 +567,10 @@ const WorkModule = {
 
                 // Kiểm tra quyền chỉnh sửa trạng thái
                 const taskCurrentUser = Auth.currentUser;
-                const canEditStatus = taskCurrentUser && (taskCurrentUser.role === 'admin' || task.owner === taskCurrentUser.username);
+                const canEditStatus = taskCurrentUser && (
+                    taskCurrentUser.role === 'admin' || 
+                    (task.owner || '').toLowerCase().trim() === (taskCurrentUser.username || '').toLowerCase().trim()
+                );
 
                 // Status Dropdown Options
                 const statuses = ['Planned', 'Doing', 'Done', 'Hạn chót', 'Hết hạn'];
@@ -688,7 +695,7 @@ const WorkModule = {
     getAssigneeHtml: (taskId, ownerUsername, isAdmin) => {
         const buildAvatar = (username) => {
             const color = Utils.getUserAvatarColor(username);
-            const acc = WorkModule.allAccounts.find(a => a.username === username);
+            const acc = WorkModule.allAccounts.find(a => (a.username || '').toLowerCase().trim() === (username || '').toLowerCase().trim());
             const hasAvatar = acc && acc.profile && acc.profile.avatar;
             const initial = username ? username[0].toUpperCase() : '?';
             const inner = hasAvatar
@@ -739,7 +746,10 @@ const WorkModule = {
         const task = WorkModule.data.tasks.find(t => t.id === id);
         if (task) {
             const currentUser = Auth.currentUser;
-            if (!currentUser || (currentUser.role !== 'admin' && task.owner !== currentUser.username)) {
+            if (!currentUser || (
+                currentUser.role !== 'admin' && 
+                (task.owner || '').toLowerCase().trim() !== (currentUser.username || '').toLowerCase().trim()
+            )) {
                 Utils.showToast('Bạn không có quyền thay đổi trạng thái công việc này!', 'error');
                 WorkModule.filterByRole(); // Reset dropdown về giá trị cũ
                 return;

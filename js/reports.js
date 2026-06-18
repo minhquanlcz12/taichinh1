@@ -40,10 +40,14 @@ const ReportsModule = {
             }
             
             if (selectedUser !== 'all') {
-                transactions = transactions.filter(t => t.owner === selectedUser || (!t.owner && selectedUser === 'admin'));
+                transactions = transactions.filter(t => 
+                    ((t.owner || '').toLowerCase().trim() === (selectedUser || '').toLowerCase().trim()) || 
+                    (!t.owner && (selectedUser || '').toLowerCase().trim() === 'admin')
+                );
             }
         } else {
-            transactions = transactions.filter(t => t.owner === currentUser.username);
+            const currentU = (currentUser.username || '').toLowerCase().trim();
+            transactions = transactions.filter(t => (t.owner || '').toLowerCase().trim() === currentU);
         }
 
         const summary = FinanceModule.getSummary(transactions);
@@ -51,9 +55,10 @@ const ReportsModule = {
         let userFilterHtml = '';
         if (isAdmin) {
             const accounts = await Auth.getAccounts();
-            let opts = `<option value="all" ${selectedUser === 'all' ? 'selected' : ''}>Tất cả nhân viên</option>`;
+            const selU = (selectedUser || '').toLowerCase().trim();
             accounts.forEach(a => {
-                opts += `<option value="${a.username}" ${selectedUser === a.username ? 'selected' : ''}>${a.username}</option>`;
+                const normalizedAccU = (a.username || '').toLowerCase().trim();
+                opts += `<option value="${a.username}" ${selU === normalizedAccU ? 'selected' : ''}>${a.username}</option>`;
             });
             userFilterHtml = `
                 <select class="form-control" id="report-user-filter" style="width: auto; margin-right: 8px; height: 38px; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid var(--border);" onchange="ReportsModule.render()">
@@ -149,10 +154,14 @@ const ReportsModule = {
             const reportUserFilter = document.getElementById('report-user-filter');
             const selectedUser = reportUserFilter ? reportUserFilter.value : 'all';
             if (selectedUser !== 'all') {
-                transactions = transactions.filter(t => t.owner === selectedUser || (!t.owner && selectedUser === 'admin'));
+                transactions = transactions.filter(t => 
+                    ((t.owner || '').toLowerCase().trim() === (selectedUser || '').toLowerCase().trim()) || 
+                    (!t.owner && (selectedUser || '').toLowerCase().trim() === 'admin')
+                );
             }
         } else {
-            transactions = transactions.filter(t => t.owner === currentUser.username);
+            const currentU = (currentUser.username || '').toLowerCase().trim();
+            transactions = transactions.filter(t => (t.owner || '').toLowerCase().trim() === currentU);
         }
 
         const data = transactions.map(t => ({
@@ -181,11 +190,15 @@ const ReportsModule = {
             const reportUserFilter = document.getElementById('report-user-filter');
             const selectedUser = reportUserFilter ? reportUserFilter.value : 'all';
             if (selectedUser !== 'all') {
-                transactions = transactions.filter(t => t.owner === selectedUser || (!t.owner && selectedUser === 'admin'));
+                transactions = transactions.filter(t => 
+                    ((t.owner || '').toLowerCase().trim() === (selectedUser || '').toLowerCase().trim()) || 
+                    (!t.owner && (selectedUser || '').toLowerCase().trim() === 'admin')
+                );
                 userTitle = `Nhân viên: ${selectedUser}`;
             }
         } else {
-            transactions = transactions.filter(t => t.owner === currentUser.username);
+            const currentU = (currentUser.username || '').toLowerCase().trim();
+            transactions = transactions.filter(t => (t.owner || '').toLowerCase().trim() === currentU);
             userTitle = `Tài khoản: ${currentUser.username}`;
         }
 
