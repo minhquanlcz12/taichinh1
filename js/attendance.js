@@ -189,9 +189,10 @@ const Attendance = {
                         continue;
                     }
 
-                    // 1. Kiểm tra đã có record chưa (morning/afternoon)
+                    // 1. Kiểm tra đã có record chưa (morning/afternoon) - so sánh không phân biệt hoa/thường
+                    const accUser = (acc.username || '').toLowerCase();
                     const hasRecord = allAttendance.some(r => 
-                        r.username === acc.username && 
+                        (r.username || '').toLowerCase() === accUser && 
                         r.dateStr === dateStr && 
                         (r.type === shift || (shift === 'morning' && !r.type))
                     );
@@ -199,7 +200,7 @@ const Attendance = {
 
                     // 2. Kiểm tra có đơn xin nghỉ phép đã duyệt không
                     const hasLeave = allLeaves.some(l => {
-                        if (l.username !== acc.username || l.status !== 'approved') return false;
+                        if ((l.username || '').toLowerCase() !== accUser || l.status !== 'approved') return false;
                         const dStart = new Date(l.startDate);
                         const dToday = new Date(dateStr);
                         const diff = Math.floor((dToday - dStart) / (1000 * 60 * 60 * 24));
@@ -209,7 +210,7 @@ const Attendance = {
 
                     // 3. Kiểm tra có đơn xin đi trễ không (duyệt hoặc đang chờ)
                     const hasLateRequest = allLateRequests.some(r => 
-                        r.username === acc.username && 
+                        (r.username || '').toLowerCase() === accUser && 
                         r.date === dateStr && 
                         (r.status === 'approved' || r.status === 'pending')
                     );
@@ -324,8 +325,9 @@ const Attendance = {
             if (Utils.isSystemAccount(acc)) continue;
             activeAccountsCount++;
 
+            const manualAccUser = (acc.username || '').toLowerCase();
             const record = allAttendance.find(r => 
-                r.username === acc.username && 
+                (r.username || '').toLowerCase() === manualAccUser && 
                 r.dateStr === dateStr && 
                 (r.type === shift || (shift === 'morning' && !r.type))
             );
@@ -336,7 +338,7 @@ const Attendance = {
             }
 
             const leave = allLeaves.find(l => {
-                if (l.username !== acc.username || l.status !== 'approved') return false;
+                if ((l.username || '').toLowerCase() !== manualAccUser || l.status !== 'approved') return false;
                 const dStart = new Date(l.startDate);
                 const dToday = new Date(dateStr);
                 const diff = Math.floor((dToday - dStart) / (1000 * 60 * 60 * 24));
@@ -348,7 +350,7 @@ const Attendance = {
             }
 
             const lateRequest = allLateRequests.find(r => 
-                r.username === acc.username && 
+                (r.username || '').toLowerCase() === manualAccUser && 
                 r.date === dateStr && 
                 (r.status === 'approved' || r.status === 'pending')
             );
@@ -419,9 +421,10 @@ const Attendance = {
             // Thực hiện phạt
             const updatedAttendance = await Attendance.loadData(); // Load fresh
             for (const username of penalizedUsers) {
-                // Kiểm tra lại lần cuối để tránh phạt đè
+                // Kiểm tra lại lần cuối để tránh phạt đè (so sánh không phân biệt hoa/thường)
+                const uLower = (username || '').toLowerCase();
                 const exists = updatedAttendance.some(r => 
-                    r.username === username && 
+                    (r.username || '').toLowerCase() === uLower && 
                     r.dateStr === dateStr && 
                     (r.type === shift || (shift === 'morning' && !r.type))
                 );
