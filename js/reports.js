@@ -56,6 +56,7 @@ const ReportsModule = {
         if (isAdmin) {
             const accounts = await Auth.getAccounts();
             const selU = (selectedUser || '').toLowerCase().trim();
+            let opts = '<option value="all">Tất cả nhân viên</option>';
             accounts.forEach(a => {
                 const normalizedAccU = (a.username || '').toLowerCase().trim();
                 opts += `<option value="${a.username}" ${selU === normalizedAccU ? 'selected' : ''}>${a.username}</option>`;
@@ -189,16 +190,16 @@ const ReportsModule = {
         if (isAdmin) {
             const reportUserFilter = document.getElementById('report-user-filter');
             const selectedUser = reportUserFilter ? reportUserFilter.value : 'all';
-            if (selectedUser !== 'all') {
+            const selU = (selectedUser || 'all').toLowerCase().trim();
+            if (selU !== 'all') {
                 transactions = transactions.filter(t => 
-                    ((t.owner || '').toLowerCase().trim() === (selectedUser || '').toLowerCase().trim()) || 
-                    (!t.owner && (selectedUser || '').toLowerCase().trim() === 'admin')
+                    FinanceModule.sameOwner(t.owner, selU) ||
+                    (FinanceModule.ownerKey(selU) === 'congty' && FinanceModule.ownerKey(t.owner) === 'congty')
                 );
                 userTitle = `Nhân viên: ${selectedUser}`;
             }
         } else {
-            const currentU = (currentUser.username || '').toLowerCase().trim();
-            transactions = transactions.filter(t => (t.owner || '').toLowerCase().trim() === currentU);
+            transactions = transactions.filter(t => FinanceModule.ownerMatchesUser(t.owner, Auth.currentUser));
             userTitle = `Tài khoản: ${currentUser.username}`;
         }
 

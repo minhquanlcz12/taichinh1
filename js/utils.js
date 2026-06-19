@@ -29,8 +29,9 @@ const Utils = {
 
     getUserDisplayName: (username) => {
         if (!username) return '';
+        const normalizedU = username.toLowerCase().trim();
         const accounts = Utils.storage.get('backup_accounts', []);
-        const acc = accounts.find(a => a.username === username);
+        const acc = accounts.find(a => (a.username || '').toLowerCase().trim() === normalizedU);
         if (acc && acc.profile && acc.profile.fullname) {
             return acc.profile.fullname;
         }
@@ -39,15 +40,16 @@ const Utils = {
 
     getUserAvatarColor: (username) => {
         if (!username) return '#00b4d8';
+        const normalizedU = username.toLowerCase().trim();
         const accounts = Utils.storage.get('backup_accounts', []);
-        const acc = accounts.find(a => a.username === username);
+        const acc = accounts.find(a => (a.username || '').toLowerCase().trim() === normalizedU);
         if (acc && acc.profile && acc.profile.color) {
             return acc.profile.color;
         }
-        // Fallback hash
+        // Fallback hash based on normalized username
         const COLORS = ['#00b4d8','#f77f00','#06d6a0','#e63946','#7b2d8b','#457b9d','#e9c46a'];
         let h = 0;
-        for (let i = 0; i < username.length; i++) h = (h << 5) - h + username.charCodeAt(i);
+        for (let i = 0; i < normalizedU.length; i++) h = (h << 5) - h + normalizedU.charCodeAt(i);
         return COLORS[Math.abs(h) % COLORS.length];
     },
 

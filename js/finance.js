@@ -102,16 +102,24 @@ const FinanceModule = {
             if (selectedU !== 'all') {
                 displayTransactions = FinanceModule.data.transactions.filter(t => 
                     FinanceModule.sameOwner(t.owner, selectedU) ||
+                    (FinanceModule.ownerKey(selectedU) === 'congty' && FinanceModule.ownerKey(t.owner) === 'congty') ||
                     (!t.owner && FinanceModule.ownerKey(selectedU) === 'admin')
                 );
             }
         } else {
             displayTransactions = FinanceModule.data.transactions.filter(t => FinanceModule.ownerMatchesUser(t.owner, currentUser));
         }
-
+        
         if (app.state && app.state.currentView === 'dashboard-view') {
             app.renderDashboard(); // Dashboard always renders personal summary implicitly
         }
+
+        // --- GLOBAL Month Filter ---
+        const monthKey = FinanceModule.currentFilterMonth; // YYYY-MM
+        if (monthKey) {
+            displayTransactions = displayTransactions.filter(t => t.date && t.date.startsWith(monthKey));
+        }
+
         FinanceModule.renderList(displayTransactions);
     },
 
