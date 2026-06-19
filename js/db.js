@@ -115,10 +115,76 @@ const DB = {
     },
 
     // --- LƯU TRỮ GIAO DỊCH TÀI CHÍNH ---
+    financeOwnerKey: (owner) => String(owner || '')
+        .trim()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[đĐ]/g, 'd')
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, ''),
+
+    financeTxKey: (tx) => [
+        tx && tx.date ? tx.date : '',
+        DB.financeOwnerKey(tx && tx.owner),
+        tx && tx.type ? tx.type : '',
+        Number(tx && tx.amount ? tx.amount : 0),
+        String(tx && tx.note ? tx.note : '').trim().toLowerCase()
+    ].join('|'),
+
+    mergeFinanceTransactions: (incomingTxs, remoteTxs) => {
+        const merged = [];
+        const seen = new Set();
+
+        [...(remoteTxs || []), ...(incomingTxs || [])].forEach(tx => {
+            if (!tx) return;
+            const normalized = DB.financeOwnerKey(tx.owner) === 'congty'
+                ? { ...tx, owner: 'CONGTY' }
+                : tx;
+            const key = normalized.id || DB.financeTxKey(normalized);
+            if (seen.has(key)) return;
+            seen.add(key);
+            merged.push(normalized);
+        });
+
+        return merged;
+    },
+
     saveFinanceData: async (financeDataObj) => {
         try {
-            Utils.storage.set('backup_finance', financeDataObj);
-            await db.collection("finance").doc("main").set(financeDataObj);
+            const incoming = financeDataObj && Array.isArray(financeDataObj.transactions)
+                ? financeDataObj
+                : { transactions: [] };
+            let dataToSave = {
+                ...incoming,
+                transactions: (incoming.transactions || []).map(tx =>
+                    DB.financeOwnerKey(tx && tx.owner) === 'congty' ? { ...tx, owner: 'CONGTY' } : tx
+                )
+            };
+
+            try {
+                const remoteDoc = await db.collection("finance").doc("main").get();
+                const remoteData = remoteDoc.exists ? remoteDoc.data() : null;
+                const remoteTxs = remoteData && Array.isArray(remoteData.transactions) ? remoteData.transactions : [];
+                const incomingTxs = dataToSave.transactions || [];
+
+                // A stale browser tab or old recovery tool must never overwrite a larger ledger.
+                if (remoteTxs.length > incomingTxs.length + 3) {
+                    console.warn('[DB] Prevented finance overwrite with fewer rows. Merging remote + incoming instead.', {
+                        remote: remoteTxs.length,
+                        incoming: incomingTxs.length
+                    });
+                    dataToSave = {
+                        ...(remoteData || {}),
+                        ...dataToSave,
+                        transactions: DB.mergeFinanceTransactions(incomingTxs, remoteTxs)
+                    };
+                }
+            } catch (guardError) {
+                console.warn('[DB] Finance overwrite guard could not read remote data. Saving incoming data only.', guardError);
+            }
+
+            Utils.storage.set('backup_finance', dataToSave);
+            await db.collection("finance").doc("main").set(dataToSave);
         } catch (e) {
             console.error("Error saving finance data:", e);
         }

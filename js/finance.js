@@ -25,7 +25,7 @@ const FinanceModule = {
 
     canonicalOwner: (owner) => {
         const key = FinanceModule.ownerKey(owner);
-        if (key === 'congty' || key === 'congtyuser' || key === 'company') return 'congty';
+        if (key === 'congty' || key === 'congtyuser' || key === 'company') return 'CONGTY';
         return owner; // Keep original display if not a known alias
     },
 
