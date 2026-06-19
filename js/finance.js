@@ -16,8 +16,7 @@ const FinanceModule = {
         .trim()
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
-        .replace(/đ/g, 'd')
-        .replace(/Đ/g, 'D')
+        .replace(/[đĐ]/g, 'd')
         .toLowerCase()
         .replace(/[^a-z0-9]/g, ''),
 
@@ -28,6 +27,36 @@ const FinanceModule = {
     },
 
     sameOwner: (left, right) => FinanceModule.ownerKey(left) === FinanceModule.ownerKey(right),
+
+    ownerAliasesForUser: (user) => {
+        const aliases = new Set();
+        const add = (value) => {
+            const key = FinanceModule.ownerKey(value);
+            if (key) aliases.add(key);
+        };
+
+        add(user && user.username);
+        add(user && user.fullname);
+        add(user && user.name);
+        add(user && user.displayName);
+        add(user && user.profile && user.profile.fullname);
+        if (typeof Utils !== 'undefined' && user && user.username) add(Utils.getUserDisplayName(user.username));
+
+        if (aliases.has('congty') || aliases.has('congtyuser')) {
+            aliases.add('congty');
+            aliases.add('congtyuser');
+        }
+
+        return aliases;
+    },
+
+    ownerMatchesUser: (owner, user) => {
+        const ownerKey = FinanceModule.ownerKey(owner);
+        const aliases = FinanceModule.ownerAliasesForUser(user);
+        if (!ownerKey) return aliases.has('admin');
+        if (ownerKey === 'congty' && (aliases.has('congty') || aliases.has('congtyuser'))) return true;
+        return aliases.has(ownerKey);
+    },
 
     init: async () => {
         await FinanceModule.renderPlaceholder();
@@ -77,8 +106,7 @@ const FinanceModule = {
                 );
             }
         } else {
-            const currentU = FinanceModule.canonicalOwner(currentUser.username);
-            displayTransactions = FinanceModule.data.transactions.filter(t => FinanceModule.sameOwner(t.owner, currentU));
+            displayTransactions = FinanceModule.data.transactions.filter(t => FinanceModule.ownerMatchesUser(t.owner, currentUser));
         }
 
         if (app.state && app.state.currentView === 'dashboard-view') {
@@ -111,8 +139,7 @@ const FinanceModule = {
         let txs = transactionsToSummarize || FinanceModule.data.transactions;
         const currentUser = Auth.currentUser;
         if (!transactionsToSummarize && currentUser) {
-            const currentU = FinanceModule.canonicalOwner(currentUser.username);
-            txs = txs.filter(t => FinanceModule.sameOwner(t.owner, currentU) || (!t.owner && FinanceModule.ownerKey(currentU) === 'admin'));
+            txs = txs.filter(t => FinanceModule.ownerMatchesUser(t.owner, currentUser));
         }
 
         txs.forEach(tx => {
@@ -136,8 +163,7 @@ const FinanceModule = {
         let txs = transactionsToFilter || FinanceModule.data.transactions;
         const currentUser = Auth.currentUser;
         if (!transactionsToFilter && currentUser) {
-            const currentU = FinanceModule.canonicalOwner(currentUser.username);
-            txs = txs.filter(t => FinanceModule.sameOwner(t.owner, currentU) || (!t.owner && FinanceModule.ownerKey(currentU) === 'admin'));
+            txs = txs.filter(t => FinanceModule.ownerMatchesUser(t.owner, currentUser));
         }
         return [...txs]
             .sort((a, b) => new Date(b.date) - new Date(a.date))
@@ -576,7 +602,7 @@ Admin đã CẤP QUYỀN sửa/xóa giao dịch cho bạn:
             }
         } else {
             selectedUser = FinanceModule.canonicalOwner(currentUser.username);
-            txs = txs.filter(t => FinanceModule.sameOwner(t.owner, selectedUser));
+            txs = txs.filter(t => FinanceModule.ownerMatchesUser(t.owner, currentUser));
             userTitle = ` - ${selectedUser}`;
         }
 
@@ -584,7 +610,9 @@ Admin đã CẤP QUYỀN sửa/xóa giao dịch cho bạn:
         let allTxs = FinanceModule.data.transactions;
         if (selectedUser !== 'all') {
             const selU = selectedUser;
-            allTxs = allTxs.filter(t => FinanceModule.sameOwner(t.owner, selU) || (FinanceModule.ownerKey(selU) === 'admin' && !t.owner));
+            allTxs = isAdmin
+                ? allTxs.filter(t => FinanceModule.sameOwner(t.owner, selU) || (FinanceModule.ownerKey(selU) === 'admin' && !t.owner))
+                : allTxs.filter(t => FinanceModule.ownerMatchesUser(t.owner, currentUser));
         }
         
         const cumulativeSummary = FinanceModule.getSummary(allTxs);
