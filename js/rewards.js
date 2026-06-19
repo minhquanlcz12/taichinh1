@@ -50,12 +50,13 @@ const RewardsModule = {
 
     getMeritBreakdown: async (username) => {
         const RESET_DATE = '2026-06-10';
+        const normalizedUsername = (username || '').toLowerCase().trim();
         const allAttendance = await Attendance.loadData();
-        const userHistory = allAttendance.filter(r => r.username === username && r.dateStr >= RESET_DATE);
+        const userHistory = allAttendance.filter(r => (r.username || '').toLowerCase().trim() === normalizedUsername && r.dateStr >= RESET_DATE);
         
         // Load rewards history for this user
         const allRewardsHistory = await RewardsModule.loadData();
-        const userRewards = allRewardsHistory.filter(r => r.username === username);
+        const userRewards = allRewardsHistory.filter(r => (r.username || '').toLowerCase().trim() === normalizedUsername);
         
         // Check for active X2 Buff (Double XP)
         const x2Used = userRewards.find(r => r.cardId === 'card_x2' && r.isUsed && (Date.now() - (r.usedAt || 0) < 30 * 24 * 60 * 60 * 1000));
@@ -144,7 +145,7 @@ const RewardsModule = {
                 const allRewards = await RewardsModule.loadData();
                 const cheatRecord = {
                     id: 'cheat_' + Date.now(),
-                    username: username,
+                    username: (username || '').toLowerCase().trim(),
                     timestamp: Date.now(),
                     cardId: 'admin_hack',
                     title: '🛠️ Admin Hack: +50đ Test',
@@ -239,15 +240,17 @@ const RewardsModule = {
         
         const currentUser = Auth.currentUser;
         if (!currentUser) return;
+        
+        const normalizedCurrentUser = (currentUser.username || '').toLowerCase().trim();
 
-        const meritInfo = await RewardsModule.calcUserMerit(currentUser.username);
+        const meritInfo = await RewardsModule.calcUserMerit(normalizedCurrentUser);
         const allRewardsHistory = await RewardsModule.loadData();
         const accounts = await DB.getAccounts() || [];
         
         // Kiểm tra xem hôm nay đã quay chưa
         const today = new Date().toLocaleDateString();
         const hasSpunToday = allRewardsHistory.some(r => 
-            r.username === currentUser.username && 
+            (r.username || '').toLowerCase().trim() === normalizedCurrentUser && 
             r.cardId === 'wheel_entry' && 
             new Date(r.timestamp).toLocaleDateString() === today
         );
@@ -291,7 +294,7 @@ const RewardsModule = {
                 </div>
             `;
         } else {
-            const history = allRewardsHistory.filter(r => r.username === currentUser.username).sort((a,b) => b.timestamp - a.timestamp);
+            const history = allRewardsHistory.filter(r => (r.username || '').toLowerCase().trim() === normalizedCurrentUser).sort((a,b) => b.timestamp - a.timestamp);
             customHistoryHtml = `
                 <div class="glass-panel" style="margin-top: 24px; padding: 20px;">
                     <h3 style="color: var(--text-secondary); margin-bottom: 5px;"><i class="fa-solid fa-clock-rotate-left"></i> Lịch Sử Đổi Thẻ Cá Nhân</h3>
@@ -446,7 +449,7 @@ const RewardsModule = {
 
         // === Build Inventory Bag Content ===
         const userItems = allRewardsHistory.filter(r => 
-            r.username === currentUser.username && 
+            (r.username || '').toLowerCase().trim() === normalizedCurrentUser && 
             (r.cardId?.startsWith('card_') || r.cardId?.startsWith('mystery_pack')) && 
             r.cost >= 0 && 
             !r.isUsed
@@ -540,7 +543,7 @@ const RewardsModule = {
 
         // === Build Spin History Content ===
         const userSpinHistory = allRewardsHistory
-            .filter(r => r.username === currentUser.username)
+            .filter(r => (r.username || '').toLowerCase().trim() === normalizedCurrentUser)
             .sort((a, b) => b.timestamp - a.timestamp)
             .slice(0, 20);
 
@@ -1395,9 +1398,11 @@ const RewardsModule = {
     useCard: async (recordId) => {
         const user = Auth.currentUser;
         if (!user) return;
+        
+        const normalizedU = (user.username || '').toLowerCase().trim();
 
         const allRewards = await RewardsModule.loadData();
-        const record = allRewards.find(r => r.id === recordId && r.username === user.username);
+        const record = allRewards.find(r => r.id === recordId && (r.username || '').toLowerCase().trim() === normalizedU);
         if (!record || record.isUsed) { Utils.showToast('Không tìm thấy thẻ hoặc đã dùng!', 'error'); return; }
 
         const card = RewardsModule._catalog.find(c => c.id === record.cardId);
@@ -1504,7 +1509,8 @@ const RewardsModule = {
         } catch(e) { console.error(e); }
 
         // Filter out current user and admins
-        const employees = accounts.filter(a => a.username !== user.username && a.role !== 'admin');
+        const normalizedCurrentUser = (user.username || '').toLowerCase().trim();
+        const employees = accounts.filter(a => (a.username || '').toLowerCase().trim() !== normalizedCurrentUser && a.role !== 'admin');
 
         if (employees.length === 0) {
             Utils.showToast('Không có nhân viên nào để cứu!', 'warning');
@@ -1562,9 +1568,10 @@ const RewardsModule = {
         if (picker) picker.remove();
 
         // Load attendance data and find the most recent late record
+        const normalizedTarget = (targetUsername || '').toLowerCase().trim();
         const allAttendance = await Attendance.loadData();
         const targetLateRecords = allAttendance.filter(r => 
-            r.username === targetUsername && r.status === 'late'
+            (r.username || '').toLowerCase().trim() === normalizedTarget && r.status === 'late'
         ).sort((a, b) => b.timestamp - a.timestamp);
 
         if (targetLateRecords.length === 0) {
@@ -1579,7 +1586,7 @@ const RewardsModule = {
         try {
             if (typeof DB !== 'undefined' && typeof DB.getAccounts === 'function') {
                 const accounts = await DB.getAccounts() || [];
-                const targetAcc = accounts.find(a => a.username === targetUsername);
+                const targetAcc = accounts.find(a => (a.username || '').toLowerCase().trim() === normalizedTarget);
                 if (targetAcc?.profile?.fullname) targetDisplayName = targetAcc.profile.fullname;
             }
         } catch(e) {}
@@ -1592,12 +1599,13 @@ const RewardsModule = {
         await Attendance.saveData(allAttendance);
 
         // Mark the rescue card as used
+        const normalizedCurrentUser = (user.username || '').toLowerCase().trim();
         const allRewards = await RewardsModule.loadData();
-        const record = allRewards.find(r => r.id === recordId && r.username === user.username);
+        const record = allRewards.find(r => r.id === recordId && (r.username || '').toLowerCase().trim() === normalizedCurrentUser);
         if (record) {
             record.isUsed = true;
             record.usedAt = Date.now();
-            record.rescueTarget = targetUsername;
+            record.rescueTarget = normalizedTarget;
             await RewardsModule.saveData(allRewards);
         }
 
@@ -1611,18 +1619,20 @@ const RewardsModule = {
      * Lấy danh sách thẻ chưa sử dụng của user
      */
     getInventory: async (username) => {
+        const normalizedU = (username || '').toLowerCase().trim();
         const all = await RewardsModule.loadData();
-        return all.filter(r => r.username === username && r.cardId && r.cardId.startsWith('card_') && !r.isUsed);
+        return all.filter(r => (r.username || '').toLowerCase().trim() === normalizedU && r.cardId && r.cardId.startsWith('card_') && !r.isUsed);
     },
 
     /**
      * Kiểm tra xem hôm nay user có đang kích hoạt WFH không
      */
     hasActiveWFH: async (username) => {
+        const normalizedU = (username || '').toLowerCase().trim();
         const all = await RewardsModule.loadData();
         const today = new Date().toLocaleDateString();
         return all.some(r => 
-            r.username === username && 
+            (r.username || '').toLowerCase().trim() === normalizedU && 
             r.cardId === 'card_wfh' && 
             r.isUsed && 
             new Date(r.usedAt).toLocaleDateString() === today
@@ -1636,8 +1646,9 @@ const RewardsModule = {
         const user = Auth.currentUser;
         if (!user) return;
 
+        const normalizedU = (user.username || '').toLowerCase().trim();
         const allRewards = await RewardsModule.loadData();
-        const rewardIdx = allRewards.findIndex(r => r.id === rewardId && r.username === user.username);
+        const rewardIdx = allRewards.findIndex(r => r.id === rewardId && (r.username || '').toLowerCase().trim() === normalizedU);
         
         if (rewardIdx === -1 || allRewards[rewardIdx].isUsed) {
             Utils.showToast("Thẻ không khả dụng hoặc đã dùng!", "error");
@@ -1816,10 +1827,11 @@ const RewardsModule = {
         }
 
         // Kiểm tra giới hạn 1 lần/ngày
+        const normalizedCurrentUser = (user.username || '').toLowerCase().trim();
         const allRewardsInit = await RewardsModule.loadData();
         const today = new Date().toLocaleDateString();
         const hasSpunToday = allRewardsInit.some(r => 
-            r.username === user.username && 
+            (r.username || '').toLowerCase().trim() === normalizedCurrentUser && 
             r.cardId === 'wheel_entry' && 
             new Date(r.timestamp).toLocaleDateString() === today
         );
@@ -1854,7 +1866,7 @@ const RewardsModule = {
             // Trừ 1 điểm phí tham gia ngay lập tức
             const participationRecord = {
                 id: 'spin_fee_' + Date.now(),
-                username: user.username,
+                username: normalizedCurrentUser,
                 timestamp: Date.now(),
                 cardId: 'wheel_entry',
                 title: '🎡 Lượt Quay May Mắn',
@@ -1932,15 +1944,14 @@ const RewardsModule = {
 
     processWheelResult: async (prize) => {
         const user = Auth.currentUser;
-        if (!user) return null;
-
+        const normalizedU = (user.username || '').toLowerCase().trim();
         const resultId = 'spin_' + (prize.isJackpot ? 'jackpot' : (prize.isCash ? 'gift' : (prize.isRandomCard ? 'card' : 'win'))) + '_' + Date.now();
         let newRecord = null;
 
         if (prize.pts > 0) {
             newRecord = {
                 id: resultId,
-                username: user.username,
+                username: normalizedU,
                 timestamp: Date.now(),
                 cardId: 'wheel_win',
                 title: `🎡 Thưởng: ${prize.label}`,
@@ -1951,7 +1962,7 @@ const RewardsModule = {
         } else if (prize.pts < 0) {
             newRecord = {
                 id: resultId,
-                username: user.username,
+                username: normalizedU,
                 timestamp: Date.now(),
                 cardId: 'wheel_loss',
                 title: `🎡 Mất điểm: ${prize.label}`,
@@ -1976,7 +1987,7 @@ const RewardsModule = {
 
             newRecord = {
                 id: resultId,
-                username: user.username,
+                username: normalizedU,
                 timestamp: Date.now(),
                 cardId: card.id,
                 title: `🎡 Thẻ Đặc Quyền: ${card.title}`,
@@ -1988,7 +1999,7 @@ const RewardsModule = {
         } else if (prize.isCash) {
             newRecord = {
                 id: resultId,
-                username: user.username,
+                username: normalizedU,
                 timestamp: Date.now(),
                 cardId: 'wheel_gift_10k',
                 title: `🎡 Quà Tặng: ${prize.label}`,
@@ -2000,7 +2011,7 @@ const RewardsModule = {
             if (prize.isVVIP) {
                 newRecord = {
                     id: resultId,
-                    username: user.username,
+                    username: normalizedU,
                     timestamp: Date.now(),
                     cardId: 'wheel_jackpot_vvip',
                     title: '💎 VVIP: Quản Lý Mời Chầu Buffet',
@@ -2011,7 +2022,7 @@ const RewardsModule = {
             } else {
                 newRecord = {
                     id: resultId,
-                    username: user.username,
+                    username: normalizedU,
                     timestamp: Date.now(),
                     cardId: 'mystery_pack',
                     title: '🎁 Gói Thẻ Bí Ẩn (Chưa Mở)',
@@ -2030,12 +2041,12 @@ const RewardsModule = {
             await RewardsModule.saveData(data);
             
             // Telegram notifications
-            if (prize.pts < 0) Utils.notifyTelegram(`💀 <b>[NHỌ QUÁ NHỌ]</b>\n👤 <b>${user.username}</b> vừa trúng ô <b>Mất 1 Điểm</b>!`);
-            if (prize.isRandomCard) Utils.notifyTelegram(`🎰 <b>[THẺ ĐẶC QUYỀN SỐ]</b>\n👤 <b>${user.username}</b> vừa trúng thẻ <b>${prize.cardTitle}</b>!`);
-            if (prize.isCash) Utils.notifyTelegram(`🎁 <b>[TRÚNG QUÀ TẶNG]</b>\n👤 <b>${user.username}</b> vừa trúng <b>Phần Quà 10k</b>!`);
+            if (prize.pts < 0) Utils.notifyTelegram(`💀 <b>[NHỌ QUÁ NHỌ]</b>\n👤 <b>${normalizedU}</b> vừa trúng ô <b>Mất 1 Điểm</b>!`);
+            if (prize.isRandomCard) Utils.notifyTelegram(`🎰 <b>[THẺ ĐẶC QUYỀN SỐ]</b>\n👤 <b>${normalizedU}</b> vừa trúng thẻ <b>${prize.cardTitle}</b>!`);
+            if (prize.isCash) Utils.notifyTelegram(`🎁 <b>[TRÚNG QUÀ TẶNG]</b>\n👤 <b>${normalizedU}</b> vừa trúng <b>Phần Quà 10k</b>!`);
             if (prize.isJackpot) {
-                if (prize.isVVIP) Utils.notifyTelegram(`💎 <b>[SIÊU ĐỘC ĐẮC - VVIP]</b>\n👤 <b>${user.username}</b> vừa trúng <b>Buffet Hoành Tráng</b>!`);
-                else Utils.notifyTelegram(`🎁 <b>[TRÚNG GÓI THẺ BÍ ẨN]</b>\n👤 <b>${user.username}</b> vừa trúng <b>Gói Thẻ Bí Ẩn</b>!`);
+                if (prize.isVVIP) Utils.notifyTelegram(`💎 <b>[SIÊU ĐỘC ĐẮC - VVIP]</b>\n👤 <b>${normalizedU}</b> vừa trúng <b>Buffet Hoành Tráng</b>!`);
+                else Utils.notifyTelegram(`🎁 <b>[TRÚNG GÓI THẺ BÍ ẨN]</b>\n👤 <b>${normalizedU}</b> vừa trúng <b>Gói Thẻ Bí Ẩn</b>!`);
             }
         }
 
@@ -2135,8 +2146,9 @@ const RewardsModule = {
         const user = Auth.currentUser;
         if (!user) return;
 
+        const normalizedU = (user.username || '').toLowerCase().trim();
         const allRewards = await RewardsModule.loadData();
-        const giftIdx = allRewards.findIndex(r => r.id === recordId && r.username === user.username);
+        const giftIdx = allRewards.findIndex(r => r.id === recordId && (r.username || '').toLowerCase().trim() === normalizedU);
         if (giftIdx === -1) { Utils.showToast('Không tìm thấy quà!', 'error'); return; }
 
         allRewards[giftIdx] = {
@@ -2161,14 +2173,15 @@ const RewardsModule = {
         const user = Auth.currentUser;
         if (!user) return;
 
+        const normalizedU = (user.username || '').toLowerCase().trim();
         const card = RewardsModule._catalog.find(c => c.id === cardId);
         if (!card) return;
 
-        const meritInfo = await RewardsModule.calcUserMerit(user.username);
+        const meritInfo = await RewardsModule.calcUserMerit(normalizedU);
         
         // VIP Discount logic
         const allRewards = await RewardsModule.loadData();
-        const hasVip = allRewards.some(r => r.username === user.username && r.cardId === 'card_vip' && r.isUsed && (Date.now() - r.usedAt < 30 * 24 * 60 * 60 * 1000));
+        const hasVip = allRewards.some(r => (r.username || '').toLowerCase().trim() === normalizedU && r.cardId === 'card_vip' && r.isUsed && (Date.now() - r.usedAt < 30 * 24 * 60 * 60 * 1000));
         const finalCost = hasVip ? Math.floor(card.cost * 0.8) : card.cost;
 
         if (meritInfo.current < finalCost) {
@@ -2185,7 +2198,7 @@ const RewardsModule = {
         // Tiến hành lưu
         const newRecord = {
             id: 'reward_' + Date.now(),
-            username: user.username,
+            username: normalizedU,
             timestamp: Date.now(),
             cardId: card.id,
             title: card.title,
@@ -2211,8 +2224,9 @@ const RewardsModule = {
         const user = Auth.currentUser;
         if (!user) return;
 
+        const normalizedU = (user.username || '').toLowerCase().trim();
         const allRewards = await RewardsModule.loadData();
-        const packRecord = allRewards.find(r => r.id === recordId && r.username === user.username && r.isUnopened);
+        const packRecord = allRewards.find(r => r.id === recordId && (r.username || '').toLowerCase().trim() === normalizedU && r.isUnopened);
         if (!packRecord) {
             Utils.showToast("Không tìm thấy gói thẻ bí ẩn hợp lệ hoặc gói đã được mở!", "error");
             return;
@@ -2255,8 +2269,9 @@ const RewardsModule = {
         const user = Auth.currentUser;
         if (!user) return;
 
+        const normalizedU = (user.username || '').toLowerCase().trim();
         const allRewards = await RewardsModule.loadData();
-        const cardRecord = allRewards.find(r => r.id === recordId && r.username === user.username && !r.isUsed);
+        const cardRecord = allRewards.find(r => r.id === recordId && (r.username || '').toLowerCase().trim() === normalizedU && !r.isUsed);
         if (!cardRecord) {
             Utils.showToast("Không tìm thấy thẻ hợp lệ hoặc thẻ đã được sử dụng!", "error");
             return;
@@ -2319,8 +2334,9 @@ const RewardsModule = {
         const user = Auth.currentUser;
         if (!user) return;
 
+        const normalizedU = (user.username || '').toLowerCase().trim();
         const allRewards = await RewardsModule.loadData();
-        const cardRecord = allRewards.find(r => r.id === cardRecordId && r.username === user.username && !r.isUsed);
+        const cardRecord = allRewards.find(r => r.id === cardRecordId && (r.username || '').toLowerCase().trim() === normalizedU && !r.isUsed);
         if (!cardRecord) return;
 
         // Đánh dấu đã sử dụng
@@ -2373,8 +2389,9 @@ const RewardsModule = {
         const user = Auth.currentUser;
         if (!user) return;
 
+        const normalizedU = (user.username || '').toLowerCase().trim();
         const allRewards = await RewardsModule.loadData();
-        const oldRecord = allRewards.find(r => r.id === oldRecordId && r.username === user.username);
+        const oldRecord = allRewards.find(r => r.id === oldRecordId && (r.username || '').toLowerCase().trim() === normalizedU);
         const newCard = RewardsModule._catalog.find(c => c.id === newCardId);
 
         if (!oldRecord || !newCard) return;

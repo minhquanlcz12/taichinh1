@@ -744,8 +744,8 @@ const PayrollModule = {
             const currentUser = Auth.currentUser;
             let accounts = await Auth.getAccounts();
             
-            // Exclude admin and CONGTY accounts
-            accounts = accounts.filter(a => a.role !== 'admin' && a.username.toLowerCase() !== 'admin' && a.username.toLowerCase() !== 'congty');
+            // Exclude admin account (congty is kept as per user request to not hide it)
+            accounts = accounts.filter(a => a.role !== 'admin' && a.username.toLowerCase() !== 'admin');
             
             // If not admin, only calculate for self
             if (currentUser.role !== 'admin') {

@@ -45,8 +45,9 @@ const DB = {
 
     incrementUserStats: async (username, statName) => {
         try {
+            const normalizedU = (username || '').toLowerCase().trim();
             const accounts = await DB.getAccounts();
-            const index = accounts.findIndex(a => a.username === username);
+            const index = accounts.findIndex(a => (a.username || '').toLowerCase().trim() === normalizedU);
             if (index !== -1) {
                 if (!accounts[index].stats) accounts[index].stats = { caroWins: 0, caroLosses: 0 };
                 if (!accounts[index].stats[statName]) accounts[index].stats[statName] = 0;
