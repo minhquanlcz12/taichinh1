@@ -744,8 +744,8 @@ const PayrollModule = {
             const currentUser = Auth.currentUser;
             let accounts = await Auth.getAccounts();
             
-            // Exclude admin account (congty is kept as per user request to not hide it)
-            accounts = accounts.filter(a => a.role !== 'admin' && a.username.toLowerCase() !== 'admin');
+            // Exclude only the literal 'admin' account, but keep 'congty' as it's the main finance account
+            accounts = accounts.filter(a => a.username.toLowerCase() !== 'admin');
             
             // If not admin, only calculate for self
             if (currentUser.role !== 'admin') {
@@ -829,7 +829,7 @@ const PayrollModule = {
                 let expiredTasks = 0;
 
                 allTasks.forEach(t => {
-                    if (t.owner === username || (!t.owner && username === 'admin')) {
+                    if (FinanceModule.ownerMatchesUser(t.owner, { username: username })) {
                         const dStr = t.deadline || t.ngayDang;
                         if (dStr) {
                             let d;

@@ -12,18 +12,21 @@ const FinanceModule = {
 
     currentFilterMonth: new Date().toISOString().slice(0, 7), // YYYY-MM
 
-    ownerKey: (owner) => String(owner || '')
-        .trim()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/[đĐ]/g, 'd')
-        .toLowerCase()
-        .replace(/[^a-z0-9]/g, ''),
+    ownerKey: (owner) => {
+        if (!owner) return '';
+        // Normalize Vietnamese characters, remove accents, and special characters
+        return owner.toString().trim()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[đĐ]/g, 'd')
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, '');
+    },
 
     canonicalOwner: (owner) => {
-        const raw = String(owner || '').trim();
-        if (FinanceModule.ownerKey(raw) === 'congty') return 'CONGTY';
-        return raw;
+        const key = FinanceModule.ownerKey(owner);
+        if (key === 'congty' || key === 'congtyuser' || key === 'company') return 'congty';
+        return owner; // Keep original display if not a known alias
     },
 
     sameOwner: (left, right) => FinanceModule.ownerKey(left) === FinanceModule.ownerKey(right),
@@ -151,16 +154,18 @@ const FinanceModule = {
         }
 
         txs.forEach(tx => {
+            if (!tx) return;
             const txDate = new Date(tx.date);
+            const amt = parseFloat(tx.amount) || 0;
 
             // All-time balance
-            if (tx.type === 'income') totalBalance += parseFloat(tx.amount);
-            else totalBalance -= parseFloat(tx.amount);
+            if (tx.type === 'income') totalBalance += amt;
+            else totalBalance -= amt;
 
             // Month summary
             if (txDate.getMonth() === currentMonth && txDate.getFullYear() === currentYear) {
-                if (tx.type === 'income') income += parseFloat(tx.amount);
-                else expense += parseFloat(tx.amount);
+                if (tx.type === 'income') income += amt;
+                else expense += amt;
             }
         });
 

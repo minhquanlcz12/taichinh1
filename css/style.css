@@ -52,12 +52,12 @@ body.dark-theme {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter', 'Outfit', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 /* --- NEON TYPOGRAPHY GLOBALS --- */
 h1, h2, h3, h4, h5, h6 {
-    font-family: 'Inter', 'Inter', sans-serif;
+    font-family: 'Inter', 'Outfit', 'Segoe UI', sans-serif;
     letter-spacing: 1.5px;
 }
 

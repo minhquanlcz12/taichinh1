@@ -19,35 +19,29 @@ const ReportsModule = {
         if (!container) return;
 
         const currentUser = Auth.currentUser;
-        const isAdmin = currentUser && currentUser.role === 'admin';
+        if (!currentUser) return;
+        const isAdmin = currentUser.role === 'admin';
         
         // Get data from FinanceModule
-        let transactions = FinanceModule.data.transactions || [];
+        let transactions = FinanceModule.filterTransactionsByRole(FinanceModule.data.transactions);
         
-        // Filter by Month
-        transactions = transactions.filter(t => t.date.startsWith(ReportsModule.data.currentMonth));
+        // Filter by Month (Specific to Reports View)
+        transactions = transactions.filter(t => t.date && t.date.startsWith(ReportsModule.data.currentMonth));
 
-        // Filter by Owner (Security/Admin)
+        // Filter by Owner if Admin selected one
         let selectedUser = 'all';
         if (isAdmin) {
             const reportUserFilter = document.getElementById('report-user-filter');
             if (reportUserFilter) {
                 selectedUser = reportUserFilter.value;
             } else {
-                // Fallback to main finance filter if it exists
                 const mainFilter = document.getElementById('finance-user-filter');
                 if (mainFilter) selectedUser = mainFilter.value;
             }
             
             if (selectedUser !== 'all') {
-                transactions = transactions.filter(t => 
-                    ((t.owner || '').toLowerCase().trim() === (selectedUser || '').toLowerCase().trim()) || 
-                    (!t.owner && (selectedUser || '').toLowerCase().trim() === 'admin')
-                );
+                transactions = transactions.filter(t => FinanceModule.ownerMatchesUser(t.owner, { username: selectedUser }));
             }
-        } else {
-            const currentU = (currentUser.username || '').toLowerCase().trim();
-            transactions = transactions.filter(t => (t.owner || '').toLowerCase().trim() === currentU);
         }
 
         const summary = FinanceModule.getSummary(transactions);
@@ -59,22 +53,22 @@ const ReportsModule = {
             let opts = '<option value="all">Tất cả nhân viên</option>';
             accounts.forEach(a => {
                 const normalizedAccU = (a.username || '').toLowerCase().trim();
-                opts += `<option value="${a.username}" ${selU === normalizedAccU ? 'selected' : ''}>${a.username}</option>`;
+                opts += `<option value="${a.username}" ${selU === normalizedAccU ? 'selected' : ''}>${Utils.getUserDisplayName(a.username) || a.username}</option>`;
             });
             userFilterHtml = `
-                <select class="form-control" id="report-user-filter" style="width: auto; margin-right: 8px; height: 38px; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid var(--border);" onchange="ReportsModule.render()">
+                <select class="form-control" id="report-user-filter" style="width: auto; margin-right: 8px; height: 38px; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid var(--glass-border);" onchange="ReportsModule.render()">
                     ${opts}
                 </select>
             `;
         }
         
         let html = `
-            <div class="reports-container" style="animation: fadeIn 0.4s ease;">
+            <div class="reports-container" style="animation: fadeIn 0.4s ease; padding: 20px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
                     <h3 style="margin: 0; font-size: 20px;"><i class="fa-solid fa-file-invoice-dollar" style="margin-right: 8px; color: var(--primary);"></i> Báo cáo Tài chính</h3>
                     <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                         ${userFilterHtml}
-                        <input type="month" class="form-control" value="${ReportsModule.data.currentMonth}" onchange="ReportsModule.setMonth(this.value)" style="width: auto; height: 38px; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid var(--border);">
+                        <input type="month" class="form-control" value="${ReportsModule.data.currentMonth}" onchange="ReportsModule.setMonth(this.value)" style="width: auto; height: 38px; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid var(--glass-border);">
                         <button class="btn btn-success" onclick="ReportsModule.exportToExcel()" style="height: 38px;">
                             <i class="fa-solid fa-file-excel"></i> Excel
                         </button>
@@ -102,15 +96,15 @@ const ReportsModule = {
                     </div>
                 </div>
 
-                <div class="glass-card" style="padding: 0; overflow: hidden; border: 1px solid var(--border);">
-                    <div style="padding: 16px 20px; border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02); display: flex; justify-content: space-between; align-items: center;">
+                <div class="glass-card" style="padding: 0; overflow: hidden; border: 1px solid var(--glass-border);">
+                    <div style="padding: 16px 20px; border-bottom: 1px solid var(--glass-border); background: rgba(255,255,255,0.02); display: flex; justify-content: space-between; align-items: center;">
                         <h4 style="margin: 0; font-size: 16px;">Chi tiết Giao dịch Tháng ${ReportsModule.data.currentMonth}</h4>
                         <span style="font-size: 12px; color: var(--text-secondary);">${transactions.length} bản ghi</span>
                     </div>
                     <div style="max-height: 500px; overflow-y: auto;">
                         <table style="width: 100%; border-collapse: collapse; font-size: 13.5px;">
                             <thead style="position: sticky; top: 0; background: #0a0f1a; z-index: 10;">
-                                <tr style="border-bottom: 1px solid var(--border);">
+                                <tr style="border-bottom: 1px solid var(--glass-border);">
                                     <th style="padding: 12px 20px; text-align: left; color: var(--text-secondary); font-weight: 500;">Ngày</th>
                                     <th style="padding: 12px 20px; text-align: left; color: var(--text-secondary); font-weight: 500;">Hạng mục</th>
                                     <th style="padding: 12px 20px; text-align: right; color: var(--text-secondary); font-weight: 500;">Số tiền</th>
@@ -122,9 +116,9 @@ const ReportsModule = {
                                         <td style="padding: 14px 20px; color: var(--text-secondary);">${Utils.formatDate(t.date)}</td>
                                         <td style="padding: 14px 20px;">
                                             <div style="font-weight: 500;">${t.category}</div>
-                                            <div style="color: var(--text-muted); font-size: 11px; margin-top: 2px;">${t.note || ''}</div>
+                                            <div style="color: var(--text-secondary); font-size: 11px; margin-top: 2px; opacity: 0.7;">${t.note || ''}</div>
                                         </td>
-                                        <td style="padding: 14px 20px; text-align: right; font-family: monospace; font-size: 15px; font-weight: 600; color: ${t.type === 'income' ? '#10b981' : '#ef4444'};">
+                                        <td style="padding: 14px 20px; text-align: right; font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 600; color: ${t.type === 'income' ? '#10b981' : '#ef4444'};">
                                             ${t.type === 'income' ? '+' : '-'}${Utils.formatCurrency(t.amount)}
                                         </td>
                                     </tr>
@@ -148,21 +142,19 @@ const ReportsModule = {
 
     exportToExcel: () => {
         const currentUser = Auth.currentUser;
-        const isAdmin = currentUser && currentUser.role === 'admin';
-        let transactions = FinanceModule.data.transactions.filter(t => t.date.startsWith(ReportsModule.data.currentMonth));
+        if (!currentUser) return;
+        const isAdmin = currentUser.role === 'admin';
+        
+        let transactions = FinanceModule.data.transactions.filter(t => t.date && t.date.startsWith(ReportsModule.data.currentMonth));
         
         if (isAdmin) {
             const reportUserFilter = document.getElementById('report-user-filter');
             const selectedUser = reportUserFilter ? reportUserFilter.value : 'all';
             if (selectedUser !== 'all') {
-                transactions = transactions.filter(t => 
-                    ((t.owner || '').toLowerCase().trim() === (selectedUser || '').toLowerCase().trim()) || 
-                    (!t.owner && (selectedUser || '').toLowerCase().trim() === 'admin')
-                );
+                transactions = transactions.filter(t => FinanceModule.ownerMatchesUser(t.owner, { username: selectedUser }));
             }
         } else {
-            const currentU = (currentUser.username || '').toLowerCase().trim();
-            transactions = transactions.filter(t => (t.owner || '').toLowerCase().trim() === currentU);
+            transactions = transactions.filter(t => FinanceModule.ownerMatchesUser(t.owner, currentUser));
         }
 
         const data = transactions.map(t => ({
@@ -183,23 +175,21 @@ const ReportsModule = {
 
     exportToPDF: () => {
         const currentUser = Auth.currentUser;
-        const isAdmin = currentUser && currentUser.role === 'admin';
-        let transactions = FinanceModule.data.transactions.filter(t => t.date.startsWith(ReportsModule.data.currentMonth));
+        if (!currentUser) return;
+        const isAdmin = currentUser.role === 'admin';
+        
+        let transactions = FinanceModule.data.transactions.filter(t => t.date && t.date.startsWith(ReportsModule.data.currentMonth));
         
         let userTitle = 'Tất cả nhân viên';
         if (isAdmin) {
             const reportUserFilter = document.getElementById('report-user-filter');
             const selectedUser = reportUserFilter ? reportUserFilter.value : 'all';
-            const selU = (selectedUser || 'all').toLowerCase().trim();
-            if (selU !== 'all') {
-                transactions = transactions.filter(t => 
-                    FinanceModule.sameOwner(t.owner, selU) ||
-                    (FinanceModule.ownerKey(selU) === 'congty' && FinanceModule.ownerKey(t.owner) === 'congty')
-                );
+            if (selectedUser !== 'all') {
+                transactions = transactions.filter(t => FinanceModule.ownerMatchesUser(t.owner, { username: selectedUser }));
                 userTitle = `Nhân viên: ${selectedUser}`;
             }
         } else {
-            transactions = transactions.filter(t => FinanceModule.ownerMatchesUser(t.owner, Auth.currentUser));
+            transactions = transactions.filter(t => FinanceModule.ownerMatchesUser(t.owner, currentUser));
             userTitle = `Tài khoản: ${currentUser.username}`;
         }
 
