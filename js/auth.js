@@ -6,6 +6,14 @@ const Auth = {
 
     currentUser: null,
 
+    usernameKey: (username) => String(username || '').trim().toLowerCase(),
+
+    canonicalUsername: (username) => {
+        const raw = String(username || '').trim();
+        if (raw.toLowerCase() === 'congty') return 'CONGTY';
+        return raw;
+    },
+
     init: async () => {
         try {
             // Verify admin account exists; if not, log a warning
@@ -18,17 +26,33 @@ const Auth = {
                 console.warn('[Auth] Không tìm thấy tài khoản admin trong database. Vui lòng tạo tài khoản admin trực tiếp trong Firebase Console.');
             }
 
-            // Normalization Migration (v5.0): Force all usernames to lowercase
+            // Login is case-insensitive, but data ownership must keep canonical usernames.
             let changed = false;
+            const byUserKey = new Map();
             accounts.forEach(acc => {
-                if (acc.username && acc.username !== acc.username.toLowerCase()) {
-                    acc.username = acc.username.toLowerCase();
+                if (!acc || !acc.username) return;
+                const canonical = Auth.canonicalUsername(acc.username);
+                if (acc.username !== canonical) {
+                    acc.username = canonical;
                     changed = true;
+                }
+
+                const key = Auth.usernameKey(acc.username);
+                if (byUserKey.has(key)) {
+                    const kept = byUserKey.get(key);
+                    kept.profile = { ...(acc.profile || {}), ...(kept.profile || {}) };
+                    kept.balance = Math.max(Number(kept.balance || 0), Number(acc.balance || 0));
+                    kept.purchasedBots = Array.from(new Set([...(kept.purchasedBots || []), ...(acc.purchasedBots || [])]));
+                    kept.achievements = Array.from(new Set([...(kept.achievements || []), ...(acc.achievements || [])]));
+                    changed = true;
+                } else {
+                    byUserKey.set(key, acc);
                 }
             });
             if (changed) {
+                accounts = Array.from(byUserKey.values());
                 await DB.saveAccounts(accounts);
-                console.log('[Auth] Đã chuẩn hóa toàn bộ Username về chữ thường (v5.0)');
+                console.log('[Auth] Đã chuẩn hóa username canonical, đăng nhập vẫn không phân biệt hoa/thường.');
             }
         } catch (e) {
             console.error('[Auth] Lỗi trong Auth.init database check:', e);
@@ -67,8 +91,10 @@ const Auth = {
             const user = Utils.storage.get(Auth.currentUserKey);
             if (user) {
                 Auth.currentUser = user;
+                Auth.currentUser.username = Auth.canonicalUsername(Auth.currentUser.username);
                 if (!Auth.currentUser.profile) Auth.currentUser.profile = {};
                 if (!Auth.currentUser.achievements) Auth.currentUser.achievements = [];
+                Utils.storage.set(Auth.currentUserKey, Auth.currentUser);
                 await Auth.showApp();
             } else {
                 Auth.showLogin();
@@ -219,7 +245,8 @@ const Auth = {
         const passIn = document.getElementById('login-pass').value;
 
         const accounts = await Auth.getAccounts();
-        const found = accounts.find(a => (a.username || '').toLowerCase() === userIn.toLowerCase() && a.password === passIn);
+        const loginKey = Auth.usernameKey(userIn);
+        const found = accounts.find(a => Auth.usernameKey(a.username) === loginKey && a.password === passIn);
 
         if (found) {
             // Check maintenance mode: only admin can log in when active
