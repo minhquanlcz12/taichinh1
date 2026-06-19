@@ -67,12 +67,20 @@ const FinanceModule = {
     },
 
     load: async () => {
-        const d = await DB.getFinanceData();
-        if (d && d.transactions) {
-            FinanceModule.data = d;
-        } else {
-            FinanceModule.data.transactions = [];
+        try {
+            const d = await DB.getFinanceData();
+            if (d && Array.isArray(d.transactions) && d.transactions.length > 0) {
+                FinanceModule.data = d;
+            } else if (d && Array.isArray(d.transactions)) {
+                // It's genuinely empty
+                FinanceModule.data = d;
+            } else {
+                console.warn("⚠️ Finance load returned invalid data. Keeping current state.");
+            }
+        } catch (e) {
+            console.error("❌ Failed to load finance data:", e);
         }
+        
         let ownerChanged = false;
         FinanceModule.data.transactions = (FinanceModule.data.transactions || []).map(tx => {
             if (tx && tx.owner) {
@@ -89,6 +97,14 @@ const FinanceModule = {
     },
 
     save: async () => {
+        if (!FinanceModule.data || !Array.isArray(FinanceModule.data.transactions)) {
+            console.error("❌ Refusing to save invalid finance data");
+            return;
+        }
+        
+        // Safety: If we are saving a single transaction when we previously had none but know the DB should have data,
+        // we might be in a race condition. But let's trust the current session if it was loaded correctly.
+        console.log(`💾 Saving ${FinanceModule.data.transactions.length} transactions...`);
         await DB.saveFinanceData(FinanceModule.data);
         FinanceModule.filterByRole(); // Re-render with active filters
     },
