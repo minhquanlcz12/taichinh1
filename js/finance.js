@@ -12,11 +12,18 @@ const FinanceModule = {
 
     currentFilterMonth: new Date().toISOString().slice(0, 7), // YYYY-MM
 
-    ownerKey: (owner) => String(owner || '').trim().toLowerCase(),
+    ownerKey: (owner) => String(owner || '')
+        .trim()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd')
+        .replace(/Đ/g, 'D')
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, ''),
 
     canonicalOwner: (owner) => {
         const raw = String(owner || '').trim();
-        if (raw.toLowerCase() === 'congty') return 'CONGTY';
+        if (FinanceModule.ownerKey(raw) === 'congty') return 'CONGTY';
         return raw;
     },
 

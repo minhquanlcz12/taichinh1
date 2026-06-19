@@ -6,11 +6,18 @@ const Auth = {
 
     currentUser: null,
 
-    usernameKey: (username) => String(username || '').trim().toLowerCase(),
+    usernameKey: (username) => String(username || '')
+        .trim()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd')
+        .replace(/Đ/g, 'D')
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, ''),
 
     canonicalUsername: (username) => {
         const raw = String(username || '').trim();
-        if (raw.toLowerCase() === 'congty') return 'CONGTY';
+        if (Auth.usernameKey(raw) === 'congty') return 'CONGTY';
         return raw;
     },
 
