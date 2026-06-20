@@ -520,16 +520,18 @@ const GamesModule = {
 
             /* Individual Tile */
             .mono-tile {
+                --owner-color: transparent;
                 background:
-                    linear-gradient(160deg, rgba(39,50,86,0.98), rgba(14,24,50,0.98) 54%, rgba(9,14,30,0.98)),
-                    radial-gradient(circle at 50% 0%, rgba(255,255,255,0.1), transparent 52%);
-                border: 1px solid rgba(148,163,184,0.22);
+                    linear-gradient(160deg, rgba(18,26,46,0.98), rgba(10,16,31,0.98) 58%, rgba(6,10,22,0.98)),
+                    radial-gradient(circle at 50% 0%, rgba(255,255,255,0.08), transparent 52%),
+                    repeating-linear-gradient(90deg, rgba(255,255,255,0.026) 0 1px, transparent 1px 10px);
+                border: 1px solid rgba(148,163,184,0.26);
                 border-radius: 12px;
-                padding: 7px 5px;
+                padding: 24px 6px 20px;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                justify-content: center;
+                justify-content: flex-start;
                 gap: 3px;
                 position: relative;
                 overflow: hidden;
@@ -552,8 +554,8 @@ const GamesModule = {
                 inset: 1px;
                 border-radius: 11px;
                 background:
-                    linear-gradient(135deg, rgba(255,255,255,0.12), transparent 38%),
-                    repeating-linear-gradient(90deg, rgba(255,255,255,0.03) 0 1px, transparent 1px 10px);
+                    linear-gradient(135deg, rgba(255,255,255,0.1), transparent 38%),
+                    radial-gradient(circle at 50% 78%, rgba(34,211,238,0.05), transparent 52%);
                 pointer-events: none;
                 z-index: 0;
             }
@@ -564,12 +566,15 @@ const GamesModule = {
                 height: 4px;
                 border-radius: 999px;
                 background: var(--bar-color);
-                box-shadow: 0 0 12px var(--bar-color);
-                opacity: 0.55;
+                box-shadow: 0 0 8px var(--bar-color);
+                opacity: 0.34;
                 z-index: 1;
             }
             .mono-tile.property {
                 cursor: pointer;
+            }
+            .mono-tile.is-owned {
+                border-color: var(--owner-color);
             }
             .mono-tile:hover {
                 z-index: 10;
@@ -590,46 +595,46 @@ const GamesModule = {
             }
             .mono-tile.start {
                 background:
-                    radial-gradient(circle at 50% 44%, rgba(34,211,238,0.2), transparent 43%),
-                    linear-gradient(135deg, rgba(15,118,110,0.72), rgba(30,41,59,0.98));
+                    radial-gradient(circle at 50% 44%, rgba(34,211,238,0.16), transparent 43%),
+                    linear-gradient(160deg, rgba(18,26,46,0.98), rgba(10,16,31,0.98) 58%, rgba(6,10,22,0.98));
                 border-color: rgba(34,211,238,0.48);
             }
             .mono-tile.jail {
                 background:
-                    repeating-linear-gradient(45deg, rgba(251,191,36,0.12) 0 8px, rgba(15,23,42,0.08) 8px 16px),
-                    linear-gradient(135deg, rgba(88,28,135,0.85), rgba(30,10,32,0.98));
+                    repeating-linear-gradient(45deg, rgba(251,191,36,0.08) 0 8px, rgba(15,23,42,0.04) 8px 16px),
+                    linear-gradient(160deg, rgba(18,26,46,0.98), rgba(10,16,31,0.98) 58%, rgba(6,10,22,0.98));
                 border-color: rgba(251,191,36,0.42);
             }
             .mono-tile.chance {
                 background:
-                    radial-gradient(circle at 50% 38%, rgba(168,85,247,0.28), transparent 46%),
-                    linear-gradient(135deg, rgba(59,7,100,0.84), rgba(15,23,42,0.98));
+                    radial-gradient(circle at 50% 38%, rgba(168,85,247,0.14), transparent 46%),
+                    linear-gradient(160deg, rgba(18,26,46,0.98), rgba(10,16,31,0.98) 58%, rgba(6,10,22,0.98));
                 border-color: rgba(168,85,247,0.46);
             }
             .mono-tile.lucky {
                 background:
-                    radial-gradient(circle at 50% 38%, rgba(45,212,191,0.22), transparent 48%),
-                    linear-gradient(135deg, rgba(8,47,73,0.86), rgba(6,78,59,0.78));
+                    radial-gradient(circle at 50% 38%, rgba(45,212,191,0.13), transparent 48%),
+                    linear-gradient(160deg, rgba(18,26,46,0.98), rgba(10,16,31,0.98) 58%, rgba(6,10,22,0.98));
                 border-color: rgba(45,212,191,0.44);
             }
             .mono-tile.tax {
                 background:
-                    radial-gradient(circle at 50% 34%, rgba(248,113,113,0.18), transparent 44%),
-                    linear-gradient(135deg, rgba(69,10,10,0.76), rgba(15,23,42,0.98));
+                    radial-gradient(circle at 50% 34%, rgba(248,113,113,0.12), transparent 44%),
+                    linear-gradient(160deg, rgba(18,26,46,0.98), rgba(10,16,31,0.98) 58%, rgba(6,10,22,0.98));
                 border-color: rgba(248,113,113,0.38);
             }
             .mono-tile.buff {
                 background:
-                    radial-gradient(circle at 50% 36%, rgba(251,191,36,0.2), transparent 46%),
-                    linear-gradient(135deg, rgba(113,63,18,0.78), rgba(15,23,42,0.98));
+                    radial-gradient(circle at 50% 36%, rgba(251,191,36,0.12), transparent 46%),
+                    linear-gradient(160deg, rgba(18,26,46,0.98), rgba(10,16,31,0.98) 58%, rgba(6,10,22,0.98));
                 border-color: rgba(251,191,36,0.4);
             }
 
             /* Corner Tiles */
             .mono-tile.corner-tile {
                 background:
-                    radial-gradient(circle at 50% 35%, rgba(251,191,36,0.13), transparent 45%),
-                    linear-gradient(135deg, rgba(39,31,89,0.98), rgba(13,26,49,0.98));
+                    radial-gradient(circle at 50% 35%, rgba(251,191,36,0.11), transparent 45%),
+                    linear-gradient(160deg, rgba(18,26,46,0.98), rgba(10,16,31,0.98) 58%, rgba(6,10,22,0.98));
                 border-color: rgba(251,191,36,0.32);
                 box-shadow:
                     inset 0 0 18px rgba(251,191,36,0.08),
@@ -640,14 +645,15 @@ const GamesModule = {
             /* Color bars on property tiles facing center */
             .mono-color-bar {
                 position: absolute;
-                background: linear-gradient(90deg, rgba(255,255,255,0.35), var(--bar-color), rgba(255,255,255,0.18));
-                box-shadow: 0 0 18px var(--bar-color), inset 0 0 6px rgba(255,255,255,0.38);
+                background: linear-gradient(90deg, rgba(255,255,255,0.2), var(--bar-color), rgba(255,255,255,0.08));
+                box-shadow: 0 0 10px var(--bar-color), inset 0 0 5px rgba(255,255,255,0.22);
                 z-index: 3;
+                opacity: 0.78;
             }
-            .side-top .mono-color-bar { bottom: 0; left: 9px; right: 9px; height: 8px; border-radius: 999px 999px 0 0; }
-            .side-right .mono-color-bar { top: 9px; left: 0; bottom: 9px; width: 8px; border-radius: 0 999px 999px 0; }
-            .side-bottom .mono-color-bar { top: 0; left: 9px; right: 9px; height: 8px; border-radius: 0 0 999px 999px; }
-            .side-left .mono-color-bar { top: 9px; right: 0; bottom: 9px; width: 8px; border-radius: 999px 0 0 999px; }
+            .side-top .mono-color-bar { bottom: 0; left: 14px; right: 14px; height: 5px; border-radius: 999px 999px 0 0; }
+            .side-right .mono-color-bar { top: 14px; left: 0; bottom: 14px; width: 5px; border-radius: 0 999px 999px 0; }
+            .side-bottom .mono-color-bar { top: 0; left: 14px; right: 14px; height: 5px; border-radius: 0 0 999px 999px; }
+            .side-left .mono-color-bar { top: 14px; right: 0; bottom: 14px; width: 5px; border-radius: 999px 0 0 999px; }
 
             .mono-step-badge {
                 position: absolute;
@@ -672,12 +678,17 @@ const GamesModule = {
             .mono-tile-name {
                 font-weight: 900;
                 color: #f1f5f9;
-                font-size: 9.2px;
+                font-size: 9.6px;
                 text-align: center;
                 line-height: 1.14;
                 max-width: 100%;
                 padding: 0 2px;
+                min-height: 22px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
                 text-shadow: 0 1px 2px rgba(0,0,0,0.92), 0 0 10px rgba(148,163,184,0.14);
+                z-index: 7;
             }
             .corner-tile .mono-tile-name {
                 font-size: 10.6px;
@@ -693,35 +704,39 @@ const GamesModule = {
                 border: 1px solid rgba(251,191,36,0.2);
                 border-radius: 999px;
                 padding: 2px 7px;
+                position: relative;
+                z-index: 7;
                 box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
             }
             .mono-tile-owner {
                 position: absolute;
-                bottom: 1px; right: 1px;
-                font-size: 6px;
-                background: rgba(0,0,0,0.9);
-                color: #94a3b8;
-                padding: 1px 3px;
-                border-radius: 3px;
-                font-weight: bold;
-                max-width: 85%;
+                top: 5px;
+                right: 5px;
+                font-size: 7px;
+                background: rgba(2,6,23,0.86);
+                color: #fde68a;
+                padding: 2px 5px;
+                border-radius: 999px;
+                font-weight: 900;
+                max-width: 45%;
                 overflow: hidden;
                 white-space: nowrap;
                 text-overflow: ellipsis;
+                border: 1px solid rgba(251,191,36,0.24);
+                z-index: 8;
             }
 
             /* Level 2 Pro Office Styles */
             .mono-tile.level-2 {
-                border: 1.5px solid rgba(0, 243, 255, 0.45) !important;
-                box-shadow: inset 0 0 10px rgba(0, 243, 255, 0.1), 0 0 15px rgba(0, 243, 255, 0.1) !important;
+                box-shadow: inset 0 0 0 1px rgba(0, 243, 255, 0.22), 0 0 12px rgba(0, 243, 255, 0.12) !important;
             }
             .mono-tile.level-2 .mono-color-bar, .mono-tile.level-3 .mono-color-bar {
                 animation: colorBarPulse 1.5s infinite alternate;
             }
-            .level-2.side-top .mono-color-bar, .level-3.side-top .mono-color-bar { height: 8px !important; }
-            .level-2.side-bottom .mono-color-bar, .level-3.side-bottom .mono-color-bar { height: 8px !important; }
-            .level-2.side-left .mono-color-bar, .level-3.side-left .mono-color-bar { width: 8px !important; }
-            .level-2.side-right .mono-color-bar, .level-3.side-right .mono-color-bar { width: 8px !important; }
+            .level-2.side-top .mono-color-bar, .level-3.side-top .mono-color-bar { height: 5px !important; }
+            .level-2.side-bottom .mono-color-bar, .level-3.side-bottom .mono-color-bar { height: 5px !important; }
+            .level-2.side-left .mono-color-bar, .level-3.side-left .mono-color-bar { width: 5px !important; }
+            .level-2.side-right .mono-color-bar, .level-3.side-right .mono-color-bar { width: 5px !important; }
 
             @keyframes colorBarPulse {
                 0% { opacity: 0.7; filter: brightness(0.9); }
@@ -731,8 +746,10 @@ const GamesModule = {
             /* Level 3 VVIP Headquarters Styles */
             .mono-tile.level-3 {
                 border: 1.5px solid #fbbf24 !important;
-                box-shadow: inset 0 0 15px rgba(251,191,36,0.25), 0 0 20px rgba(251,191,36,0.2) !important;
-                background: linear-gradient(135deg, rgba(31,10,50,0.95), rgba(15,23,42,0.95)) !important;
+                box-shadow: inset 0 0 12px rgba(251,191,36,0.16), 0 0 16px rgba(251,191,36,0.14) !important;
+                background:
+                    linear-gradient(160deg, rgba(18,26,46,0.98), rgba(10,16,31,0.98) 58%, rgba(6,10,22,0.98)),
+                    radial-gradient(circle at 50% 70%, rgba(251,191,36,0.09), transparent 55%) !important;
             }
             .mono-tile.level-3 .mono-tile-name {
                 color: #fbbf24 !important;
@@ -813,18 +830,26 @@ const GamesModule = {
 
             /* Owner Badge inside property tile */
             .mono-owner-badge {
-                font-size: 7.5px;
-                font-weight: 900;
+                position: absolute;
+                left: 8px;
+                right: 8px;
+                bottom: 6px;
+                height: 15px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 7px;
+                font-weight: 950;
                 color: #fff;
-                padding: 1.5px 5px;
-                border-radius: 4px;
+                padding: 0 5px;
+                border-radius: 999px;
                 text-transform: uppercase;
-                letter-spacing: 0.5px;
-                z-index: 3;
-                margin-top: 1px;
+                letter-spacing: 0.3px;
+                z-index: 8;
                 text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-                border: 1px solid rgba(255,255,255,0.35);
-                max-width: 90%;
+                border: 1px solid var(--owner-color);
+                background: rgba(2,6,23,0.84) !important;
+                box-shadow: 0 0 8px rgba(255,255,255,0.08) !important;
                 overflow: hidden;
                 text-overflow: ellipsis;
                 white-space: nowrap;
@@ -1197,23 +1222,23 @@ const GamesModule = {
             /* Building models on property tiles */
             .mono-building-container {
                 position: absolute;
-                top: 52%;
                 left: 50%;
-                transform: translate(-50%, -50%);
+                bottom: 21px;
+                transform: translateX(-50%);
                 display: grid;
                 place-items: center;
                 justify-content: center;
                 align-items: flex-end;
-                height: 54px;
-                width: 64px;
+                height: 38px;
+                width: 58px;
                 pointer-events: none;
-                z-index: 4;
-                opacity: 0.95;
+                z-index: 3;
+                opacity: 0.72;
                 animation: buildingRise 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
             }
             @keyframes buildingRise {
-                from { transform: translate(-50%, -14%) scale(0.35); opacity: 0; }
-                to { transform: translate(-50%, -50%) scale(1); opacity: 0.95; }
+                from { transform: translateX(-50%) translateY(14px) scale(0.35); opacity: 0; }
+                to { transform: translateX(-50%) translateY(0) scale(0.78); opacity: 0.72; }
             }
             .mono-building {
                 position: relative;
@@ -1221,8 +1246,8 @@ const GamesModule = {
                 flex-direction: column;
                 align-items: center;
                 justify-content: flex-end;
-                width: 56px;
-                height: 44px;
+                width: 48px;
+                height: 36px;
                 transition: all 0.3s;
                 filter: drop-shadow(0 7px 10px rgba(0,0,0,0.62));
             }
@@ -1949,7 +1974,7 @@ const GamesModule = {
             if (isOwned) {
                 const oColor = tile.owner.color;
                 if (lvl === 1) {
-                    ownerTileStyle = `border: 2px solid ${oColor} !important; box-shadow: inset 0 0 8px ${oColor}25, 0 0 10px ${oColor}20 !important; background: linear-gradient(135deg, ${oColor}18, rgba(16,24,48,0.92)) !important;`;
+                    ownerTileStyle = `--owner-color: ${oColor}; border-color: ${oColor} !important; box-shadow: inset 0 0 0 1px ${oColor}55, 0 0 14px ${oColor}30, 0 6px 0 rgba(3,7,18,0.75) !important;`;
                     buildingHtml = `
                         <div class="mono-building-container" title="Nha 1 sao - mong nha">
                             <div class="mono-building lvl-1" style="--owner-color: ${oColor}">
@@ -1963,7 +1988,7 @@ const GamesModule = {
                         </div>
                     `;
                 } else if (lvl === 2) {
-                    ownerTileStyle = `border: 2.2px solid #00f3ff !important; box-shadow: inset 0 0 10px ${oColor}25, 0 0 15px rgba(0, 243, 255, 0.4) !important; background: linear-gradient(135deg, ${oColor}18, rgba(16,24,48,0.92)) !important;`;
+                    ownerTileStyle = `--owner-color: ${oColor}; border-color: #00f3ff !important; box-shadow: inset 0 0 0 1px ${oColor}55, 0 0 15px rgba(0,243,255,0.28), 0 6px 0 rgba(3,7,18,0.75) !important;`;
                     buildingHtml = `
                         <div class="mono-building-container" title="Nha 2 sao - nha cap 4">
                             <div class="mono-building lvl-2" style="--owner-color: ${oColor}">
@@ -1975,7 +2000,7 @@ const GamesModule = {
                         </div>
                     `;
                 } else if (lvl === 3) {
-                    ownerTileStyle = `border: 2.5px solid #fbbf24 !important; box-shadow: inset 0 0 12px ${oColor}25, 0 0 20px rgba(251, 191, 36, 0.5) !important; background: linear-gradient(135deg, rgba(31,10,50,0.95), ${oColor}15, rgba(15,23,42,0.95)) !important;`;
+                    ownerTileStyle = `--owner-color: ${oColor}; border-color: #fbbf24 !important; box-shadow: inset 0 0 0 1px ${oColor}55, 0 0 16px rgba(251,191,36,0.28), 0 6px 0 rgba(3,7,18,0.75) !important;`;
                     buildingHtml = `
                         <div class="mono-building-container" title="Nha 3 sao - biet thu cao oc">
                             <div class="mono-building lvl-3" style="--owner-color: ${oColor}">
@@ -1991,7 +2016,7 @@ const GamesModule = {
                     `;
                 }
                 ownerBadgeHtml = `
-                    <div class="mono-owner-badge" style="background: ${oColor}; box-shadow: 0 0 6px ${oColor};" title="@${tile.owner.name}">
+                    <div class="mono-owner-badge" title="@${tile.owner.name}">
                         @${tile.owner.name.toUpperCase()}
                     </div>
                 `;
@@ -2010,7 +2035,7 @@ const GamesModule = {
             const tileClickHtml = tile.type === 'property' ? `onclick="GamesModule.selectCenterDeed('${tile.id}')"` : '';
 
             return `
-                <div class="mono-tile ${tile.type} ${sideClass} ${lvlClass} ${isCorner ? 'corner-tile' : ''} ${hasPawns ? 'has-player' : ''}" ${tileClickHtml} style="--bar-color: ${tile.color || 'transparent'}; ${gridPos} ${ownerTileStyle}">
+                <div class="mono-tile ${tile.type} ${sideClass} ${lvlClass} ${isCorner ? 'corner-tile' : ''} ${isOwned ? 'is-owned' : ''} ${hasPawns ? 'has-player' : ''}" ${tileClickHtml} style="--bar-color: ${tile.color || 'transparent'}; ${gridPos} ${ownerTileStyle}">
                     <div class="mono-step-badge">${idx}</div>
                     ${tile.type === 'property' ? '<div class="mono-color-bar"></div>' : ''}
                     <div class="mono-tile-name">${tile.name}</div>
