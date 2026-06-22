@@ -1,5 +1,5 @@
 (function () {
-    if (!window.WorkModule || window.WorkModule.__boardDashboardPatched) return;
+    if (typeof WorkModule === 'undefined' || WorkModule.__boardDashboardPatched) return;
 
     const originalRenderList = WorkModule.renderList.bind(WorkModule);
     WorkModule.__boardDashboardPatched = true;
@@ -40,7 +40,7 @@
 
     const dayDiff = (task) => {
         const target = parseDate(task.deadline || task.ngayDang);
-        if (!target || !window.Utils) return null;
+        if (!target || typeof Utils === 'undefined') return null;
         const parts = Utils.getTodayString().split('/');
         if (parts.length !== 3) return null;
         const today = new Date(`${parts[2]}-${parts[1]}-${parts[0]}T00:00:00`);
