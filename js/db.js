@@ -351,6 +351,30 @@ const DB = {
         return Utils.storage.get('backup_chatbots', []);
     },
 
+    // --- LƯU TRỮ RPG SẢNH CHỜ CHIBI ---
+    saveChibiRpg: async (rpgData) => {
+        try {
+            Utils.storage.set('backup_chibi_rpg', rpgData);
+            await db.collection("system").doc("chibi_rpg").set({ data: rpgData });
+            return true;
+        } catch (e) {
+            console.error("Error saving chibi rpg:", e);
+            return false;
+        }
+    },
+
+    getChibiRpg: async () => {
+        try {
+            const doc = await db.collection("system").doc("chibi_rpg").get();
+            if (doc.exists && doc.data() && doc.data().data) {
+                return doc.data().data;
+            }
+        } catch (e) {
+            console.error("Error getting chibi rpg fallback:", e);
+        }
+        return Utils.storage.get('backup_chibi_rpg', {});
+    },
+
     // --- LƯU TRỮ CHẤM CÔNG ---
     saveAttendance: async (attendanceArray) => {
         try {
@@ -524,6 +548,7 @@ const DB = {
             Utils.storage.remove('tl_late_requests');
             Utils.storage.remove('backup_prompts');
             Utils.storage.remove('backup_chatbots');
+            Utils.storage.remove('backup_chibi_rpg');
             Utils.storage.remove('backup_topup_reqs');
             Utils.storage.remove('backup_cb_history');
             Utils.storage.remove('backup_rewards');
@@ -535,6 +560,7 @@ const DB = {
             await db.collection("system").doc("late_requests").delete();
             await db.collection("system").doc("prompts").delete();
             await db.collection("system").doc("chatbots").delete();
+            await db.collection("system").doc("chibi_rpg").delete();
             await db.collection("system").doc("topup_requests").delete();
             await db.collection("system").doc("chatbot_history").delete();
             await db.collection("system").doc("rewards").delete();
