@@ -592,6 +592,251 @@ window.LobbyNeon = {
                     display: grid;
                     gap: 6px;
                 }
+                .rpg-battle-stage {
+                    position: relative;
+                    min-height: 255px;
+                    overflow: hidden;
+                    border-radius: 14px;
+                    border: 1px solid rgba(34, 211, 238, 0.28);
+                    background:
+                        radial-gradient(circle at 20% 20%, rgba(34, 211, 238, 0.18), transparent 34%),
+                        radial-gradient(circle at 80% 10%, rgba(168, 85, 247, 0.2), transparent 32%),
+                        linear-gradient(180deg, rgba(8, 13, 33, 0.98), rgba(3, 7, 18, 0.98));
+                    box-shadow: inset 0 0 32px rgba(34, 211, 238, 0.08), 0 14px 30px rgba(0, 0, 0, 0.28);
+                }
+                .rpg-battle-stage::before {
+                    content: "";
+                    position: absolute;
+                    inset: 0;
+                    background-image:
+                        linear-gradient(rgba(34, 211, 238, 0.09) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(34, 211, 238, 0.07) 1px, transparent 1px);
+                    background-size: 26px 26px;
+                    transform: perspective(320px) rotateX(58deg) translateY(68px);
+                    transform-origin: bottom;
+                    opacity: 0.55;
+                }
+                .rpg-battle-top {
+                    position: relative;
+                    z-index: 3;
+                    display: flex;
+                    justify-content: space-between;
+                    gap: 10px;
+                    padding: 12px;
+                }
+                .rpg-hp-box {
+                    width: 46%;
+                    min-width: 0;
+                }
+                .rpg-hp-label {
+                    display: flex;
+                    justify-content: space-between;
+                    gap: 6px;
+                    color: #e2e8f0;
+                    font-size: 10px;
+                    font-weight: 900;
+                    margin-bottom: 5px;
+                }
+                .rpg-hp-bar {
+                    height: 8px;
+                    border-radius: 999px;
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    background: rgba(2, 6, 23, 0.86);
+                    overflow: hidden;
+                }
+                .rpg-hp-bar > span {
+                    display: block;
+                    height: 100%;
+                    border-radius: inherit;
+                    transition: width .35s ease;
+                }
+                .rpg-hp-player > span { background: linear-gradient(90deg, #22c55e, #22d3ee); }
+                .rpg-hp-monster > span { background: linear-gradient(90deg, #fb7185, #f97316); }
+                .rpg-battle-floor {
+                    position: absolute;
+                    left: 14px;
+                    right: 14px;
+                    bottom: 20px;
+                    height: 60px;
+                    border-radius: 50%;
+                    background: radial-gradient(ellipse at center, rgba(34, 211, 238, 0.18), rgba(15, 23, 42, 0.18) 48%, transparent 72%);
+                    filter: blur(1px);
+                }
+                .rpg-combatant {
+                    position: absolute;
+                    z-index: 4;
+                    bottom: 40px;
+                    width: 112px;
+                    min-height: 118px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: flex-end;
+                    pointer-events: none;
+                }
+                .rpg-combatant.player {
+                    left: 16px;
+                    animation: rpg-player-strike 1.8s ease-in-out infinite;
+                }
+                .rpg-combatant.monster {
+                    right: 16px;
+                    animation: rpg-monster-breathe 1.9s ease-in-out infinite;
+                }
+                .rpg-combatant.defeated {
+                    opacity: .42;
+                    filter: grayscale(.65);
+                    animation: none;
+                }
+                .rpg-fighter-name {
+                    margin-top: 4px;
+                    max-width: 118px;
+                    padding: 3px 8px;
+                    border-radius: 999px;
+                    background: rgba(2, 6, 23, 0.82);
+                    border: 1px solid rgba(255, 255, 255, 0.12);
+                    color: #e2e8f0;
+                    font-size: 9px;
+                    font-weight: 900;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+                .rpg-player-sprite {
+                    transform: scale(1.05);
+                    filter: drop-shadow(0 0 12px rgba(34, 211, 238, 0.45));
+                }
+                .rpg-monster-svg {
+                    width: 96px;
+                    height: 96px;
+                    filter: drop-shadow(0 0 16px rgba(248, 113, 113, 0.35));
+                }
+                .rpg-skill {
+                    position: absolute;
+                    z-index: 5;
+                    left: 37%;
+                    top: 46%;
+                    width: 38px;
+                    height: 14px;
+                    border-radius: 999px;
+                    transform-origin: center;
+                    animation: rpg-skill-flight 1.35s ease-in-out infinite;
+                    box-shadow: 0 0 20px currentColor;
+                }
+                .rpg-skill.basic {
+                    color: #38bdf8;
+                    background: linear-gradient(90deg, transparent, #38bdf8, #fff);
+                }
+                .rpg-skill.fire_dragon {
+                    color: #fb923c;
+                    width: 52px;
+                    height: 18px;
+                    background: linear-gradient(90deg, transparent, #f97316, #fed7aa);
+                }
+                .rpg-skill.thunder {
+                    color: #facc15;
+                    width: 44px;
+                    height: 16px;
+                    clip-path: polygon(0 45%, 45% 45%, 35% 0, 100% 55%, 55% 55%, 66% 100%);
+                    background: #facc15;
+                }
+                .rpg-skill.moon_shadow {
+                    color: #c084fc;
+                    width: 46px;
+                    height: 46px;
+                    border: 4px solid #c084fc;
+                    border-left-color: transparent;
+                    background: transparent;
+                    border-radius: 50%;
+                }
+                .rpg-hit-burst {
+                    position: absolute;
+                    z-index: 6;
+                    right: 80px;
+                    top: 47%;
+                    width: 46px;
+                    height: 46px;
+                    border-radius: 50%;
+                    background: radial-gradient(circle, rgba(255,255,255,.95), rgba(34,211,238,.42) 32%, transparent 70%);
+                    animation: rpg-hit-pulse 1.35s ease-in-out infinite;
+                    pointer-events: none;
+                }
+                .rpg-damage-pop {
+                    position: absolute;
+                    z-index: 7;
+                    right: 76px;
+                    top: 34%;
+                    color: #fde68a;
+                    font-size: 13px;
+                    font-weight: 1000;
+                    text-shadow: 0 0 10px rgba(251, 191, 36, .75);
+                    animation: rpg-damage-float 1.35s ease-in-out infinite;
+                }
+                .rpg-battle-status {
+                    position: absolute;
+                    z-index: 8;
+                    left: 12px;
+                    right: 12px;
+                    bottom: 10px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 8px;
+                    color: #cbd5e1;
+                    font-size: 10px;
+                    font-weight: 800;
+                }
+                .rpg-pvp-stage {
+                    display: grid;
+                    grid-template-columns: 1fr auto 1fr;
+                    gap: 8px;
+                    align-items: center;
+                    margin-top: 10px;
+                    padding: 10px;
+                    border-radius: 12px;
+                    background: rgba(15, 23, 42, 0.72);
+                    border: 1px dashed rgba(248, 113, 113, 0.36);
+                }
+                .rpg-pvp-slot {
+                    min-height: 58px;
+                    border-radius: 10px;
+                    padding: 8px;
+                    background: rgba(2, 6, 23, 0.72);
+                    border: 1px solid rgba(148, 163, 184, 0.14);
+                    text-align: center;
+                }
+                @keyframes rpg-player-strike {
+                    0%, 100% { transform: translateX(0) translateY(0); }
+                    45% { transform: translateX(9px) translateY(-2px); }
+                    55% { transform: translateX(18px) translateY(-4px); }
+                }
+                @keyframes rpg-monster-breathe {
+                    0%, 100% { transform: translateX(0) scale(1); }
+                    50% { transform: translateX(-4px) scale(1.035); }
+                }
+                @keyframes rpg-skill-flight {
+                    0% { opacity: 0; transform: translateX(-42px) scale(.72) rotate(0deg); }
+                    18% { opacity: 1; }
+                    72% { opacity: 1; transform: translateX(72px) scale(1.05) rotate(18deg); }
+                    100% { opacity: 0; transform: translateX(94px) scale(.55) rotate(34deg); }
+                }
+                @keyframes rpg-hit-pulse {
+                    0%, 70%, 100% { opacity: 0; transform: scale(.55); }
+                    76% { opacity: 1; transform: scale(1.08); }
+                    88% { opacity: .32; transform: scale(1.55); }
+                }
+                @keyframes rpg-damage-float {
+                    0%, 66%, 100% { opacity: 0; transform: translateY(8px); }
+                    76% { opacity: 1; transform: translateY(0); }
+                    92% { opacity: 0; transform: translateY(-18px); }
+                }
+                @media (prefers-reduced-motion: reduce) {
+                    .rpg-combatant,
+                    .rpg-skill,
+                    .rpg-hit-burst,
+                    .rpg-damage-pop {
+                        animation: none !important;
+                    }
+                }
 
                 /* QUEST NPC STYLES */
                 @keyframes float { 0%, 100% { transform: translate(-50%, 0); } 50% { transform: translate(-50%, -15px); } }
@@ -2610,6 +2855,163 @@ window.LobbyNeon = {
         return Math.round(level * 120 + (profile.totalHunts || 0) * 16 + (profile.totalRewardPoints || 0) * 20 + (profile.unlockedSkins?.length || 1) * 75);
     },
 
+    selectRpgZone: (zoneId) => {
+        if (!LobbyNeon.rpgZones[zoneId]) return;
+        LobbyNeon.state.selectedRpgZone = zoneId;
+        LobbyNeon.renderRpgPanel();
+    },
+
+    getRpgMonsterSvg: (zoneId, defeated = false) => {
+        const opacity = defeated ? '0.45' : '1';
+        if (zoneId === 'ghost_cave') {
+            return `
+                <svg class="rpg-monster-svg" viewBox="0 0 120 120" aria-hidden="true" style="opacity:${opacity}">
+                    <defs>
+                        <radialGradient id="ghostGlow" cx="50%" cy="35%" r="70%">
+                            <stop offset="0%" stop-color="#f0f9ff"/>
+                            <stop offset="45%" stop-color="#a78bfa"/>
+                            <stop offset="100%" stop-color="#312e81"/>
+                        </radialGradient>
+                    </defs>
+                    <path d="M22 82 C24 40 38 18 63 18 C88 18 101 41 98 82 C94 78 90 77 85 84 C79 76 72 76 66 86 C59 76 51 77 45 86 C39 76 32 78 22 82 Z" fill="url(#ghostGlow)" stroke="#c4b5fd" stroke-width="4"/>
+                    <circle cx="49" cy="54" r="7" fill="#0f172a"/>
+                    <circle cx="76" cy="54" r="7" fill="#0f172a"/>
+                    <path d="M49 73 C58 80 69 80 78 72" fill="none" stroke="#0f172a" stroke-width="5" stroke-linecap="round"/>
+                    <path d="M29 46 C16 42 13 60 27 64" fill="none" stroke="#c4b5fd" stroke-width="6" stroke-linecap="round"/>
+                    <path d="M95 46 C111 42 112 61 96 66" fill="none" stroke="#c4b5fd" stroke-width="6" stroke-linecap="round"/>
+                </svg>
+            `;
+        }
+        if (zoneId === 'secret_realm') {
+            return `
+                <svg class="rpg-monster-svg" viewBox="0 0 120 120" aria-hidden="true" style="opacity:${opacity}">
+                    <defs>
+                        <linearGradient id="dragonScale" x1="0%" x2="100%">
+                            <stop offset="0%" stop-color="#7f1d1d"/>
+                            <stop offset="52%" stop-color="#ef4444"/>
+                            <stop offset="100%" stop-color="#f97316"/>
+                        </linearGradient>
+                    </defs>
+                    <path d="M25 70 C15 43 35 23 61 26 C89 29 105 49 98 80 C91 103 43 103 25 70 Z" fill="url(#dragonScale)" stroke="#fed7aa" stroke-width="4"/>
+                    <path d="M34 29 L24 9 L49 22 Z" fill="#f97316" stroke="#fed7aa" stroke-width="3"/>
+                    <path d="M82 27 L99 8 L96 36 Z" fill="#f97316" stroke="#fed7aa" stroke-width="3"/>
+                    <circle cx="49" cy="57" r="6" fill="#111827"/>
+                    <circle cx="75" cy="57" r="6" fill="#111827"/>
+                    <path d="M47 78 C57 84 68 84 80 76" fill="none" stroke="#450a0a" stroke-width="5" stroke-linecap="round"/>
+                    <path d="M23 77 C7 82 12 101 32 94" fill="none" stroke="#fb923c" stroke-width="7" stroke-linecap="round"/>
+                    <path d="M99 77 C117 82 110 102 91 94" fill="none" stroke="#fb923c" stroke-width="7" stroke-linecap="round"/>
+                    <path d="M59 18 L66 5 L72 20" fill="#fde68a"/>
+                </svg>
+            `;
+        }
+        return `
+            <svg class="rpg-monster-svg" viewBox="0 0 120 120" aria-hidden="true" style="opacity:${opacity}">
+                <defs>
+                    <radialGradient id="slimeGlow" cx="50%" cy="35%" r="70%">
+                        <stop offset="0%" stop-color="#bbf7d0"/>
+                        <stop offset="55%" stop-color="#22c55e"/>
+                        <stop offset="100%" stop-color="#14532d"/>
+                    </radialGradient>
+                </defs>
+                <path d="M18 78 C18 48 38 25 61 25 C88 25 103 50 101 79 C99 100 82 106 60 106 C37 106 19 99 18 78 Z" fill="url(#slimeGlow)" stroke="#86efac" stroke-width="4"/>
+                <circle cx="47" cy="62" r="7" fill="#052e16"/>
+                <circle cx="74" cy="62" r="7" fill="#052e16"/>
+                <path d="M48 82 C56 87 66 87 75 82" fill="none" stroke="#052e16" stroke-width="5" stroke-linecap="round"/>
+                <path d="M36 33 C31 19 42 16 49 27" fill="none" stroke="#86efac" stroke-width="6" stroke-linecap="round"/>
+                <path d="M81 33 C88 18 99 24 91 37" fill="none" stroke="#86efac" stroke-width="6" stroke-linecap="round"/>
+            </svg>
+        `;
+    },
+
+    getRpgPlayerBattleSvg: () => {
+        if (typeof ChibiModule !== 'undefined' && ChibiModule.render) {
+            const config = Auth.currentUser?.profile?.chibiConfig || {};
+            return ChibiModule.render(config, true, 78);
+        }
+        return `<div style="font-size:72px; line-height:1;">🧑‍🚀</div>`;
+    },
+
+    renderRpgBattleScene: (profile, active, zone, progress, isDone) => {
+        const classCfg = LobbyNeon.rpgClasses[profile.classId] || LobbyNeon.rpgClasses.kiem_tong;
+        const skin = LobbyNeon.rpgSkins[profile.equippedSkin] || LobbyNeon.rpgSkins.basic;
+        const monsterHp = active ? (isDone ? 0 : Math.max(4, Math.round(100 - progress))) : 100;
+        const playerHp = active ? Math.max(72, Math.round(100 - progress * 0.12)) : 100;
+        const damageText = active ? `-${Math.max(12, Math.round((active.reward?.exp || 80) / 8))}` : 'READY';
+        const battleText = active
+            ? (isDone ? `${zone.monster} đã gục. Mở rương nhận thưởng.` : `${classCfg.name} đang tung ${skin.name}`)
+            : `Chọn thời lượng để ${classCfg.name} giao chiến với ${zone.monster}`;
+        const statusChip = active
+            ? (isDone ? '🎁 Kết thúc trận' : `⏳ ${LobbyNeon.formatRpgDuration(active.endsAt - Date.now())}`)
+            : '⚔️ Sẵn sàng vào trận';
+
+        return `
+            <div class="rpg-card featured" style="padding:10px;">
+                <div class="rpg-battle-stage">
+                    <div class="rpg-battle-top">
+                        <div class="rpg-hp-box">
+                            <div class="rpg-hp-label">
+                                <span>@${LobbyNeon.escapeHtml(Auth.currentUser?.username || 'Player')}</span>
+                                <span>${playerHp}%</span>
+                            </div>
+                            <div class="rpg-hp-bar rpg-hp-player"><span style="width:${playerHp}%;"></span></div>
+                        </div>
+                        <div class="rpg-hp-box">
+                            <div class="rpg-hp-label">
+                                <span>${zone.icon} ${zone.monster}</span>
+                                <span>${monsterHp}%</span>
+                            </div>
+                            <div class="rpg-hp-bar rpg-hp-monster"><span style="width:${monsterHp}%;"></span></div>
+                        </div>
+                    </div>
+                    <div class="rpg-battle-floor"></div>
+                    <div class="rpg-combatant player">
+                        <div class="rpg-player-sprite">${LobbyNeon.getRpgPlayerBattleSvg()}</div>
+                        <div class="rpg-fighter-name" style="border-color:${classCfg.color}55;">${classCfg.icon} ${classCfg.name}</div>
+                    </div>
+                    <div class="rpg-skill ${skin.id}"></div>
+                    ${active && !isDone ? `<div class="rpg-hit-burst"></div><div class="rpg-damage-pop">${damageText}</div>` : ''}
+                    <div class="rpg-combatant monster ${isDone ? 'defeated' : ''}">
+                        ${LobbyNeon.getRpgMonsterSvg(zone.id, isDone)}
+                        <div class="rpg-fighter-name" style="border-color:${zone.color}55;">${zone.name}</div>
+                    </div>
+                    <div class="rpg-battle-status">
+                        <span>${battleText}</span>
+                        <span class="rpg-chip">${statusChip}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    },
+
+    renderRpgPvpTeaser: (profile) => {
+        const classCfg = LobbyNeon.rpgClasses[profile.classId] || LobbyNeon.rpgClasses.kiem_tong;
+        const skin = LobbyNeon.rpgSkins[profile.equippedSkin] || LobbyNeon.rpgSkins.basic;
+        return `
+            <div class="rpg-card" style="border-color:rgba(248,113,113,.28);">
+                <div style="display:flex; justify-content:space-between; gap:8px; align-items:center;">
+                    <p class="rpg-title">🥊 Đấu pháp PK</p>
+                    <span class="rpg-chip" style="color:#fca5a5;">Đang chuẩn bị</span>
+                </div>
+                <div class="rpg-pvp-stage">
+                    <div class="rpg-pvp-slot">
+                        <div style="font-size:18px;">${classCfg.icon}</div>
+                        <strong style="color:${classCfg.color}; font-size:11px;">${classCfg.name}</strong>
+                        <div class="rpg-muted">LC ${LobbyNeon.getRpgPower(profile)}</div>
+                    </div>
+                    <strong style="color:#fca5a5; font-size:12px;">VS</strong>
+                    <div class="rpg-pvp-slot">
+                        <div style="font-size:18px;">👤</div>
+                        <strong style="color:#cbd5e1; font-size:11px;">Đối thủ online</strong>
+                        <div class="rpg-muted">Ghép kèo sau</div>
+                    </div>
+                </div>
+                <div class="rpg-muted" style="margin-top:8px;">
+                    Khung này sẽ dùng môn phái, lực chiến, skin ${skin.icon} ${skin.name} và dữ liệu online để mở PK sau.
+                </div>
+            </div>
+        `;
+    },
+
     selectRpgClass: async (classId) => {
         if (!LobbyNeon.rpgClasses[classId]) return;
         const { data, profile } = await LobbyNeon.getMyRpgProfile();
@@ -2670,6 +3072,7 @@ window.LobbyNeon = {
 
         const now = Date.now();
         const reward = LobbyNeon.rollRpgReward(zone, Number(durationMin), profile);
+        LobbyNeon.state.selectedRpgZone = zoneId;
         profile.stamina -= cost;
         profile.totalHunts = Number(profile.totalHunts || 0) + 1;
         profile.activeHunt = {
@@ -2757,6 +3160,7 @@ window.LobbyNeon = {
         const active = profile.activeHunt;
         const now = Date.now();
         const activeZone = active ? (LobbyNeon.rpgZones[active.zoneId] || LobbyNeon.rpgZones.training_forest) : null;
+        const displayZone = activeZone || LobbyNeon.rpgZones[LobbyNeon.state.selectedRpgZone] || LobbyNeon.rpgZones.training_forest;
         const isDone = active && now >= active.endsAt;
         const progress = active
             ? Math.min(100, Math.max(4, ((now - active.startedAt) / (active.endsAt - active.startedAt)) * 100))
@@ -2801,23 +3205,24 @@ window.LobbyNeon = {
         const zoneHtml = Object.values(LobbyNeon.rpgZones).map(zone => {
             const userLevel = Auth.currentUser?.level || 1;
             const levelLocked = userLevel < zone.minLevel;
+            const isSelected = displayZone.id === zone.id;
             const buttons = LobbyNeon.rpgDurations.map(duration => {
                 const cost = LobbyNeon.getRpgStaminaCost(zone, duration, profile);
                 const disabled = !!active || levelLocked || profile.stamina < cost;
                 return `
-                    <button class="rpg-action-btn" ${disabled ? 'disabled' : ''} onclick="LobbyNeon.startRpgHunt('${zone.id}', ${duration})">
+                    <button class="rpg-action-btn" ${disabled ? 'disabled' : ''} onclick="event.stopPropagation(); LobbyNeon.startRpgHunt('${zone.id}', ${duration})">
                         ${duration}p<br><span style="font-size:9px; opacity:.82;">${cost} thể lực</span>
                     </button>
                 `;
             }).join('');
             return `
-                <div class="rpg-card" style="border-color:${zone.color}55;">
+                <div class="rpg-card ${isSelected ? 'featured' : ''}" onclick="LobbyNeon.selectRpgZone('${zone.id}')" style="border-color:${zone.color}55; cursor:pointer;">
                     <div style="display:flex; justify-content:space-between; gap:8px; align-items:flex-start;">
                         <div>
                             <p class="rpg-title" style="color:${zone.color};">${zone.icon} ${zone.name}</p>
                             <div class="rpg-muted">${zone.monster} · ${zone.danger} · Cấp ${zone.minLevel}+</div>
                         </div>
-                        <span class="rpg-chip">+${zone.rewardPoints * (Auth.EXP_MULTIPLIER || 80)} EXP/15p</span>
+                        <span class="rpg-chip">${isSelected ? 'Đang xem' : `+${zone.rewardPoints * (Auth.EXP_MULTIPLIER || 80)} EXP/15p`}</span>
                     </div>
                     ${levelLocked ? `<div class="rpg-muted" style="margin-top:8px; color:#fbbf24;">Cần cấp ${zone.minLevel} để vào ải này.</div>` : ''}
                     <div class="rpg-duration-row">${buttons}</div>
@@ -2879,7 +3284,11 @@ window.LobbyNeon = {
                     </div>
                 </div>
 
+                ${LobbyNeon.renderRpgBattleScene(profile, active, displayZone, progress, isDone)}
+
                 ${activeHtml}
+
+                ${LobbyNeon.renderRpgPvpTeaser(profile)}
 
                 <div class="rpg-card">
                     <p class="rpg-title">🏯 Môn phái</p>
