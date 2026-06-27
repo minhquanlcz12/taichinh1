@@ -17,6 +17,147 @@ const Attendance = {
         trustedDevices: []
     },
 
+    usernameKey: (username) => {
+        if (typeof Auth !== 'undefined' && typeof Auth.usernameKey === 'function') {
+            return Auth.usernameKey(username);
+        }
+        return String(username || '')
+            .trim()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/\u0111/g, 'd')
+            .replace(/\u0110/g, 'D')
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, '');
+    },
+
+    shiftKey: (record) => record && record.type ? record.type : 'morning',
+
+    isSundayDate: (dateStr) => {
+        if (!dateStr) return false;
+        const parts = String(dateStr).split('-').map(n => parseInt(n, 10));
+        if (parts.length !== 3 || parts.some(Number.isNaN)) return false;
+        return new Date(parts[0], parts[1] - 1, parts[2]).getDay() === 0;
+    },
+
+    normalizeRecordForSummary: (record) => {
+        const normalized = { ...record };
+        if (/2026-0?6-1?3/.test(String(normalized.dateStr || '').trim()) && normalized.status !== 'on_time') {
+            normalized.status = 'on_time';
+            normalized.lateMinutes = 0;
+        }
+        if (normalized.status === 'late' && Number(normalized.lateMinutes || 0) <= 0) {
+            normalized.status = 'on_time';
+            normalized.lateMinutes = 0;
+        }
+        return normalized;
+    },
+
+    recordPriority: (record) => {
+        const status = record && record.status;
+        if (status === 'on_time') return 4;
+        if (status === 'late_excused') return 3;
+        if (status === 'late') return 2;
+        if (status === 'absent_unexcused') return 1;
+        return 0;
+    },
+
+    getDedupedAttendanceRecords: (records, startStr, endStr) => {
+        const byShift = new Map();
+        (records || []).forEach(raw => {
+            if (!raw || raw.dateStr < startStr || raw.dateStr > endStr) return;
+            if (Attendance.isSundayDate(raw.dateStr)) return;
+
+            const record = Attendance.normalizeRecordForSummary(raw);
+            const userKey = Attendance.usernameKey(record.username);
+            if (!userKey || userKey === 'admin' || userKey === 'congty') return;
+
+            const key = `${userKey}|${record.dateStr}|${Attendance.shiftKey(record)}`;
+            const current = byShift.get(key);
+            const currentPriority = Attendance.recordPriority(current);
+            const recordPriority = Attendance.recordPriority(record);
+            if (!current || recordPriority > currentPriority ||
+                (recordPriority === currentPriority && Number(record.timestamp || 0) > Number(current.timestamp || 0))) {
+                byShift.set(key, record);
+            }
+        });
+        return Array.from(byShift.values());
+    },
+
+    getPassedWorkingDays: (cycle) => {
+        const now = new Date();
+        const todayZero = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        let limitDate = new Date(cycle.endDate);
+        limitDate.setHours(0,0,0,0);
+        if (todayZero < limitDate) {
+            limitDate = todayZero;
+        }
+
+        let passedWorkingDays = 0;
+        let tempDate = new Date(cycle.startDate);
+        tempDate.setHours(0,0,0,0);
+        while (tempDate <= limitDate) {
+            if (tempDate.getDay() !== 0) {
+                passedWorkingDays++;
+            }
+            tempDate.setDate(tempDate.getDate() + 1);
+        }
+        return passedWorkingDays;
+    },
+
+    buildAttendanceSummary: (allData, allLeaves, accounts, startStr, endStr) => {
+        const summary = {};
+        Attendance.getDedupedAttendanceRecords(allData, startStr, endStr).forEach(record => {
+            const userKey = Attendance.usernameKey(record.username);
+            if (!summary[userKey]) {
+                summary[userKey] = { totalDays: 0, onTime: 0, late: 0, lateExcused: 0, totalLateMinutes: 0 };
+            }
+            const weight = record.type ? 0.5 : 1.0;
+            if (record.status === 'absent_unexcused') {
+                return;
+            }
+            summary[userKey].totalDays += weight;
+            if (record.status === 'on_time') {
+                summary[userKey].onTime += weight;
+            } else if (record.status === 'late_excused') {
+                summary[userKey].lateExcused += weight;
+            } else if (record.status === 'late') {
+                summary[userKey].late += weight;
+                summary[userKey].totalLateMinutes += Number(record.lateMinutes || 0);
+            }
+        });
+
+        const approvedLeaves = {};
+        (allLeaves || []).forEach(leave => {
+            const start = leave.startDate || leave.date || '';
+            const userKey = Attendance.usernameKey(leave.username);
+            if (leave.status === 'approved' && start >= startStr && start <= endStr && userKey && userKey !== 'admin' && userKey !== 'congty') {
+                if (!approvedLeaves[userKey]) approvedLeaves[userKey] = 0;
+                approvedLeaves[userKey] += parseFloat(leave.days) || 0;
+            }
+        });
+
+        const usersByKey = new Map();
+        (accounts || []).forEach(acc => {
+            if (!acc || Utils.isSystemAccount(acc)) return;
+            const key = Attendance.usernameKey(acc.username);
+            if (key && !usersByKey.has(key)) {
+                usersByKey.set(key, acc.username);
+            }
+        });
+        Object.keys(summary).forEach(key => {
+            if (key && key !== 'admin' && key !== 'congty' && !usersByKey.has(key)) {
+                usersByKey.set(key, key);
+            }
+        });
+
+        return {
+            summary,
+            approvedLeaves,
+            usersList: Array.from(usersByKey.values())
+        };
+    },
+
     init: () => {
         // Tự động kiểm tra và điểm danh bù cho chiều 13/06 nếu cần
         Attendance.checkAndPerformAutoCheckIn();
@@ -190,9 +331,9 @@ const Attendance = {
                     }
 
                     // 1. Kiểm tra đã có record chưa (morning/afternoon) - so sánh không phân biệt hoa/thường
-                    const accUser = (acc.username || '').toLowerCase();
+                    const accUser = Attendance.usernameKey(acc.username);
                     const hasRecord = allAttendance.some(r => 
-                        (r.username || '').toLowerCase() === accUser && 
+                        Attendance.usernameKey(r.username) === accUser &&
                         r.dateStr === dateStr && 
                         (r.type === shift || (shift === 'morning' && !r.type))
                     );
@@ -200,7 +341,7 @@ const Attendance = {
 
                     // 2. Kiểm tra có đơn xin nghỉ phép đã duyệt không
                     const hasLeave = allLeaves.some(l => {
-                        if ((l.username || '').toLowerCase() !== accUser || l.status !== 'approved') return false;
+                        if (Attendance.usernameKey(l.username) !== accUser || l.status !== 'approved') return false;
                         const dStart = new Date(l.startDate);
                         const dToday = new Date(dateStr);
                         const diff = Math.floor((dToday - dStart) / (1000 * 60 * 60 * 24));
@@ -210,7 +351,7 @@ const Attendance = {
 
                     // 3. Kiểm tra có đơn xin đi trễ không (duyệt hoặc đang chờ)
                     const hasLateRequest = allLateRequests.some(r => 
-                        (r.username || '').toLowerCase() === accUser && 
+                        Attendance.usernameKey(r.username) === accUser &&
                         r.date === dateStr && 
                         (r.status === 'approved' || r.status === 'pending')
                     );
@@ -325,9 +466,9 @@ const Attendance = {
             if (Utils.isSystemAccount(acc)) continue;
             activeAccountsCount++;
 
-            const manualAccUser = (acc.username || '').toLowerCase();
+            const manualAccUser = Attendance.usernameKey(acc.username);
             const record = allAttendance.find(r => 
-                (r.username || '').toLowerCase() === manualAccUser && 
+                Attendance.usernameKey(r.username) === manualAccUser &&
                 r.dateStr === dateStr && 
                 (r.type === shift || (shift === 'morning' && !r.type))
             );
@@ -338,7 +479,7 @@ const Attendance = {
             }
 
             const leave = allLeaves.find(l => {
-                if ((l.username || '').toLowerCase() !== manualAccUser || l.status !== 'approved') return false;
+                if (Attendance.usernameKey(l.username) !== manualAccUser || l.status !== 'approved') return false;
                 const dStart = new Date(l.startDate);
                 const dToday = new Date(dateStr);
                 const diff = Math.floor((dToday - dStart) / (1000 * 60 * 60 * 24));
@@ -350,7 +491,7 @@ const Attendance = {
             }
 
             const lateRequest = allLateRequests.find(r => 
-                (r.username || '').toLowerCase() === manualAccUser && 
+                Attendance.usernameKey(r.username) === manualAccUser &&
                 r.date === dateStr && 
                 (r.status === 'approved' || r.status === 'pending')
             );
@@ -422,9 +563,9 @@ const Attendance = {
             const updatedAttendance = await Attendance.loadData(); // Load fresh
             for (const username of penalizedUsers) {
                 // Kiểm tra lại lần cuối để tránh phạt đè (so sánh không phân biệt hoa/thường)
-                const uLower = (username || '').toLowerCase();
+                const uLower = Attendance.usernameKey(username);
                 const exists = updatedAttendance.some(r => 
-                    (r.username || '').toLowerCase() === uLower && 
+                    Attendance.usernameKey(r.username) === uLower &&
                     r.dateStr === dateStr && 
                     (r.type === shift || (shift === 'morning' && !r.type))
                 );
@@ -1235,75 +1376,9 @@ const Attendance = {
         const startStr = cycle.startStr;
         const endStr = cycle.endStr;
         
-        // Tính số ngày làm việc đã qua trong chu kỳ tính lương (Loại trừ Chủ nhật)
-        const todayZero = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        let limitDate = new Date(cycle.endDate);
-        limitDate.setHours(0,0,0,0);
-        if (todayZero < limitDate) {
-            limitDate = todayZero;
-        }
-
-        let passedWorkingDays = 0;
-        let tempDate = new Date(cycle.startDate);
-        tempDate.setHours(0,0,0,0);
-        while (tempDate <= limitDate) {
-            if (tempDate.getDay() !== 0) {
-                passedWorkingDays++;
-            }
-            tempDate.setDate(tempDate.getDate() + 1);
-        }
-
-        const summary = {};
-        allData.forEach(r => {
-            if (r.dateStr >= startStr && r.dateStr <= endStr) {
-                // Sửa lỗi ngày 13/06 trực tiếp trong bộ nhớ
-                if (/2026-0?6-1?3/.test(String(r.dateStr).trim()) && r.status !== 'on_time') { console.log('[ATT-v4] Force normalizing:', r.username, r.dateStr, r.status); r.status = 'on_time'; r.lateMinutes = 0;
-                    r.status = 'on_time';
-                    r.lateMinutes = 0;
-                }
-                if (!summary[r.username]) {
-                    summary[r.username] = { totalDays: 0, onTime: 0, late: 0, lateExcused: 0, totalLateMinutes: 0 };
-                }
-                const weight = r.type ? 0.5 : 1.0;
-                summary[r.username].totalDays += weight;
-                if (r.status === 'on_time') {
-                    summary[r.username].onTime += weight;
-                } else if (r.status === 'late_excused') {
-                    summary[r.username].lateExcused += weight;
-                } else {
-                    // BỎ QUA NGÀY 13/06/2026 DO LỖI HỆ THỐNG
-                    if (!/2026-0?6-1?3/.test(String(r.dateStr).trim())) {
-                        summary[r.username].late += weight;
-                        summary[r.username].totalLateMinutes += r.lateMinutes || 0;
-                    } else {
-                        // Nếu là ngày 13/06 mà bị late, đếm vào onTime để không bị coi là Vắng
-                        summary[r.username].onTime += weight;
-                    }
-                }
-            }
-        });
-
-        const approvedLeaves = {};
-        allLeaves.forEach(l => {
-            const lStart = l.startDate || l.date || '';
-            if (l.status === 'approved' && lStart >= startStr && lStart <= endStr) {
-                if (!approvedLeaves[l.username]) approvedLeaves[l.username] = 0;
-                approvedLeaves[l.username] += parseFloat(l.days) || 0;
-            }
-        });
-
-        // Lấy tất cả user từ DB (loại admin và CONGTY) để hiển thị kể cả khi chưa điểm danh
         const accounts = (typeof Auth !== 'undefined' && await Auth.getAccounts()) || [];
-        const usersList = accounts
-            .filter(a => a.role !== 'admin' && a.username.toLowerCase() !== 'admin' && a.username.toLowerCase() !== 'congty')
-            .map(a => a.username);
-        
-        // Cứ thêm user có dữ liệu điểm danh lỡ như tài khoản bị xoá
-        Object.keys(summary).forEach(u => {
-            if (!usersList.includes(u) && u.toLowerCase() !== 'admin' && u.toLowerCase() !== 'congty') {
-                usersList.push(u);
-            }
-        });
+        const passedWorkingDays = Attendance.getPassedWorkingDays(cycle);
+        const { summary, approvedLeaves, usersList } = Attendance.buildAttendanceSummary(allData, allLeaves, accounts, startStr, endStr);
 
         const security = await Attendance.getAttendanceSecuritySettings();
         const securityHtml = await Attendance.renderAttendanceSecurityPanel(security);
@@ -1403,8 +1478,9 @@ const Attendance = {
                             <tbody>
                                 ${usersList.length === 0 ? '<tr><td colspan="7" style="text-align:center; padding: 16px;">Chưa có dữ liệu tháng này</td></tr>' : ''}
                                 ${usersList.map(u => {
-                                    const s = summary[u] || { totalDays: 0, onTime: 0, late: 0, lateExcused: 0, totalLateMinutes: 0 };
-                                    const leaves = approvedLeaves[u] || 0;
+                                    const userKey = Attendance.usernameKey(u);
+                                    const s = summary[userKey] || { totalDays: 0, onTime: 0, late: 0, lateExcused: 0, totalLateMinutes: 0 };
+                                    const leaves = approvedLeaves[userKey] || 0;
                                     let absent = passedWorkingDays - s.totalDays - leaves;
                                     if (absent < 0) absent = 0;
                                     
@@ -1656,11 +1732,11 @@ const Attendance = {
         
         try {
             const allData = await Attendance.loadData();
-            const normalizedU = (username || '').toLowerCase().trim();
+            const normalizedU = Attendance.usernameKey(username);
             
             // Kiểm tra xem đã có bản ghi chưa
             const existingRecord = allData.find(r => 
-                (r.username || '').toLowerCase().trim() === normalizedU && 
+                Attendance.usernameKey(r.username) === normalizedU &&
                 r.dateStr === dateStr && 
                 (r.type === sessionType || (sessionType === 'morning' && !r.type))
             );
@@ -1813,8 +1889,8 @@ const Attendance = {
             try {
                 if (typeof RewardsModule !== 'undefined') {
                     const allRewards = await RewardsModule.loadData();
-                    const normalizedU = (user.username || '').toLowerCase().trim();
-                    const flexCard = allRewards.find(r => (r.username || '').toLowerCase().trim() === normalizedU && r.cardId === 'card_flex' && r.isUsed && (Date.now() - (r.usedAt || 0) < 7 * 24 * 60 * 60 * 1000));
+                    const normalizedU = Attendance.usernameKey(user.username);
+                    const flexCard = allRewards.find(r => Attendance.usernameKey(r.username) === normalizedU && r.cardId === 'card_flex' && r.isUsed && (Date.now() - (r.usedAt || 0) < 7 * 24 * 60 * 60 * 1000));
                     if (flexCard) {
                         deadline.setHours(deadline.getHours() + 1); 
                     }
@@ -1836,8 +1912,8 @@ const Attendance = {
             
             // Check if there is an approved late request for today
             const lates = await Attendance.loadLateRequests();
-            const normalizedU = (user.username || '').toLowerCase().trim();
-            const todayApprovedRequest = lates.find(r => (r.username || '').toLowerCase().trim() === normalizedU && r.date === dateStr && r.status === 'approved');
+            const normalizedU = Attendance.usernameKey(user.username);
+            const todayApprovedRequest = lates.find(r => Attendance.usernameKey(r.username) === normalizedU && r.date === dateStr && r.status === 'approved');
             const locStr = lat ? `\n📍 <b>Vị trí:</b> <a href="https://google.com/maps?q=${lat},${lng}">Xem bản đồ</a>` : '';
             const shiftName = currentSession === 'morning' ? 'CA SÁNG' : 'CA CHIỀU';
             
@@ -1923,9 +1999,9 @@ const Attendance = {
 
         try {
             const allData = await Attendance.loadData();
-            const normalizedU = (user.username || '').toLowerCase().trim();
+            const normalizedU = Attendance.usernameKey(user.username);
             const existingRecord = allData.find(r => 
-                (r.username || '').toLowerCase().trim() === normalizedU && 
+                Attendance.usernameKey(r.username) === normalizedU &&
                 r.dateStr === dateStr && 
                 (r.type === currentSession || (currentSession === 'morning' && !r.type))
             );
@@ -2087,9 +2163,9 @@ const Attendance = {
         const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
         
         const allData = await Attendance.loadData();
-        const normalizedU = (user.username || '').toLowerCase().trim();
-        const todayRecord = allData.find(r => (r.username || '').toLowerCase().trim() === normalizedU && r.dateStr === dateStr && r.type === 'afternoon') ||
-                            allData.find(r => (r.username || '').toLowerCase().trim() === normalizedU && r.dateStr === dateStr && (r.type === 'morning' || !r.type));
+        const normalizedU = Attendance.usernameKey(user.username);
+        const todayRecord = allData.find(r => Attendance.usernameKey(r.username) === normalizedU && r.dateStr === dateStr && r.type === 'afternoon') ||
+                            allData.find(r => Attendance.usernameKey(r.username) === normalizedU && r.dateStr === dateStr && (r.type === 'morning' || !r.type));
         
         if (todayRecord) {
             todayRecord.checkoutTimestamp = now.getTime();
@@ -2130,71 +2206,18 @@ const Attendance = {
         const startStr = cycle.startStr;
         const endStr = cycle.endStr;
         
-        const todayZero = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        let limitDate = new Date(cycle.endDate);
-        limitDate.setHours(0,0,0,0);
-        if (todayZero < limitDate) {
-            limitDate = todayZero;
-        }
-
-        let passedWorkingDays = 0;
-        let tempDate = new Date(cycle.startDate);
-        tempDate.setHours(0,0,0,0);
-        while (tempDate <= limitDate) {
-            if (tempDate.getDay() !== 0) {
-                passedWorkingDays++;
-            }
-            tempDate.setDate(tempDate.getDate() + 1);
-        }
-
-        const summary = {};
-        allData.forEach(r => {
-            if (r.dateStr >= startStr && r.dateStr <= endStr) {
-                const normalizedRU = (r.username || '').toLowerCase().trim();
-                // Sửa lỗi ngày 13/06 trực tiếp trong bộ nhớ
-                if (/2026-0?6-1?3/.test(String(r.dateStr).trim()) && r.status !== 'on_time') { 
-                    console.log('[ATT-v4] Force normalizing:', r.username, r.dateStr, r.status); 
-                    r.status = 'on_time'; 
-                    r.lateMinutes = 0;
-                }
-                if (!summary[normalizedRU]) summary[normalizedRU] = { totalDays: 0, onTime: 0, late: 0, totalLateMinutes: 0 };
-                const weight = r.type ? 0.5 : 1.0;
-                summary[normalizedRU].totalDays += weight;
-                if (r.status === 'on_time') summary[normalizedRU].onTime += weight;
-                else {
-                    summary[normalizedRU].late += weight;
-                    summary[normalizedRU].totalLateMinutes += r.lateMinutes || 0;
-                }
-            }
-        });
-
-        const approvedLeaves = {};
-        allLeaves.forEach(l => {
-            const lStart = l.startDate || l.date || '';
-            if (l.status === 'approved' && lStart >= startStr && lStart <= endStr) {
-                if (!approvedLeaves[l.username]) approvedLeaves[l.username] = 0;
-                approvedLeaves[l.username] += parseFloat(l.days) || 0;
-            }
-        });
-
         const accounts = (typeof Auth !== 'undefined' && await Auth.getAccounts()) || [];
-        const usersList = accounts
-            .filter(a => a.role !== 'admin' && a.username.toLowerCase() !== 'admin' && a.username.toLowerCase() !== 'congty')
-            .map(a => a.username);
-        Object.keys(summary).forEach(u => {
-            if (!usersList.includes(u) && u.toLowerCase() !== 'admin' && u.toLowerCase() !== 'congty') {
-                usersList.push(u);
-            }
-        });
+        const passedWorkingDays = Attendance.getPassedWorkingDays(cycle);
+        const { summary, approvedLeaves, usersList } = Attendance.buildAttendanceSummary(allData, allLeaves, accounts, startStr, endStr);
 
         // Tạo nội dung CSV (UTF-8 BOM hỗ trợ tiếng Việt)
         let csvContent = "\uFEFF"; // BOM cho Excel
         csvContent += "Tài xế/Nhân viên,Tổng ngày công đã qua,Đã đi làm,Đúng giờ,Vắng,Nghỉ phép duyệt,Đi muộn (lần),Tổng phút đi muộn\n";
 
         usersList.forEach(u => {
-            const normalizedU = u.toLowerCase().trim();
-            const s = summary[normalizedU] || { totalDays: 0, onTime: 0, late: 0, totalLateMinutes: 0 };
-            const leaves = approvedLeaves[normalizedU] || 0;
+            const userKey = Attendance.usernameKey(u);
+            const s = summary[userKey] || { totalDays: 0, onTime: 0, late: 0, lateExcused: 0, totalLateMinutes: 0 };
+            const leaves = approvedLeaves[userKey] || 0;
             let absent = passedWorkingDays - s.totalDays - leaves;
             if (absent < 0) absent = 0;
             
@@ -2223,13 +2246,13 @@ const Attendance = {
         const endStr = cycle.endStr;
         
         // Filter by this user + current payroll cycle
-        const normalizedTargetU = (username || '').toLowerCase().trim();
+        const normalizedTargetU = Attendance.usernameKey(username);
         const userRecords = allData
-            .filter(r => (r.username || '').toLowerCase().trim() === normalizedTargetU && r.dateStr >= startStr && r.dateStr <= endStr)
+            .filter(r => Attendance.usernameKey(r.username) === normalizedTargetU && r.dateStr >= startStr && r.dateStr <= endStr)
             .sort((a, b) => a.dateStr.localeCompare(b.dateStr));
         
         const userLeaves = allLeaves
-            .filter(l => (l.username || '').toLowerCase().trim() === normalizedTargetU && (l.startDate || l.date) >= startStr && (l.startDate || l.date) <= endStr);
+            .filter(l => Attendance.usernameKey(l.username) === normalizedTargetU && (l.startDate || l.date) >= startStr && (l.startDate || l.date) <= endStr);
         
         const totalOnTime = userRecords.filter(r => r.status === 'on_time').length;
         const totalExcusedLate = userRecords.filter(r => r.status === 'late_excused').length;
@@ -2595,71 +2618,9 @@ const Attendance = {
         const startStr = cycle.startStr;
         const endStr = cycle.endStr;
         
-        const todayZero = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        let limitDate = new Date(cycle.endDate);
-        limitDate.setHours(0,0,0,0);
-        if (todayZero < limitDate) {
-            limitDate = todayZero;
-        }
-
-        let passedWorkingDays = 0;
-        let tempDate = new Date(cycle.startDate);
-        tempDate.setHours(0,0,0,0);
-        while (tempDate <= limitDate) {
-            if (tempDate.getDay() !== 0) {
-                passedWorkingDays++;
-            }
-            tempDate.setDate(tempDate.getDate() + 1);
-        }
-
-        const summary = {};
-        allData.forEach(r => {
-            if (r.dateStr >= startStr && r.dateStr <= endStr) {
-                // Sửa lỗi ngày 13/06 trực tiếp trong bộ nhớ
-                if (/2026-0?6-1?3/.test(String(r.dateStr).trim()) && r.status !== 'on_time') { console.log('[ATT-v4] Force normalizing:', r.username, r.dateStr, r.status); r.status = 'on_time'; r.lateMinutes = 0;
-                    r.status = 'on_time';
-                    r.lateMinutes = 0;
-                }
-                if (!summary[r.username]) {
-                    summary[r.username] = { totalDays: 0, onTime: 0, late: 0, lateExcused: 0, totalLateMinutes: 0 };
-                }
-                const weight = r.type ? 0.5 : 1.0;
-                summary[r.username].totalDays += weight;
-                if (r.status === 'on_time') {
-                    summary[r.username].onTime += weight;
-                } else if (r.status === 'late_excused') {
-                    summary[r.username].lateExcused += weight;
-                } else {
-                    // BỎ QUA NGÀY 13/06/2026 DO LỖI HỆ THỐNG
-                    if (!/2026-0?6-1?3/.test(String(r.dateStr).trim())) {
-                        summary[r.username].late += weight;
-                        summary[r.username].totalLateMinutes += r.lateMinutes || 0;
-                    } else {
-                        // Nếu là ngày 13/06 mà bị late, đếm vào onTime để không bị coi là Vắng
-                        summary[r.username].onTime += weight;
-                    }
-                }
-            }
-        });
-
-        const approvedLeaves = {};
-        allLeaves.forEach(l => {
-            const lStart = l.startDate || l.date || '';
-            if (l.status === 'approved' && lStart >= startStr && lStart <= endStr) {
-                if (!approvedLeaves[l.username]) approvedLeaves[l.username] = 0;
-                approvedLeaves[l.username] += parseFloat(l.days) || 0;
-            }
-        });
-
         const accounts = (typeof Auth !== 'undefined' && await Auth.getAccounts()) || [];
-        const usersList = accounts
-            .filter(a => a.role !== 'admin' && a.username.toLowerCase() !== 'admin' && a.username.toLowerCase() !== 'congty')
-            .map(a => a.username);
-        Object.keys(summary).forEach(u => {
-            if (!usersList.includes(u) && u.toLowerCase() !== 'admin' && u.toLowerCase() !== 'congty') {
-                usersList.push(u);
-            }
-        });
+        const passedWorkingDays = Attendance.getPassedWorkingDays(cycle);
+        const { summary, approvedLeaves, usersList } = Attendance.buildAttendanceSummary(allData, allLeaves, accounts, startStr, endStr);
 
         const clone = document.createElement('div');
         clone.style.cssText = 'padding:30px;background:#fff;color:#000;font-family:Arial,sans-serif;';
@@ -2667,8 +2628,9 @@ const Attendance = {
         const stamp = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="120" height="120"><circle cx="100" cy="100" r="92" fill="none" stroke="#da251d" stroke-width="4" opacity="0.85"/><circle cx="100" cy="100" r="82" fill="none" stroke="#da251d" stroke-width="1.5" opacity="0.6"/><path d="M 100 35 Q 115 50 110 65 Q 125 55 130 70 Q 120 75 125 90 Q 135 85 140 95 Q 130 100 125 110 Q 115 105 110 115 Q 105 105 100 110 Q 95 105 90 115 Q 85 105 75 110 Q 70 100 60 95 Q 65 85 75 90 Q 80 75 70 70 Q 75 55 90 65 Q 85 50 100 35" fill="#da251d" opacity="0.7"/><text x="100" y="148" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#da251d">THANH LONG WORK</text><text x="100" y="165" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#da251d">GIÁM ĐỐC</text></svg>`;
 
         let rowsHtml = usersList.map(u => {
-            const s = summary[u] || { totalDays: 0, onTime: 0, late: 0, lateExcused: 0, totalLateMinutes: 0 };
-            const leaves = approvedLeaves[u] || 0;
+            const userKey = Attendance.usernameKey(u);
+            const s = summary[userKey] || { totalDays: 0, onTime: 0, late: 0, lateExcused: 0, totalLateMinutes: 0 };
+            const leaves = approvedLeaves[userKey] || 0;
             let absent = passedWorkingDays - s.totalDays - leaves;
             if (absent < 0) absent = 0;
             
@@ -2739,4 +2701,3 @@ const Attendance = {
         });
     }
 };
-
