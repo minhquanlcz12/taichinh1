@@ -25,6 +25,10 @@ window.LobbyNeon = {
         rpgWorldInterval: null,
         rpgWildInterval: null,
         rpgHudInterval: null,
+        rpgAutoFarmInterval: null,
+        rpgAutoFarm: false,
+        rpgAutoFarmBusy: false,
+        rpgLastAutoToastAt: 0,
         rpgWildMonsters: {},
         selectedWildMonsterId: null,
         rpgSkillCooldownUntil: 0,
@@ -447,6 +451,12 @@ window.LobbyNeon = {
             clearInterval(LobbyNeon.state.rpgHudInterval);
             LobbyNeon.state.rpgHudInterval = null;
         }
+        if (LobbyNeon.state.rpgAutoFarmInterval) {
+            clearInterval(LobbyNeon.state.rpgAutoFarmInterval);
+            LobbyNeon.state.rpgAutoFarmInterval = null;
+        }
+        LobbyNeon.state.rpgAutoFarm = false;
+        LobbyNeon.state.rpgAutoFarmBusy = false;
         LobbyNeon.state.rpgWildMonsters = {};
         document.querySelectorAll('.rpg-world-monster').forEach(el => el.remove());
         document.querySelectorAll('.rpg-wild-monster').forEach(el => el.remove());
@@ -1396,6 +1406,15 @@ window.LobbyNeon = {
                     cursor: wait;
                     filter: grayscale(.35);
                 }
+                .rpg-auto-button {
+                    min-width: 88px;
+                    background: linear-gradient(135deg, #0f172a, #1e293b);
+                    border: 1px solid rgba(34, 211, 238, 0.34);
+                }
+                .rpg-auto-button.active {
+                    background: linear-gradient(135deg, #16a34a, #06b6d4);
+                    box-shadow: 0 0 24px rgba(34, 211, 238, 0.38), 0 0 18px rgba(34, 197, 94, 0.25);
+                }
                 .rpg-target-hint {
                     min-width: 155px;
                     max-width: 250px;
@@ -1406,6 +1425,282 @@ window.LobbyNeon = {
                     white-space: nowrap;
                     overflow: hidden;
                     text-overflow: ellipsis;
+                }
+                .rpg-skill-wheel {
+                    position: absolute;
+                    right: 388px;
+                    bottom: 88px;
+                    z-index: 1101;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 10px;
+                    pointer-events: auto;
+                }
+                .rpg-wheel-btn {
+                    width: 58px;
+                    height: 58px;
+                    border-radius: 50%;
+                    border: 1.5px solid rgba(148, 163, 184, 0.24);
+                    background:
+                        radial-gradient(circle at 38% 28%, rgba(255,255,255,.2), transparent 28%),
+                        linear-gradient(145deg, rgba(15, 23, 42, .96), rgba(2, 6, 23, .94));
+                    color: #e2e8f0;
+                    display: grid;
+                    place-items: center;
+                    position: relative;
+                    cursor: pointer;
+                    box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 10px 24px rgba(0,0,0,.38);
+                    transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+                }
+                .rpg-wheel-btn:hover {
+                    transform: translateY(-2px) scale(1.04);
+                    border-color: var(--wheel-color, #22d3ee);
+                    box-shadow: 0 0 18px color-mix(in srgb, var(--wheel-color, #22d3ee) 45%, transparent), 0 10px 24px rgba(0,0,0,.42);
+                }
+                .rpg-wheel-btn.active {
+                    border-color: var(--wheel-color, #22d3ee);
+                    box-shadow: 0 0 0 2px color-mix(in srgb, var(--wheel-color, #22d3ee) 22%, transparent), 0 0 22px color-mix(in srgb, var(--wheel-color, #22d3ee) 42%, transparent);
+                }
+                .rpg-wheel-btn.locked {
+                    filter: grayscale(.65);
+                    opacity: .58;
+                }
+                .rpg-wheel-btn.auto-on {
+                    border-color: #22c55e;
+                    color: #bbf7d0;
+                    box-shadow: 0 0 22px rgba(34, 197, 94, .42);
+                }
+                .rpg-wheel-icon {
+                    width: 38px;
+                    height: 38px;
+                    border-radius: 50%;
+                    display: grid;
+                    place-items: center;
+                    font-size: 20px;
+                    background: radial-gradient(circle, color-mix(in srgb, var(--wheel-color, #22d3ee) 32%, transparent), transparent 72%);
+                    filter: drop-shadow(0 0 8px var(--wheel-color, #22d3ee));
+                }
+                .rpg-wheel-label {
+                    position: absolute;
+                    right: 66px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    min-width: 78px;
+                    padding: 4px 7px;
+                    border-radius: 8px;
+                    background: rgba(2, 6, 23, .84);
+                    border: 1px solid rgba(148, 163, 184, .18);
+                    color: #cbd5e1;
+                    font-size: 9px;
+                    font-weight: 900;
+                    text-align: right;
+                    opacity: 0;
+                    pointer-events: none;
+                    transition: opacity .16s ease;
+                    white-space: nowrap;
+                }
+                .rpg-wheel-btn:hover .rpg-wheel-label {
+                    opacity: 1;
+                }
+                .rpg-inventory-layout {
+                    display: grid;
+                    grid-template-columns: 1.05fr .95fr;
+                    gap: 10px;
+                }
+                .rpg-equip-panel,
+                .rpg-bag-panel {
+                    background: linear-gradient(180deg, rgba(15,23,42,.9), rgba(2,6,23,.9));
+                    border: 1px solid rgba(148,163,184,.18);
+                    border-radius: 12px;
+                    padding: 10px;
+                    min-width: 0;
+                }
+                .rpg-panel-head {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 8px;
+                    margin-bottom: 9px;
+                    color: #f8fafc;
+                    font-size: 11px;
+                    font-weight: 1000;
+                    text-transform: uppercase;
+                    letter-spacing: .04em;
+                }
+                .rpg-character-frame {
+                    position: relative;
+                    min-height: 128px;
+                    border-radius: 12px;
+                    border: 1px solid rgba(34,211,238,.22);
+                    background:
+                        radial-gradient(circle at 50% 58%, rgba(34,211,238,.2), transparent 42%),
+                        linear-gradient(180deg, rgba(30,41,59,.62), rgba(2,6,23,.76));
+                    display: grid;
+                    place-items: center;
+                    overflow: hidden;
+                }
+                .rpg-character-frame::after {
+                    content: "";
+                    position: absolute;
+                    left: 28%;
+                    right: 28%;
+                    bottom: 14px;
+                    height: 10px;
+                    border-radius: 50%;
+                    background: radial-gradient(ellipse at center, rgba(34,211,238,.46), transparent 72%);
+                    filter: blur(1px);
+                }
+                .rpg-character-frame .rpg-player-sprite {
+                    position: relative;
+                    z-index: 2;
+                    transform: scale(1.05);
+                }
+                .rpg-equip-grid {
+                    display: grid;
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                    gap: 7px;
+                    margin-top: 9px;
+                }
+                .rpg-equip-slot {
+                    min-height: 54px;
+                    border-radius: 10px;
+                    border: 1px solid rgba(148,163,184,.16);
+                    background: rgba(15,23,42,.72);
+                    padding: 7px;
+                    display: grid;
+                    grid-template-columns: 28px 1fr;
+                    gap: 7px;
+                    align-items: center;
+                }
+                .rpg-equip-icon {
+                    width: 28px;
+                    height: 28px;
+                    border-radius: 8px;
+                    display: grid;
+                    place-items: center;
+                    background: rgba(255,255,255,.06);
+                    border: 1px solid rgba(255,255,255,.08);
+                    color: var(--equip-color, #22d3ee);
+                    filter: drop-shadow(0 0 8px color-mix(in srgb, var(--equip-color, #22d3ee) 50%, transparent));
+                }
+                .rpg-equip-label {
+                    color: #94a3b8;
+                    font-size: 8px;
+                    font-weight: 900;
+                    text-transform: uppercase;
+                }
+                .rpg-equip-name {
+                    color: #e2e8f0;
+                    font-size: 9px;
+                    line-height: 1.25;
+                    font-weight: 900;
+                    overflow: hidden;
+                    display: -webkit-box;
+                    -webkit-line-clamp: 2;
+                    -webkit-box-orient: vertical;
+                }
+                .rpg-bag-grid {
+                    display: grid;
+                    grid-template-columns: repeat(4, minmax(0, 1fr));
+                    gap: 6px;
+                }
+                .rpg-bag-cell {
+                    aspect-ratio: 1;
+                    border-radius: 8px;
+                    border: 1px solid rgba(148,163,184,.14);
+                    background: rgba(15,23,42,.68);
+                    display: grid;
+                    place-items: center;
+                    position: relative;
+                    overflow: hidden;
+                }
+                .rpg-bag-cell.has-item {
+                    border-color: color-mix(in srgb, var(--item-color, #22d3ee) 44%, rgba(148,163,184,.14));
+                    background:
+                        radial-gradient(circle at 50% 34%, color-mix(in srgb, var(--item-color, #22d3ee) 20%, transparent), transparent 68%),
+                        rgba(15,23,42,.82);
+                }
+                .rpg-bag-icon {
+                    font-size: 18px;
+                    filter: drop-shadow(0 0 8px var(--item-color, #22d3ee));
+                }
+                .rpg-bag-qty {
+                    position: absolute;
+                    right: 3px;
+                    bottom: 2px;
+                    padding: 1px 4px;
+                    border-radius: 5px;
+                    background: rgba(0,0,0,.68);
+                    color: #fff;
+                    font-size: 8px;
+                    font-weight: 1000;
+                }
+                .rpg-quick-skins {
+                    display: grid;
+                    grid-template-columns: repeat(4, minmax(0, 1fr));
+                    gap: 7px;
+                }
+                .rpg-skin-orb {
+                    min-height: 76px;
+                    border-radius: 12px;
+                    border: 1px solid rgba(148,163,184,.16);
+                    background: rgba(15,23,42,.72);
+                    color: #e2e8f0;
+                    cursor: pointer;
+                    padding: 7px 4px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 5px;
+                    position: relative;
+                    overflow: hidden;
+                }
+                .rpg-skin-orb.active {
+                    border-color: var(--skin-color, #22d3ee);
+                    box-shadow: 0 0 18px color-mix(in srgb, var(--skin-color, #22d3ee) 38%, transparent);
+                }
+                .rpg-skin-orb.locked {
+                    opacity: .58;
+                    filter: grayscale(.55);
+                }
+                .rpg-skin-orb-icon {
+                    width: 38px;
+                    height: 38px;
+                    border-radius: 50%;
+                    display: grid;
+                    place-items: center;
+                    background: radial-gradient(circle, color-mix(in srgb, var(--skin-color, #22d3ee) 34%, transparent), transparent 72%);
+                    color: var(--skin-color, #22d3ee);
+                    font-size: 20px;
+                    filter: drop-shadow(0 0 10px var(--skin-color, #22d3ee));
+                }
+                .rpg-skin-orb-name {
+                    width: 100%;
+                    color: #e2e8f0;
+                    font-size: 8px;
+                    font-weight: 900;
+                    line-height: 1.15;
+                    text-align: center;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+                .rpg-skin-orb-tag {
+                    color: #94a3b8;
+                    font-size: 8px;
+                    font-weight: 900;
+                }
+                .rpg-mini-btn {
+                    border: 1px solid rgba(34,211,238,.28);
+                    border-radius: 8px;
+                    background: rgba(34,211,238,.1);
+                    color: #67e8f9;
+                    padding: 5px 8px;
+                    font-size: 9px;
+                    font-weight: 1000;
+                    cursor: pointer;
                 }
                 .lobby-user-wrapper.rpg-world-fighting {
                     z-index: 93 !important;
@@ -1604,8 +1899,13 @@ window.LobbyNeon = {
                         <span>⚔️</span>
                         <strong>SKILL</strong>
                     </button>
+                    <button id="rpg-auto-button" class="rpg-skill-button rpg-auto-button" onclick="LobbyNeon.toggleRpgAutoFarm()" title="Tự động áp sát và farm quái">
+                        <span>⏱</span>
+                        <strong>AUTO</strong>
+                    </button>
                     <div id="rpg-target-hint" class="rpg-target-hint">Đang dò quái...</div>
                 </div>
+                <div id="rpg-skill-wheel" class="rpg-skill-wheel"></div>
 
                 <!-- Game Hub sliding side panel -->
                 <div id="lobby-game-hub" class="lobby-game-hub">
@@ -3533,6 +3833,172 @@ window.LobbyNeon = {
         return Math.max(12, Math.round(base + level * 4 + (classCfg.expMult || 1) * 7));
     },
 
+    getRpgInventoryItems: (profile) => {
+        const meta = {
+            goldDust: { name: 'Tinh kim', icon: '🪙', color: '#facc15' },
+            linhThach: { name: 'Linh thạch', icon: '💎', color: '#38bdf8' },
+            daCuongHoa: { name: 'Đá cường hóa', icon: '🪨', color: '#94a3b8' },
+            longAn: { name: 'Long ấn', icon: '🔥', color: '#fb923c' },
+            fireShard: { name: 'Mảnh Hỏa Long', icon: '🔥', color: '#f97316' },
+            thunderShard: { name: 'Mảnh Lôi Ảnh', icon: '⚡', color: '#facc15' },
+            moonShard: { name: 'Mảnh Nguyệt Ảnh', icon: '🌙', color: '#c084fc' }
+        };
+        return Object.entries(profile?.inventory || {})
+            .filter(([, qty]) => Number(qty) > 0)
+            .map(([key, qty]) => ({ key, qty: Number(qty), ...(meta[key] || { name: key, icon: '🎁', color: '#22d3ee' }) }));
+    },
+
+    renderRpgEquipmentPanel: (profile) => {
+        const classCfg = LobbyNeon.rpgClasses[profile.classId] || LobbyNeon.rpgClasses.kiem_tong;
+        const skin = LobbyNeon.rpgSkins[profile.equippedSkin] || LobbyNeon.rpgSkins.basic;
+        const items = LobbyNeon.getRpgInventoryItems(profile);
+        const totalCells = Math.max(24, Math.ceil(Math.max(items.length, 1) / 4) * 4);
+        const cells = Array.from({ length: totalCells }, (_, index) => items[index] || null);
+        const slots = [
+            { label: 'Môn phái', icon: classCfg.icon, name: profile.classChosen ? classCfg.name : 'Chưa nhập môn', color: classCfg.color },
+            { label: 'Chưởng', icon: skin.icon, name: skin.name, color: skin.color },
+            { label: 'Trang phục', icon: '👕', name: 'Theo tủ đồ Chibi', color: '#ec4899' },
+            { label: 'Cánh', icon: '🦋', name: 'Theo tủ đồ Chibi', color: '#38bdf8' },
+            { label: 'Linh thú', icon: '🐉', name: 'Theo tủ đồ Chibi', color: '#86efac' },
+            { label: 'Vòng sáng', icon: '⭕', name: 'Theo tủ đồ Chibi', color: '#facc15' }
+        ];
+        return `
+            <div class="rpg-inventory-layout">
+                <div class="rpg-equip-panel">
+                    <div class="rpg-panel-head">
+                        <span>🛡 Trang bị</span>
+                        <button class="rpg-mini-btn" onclick="if(typeof ChibiModule !== 'undefined') ChibiModule.openBuilder()">Tủ đồ</button>
+                    </div>
+                    <div class="rpg-character-frame">
+                        <div class="rpg-player-sprite">${LobbyNeon.getRpgPlayerBattleSvg()}</div>
+                    </div>
+                    <div class="rpg-equip-grid">
+                        ${slots.map(slot => `
+                            <div class="rpg-equip-slot" style="--equip-color:${slot.color};">
+                                <div class="rpg-equip-icon">${slot.icon}</div>
+                                <div>
+                                    <div class="rpg-equip-label">${slot.label}</div>
+                                    <div class="rpg-equip-name">${LobbyNeon.escapeHtml(slot.name)}</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="rpg-bag-panel">
+                    <div class="rpg-panel-head">
+                        <span>🎒 Ba lô</span>
+                        <span class="rpg-chip">${items.length} loại</span>
+                    </div>
+                    <div class="rpg-bag-grid">
+                        ${cells.map(item => item ? `
+                            <div class="rpg-bag-cell has-item" title="${LobbyNeon.escapeHtml(item.name)} x${item.qty}" style="--item-color:${item.color};">
+                                <span class="rpg-bag-icon">${item.icon}</span>
+                                <span class="rpg-bag-qty">x${item.qty}</span>
+                            </div>
+                        ` : `<div class="rpg-bag-cell"></div>`).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+    },
+
+    renderRpgQuickSkinButtons: (profile) => {
+        return `
+            <div class="rpg-quick-skins">
+                ${LobbyNeon.getRpgVisibleSkins(profile).map(skin => {
+                    const unlocked = LobbyNeon.isRpgSkinUnlocked(profile, skin);
+                    const shardCount = skin.shard ? Number(profile.inventory[skin.shard] || 0) : 0;
+                    const canUnlock = !unlocked && skin.shard && shardCount >= skin.unlockNeed;
+                    const label = unlocked
+                        ? (profile.equippedSkin === skin.id ? 'Đang dùng' : 'Bấm dùng')
+                        : (skin.classId ? `Lv.${skin.unlockLevel}` : `${shardCount}/${skin.unlockNeed || 0}`);
+                    return `
+                        <button class="rpg-skin-orb ${profile.equippedSkin === skin.id ? 'active' : ''} ${!unlocked && !canUnlock ? 'locked' : ''}"
+                            style="--skin-color:${skin.color};"
+                            title="${LobbyNeon.escapeHtml(skin.name)}"
+                            onclick="LobbyNeon.quickEquipAndCastRpgSkin('${skin.id}')">
+                            <span class="rpg-skin-orb-icon">${skin.icon}</span>
+                            <span class="rpg-skin-orb-name">${LobbyNeon.escapeHtml(skin.name)}</span>
+                            <span class="rpg-skin-orb-tag">${label}</span>
+                        </button>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    },
+
+    renderRpgSkillWheel: async () => {
+        const wheel = document.getElementById('rpg-skill-wheel');
+        if (!wheel) return;
+        let profile;
+        try {
+            ({ profile } = await LobbyNeon.getMyRpgProfile());
+        } catch (e) {
+            console.warn('render rpg skill wheel error:', e);
+            wheel.innerHTML = '';
+            return;
+        }
+        const skins = LobbyNeon.getRpgVisibleSkins(profile).slice(0, 4);
+        wheel.innerHTML = `
+            <button class="rpg-wheel-btn ${LobbyNeon.state.rpgAutoFarm ? 'auto-on' : ''}" style="--wheel-color:#22c55e;" onclick="LobbyNeon.toggleRpgAutoFarm()" title="Auto treo quái">
+                <span class="rpg-wheel-icon">⏱</span>
+                <span class="rpg-wheel-label">${LobbyNeon.state.rpgAutoFarm ? 'AUTO ON' : 'AUTO OFF'}</span>
+            </button>
+            ${skins.map(skin => {
+                const unlocked = LobbyNeon.isRpgSkinUnlocked(profile, skin);
+                return `
+                    <button class="rpg-wheel-btn ${profile.equippedSkin === skin.id ? 'active' : ''} ${unlocked ? '' : 'locked'}"
+                        style="--wheel-color:${skin.color};"
+                        onclick="LobbyNeon.quickEquipAndCastRpgSkin('${skin.id}')"
+                        title="${LobbyNeon.escapeHtml(skin.name)}">
+                        <span class="rpg-wheel-icon">${skin.icon}</span>
+                        <span class="rpg-wheel-label">${unlocked ? LobbyNeon.escapeHtml(skin.name) : `Khóa ${skin.unlockLevel ? 'Lv.' + skin.unlockLevel : 'VIP'}`}</span>
+                    </button>
+                `;
+            }).join('')}
+            <button class="rpg-wheel-btn" style="--wheel-color:#38bdf8;" onclick="LobbyNeon.openRpgHub()" title="Mở túi đồ / trang bị">
+                <span class="rpg-wheel-icon">🎒</span>
+                <span class="rpg-wheel-label">Túi đồ</span>
+            </button>
+        `;
+    },
+
+    quickEquipAndCastRpgSkin: async (skinId) => {
+        const skin = LobbyNeon.rpgSkins[skinId];
+        if (!skin) return;
+        const { data, profile } = await LobbyNeon.getMyRpgProfile();
+        if (skin.classId && skin.classId !== profile.classId) {
+            Utils.showToast('Skill này thuộc môn phái khác.', 'warning');
+            return;
+        }
+        const unlocked = LobbyNeon.isRpgSkinUnlocked(profile, skin);
+        let changed = false;
+        if (!unlocked) {
+            const shardCount = skin.shard ? Number(profile.inventory[skin.shard] || 0) : 0;
+            if (skin.shard && shardCount >= skin.unlockNeed) {
+                profile.inventory[skin.shard] = shardCount - skin.unlockNeed;
+                profile.unlockedSkins = Array.from(new Set([...(profile.unlockedSkins || []), skinId]));
+                changed = true;
+                Utils.showToast(`Đã mở khóa skin VIP ${skin.name}.`, 'success');
+            } else {
+                if (skin.classId) {
+                    Utils.showToast(`${skin.name} mở ở cấp ${skin.unlockLevel}.`, 'warning');
+                } else {
+                    Utils.showToast(`Chưa đủ mảnh để dùng ${skin.name}.`, 'warning');
+                }
+                LobbyNeon.openRpgHub();
+                return;
+            }
+        }
+        if (profile.equippedSkin !== skinId || changed) {
+            profile.equippedSkin = skinId;
+            await LobbyNeon.saveMyRpgProfile(profile, data);
+            if (LobbyNeon.state.activeHubTab === 'rpg') LobbyNeon.renderRpgPanel();
+            await LobbyNeon.renderRpgSkillWheel();
+        }
+        await LobbyNeon.castRpgSkill();
+    },
+
     getRpgSafeId: (username) => {
         const keyFn = Auth.usernameKey || ((value) => String(value || '').toLowerCase().replace(/[^a-z0-9]/g, ''));
         return keyFn(username) || 'player';
@@ -3752,6 +4218,7 @@ window.LobbyNeon = {
         }
         LobbyNeon.state.rpgWildInterval = setInterval(() => LobbyNeon.tickRpgWildMonsters(), 650);
         LobbyNeon.state.rpgHudInterval = setInterval(() => LobbyNeon.updateRpgFarmHud(), 350);
+        LobbyNeon.renderRpgSkillWheel();
     },
 
     tickRpgWildMonsters: () => {
@@ -3841,6 +4308,7 @@ window.LobbyNeon = {
     updateRpgFarmHud: () => {
         const hint = document.getElementById('rpg-target-hint');
         const btn = document.getElementById('rpg-skill-button');
+        const autoBtn = document.getElementById('rpg-auto-button');
         if (!hint || !btn) return;
         const now = Date.now();
         const cooldownMs = Math.max(0, LobbyNeon.state.rpgSkillCooldownUntil - now);
@@ -3850,22 +4318,90 @@ window.LobbyNeon = {
             : LobbyNeon.findNearestRpgWildMonster(9999);
         btn.classList.toggle('cooldown', cooldownMs > 0);
         btn.querySelector('strong').textContent = cooldownMs > 0 ? `${Math.ceil(cooldownMs / 1000)}s` : 'SKILL';
+        if (autoBtn) {
+            autoBtn.classList.toggle('active', Boolean(LobbyNeon.state.rpgAutoFarm));
+            const strong = autoBtn.querySelector('strong');
+            if (strong) strong.textContent = LobbyNeon.state.rpgAutoFarm ? 'ON' : 'AUTO';
+        }
+        const wheelAuto = document.querySelector('#rpg-skill-wheel .rpg-wheel-btn');
+        if (wheelAuto) wheelAuto.classList.toggle('auto-on', Boolean(LobbyNeon.state.rpgAutoFarm));
         if (!nearest) {
             hint.textContent = 'Chưa thấy quái. Hệ thống đang sinh quái tự động...';
             return;
         }
         const zone = LobbyNeon.rpgZones[nearest.monster.zoneId] || LobbyNeon.rpgZones.training_forest;
+        if (LobbyNeon.state.rpgAutoFarm) {
+            hint.textContent = nearest.dist <= 175
+                ? `AUTO đang đánh: ${zone.monster}`
+                : `AUTO đang áp sát ${zone.monster} (${Math.round(nearest.dist)}px)`;
+            return;
+        }
         hint.textContent = nearest.dist <= 175
             ? `Trong tầm: ${zone.monster} · bấm SKILL để đánh`
             : `Cách ${Math.round(nearest.dist)}px: bấm SKILL để chạy tới gần`;
     },
 
-    castRpgSkill: async () => {
+    startRpgAutoFarm: () => {
+        if (LobbyNeon.state.rpgAutoFarmInterval) clearInterval(LobbyNeon.state.rpgAutoFarmInterval);
+        LobbyNeon.state.rpgAutoFarmInterval = setInterval(async () => {
+            if (!LobbyNeon.state.rpgAutoFarm || LobbyNeon.state.rpgAutoFarmBusy) return;
+            LobbyNeon.state.rpgAutoFarmBusy = true;
+            try {
+                await LobbyNeon.castRpgSkill({ auto: true, silent: true });
+            } catch (e) {
+                console.warn('rpg auto farm error:', e);
+            } finally {
+                LobbyNeon.state.rpgAutoFarmBusy = false;
+            }
+        }, 1450);
+    },
+
+    stopRpgAutoFarm: () => {
+        if (LobbyNeon.state.rpgAutoFarmInterval) {
+            clearInterval(LobbyNeon.state.rpgAutoFarmInterval);
+            LobbyNeon.state.rpgAutoFarmInterval = null;
+        }
+        LobbyNeon.state.rpgAutoFarm = false;
+        LobbyNeon.state.rpgAutoFarmBusy = false;
+        LobbyNeon.updateRpgFarmHud();
+        LobbyNeon.renderRpgSkillWheel();
+    },
+
+    toggleRpgAutoFarm: async () => {
+        if (LobbyNeon.state.rpgAutoFarm) {
+            LobbyNeon.stopRpgAutoFarm();
+            Utils.showToast('Đã tắt auto treo quái.', 'info');
+            return;
+        }
+        const { profile } = await LobbyNeon.getMyRpgProfile();
+        if (!profile.classChosen) {
+            Utils.showToast('Chọn môn phái chính thức trước khi bật auto treo quái.', 'warning');
+            LobbyNeon.openRpgHub();
+            return;
+        }
+        LobbyNeon.state.rpgAutoFarm = true;
+        LobbyNeon.startRpgAutoFarm();
+        LobbyNeon.updateRpgFarmHud();
+        await LobbyNeon.renderRpgSkillWheel();
+        Utils.showToast('Đã bật auto treo quái. Chibi sẽ tự áp sát và dùng chưởng.', 'success');
+        if (!LobbyNeon.state.rpgAutoFarmBusy) {
+            LobbyNeon.state.rpgAutoFarmBusy = true;
+            try {
+                await LobbyNeon.castRpgSkill({ auto: true, silent: true });
+            } finally {
+                LobbyNeon.state.rpgAutoFarmBusy = false;
+            }
+        }
+    },
+
+    castRpgSkill: async (options = {}) => {
         const now = Date.now();
         if (now < LobbyNeon.state.rpgSkillCooldownUntil) return;
 
         const { data, profile, username } = await LobbyNeon.getMyRpgProfile();
         if (!profile.classChosen) {
+            if (options.auto) LobbyNeon.stopRpgAutoFarm();
+            if (options.silent) return;
             Utils.showToast('Bạn cần chọn môn phái chính thức trước khi farm quái.', 'warning');
             LobbyNeon.openRpgHub();
             return;
@@ -3886,6 +4422,10 @@ window.LobbyNeon = {
             const approachX = Math.max(90, target.x - 118);
             const approachY = target.y + 10;
             await LobbyNeon.moveTo(approachX, approachY);
+            if (options.silent) {
+                LobbyNeon.updateRpgFarmHud();
+                return;
+            }
             Utils.showToast('Đã áp sát quái. Bấm SKILL lần nữa để tung chưởng.', 'info');
             LobbyNeon.updateRpgFarmHud();
             return;
@@ -3911,7 +4451,7 @@ window.LobbyNeon = {
         target.lastHitAt = Date.now();
         if (target.hp <= 0 && !target.claimed) {
             target.defeated = true;
-            await LobbyNeon.rewardRpgWildKill(target, profile, data, username);
+            await LobbyNeon.rewardRpgWildKill(target, profile, data, username, options);
             setTimeout(() => {
                 const el = document.getElementById(`rpg-wild-${target.id}`);
                 if (el) el.remove();
@@ -3941,7 +4481,7 @@ window.LobbyNeon = {
         setTimeout(() => projectile.remove(), 650);
     },
 
-    rewardRpgWildKill: async (monster, profile, data, username) => {
+    rewardRpgWildKill: async (monster, profile, data, username, options = {}) => {
         monster.claimed = true;
         const zone = LobbyNeon.rpgZones[monster.zoneId] || LobbyNeon.rpgZones.training_forest;
         const rewardPoints = Math.max(1, zone.rewardPoints);
@@ -3976,7 +4516,11 @@ window.LobbyNeon = {
         ].slice(0, 12);
         await Auth.addExpToUser(username, rewardPoints);
         await LobbyNeon.saveMyRpgProfile(profile, data);
-        Utils.showToast(`Hạ ${zone.monster}: +${exp} EXP · ${LobbyNeon.formatRpgItems(items)}`, 'success');
+        const shouldToast = !options.auto || Date.now() - (LobbyNeon.state.rpgLastAutoToastAt || 0) > 7000;
+        if (shouldToast) {
+            LobbyNeon.state.rpgLastAutoToastAt = Date.now();
+            Utils.showToast(`Hạ ${zone.monster}: +${exp} EXP · ${LobbyNeon.formatRpgItems(items)}`, 'success');
+        }
         if (LobbyNeon.state.activeHubTab === 'rpg') LobbyNeon.renderRpgPanel();
     },
 
@@ -4158,6 +4702,7 @@ window.LobbyNeon = {
         await LobbyNeon.saveMyRpgProfile(profile, data);
         Utils.showToast(`Đã chọn môn phái chính thức: ${LobbyNeon.rpgClasses[classId].name}.`, 'success');
         LobbyNeon.renderRpgPanel();
+        LobbyNeon.renderRpgSkillWheel();
     },
 
     equipRpgSkin: async (skinId) => {
@@ -4189,6 +4734,7 @@ window.LobbyNeon = {
         await LobbyNeon.saveMyRpgProfile(profile, data);
         Utils.showToast(`Đã trang bị ${skin.name}.`, 'success');
         LobbyNeon.renderRpgPanel();
+        LobbyNeon.renderRpgSkillWheel();
     },
 
     startRpgHunt: async (zoneId, durationMin) => {
@@ -4429,6 +4975,14 @@ window.LobbyNeon = {
                     ${!profile.classChosen ? `<div class="rpg-muted" style="margin-top:10px; color:#fbbf24;">Chọn một môn phái chính thức để mở bộ skill cơ bản và farm quái bằng nút SKILL.</div>` : ''}
                 </div>
 
+                ${LobbyNeon.renderRpgEquipmentPanel(profile)}
+
+                <div class="rpg-card">
+                    <p class="rpg-title">🎮 Nút skin chưởng nhanh</p>
+                    <div class="rpg-muted" style="margin:6px 0 10px;">Bấm một nút để trang bị skin chưởng rồi tung skill. Skin cơ bản mở theo cấp, skin VIP vẫn dùng mảnh để mở.</div>
+                    ${LobbyNeon.renderRpgQuickSkinButtons(profile)}
+                </div>
+
                 ${activeHtml}
 
                 ${LobbyNeon.renderRpgPvpTeaser(profile)}
@@ -4454,6 +5008,7 @@ window.LobbyNeon = {
                 </div>
             </div>
         `;
+        LobbyNeon.renderRpgSkillWheel();
     },
 
     // ========== QUEST SYSTEM ==========
