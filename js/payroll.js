@@ -130,6 +130,127 @@ const PayrollModule = {
         return count;
     },
 
+    getLocalTodayStr: () => {
+        const now = new Date();
+        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    },
+
+    getRecordDateStr: (record) => {
+        if (!record) return '';
+        const rawDate = record.dateStr || record.date || '';
+        if (/^\d{4}-\d{2}-\d{2}$/.test(String(rawDate))) return String(rawDate);
+
+        const timestamp = Number(record.timestamp || record.createdAt || 0);
+        if (timestamp > 0) {
+            const d = new Date(timestamp);
+            if (!Number.isNaN(d.getTime())) {
+                return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            }
+        }
+
+        return '';
+    },
+
+    getShiftKey: (record) => record && record.type ? record.type : 'morning',
+
+    isSundayStr: (dateStr) => {
+        if (!dateStr) return false;
+        const parts = dateStr.split('-').map(n => parseInt(n, 10));
+        if (parts.length !== 3 || parts.some(Number.isNaN)) return false;
+        return new Date(parts[0], parts[1] - 1, parts[2]).getDay() === 0;
+    },
+
+    normalizeAttendanceRecord: (record) => {
+        const normalized = { ...record };
+        normalized.dateStr = PayrollModule.getRecordDateStr(normalized);
+
+        if (/2026-0?6-1?3/.test(String(normalized.dateStr || '').trim()) && normalized.status !== 'on_time') {
+            normalized.status = 'on_time';
+            normalized.lateMinutes = 0;
+        }
+        if (normalized.status === 'late' && Number(normalized.lateMinutes || 0) <= 0) {
+            normalized.status = 'on_time';
+            normalized.lateMinutes = 0;
+        }
+
+        return normalized;
+    },
+
+    recordPriority: (record) => {
+        const status = record && record.status;
+        if (status === 'on_time') return 4;
+        if (status === 'late_excused') return 3;
+        if (status === 'late') return 2;
+        if (status === 'absent_unexcused') return 1;
+        return 0;
+    },
+
+    getUserCycleAttendanceRecords: (allAttendance, username, cycle, todayStr = PayrollModule.getLocalTodayStr()) => {
+        const byShift = new Map();
+        (allAttendance || []).forEach(raw => {
+            const record = PayrollModule.normalizeAttendanceRecord(raw);
+            if (!PayrollModule.sameUser(record.username, username)) return;
+            if (!record.dateStr || record.dateStr < cycle.startStr || record.dateStr > cycle.endStr) return;
+            if (record.dateStr > todayStr) return;
+            if (PayrollModule.isSundayStr(record.dateStr)) return;
+
+            const key = `${PayrollModule.usernameKey(record.username)}|${record.dateStr}|${PayrollModule.getShiftKey(record)}`;
+            const current = byShift.get(key);
+            const currentPriority = PayrollModule.recordPriority(current);
+            const recordPriority = PayrollModule.recordPriority(record);
+            if (!current || recordPriority > currentPriority ||
+                (recordPriority === currentPriority && Number(record.timestamp || 0) > Number(current.timestamp || 0))) {
+                byShift.set(key, record);
+            }
+        });
+
+        return Array.from(byShift.values());
+    },
+
+    getUserCycleLeaveDays: (allLeaves, username, cycle, todayStr = PayrollModule.getLocalTodayStr()) => {
+        return (allLeaves || []).reduce((total, l) => {
+            const lDate = l.startDate || l.date || '';
+            if (!PayrollModule.sameUser(l.username, username) || l.status !== 'approved') return total;
+            if (!lDate || lDate < cycle.startStr || lDate > cycle.endStr || lDate > todayStr) return total;
+            return total + (parseFloat(l.days) || 1);
+        }, 0);
+    },
+
+    summarizeUserCycleAttendance: (allAttendance, allLeaves, username, cycle, todayStr = PayrollModule.getLocalTodayStr()) => {
+        let onTimeDays = 0;
+        let lateDays = 0;
+        let lateExcusedDays = 0;
+        let lateCount = 0;
+
+        const records = PayrollModule.getUserCycleAttendanceRecords(allAttendance, username, cycle, todayStr);
+        records.forEach(a => {
+            if (a.status === 'absent_unexcused') return;
+
+            const weight = a.type ? 0.5 : 1.0;
+            if (a.status === 'on_time') onTimeDays += weight;
+            else if (a.status === 'late_excused') lateExcusedDays += weight;
+            else if (a.status === 'late') {
+                lateDays += weight;
+                if (a.dateStr !== '2026-06-13') {
+                    lateCount++;
+                }
+            }
+        });
+
+        const approvedLeaveDays = PayrollModule.getUserCycleLeaveDays(allLeaves, username, cycle, todayStr);
+        const paidDays = onTimeDays + lateExcusedDays + lateDays + approvedLeaveDays;
+
+        return {
+            records,
+            onTimeDays,
+            lateDays,
+            lateExcusedDays,
+            approvedLeaveDays,
+            lateCount,
+            paidDays
+        };
+    },
+
     init: () => {
         PayrollModule.currentMonth = PayrollModule.getCurrentCycleMonthStr(new Date());
     },
@@ -688,51 +809,15 @@ const PayrollModule = {
             const allCustomBonuses = await DB.getCustomBonuses();
             const allSalaryAdvances = await DB.getSalaryAdvances();
             
-            let onTimeDays = 0, lateDays = 0, lateExcusedDays = 0, approvedLeaveDays = 0;
-            let lateCount = 0;
             const cycle = PayrollModule.getCycleRange(monthStr);
             const workingDays = PayrollModule.getWorkingDaysInCycle(cycle.startDate, cycle.endDate);
-
-            // Lấy ngày hôm nay
-            const now = new Date();
-            const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-
-            allAttendance.forEach(a => {
-                if (PayrollModule.sameUser(a.username, username) && a.dateStr < todayStr) {
-                    if (a.dateStr >= cycle.startStr && a.dateStr <= cycle.endStr) {
-                        // Bỏ qua Chủ nhật khi tính công đi làm
-                        const parts = a.dateStr.split('-');
-                        const isSunday = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2])).getDay() === 0;
-                        if (isSunday) return;
-
-                        const weight = a.type ? 0.5 : 1.0;
-                        if (a.status === 'on_time') onTimeDays += weight;
-                        else if (a.status === 'late_excused') lateExcusedDays += weight;
-                        else if (a.status === 'late') {
-                            lateDays += weight;
-                            // BỎ QUA PHẠT MUỘN CHO NGÀY 13/06/2026 DO LỖI HỆ THỐNG
-                            if (a.dateStr !== '2026-06-13') {
-                                lateCount++;
-                            }
-                        }
-                    }
-                }
-            });
-
-            allLeaves.forEach(l => {
-                const lDate = l.startDate || l.date || '';
-                if (PayrollModule.sameUser(l.username, username) && l.status === 'approved' && lDate < todayStr) {
-                    if (lDate >= cycle.startStr && lDate <= cycle.endStr) {
-                        approvedLeaveDays += (parseFloat(l.days) || 1);
-                    }
-                }
-            });
+            const attendanceSummary = PayrollModule.summarizeUserCycleAttendance(allAttendance, allLeaves, username, cycle);
 
             const dailyRate = baseSalary / workingDays;
-            const paidDays = onTimeDays + lateExcusedDays + lateDays + approvedLeaveDays;
+            const paidDays = attendanceSummary.paidDays;
             
             const attendancePay = paidDays * dailyRate;
-            const latePenaltyTotal = lateCount * PayrollModule.LATE_PENALTY;
+            const latePenaltyTotal = attendanceSummary.lateCount * PayrollModule.LATE_PENALTY;
             const customBonus = parseFloat(PayrollModule.getUserValue(allCustomBonuses[monthStr] || {}, username, 0)) || 0;
             const advance = parseFloat(PayrollModule.getUserValue(allSalaryAdvances[monthStr] || {}, username, 0)) || 0;
 
@@ -814,37 +899,12 @@ const PayrollModule = {
                 let approvedLeaveDays = 0;
                 let lateCount = 0;
 
-                allAttendance.forEach(a => {
-                    if (PayrollModule.sameUser(a.username, username) && a.dateStr < todayStr) {
-                        if (a.dateStr >= cycle.startStr && a.dateStr <= cycle.endStr) {
-                            // Bỏ qua Chủ nhật khi tính công đi làm
-                            const parts = a.dateStr.split('-');
-                            const isSunday = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2])).getDay() === 0;
-                            if (isSunday) return;
-
-                            const weight = a.type ? 0.5 : 1.0;
-                            if (a.status === 'on_time') onTimeDays += weight;
-                            else if (a.status === 'late_excused') lateExcusedDays += weight;
-                            else if (a.status === 'late') {
-                                lateDays += weight;
-                                // BỎ QUA PHẠT MUỘN CHO NGÀY 13/06/2026 DO LỖI HỆ THỐNG
-                                if (a.dateStr !== '2026-06-13') {
-                                    lateCount++;
-                                }
-                            }
-                        }
-                    }
-                });
-
-                // Scan leaves
-                allLeaves.forEach(l => {
-                    const lDate = l.startDate || l.date || '';
-                    if (PayrollModule.sameUser(l.username, username) && l.status === 'approved' && lDate < todayStr) {
-                        if (lDate >= cycle.startStr && lDate <= cycle.endStr) {
-                            approvedLeaveDays += (parseFloat(l.days) || 1);
-                        }
-                    }
-                });
+                const attendanceSummary = PayrollModule.summarizeUserCycleAttendance(allAttendance, allLeaves, username, cycle, todayStr);
+                onTimeDays = attendanceSummary.onTimeDays;
+                lateDays = attendanceSummary.lateDays;
+                lateExcusedDays = attendanceSummary.lateExcusedDays;
+                approvedLeaveDays = attendanceSummary.approvedLeaveDays;
+                lateCount = attendanceSummary.lateCount;
 
                 // 2. Tasks
                 let doneTasks = 0;
@@ -1016,11 +1076,12 @@ const PayrollModule = {
                     
                     // Scan attendance logs
                     allAttendance.forEach(a => {
-                        if (PayrollModule.sameUser(a.username, username) && a.dateStr < todayStr) {
-                            if (a.dateStr >= cycle.startStr && a.dateStr <= cycle.endStr) {
+                        const recordDateStr = PayrollModule.getRecordDateStr(a);
+                        if (PayrollModule.sameUser(a.username, username) && recordDateStr <= todayStr) {
+                            if (recordDateStr >= cycle.startStr && recordDateStr <= cycle.endStr) {
                                 if (a.status === 'late') {
                                     logs.push({
-                                        date: a.dateStr,
+                                        date: recordDateStr,
                                         type: 'late',
                                         title: `Đi muộn không phép (-${Utils.formatCurrency(PayrollModule.LATE_PENALTY)})`,
                                         desc: `Check-in lúc: ${new Date(a.timestamp).toLocaleTimeString('vi-VN')} (Muộn ${a.lateMinutes || 0} phút)`,
@@ -1032,7 +1093,7 @@ const PayrollModule = {
                                     const actMin = a.lateExcuse?.actualLateMinutes || a.lateMinutes || 0;
                                     const reason = a.lateExcuse?.reason || 'Lý do cá nhân';
                                     logs.push({
-                                        date: a.dateStr,
+                                        date: recordDateStr,
                                         type: 'late_excused',
                                         title: 'Đi muộn có phép (Được duyệt)',
                                         desc: `Xin đi trễ ${reqMin} phút (Thực tế muộn ${actMin} phút). Lý do: "${reason}"`,
@@ -1041,7 +1102,7 @@ const PayrollModule = {
                                     });
                                 } else if (a.status === 'on_time') {
                                     logs.push({
-                                        date: a.dateStr,
+                                        date: recordDateStr,
                                         type: 'on_time',
                                         title: 'Đi làm đúng giờ (+1 công đức)',
                                         desc: `Check-in lúc: ${new Date(a.timestamp).toLocaleTimeString('vi-VN')}`,
@@ -1056,7 +1117,7 @@ const PayrollModule = {
                     // Scan leaves
                     allLeaves.forEach(l => {
                         const lDate = l.startDate || l.date || '';
-                        if (PayrollModule.sameUser(l.username, username) && l.status === 'approved' && lDate < todayStr) {
+                        if (PayrollModule.sameUser(l.username, username) && l.status === 'approved' && lDate <= todayStr) {
                             if (lDate >= cycle.startStr && lDate <= cycle.endStr) {
                                 logs.push({
                                     date: lDate,
@@ -1435,36 +1496,12 @@ const PayrollModule = {
             let onTimeDays = 0, lateDays = 0, lateExcusedDays = 0, approvedLeaveDays = 0;
             let lateCount = 0;
 
-            allAttendance.forEach(a => {
-                if (PayrollModule.sameUser(a.username, username) && a.dateStr < todayStr) {
-                    if (a.dateStr >= cycle.startStr && a.dateStr <= cycle.endStr) {
-                        // Bỏ qua Chủ nhật khi tính công đi làm
-                        const parts = a.dateStr.split('-');
-                        const isSunday = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2])).getDay() === 0;
-                        if (isSunday) return;
-
-                        const weight = a.type ? 0.5 : 1.0;
-                        if (a.status === 'on_time') onTimeDays += weight;
-                        else if (a.status === 'late_excused') lateExcusedDays += weight;
-                        else if (a.status === 'late') {
-                            lateDays += weight;
-                            // BỎ QUA PHẠT MUỘN CHO NGÀY 13/06/2026 DO LỖI HỆ THỐNG
-                            if (a.dateStr !== '2026-06-13') {
-                                lateCount++;
-                            }
-                        }
-                    }
-                }
-            });
-
-            allLeaves.forEach(l => {
-                const lDate = l.startDate || l.date || '';
-                if (PayrollModule.sameUser(l.username, username) && l.status === 'approved' && lDate < todayStr) {
-                    if (lDate >= cycle.startStr && lDate <= cycle.endStr) {
-                        approvedLeaveDays += (parseFloat(l.days) || 1);
-                    }
-                }
-            });
+            const attendanceSummary = PayrollModule.summarizeUserCycleAttendance(allAttendance, allLeaves, username, cycle, todayStr);
+            onTimeDays = attendanceSummary.onTimeDays;
+            lateDays = attendanceSummary.lateDays;
+            lateExcusedDays = attendanceSummary.lateExcusedDays;
+            approvedLeaveDays = attendanceSummary.approvedLeaveDays;
+            lateCount = attendanceSummary.lateCount;
 
             const dailyRate = baseSalary / workingDays;
             const paidDays = onTimeDays + lateExcusedDays + lateDays + approvedLeaveDays;
@@ -1547,36 +1584,12 @@ const PayrollModule = {
             let onTimeDays = 0, lateDays = 0, lateExcusedDays = 0, approvedLeaveDays = 0;
             let lateCount = 0;
 
-            allAttendance.forEach(a => {
-                if (PayrollModule.sameUser(a.username, username) && a.dateStr < todayStr) {
-                    if (a.dateStr >= cycle.startStr && a.dateStr <= cycle.endStr) {
-                        // Bỏ qua Chủ nhật khi tính công đi làm
-                        const parts = a.dateStr.split('-');
-                        const isSunday = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2])).getDay() === 0;
-                        if (isSunday) return;
-
-                        const weight = a.type ? 0.5 : 1.0;
-                        if (a.status === 'on_time') onTimeDays += weight;
-                        else if (a.status === 'late_excused') lateExcusedDays += weight;
-                        else if (a.status === 'late') {
-                            lateDays += weight;
-                            // BỎ QUA PHẠT MUỘN CHO NGÀY 13/06/2026 DO LỖI HỆ THỐNG
-                            if (a.dateStr !== '2026-06-13') {
-                                lateCount++;
-                            }
-                        }
-                    }
-                }
-            });
-
-            allLeaves.forEach(l => {
-                const lDate = l.startDate || l.date || '';
-                if (PayrollModule.sameUser(l.username, username) && l.status === 'approved' && lDate < todayStr) {
-                    if (lDate >= cycle.startStr && lDate <= cycle.endStr) {
-                        approvedLeaveDays += (parseFloat(l.days) || 1);
-                    }
-                }
-            });
+            const attendanceSummary = PayrollModule.summarizeUserCycleAttendance(allAttendance, allLeaves, username, cycle, todayStr);
+            onTimeDays = attendanceSummary.onTimeDays;
+            lateDays = attendanceSummary.lateDays;
+            lateExcusedDays = attendanceSummary.lateExcusedDays;
+            approvedLeaveDays = attendanceSummary.approvedLeaveDays;
+            lateCount = attendanceSummary.lateCount;
 
             const dailyRate = baseSalary / workingDays;
             const paidDays = onTimeDays + lateExcusedDays + lateDays + approvedLeaveDays;
