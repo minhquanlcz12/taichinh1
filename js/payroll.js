@@ -723,7 +723,7 @@ const PayrollModule = {
                 const lDate = l.startDate || l.date || '';
                 if (PayrollModule.sameUser(l.username, username) && l.status === 'approved' && lDate < todayStr) {
                     if (lDate >= cycle.startStr && lDate <= cycle.endStr) {
-                        approvedLeaveDays += (parseInt(l.days) || 1);
+                        approvedLeaveDays += (parseFloat(l.days) || 1);
                     }
                 }
             });
@@ -841,7 +841,7 @@ const PayrollModule = {
                     const lDate = l.startDate || l.date || '';
                     if (PayrollModule.sameUser(l.username, username) && l.status === 'approved' && lDate < todayStr) {
                         if (lDate >= cycle.startStr && lDate <= cycle.endStr) {
-                            approvedLeaveDays += (parseInt(l.days) || 1);
+                            approvedLeaveDays += (parseFloat(l.days) || 1);
                         }
                     }
                 });
@@ -1461,7 +1461,7 @@ const PayrollModule = {
                 const lDate = l.startDate || l.date || '';
                 if (PayrollModule.sameUser(l.username, username) && l.status === 'approved' && lDate < todayStr) {
                     if (lDate >= cycle.startStr && lDate <= cycle.endStr) {
-                        approvedLeaveDays += (parseInt(l.days) || 1);
+                        approvedLeaveDays += (parseFloat(l.days) || 1);
                     }
                 }
             });
@@ -1573,7 +1573,7 @@ const PayrollModule = {
                 const lDate = l.startDate || l.date || '';
                 if (PayrollModule.sameUser(l.username, username) && l.status === 'approved' && lDate < todayStr) {
                     if (lDate >= cycle.startStr && lDate <= cycle.endStr) {
-                        approvedLeaveDays += (parseInt(l.days) || 1);
+                        approvedLeaveDays += (parseFloat(l.days) || 1);
                     }
                 }
             });
