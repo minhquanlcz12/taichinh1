@@ -452,7 +452,10 @@ const app = {
         Utils.animateValue(document.getElementById('dash-expense'), 0, financeData.expense, 1000, Utils.formatCurrency);
 
         if (Auth.currentUser && typeof PayrollModule !== 'undefined') {
-            const currentSalary = await PayrollModule.calculateUserSalary(Auth.currentUser.username, new Date().toISOString().slice(0, 7));
+            const payrollMonth = typeof PayrollModule.getCurrentCycleMonthStr === 'function'
+                ? PayrollModule.getCurrentCycleMonthStr(new Date())
+                : new Date().toISOString().slice(0, 7);
+            const currentSalary = await PayrollModule.calculateUserSalary(Auth.currentUser.username, payrollMonth);
             Utils.animateValue(document.getElementById('dash-salary'), 0, currentSalary, 1000, Utils.formatCurrency);
         }
 

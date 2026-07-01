@@ -33,6 +33,14 @@ const Attendance = {
 
     shiftKey: (record) => record && record.type ? record.type : 'morning',
 
+    sameUser: (left, right) => Attendance.usernameKey(left) === Attendance.usernameKey(right),
+
+    isSameAttendanceSlot: (record, userKey, dateStr, shift) => {
+        return Attendance.usernameKey(record && record.username) === userKey &&
+            record.dateStr === dateStr &&
+            (record.type === shift || (shift === 'morning' && !record.type));
+    },
+
     isSundayDate: (dateStr) => {
         if (!dateStr) return false;
         const parts = String(dateStr).split('-').map(n => parseInt(n, 10));
@@ -82,6 +90,47 @@ const Attendance = {
             }
         });
         return Array.from(byShift.values());
+    },
+
+    repairConflictingAbsentRecords: async (records) => {
+        const allRecords = Array.isArray(records) ? records : await Attendance.loadData();
+        const validSlots = new Set();
+        allRecords.forEach(record => {
+            if (!record || record.status === 'absent_unexcused') return;
+            const userKey = Attendance.usernameKey(record.username);
+            if (!userKey || !record.dateStr) return;
+            validSlots.add(`${userKey}|${record.dateStr}|${Attendance.shiftKey(record)}`);
+        });
+
+        let changed = false;
+        const reversedPenaltyUsers = [];
+        const cleaned = allRecords.filter(record => {
+            if (!record || record.status !== 'absent_unexcused') return true;
+            const userKey = Attendance.usernameKey(record.username);
+            const slot = `${userKey}|${record.dateStr}|${Attendance.shiftKey(record)}`;
+            if (validSlots.has(slot)) {
+                changed = true;
+                if (record.security?.autoAudit || record.security?.adminManualAudit || String(record.id || '').startsWith('absent_')) {
+                    reversedPenaltyUsers.push(record.username);
+                }
+                return false;
+            }
+            return true;
+        });
+
+        if (changed) {
+            await Attendance.saveData(cleaned);
+            if (typeof PayrollModule !== 'undefined' && typeof PayrollModule.applyAbsentPenalty === 'function') {
+                const reversed = new Set();
+                for (const username of reversedPenaltyUsers) {
+                    const userKey = Attendance.usernameKey(username);
+                    if (!userKey || reversed.has(userKey)) continue;
+                    reversed.add(userKey);
+                    await PayrollModule.applyAbsentPenalty(username, -50000);
+                }
+            }
+        }
+        return cleaned;
     },
 
     getPassedWorkingDays: (cycle) => {
@@ -211,7 +260,8 @@ const Attendance = {
                         continue;
                     }
                     
-                    const hasRecord = allAttendance.some(r => r.username === acc.username && r.dateStr === dateStr && r.type === 'afternoon');
+                    const accUser = Attendance.usernameKey(acc.username);
+                    const hasRecord = allAttendance.some(r => Attendance.isSameAttendanceSlot(r, accUser, dateStr, 'afternoon'));
                     
                     if (!hasRecord) {
                         allAttendance.push({
@@ -314,7 +364,7 @@ const Attendance = {
 
         try {
             const accounts = await Auth.getAccounts();
-            const allAttendance = await Attendance.loadData();
+            const allAttendance = await Attendance.repairConflictingAbsentRecords(await Attendance.loadData());
             const allLeaves = await Attendance.loadLeaveData();
             const allLateRequests = await Attendance.loadLateRequests();
             
@@ -1054,15 +1104,13 @@ const Attendance = {
     renderUserView: async (container, user) => {
         const today = new Date();
         const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-        const allData = await Attendance.loadData();
+        const allData = await Attendance.repairConflictingAbsentRecords(await Attendance.loadData());
         
         // Kiểm tra xem ca hiện tại đã chấm công chưa
         const currentHour = today.getHours();
         const currentSession = currentHour < 12 ? 'morning' : 'afternoon';
         const sessionRecord = allData.find(r => 
-            r.username === user.username && 
-            r.dateStr === dateStr && 
-            (r.type === currentSession || (currentSession === 'morning' && !r.type))
+            Attendance.isSameAttendanceSlot(r, Attendance.usernameKey(user.username), dateStr, currentSession)
         );
         let checkInHtml = '';
 
@@ -1110,7 +1158,7 @@ const Attendance = {
             `;
             
             // Tìm bản ghi checkout của ngày hôm nay
-            const checkoutRecord = allData.find(r => r.username === user.username && r.dateStr === dateStr && r.checkoutTimestamp);
+            const checkoutRecord = allData.find(r => Attendance.sameUser(r.username, user.username) && r.dateStr === dateStr && r.checkoutTimestamp);
             if (!checkoutRecord) {
                 checkInHtml += `
                 <div style="text-align:center;margin-top:20px;">
@@ -1200,11 +1248,11 @@ const Attendance = {
         } catch(e) { console.warn('Salary preview error:', e); }
 
         // Lấy lịch sử 30 ngày gần nhất
-        const userHistory = allData.filter(r => r.username === user.username).sort((a,b) => b.timestamp - a.timestamp).slice(0, 30);
+        const userHistory = allData.filter(r => Attendance.sameUser(r.username, user.username)).sort((a,b) => b.timestamp - a.timestamp).slice(0, 30);
         
         // Lấy lịch sử xin nghỉ
         const allLeaves = await Attendance.loadLeaveData();
-        const userLeaves = allLeaves.filter(l => l.username === user.username).sort((a,b) => b.timestamp - a.timestamp);
+        const userLeaves = allLeaves.filter(l => Attendance.sameUser(l.username, user.username)).sort((a,b) => b.timestamp - a.timestamp);
         const RESET_DATE = '2026-06-10';
         let currentMeritDisplay = '?';
         if (typeof RewardsModule !== 'undefined') {
@@ -1297,7 +1345,7 @@ const Attendance = {
 
         // Tải lịch sử xin đi trễ của nhân viên
         const allLates = await Attendance.loadLateRequests();
-        const userLates = allLates.filter(l => l.username === user.username).sort((a,b) => b.timestamp - a.timestamp);
+        const userLates = allLates.filter(l => Attendance.sameUser(l.username, user.username)).sort((a,b) => b.timestamp - a.timestamp);
 
         historyHtml += `
             <div class="glass-panel" style="margin-top: 24px; padding: 20px;">
@@ -2453,7 +2501,7 @@ const Attendance = {
             // Count already approved late requests in the same month
             const targetMonthStr = requestDate.substring(0, 7); // YYYY-MM
             const userMonthApprovedCount = allLateRequests.filter(r => 
-                r.username === user.username && 
+                Attendance.sameUser(r.username, user.username) &&
                 r.status === 'approved' && 
                 r.date.startsWith(targetMonthStr)
             ).length;

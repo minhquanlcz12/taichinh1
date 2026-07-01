@@ -3,6 +3,21 @@
 const PayrollModule = {
     currentMonth: new Date().toISOString().slice(0, 7), // YYYY-MM
     LATE_PENALTY: 20000,
+    usernameKey: (username) => {
+        if (typeof Attendance !== 'undefined' && typeof Attendance.usernameKey === 'function') {
+            return Attendance.usernameKey(username);
+        }
+        if (typeof Auth !== 'undefined' && typeof Auth.usernameKey === 'function') {
+            return Auth.usernameKey(username);
+        }
+        return String(username || '').trim().toLowerCase();
+    },
+    sameUser: (left, right) => PayrollModule.usernameKey(left) === PayrollModule.usernameKey(right),
+    getUserValue: (map, username, fallback = 0) => {
+        const userKey = PayrollModule.usernameKey(username);
+        const key = Object.keys(map || {}).find(k => PayrollModule.usernameKey(k) === userKey);
+        return key ? map[key] : fallback;
+    },
     viewMode: 'cards', // Dạng hiển thị mặc định (Thẻ Premium)
 
     // Đếm số ngày làm việc Thứ 2 - Thứ 7 trong tháng
@@ -646,8 +661,9 @@ const PayrollModule = {
                 allCustomBonuses[monthStr] = {};
             }
             
-            const currentBonus = allCustomBonuses[monthStr][username] || 0;
-            allCustomBonuses[monthStr][username] = currentBonus - amount;
+            const bonusKey = Object.keys(allCustomBonuses[monthStr]).find(k => PayrollModule.sameUser(k, username)) || username;
+            const currentBonus = allCustomBonuses[monthStr][bonusKey] || 0;
+            allCustomBonuses[monthStr][bonusKey] = currentBonus - amount;
             
             await DB.saveCustomBonuses(allCustomBonuses);
             console.log(`[System] Applied absent penalty of ${amount} to ${username}`);
@@ -661,11 +677,13 @@ const PayrollModule = {
     calculateUserSalary: async (username, monthStr) => {
         try {
             const accounts = await Auth.getAccounts();
-            const acc = accounts.find(a => a.username === username);
+            const acc = accounts.find(a => PayrollModule.sameUser(a.username, username));
             if (!acc) return 0;
 
             const baseSalary = acc.baseSalary || 0;
-            const allAttendance = await Attendance.loadData();
+            const allAttendance = (typeof Attendance.repairConflictingAbsentRecords === 'function')
+                ? await Attendance.repairConflictingAbsentRecords(await Attendance.loadData())
+                : await Attendance.loadData();
             const allLeaves = await Attendance.loadLeaveData();
             const allCustomBonuses = await DB.getCustomBonuses();
             const allSalaryAdvances = await DB.getSalaryAdvances();
@@ -680,7 +698,7 @@ const PayrollModule = {
             const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
 
             allAttendance.forEach(a => {
-                if (a.username === username && a.dateStr < todayStr) {
+                if (PayrollModule.sameUser(a.username, username) && a.dateStr < todayStr) {
                     if (a.dateStr >= cycle.startStr && a.dateStr <= cycle.endStr) {
                         // Bỏ qua Chủ nhật khi tính công đi làm
                         const parts = a.dateStr.split('-');
@@ -703,7 +721,7 @@ const PayrollModule = {
 
             allLeaves.forEach(l => {
                 const lDate = l.startDate || l.date || '';
-                if (l.username === username && l.status === 'approved' && lDate < todayStr) {
+                if (PayrollModule.sameUser(l.username, username) && l.status === 'approved' && lDate < todayStr) {
                     if (lDate >= cycle.startStr && lDate <= cycle.endStr) {
                         approvedLeaveDays += (parseInt(l.days) || 1);
                     }
@@ -711,12 +729,12 @@ const PayrollModule = {
             });
 
             const dailyRate = baseSalary / workingDays;
-            const paidDays = onTimeDays + lateExcusedDays + lateDays;
+            const paidDays = onTimeDays + lateExcusedDays + lateDays + approvedLeaveDays;
             
             const attendancePay = paidDays * dailyRate;
             const latePenaltyTotal = lateCount * PayrollModule.LATE_PENALTY;
-            const customBonus = parseFloat((allCustomBonuses[monthStr] || {})[username]) || 0;
-            const advance = parseFloat((allSalaryAdvances[monthStr] || {})[username]) || 0;
+            const customBonus = parseFloat(PayrollModule.getUserValue(allCustomBonuses[monthStr] || {}, username, 0)) || 0;
+            const advance = parseFloat(PayrollModule.getUserValue(allSalaryAdvances[monthStr] || {}, username, 0)) || 0;
 
             const netSalary = attendancePay + customBonus - latePenaltyTotal - advance;
             const roundedNetSalary = Math.round(netSalary / 1000) * 1000;
@@ -749,21 +767,25 @@ const PayrollModule = {
             
             // If not admin, only calculate for self
             if (currentUser.role !== 'admin') {
-                const myAcc = (await Auth.getAccounts()).find(a => a.username === currentUser.username);
+                const myAcc = (await Auth.getAccounts()).find(a => PayrollModule.sameUser(a.username, currentUser.username));
                 accounts = myAcc ? [myAcc] : [];
             }
 
             // Load data
-            const allAttendance = await Attendance.loadData();
+            const allAttendance = (typeof Attendance.repairConflictingAbsentRecords === 'function')
+                ? await Attendance.repairConflictingAbsentRecords(await Attendance.loadData())
+                : await Attendance.loadData();
             const allLeaves = await Attendance.loadLeaveData();
             const allBonusApprovals = await DB.getBonusApprovals();
             const monthlyApprovals = allBonusApprovals[PayrollModule.currentMonth] || {};
             
             // Load tasks ensuring we wait for them if not loaded
-            if (WorkModule.data.tasks.length === 0 && document.getElementById('work-view')) {
+            if (typeof WorkModule !== 'undefined' && WorkModule.data && Array.isArray(WorkModule.data.tasks) && WorkModule.data.tasks.length === 0 && document.getElementById('work-view')) {
                 await WorkModule.load();
             }
-            const allTasks = WorkModule.data.tasks;
+            const allTasks = (typeof WorkModule !== 'undefined' && WorkModule.data && Array.isArray(WorkModule.data.tasks))
+                ? WorkModule.data.tasks
+                : [];
             const allCustomBonuses = await DB.getCustomBonuses();
             const monthlyBonuses = allCustomBonuses[PayrollModule.currentMonth] || {};
             const allSalaryAdvances = await DB.getSalaryAdvances();
@@ -793,7 +815,7 @@ const PayrollModule = {
                 let lateCount = 0;
 
                 allAttendance.forEach(a => {
-                    if (a.username === username && a.dateStr < todayStr) {
+                    if (PayrollModule.sameUser(a.username, username) && a.dateStr < todayStr) {
                         if (a.dateStr >= cycle.startStr && a.dateStr <= cycle.endStr) {
                             // Bỏ qua Chủ nhật khi tính công đi làm
                             const parts = a.dateStr.split('-');
@@ -817,7 +839,7 @@ const PayrollModule = {
                 // Scan leaves
                 allLeaves.forEach(l => {
                     const lDate = l.startDate || l.date || '';
-                    if (l.username === username && l.status === 'approved' && lDate < todayStr) {
+                    if (PayrollModule.sameUser(l.username, username) && l.status === 'approved' && lDate < todayStr) {
                         if (lDate >= cycle.startStr && lDate <= cycle.endStr) {
                             approvedLeaveDays += (parseInt(l.days) || 1);
                         }
@@ -854,7 +876,7 @@ const PayrollModule = {
 
                 // 3. Calculation
                 const dailyRate = baseSalary / workingDays;
-                const paidDays = onTimeDays + lateExcusedDays + lateDays;
+                const paidDays = onTimeDays + lateExcusedDays + lateDays + approvedLeaveDays;
                 
                 const attendancePay = paidDays * dailyRate;
                 const latePenaltyTotal = lateCount * PayrollModule.LATE_PENALTY;
@@ -866,12 +888,12 @@ const PayrollModule = {
                 }
 
                 // Kiểm tra xem sếp đã duyệt chưa
-                const isApproved = monthlyApprovals[username] === true;
+                const isApproved = PayrollModule.getUserValue(monthlyApprovals, username, false) === true;
                 const punctualityBonusVal = (eligibleForBonus && isApproved) ? 200000 : 0;
 
                 // Manual custom Bonus/Penalty
-                const customBonus = parseFloat(monthlyBonuses[username]) || 0;
-                const advance = parseFloat(monthlyAdvances[username]) || 0;
+                const customBonus = parseFloat(PayrollModule.getUserValue(monthlyBonuses, username, 0)) || 0;
+                const advance = parseFloat(PayrollModule.getUserValue(monthlyAdvances, username, 0)) || 0;
 
                 const netSalary = attendancePay + customBonus + punctualityBonusVal - latePenaltyTotal - advance;
                 const roundedNetSalary = Math.round(netSalary > 0 ? Math.round(netSalary / 1000) * 1000 : 0);
@@ -994,7 +1016,7 @@ const PayrollModule = {
                     
                     // Scan attendance logs
                     allAttendance.forEach(a => {
-                        if (a.username === username && a.dateStr < todayStr) {
+                        if (PayrollModule.sameUser(a.username, username) && a.dateStr < todayStr) {
                             if (a.dateStr >= cycle.startStr && a.dateStr <= cycle.endStr) {
                                 if (a.status === 'late') {
                                     logs.push({
@@ -1034,7 +1056,7 @@ const PayrollModule = {
                     // Scan leaves
                     allLeaves.forEach(l => {
                         const lDate = l.startDate || l.date || '';
-                        if (l.username === username && l.status === 'approved' && lDate < todayStr) {
+                        if (PayrollModule.sameUser(l.username, username) && l.status === 'approved' && lDate < todayStr) {
                             if (lDate >= cycle.startStr && lDate <= cycle.endStr) {
                                 logs.push({
                                     date: lDate,
@@ -1389,14 +1411,18 @@ const PayrollModule = {
         accounts = accounts.filter(a => a.role !== 'admin' && a.username.toLowerCase() !== 'admin' && a.username.toLowerCase() !== 'congty');
         
         if (currentUser.role !== 'admin') {
-            const myAcc = (await Auth.getAccounts()).find(a => a.username === currentUser.username);
+            const myAcc = (await Auth.getAccounts()).find(a => PayrollModule.sameUser(a.username, currentUser.username));
             accounts = myAcc ? [myAcc] : [];
         }
 
-        const allAttendance = await Attendance.loadData();
+        const allAttendance = (typeof Attendance.repairConflictingAbsentRecords === 'function')
+            ? await Attendance.repairConflictingAbsentRecords(await Attendance.loadData())
+            : await Attendance.loadData();
         const allLeaves = await Attendance.loadLeaveData();
         const allCustomBonuses = await DB.getCustomBonuses();
         const monthlyBonuses = allCustomBonuses[PayrollModule.currentMonth] || {};
+        const allSalaryAdvances = await DB.getSalaryAdvances();
+        const monthlyAdvances = allSalaryAdvances[PayrollModule.currentMonth] || {};
 
         const cycle = PayrollModule.getCycleRange(PayrollModule.currentMonth);
         const workingDays = PayrollModule.getWorkingDaysInCycle(cycle.startDate, cycle.endDate);
@@ -1410,9 +1436,7 @@ const PayrollModule = {
             let lateCount = 0;
 
             allAttendance.forEach(a => {
-                const normalizedA = (a.username || '').toLowerCase().trim();
-                const normalizedU = (username || '').toLowerCase().trim();
-                if (normalizedA === normalizedU && a.dateStr < todayStr) {
+                if (PayrollModule.sameUser(a.username, username) && a.dateStr < todayStr) {
                     if (a.dateStr >= cycle.startStr && a.dateStr <= cycle.endStr) {
                         // Bỏ qua Chủ nhật khi tính công đi làm
                         const parts = a.dateStr.split('-');
@@ -1434,10 +1458,8 @@ const PayrollModule = {
             });
 
             allLeaves.forEach(l => {
-                const normalizedL = (l.username || '').toLowerCase().trim();
-                const normalizedU = (username || '').toLowerCase().trim();
                 const lDate = l.startDate || l.date || '';
-                if (normalizedL === normalizedU && l.status === 'approved' && lDate < todayStr) {
+                if (PayrollModule.sameUser(l.username, username) && l.status === 'approved' && lDate < todayStr) {
                     if (lDate >= cycle.startStr && lDate <= cycle.endStr) {
                         approvedLeaveDays += (parseInt(l.days) || 1);
                     }
@@ -1450,11 +1472,9 @@ const PayrollModule = {
             const latePenaltyTotal = lateCount * PayrollModule.LATE_PENALTY;
             
             // Tìm thưởng/ứng không phân biệt hoa thường
-            const bonusKey = Object.keys(monthlyBonuses).find(k => k.toLowerCase().trim() === username.toLowerCase().trim());
-            const customBonus = bonusKey ? parseFloat(monthlyBonuses[bonusKey]) : 0;
+            const customBonus = parseFloat(PayrollModule.getUserValue(monthlyBonuses, username, 0)) || 0;
             
-            const advanceKey = Object.keys(monthlyAdvances).find(k => k.toLowerCase().trim() === username.toLowerCase().trim());
-            const advance = advanceKey ? parseFloat(monthlyAdvances[advanceKey]) : 0;
+            const advance = parseFloat(PayrollModule.getUserValue(monthlyAdvances, username, 0)) || 0;
             
             const netSalary = attendancePay + customBonus - latePenaltyTotal - advance;
             const roundedNetSalary = Math.round(netSalary > 0 ? Math.round(netSalary / 1000) * 1000 : 0);
@@ -1489,7 +1509,8 @@ const PayrollModule = {
         if (!allSalaryAdvances[monthStr]) {
             allSalaryAdvances[monthStr] = {};
         }
-        allSalaryAdvances[monthStr][username] = val;
+        const advanceKey = Object.keys(allSalaryAdvances[monthStr]).find(k => PayrollModule.sameUser(k, username)) || username;
+        allSalaryAdvances[monthStr][advanceKey] = val;
         
         await DB.saveSalaryAdvances(allSalaryAdvances);
         Utils.showToast(`Đã lưu Tạm ứng cho ${username}`, 'success');
@@ -1502,11 +1523,13 @@ const PayrollModule = {
         try {
             Utils.showToast("Đang tải chi tiết...", "info");
             const accounts = await Auth.getAccounts();
-            const acc = accounts.find(a => a.username === username);
+            const acc = accounts.find(a => PayrollModule.sameUser(a.username, username));
             if (!acc) return;
 
             const baseSalary = acc.baseSalary || 0;
-            const allAttendance = await Attendance.loadData();
+            const allAttendance = (typeof Attendance.repairConflictingAbsentRecords === 'function')
+                ? await Attendance.repairConflictingAbsentRecords(await Attendance.loadData())
+                : await Attendance.loadData();
             const allLeaves = await Attendance.loadLeaveData();
             const allBonusApprovals = await DB.getBonusApprovals();
             const monthlyApprovals = allBonusApprovals[PayrollModule.currentMonth] || {};
@@ -1525,9 +1548,7 @@ const PayrollModule = {
             let lateCount = 0;
 
             allAttendance.forEach(a => {
-                const normalizedA = (a.username || '').toLowerCase().trim();
-                const normalizedU = (username || '').toLowerCase().trim();
-                if (normalizedA === normalizedU && a.dateStr < todayStr) {
+                if (PayrollModule.sameUser(a.username, username) && a.dateStr < todayStr) {
                     if (a.dateStr >= cycle.startStr && a.dateStr <= cycle.endStr) {
                         // Bỏ qua Chủ nhật khi tính công đi làm
                         const parts = a.dateStr.split('-');
@@ -1549,10 +1570,8 @@ const PayrollModule = {
             });
 
             allLeaves.forEach(l => {
-                const normalizedL = (l.username || '').toLowerCase().trim();
-                const normalizedU = (username || '').toLowerCase().trim();
                 const lDate = l.startDate || l.date || '';
-                if (normalizedL === normalizedU && l.status === 'approved' && lDate < todayStr) {
+                if (PayrollModule.sameUser(l.username, username) && l.status === 'approved' && lDate < todayStr) {
                     if (lDate >= cycle.startStr && lDate <= cycle.endStr) {
                         approvedLeaveDays += (parseInt(l.days) || 1);
                     }
@@ -1570,15 +1589,12 @@ const PayrollModule = {
             if (lateCount === 0 && (onTimeDays + approvedLeaveDays) >= 15) {
                 eligibleForBonus = true;
             }
-            const approvalKey = Object.keys(monthlyApprovals).find(k => k.toLowerCase().trim() === username.toLowerCase().trim());
-            const isApproved = approvalKey ? monthlyApprovals[approvalKey] === true : false;
+            const isApproved = PayrollModule.getUserValue(monthlyApprovals, username, false) === true;
             const punctualityBonusVal = (eligibleForBonus && isApproved) ? 200000 : 0;
 
-            const bonusKey = Object.keys(monthlyBonuses).find(k => k.toLowerCase().trim() === username.toLowerCase().trim());
-            const customBonus = bonusKey ? parseFloat(monthlyBonuses[bonusKey]) : 0;
+            const customBonus = parseFloat(PayrollModule.getUserValue(monthlyBonuses, username, 0)) || 0;
             
-            const advanceKey = Object.keys(monthlyAdvances).find(k => k.toLowerCase().trim() === username.toLowerCase().trim());
-            const advance = advanceKey ? parseFloat(monthlyAdvances[advanceKey]) : 0;
+            const advance = parseFloat(PayrollModule.getUserValue(monthlyAdvances, username, 0)) || 0;
 
             const totalDeductions = (dailyRate * absentDays) + advance + latePenaltyTotal + (customBonus < 0 ? Math.abs(customBonus) : 0);
             const totalAdditions = punctualityBonusVal + (customBonus > 0 ? customBonus : 0);
