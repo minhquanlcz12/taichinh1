@@ -1,3 +1,20 @@
+const AttendanceDefaultCycle = (() => {
+    const now = new Date();
+    let year = now.getFullYear();
+    let month = now.getMonth(); // 0-based
+
+    // Attendance/payroll cycles reset on the 10th, not on the 1st.
+    if (now.getDate() < 10) {
+        month -= 1;
+        if (month < 0) {
+            month = 11;
+            year -= 1;
+        }
+    }
+
+    return { year, month };
+})();
+
 const Attendance = {
     // Thời hạn chấm công đúng giờ
     DEADLINE_HOURS: 8,
@@ -5,8 +22,8 @@ const Attendance = {
     AFTERNOON_DEADLINE_HOURS: 14,
     AFTERNOON_DEADLINE_MINUTES: 0,
 
-    selectedMonth: new Date().getMonth(),
-    selectedYear: new Date().getFullYear(),
+    selectedMonth: AttendanceDefaultCycle.month,
+    selectedYear: AttendanceDefaultCycle.year,
     ATTENDANCE_SECURITY_DEFAULTS: {
         enabled: true,
         requireTrustedDevice: true,
@@ -46,6 +63,43 @@ const Attendance = {
         const parts = String(dateStr).split('-').map(n => parseInt(n, 10));
         if (parts.length !== 3 || parts.some(Number.isNaN)) return false;
         return new Date(parts[0], parts[1] - 1, parts[2]).getDay() === 0;
+    },
+
+    getCycleMonthStrForDate: (date = new Date()) => {
+        let year = date.getFullYear();
+        let month = date.getMonth() + 1;
+        if (date.getDate() < 10) {
+            month -= 1;
+            if (month === 0) {
+                month = 12;
+                year -= 1;
+            }
+        }
+        return `${year}-${String(month).padStart(2, '0')}`;
+    },
+
+    getCycleRangeForDate: (date = new Date()) => {
+        const monthStr = Attendance.getCycleMonthStrForDate(date);
+        if (typeof PayrollModule !== 'undefined' && typeof PayrollModule.getCycleRange === 'function') {
+            return PayrollModule.getCycleRange(monthStr);
+        }
+
+        const [year, month] = monthStr.split('-').map(n => parseInt(n, 10));
+        let endYear = year;
+        let endMonth = month + 1;
+        if (endMonth > 12) {
+            endMonth = 1;
+            endYear += 1;
+        }
+
+        const startStr = `${year}-${String(month).padStart(2, '0')}-10`;
+        const endStr = `${endYear}-${String(endMonth).padStart(2, '0')}-09`;
+        return {
+            startStr,
+            endStr,
+            startDate: new Date(`${startStr}T00:00:00`),
+            endDate: new Date(`${endStr}T23:59:59`)
+        };
     },
 
     normalizeRecordForSummary: (record) => {
@@ -367,6 +421,18 @@ const Attendance = {
             const allAttendance = await Attendance.repairConflictingAbsentRecords(await Attendance.loadData());
             const allLeaves = await Attendance.loadLeaveData();
             const allLateRequests = await Attendance.loadLateRequests();
+
+            const cycle = Attendance.getCycleRangeForDate(now);
+            const hasEarlierValidCycleRecord = allAttendance.some(r => {
+                const recordDate = r && (r.dateStr || r.date || '');
+                return recordDate >= cycle.startStr &&
+                    recordDate < dateStr &&
+                    r.status !== 'absent_unexcused';
+            });
+            if (!force && now.getDate() < 10 && !hasEarlierValidCycleRecord) {
+                console.warn(`[Attendance] Skip auto absent audit for ${dateStr}: current cycle ${cycle.startStr} - ${cycle.endStr} has no earlier valid attendance records.`);
+                return;
+            }
             
             let changed = false;
             let penalizedUsers = [];
