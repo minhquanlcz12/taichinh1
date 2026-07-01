@@ -15,6 +15,43 @@ function formatCurrency(amount) {
         .replace('₫', 'đ');
 }
 
+function getPayrollCycleMonthStr(dateStr) {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    let cycleYear = year;
+    let cycleMonth = month;
+
+    // Salary cycle is from the 10th through the 9th of the next month.
+    if (day < 10) {
+        cycleMonth -= 1;
+        if (cycleMonth === 0) {
+            cycleMonth = 12;
+            cycleYear -= 1;
+        }
+    }
+
+    return `${cycleYear}-${String(cycleMonth).padStart(2, '0')}`;
+}
+
+function getPayrollCycleRange(monthStr) {
+    const [year, month] = monthStr.split('-').map(Number);
+    let endYear = year;
+    let endMonth = month + 1;
+
+    if (endMonth > 12) {
+        endMonth = 1;
+        endYear += 1;
+    }
+
+    return {
+        startStr: `${year}-${String(month).padStart(2, '0')}-10`,
+        endStr: `${endYear}-${String(endMonth).padStart(2, '0')}-09`
+    };
+}
+
+function formatDateVN(dateStr) {
+    return dateStr.split('-').reverse().join('/');
+}
+
 // Hàm gửi tin nhắn qua Telegram Bot
 function sendTelegramMessage(token, chatId, text) {
     return new Promise((resolve, reject) => {
@@ -71,8 +108,11 @@ async function run() {
 
     // 3. Tính toán ngày hiện tại theo giờ Việt Nam (UTC+7)
     const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
-    const currentMonthStr = todayStr.substring(0, 7); // YYYY-MM
-    console.log(`Current local date: ${todayStr}, Month: ${currentMonthStr}`);
+    const calendarMonthStr = todayStr.substring(0, 7); // YYYY-MM
+    const payrollMonthStr = getPayrollCycleMonthStr(todayStr);
+    const payrollCycle = getPayrollCycleRange(payrollMonthStr);
+    const payrollCycleLabel = `${formatDateVN(payrollCycle.startStr)} - ${formatDateVN(payrollCycle.endStr)}`;
+    console.log(`Current local date: ${todayStr}, Calendar month: ${calendarMonthStr}, Payroll cycle: ${payrollCycleLabel}`);
 
     // 4. Lấy cấu hình hệ thống từ Firestore
     let settings = {};
@@ -167,7 +207,7 @@ async function run() {
         }
 
         // Lũy kế tháng
-        if (tx.date && tx.date.startsWith(currentMonthStr)) {
+        if (tx.date && tx.date.startsWith(calendarMonthStr)) {
             if (tx.type === 'income') incomeMonth += amount;
             else expenseMonth += amount;
         }
@@ -347,7 +387,9 @@ async function run() {
 
     if (tgToken && tgChatId) {
         console.log("Building Telegram Message...");
-        let tgMsg = `📊 <b>BÁO CÁO TỔNG HỢP NGÀY ${todayStr.split('-').reverse().join('/')}</b>\n\n`;
+        let tgMsg = `📊 <b>BÁO CÁO TỔNG HỢP NGÀY ${formatDateVN(todayStr)}</b>\n`;
+        tgMsg += `💼 <b>KỲ LƯƠNG HIỆN TẠI:</b> ${payrollCycleLabel}\n`;
+        tgMsg += `<i>Chỉ reset kỳ lương khi sang ngày mùng 10.</i>\n\n`;
 
         tgMsg += `💰 <b>TÀI CHÍNH HÔM NAY:</b>\n`;
         tgMsg += `+ Tổng Thu: <b>${formatCurrency(incomeToday)}</b>\n`;
@@ -421,7 +463,7 @@ async function run() {
         });
 
         // Xây dựng email HTML đẹp mắt
-        const formattedDate = todayStr.split('-').reverse().join('/');
+        const formattedDate = formatDateVN(todayStr);
         const netTodayColor = netToday >= 0 ? '#10b981' : '#ef4444';
         const netMonthColor = netMonth >= 0 ? '#10b981' : '#ef4444';
 
@@ -603,6 +645,7 @@ async function run() {
                 <div class="header">
                     <h1>THANH LONG WORK</h1>
                     <p>BÁO CÁO HOẠT ĐỘNG NGÀY ${formattedDate}</p>
+                    <p style="font-size:13px; opacity:0.9; margin-top:6px;">Kỳ lương hiện tại: ${payrollCycleLabel} - chỉ reset từ ngày mùng 10</p>
                 </div>
                 <div class="content">
                     
