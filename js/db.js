@@ -378,12 +378,103 @@ const DB = {
     },
 
     // --- LƯU TRỮ CHẤM CÔNG ---
+    attendanceUserKey: (username) => {
+        if (typeof Attendance !== 'undefined' && typeof Attendance.usernameKey === 'function') {
+            return Attendance.usernameKey(username);
+        }
+        if (typeof Auth !== 'undefined' && typeof Auth.usernameKey === 'function') {
+            return Auth.usernameKey(username);
+        }
+        return String(username || '')
+            .trim()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/\u0111/g, 'd')
+            .replace(/\u0110/g, 'D')
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, '');
+    },
+
+    attendanceDateStr: (record) => {
+        if (!record) return '';
+        const rawDate = record.dateStr || record.date || '';
+        if (/^\d{4}-\d{2}-\d{2}$/.test(String(rawDate))) return String(rawDate);
+
+        const timestamp = Number(record.timestamp || record.createdAt || 0);
+        if (timestamp > 0) {
+            const d = new Date(timestamp);
+            if (!Number.isNaN(d.getTime())) {
+                return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            }
+        }
+        return '';
+    },
+
+    attendanceShiftKey: (record) => record && record.type ? record.type : 'morning',
+
+    attendanceRecordPriority: (record) => {
+        const status = record && record.status;
+        if (status === 'on_time') return 4;
+        if (status === 'late_excused') return 3;
+        if (status === 'late') return 2;
+        if (status === 'absent_unexcused') return 1;
+        return 0;
+    },
+
+    mergeAttendanceRecords: (...recordSets) => {
+        const bySlot = new Map();
+        const looseRecords = new Map();
+
+        recordSets.flat().filter(Boolean).forEach(raw => {
+            const record = { ...raw };
+            record.dateStr = DB.attendanceDateStr(record) || record.dateStr;
+
+            const userKey = DB.attendanceUserKey(record.username);
+            const dateStr = record.dateStr || '';
+            const shift = DB.attendanceShiftKey(record);
+
+            if (!userKey || !dateStr) {
+                const looseKey = record.id || `${JSON.stringify(record)}_${looseRecords.size}`;
+                looseRecords.set(looseKey, record);
+                return;
+            }
+
+            const key = `${userKey}|${dateStr}|${shift}`;
+            const current = bySlot.get(key);
+            const currentPriority = DB.attendanceRecordPriority(current);
+            const recordPriority = DB.attendanceRecordPriority(record);
+            if (!current || recordPriority > currentPriority ||
+                (recordPriority === currentPriority && Number(record.timestamp || 0) > Number(current.timestamp || 0))) {
+                bySlot.set(key, record);
+            }
+        });
+
+        return [...bySlot.values(), ...looseRecords.values()]
+            .sort((a, b) => {
+                const dateCompare = String(a.dateStr || '').localeCompare(String(b.dateStr || ''));
+                if (dateCompare !== 0) return dateCompare;
+                return Number(a.timestamp || 0) - Number(b.timestamp || 0);
+            });
+    },
+
     saveAttendance: async (attendanceArray) => {
         try {
-            Utils.storage.set('tl_attendance', attendanceArray);
-            await db.collection("system").doc("attendance").set({ data: attendanceArray });
+            const incoming = Array.isArray(attendanceArray) ? attendanceArray : [];
+            const docRef = db.collection("system").doc("attendance");
+            const currentDoc = await docRef.get();
+            const remote = (currentDoc.exists && currentDoc.data() && Array.isArray(currentDoc.data().data))
+                ? currentDoc.data().data
+                : [];
+            const merged = DB.mergeAttendanceRecords(remote, incoming);
+
+            Utils.storage.set('backup_attendance', merged);
+            Utils.storage.remove('tl_attendance');
+            await docRef.set({ data: merged }, { merge: true });
+            return merged;
         } catch (e) {
             console.error("Error saving attendance:", e);
+            const fallback = Array.isArray(attendanceArray) ? attendanceArray : [];
+            Utils.storage.set('tl_attendance', fallback);
             throw e;
         }
     },
@@ -392,12 +483,14 @@ const DB = {
         try {
             const doc = await db.collection("system").doc("attendance").get();
             if (doc.exists && doc.data() && doc.data().data) {
-                return doc.data().data;
+                const data = doc.data().data;
+                Utils.storage.set('backup_attendance', data);
+                return data;
             }
         } catch (e) {
             console.error("Error getting attendance fallback:", e);
         }
-        return Utils.storage.get('tl_attendance', []);
+        return Utils.storage.get('backup_attendance', Utils.storage.get('tl_attendance', []));
     },
 
     // --- LƯU TRỮ XIN NGHỈ PHÉP ---
@@ -550,6 +643,7 @@ const DB = {
             Utils.storage.remove('backup_accounts');
             Utils.storage.remove('backup_finance');
             Utils.storage.remove('backup_work');
+            Utils.storage.remove('backup_attendance');
             Utils.storage.remove('tl_attendance');
             Utils.storage.remove('tl_leave_requests');
             Utils.storage.remove('tl_late_requests');

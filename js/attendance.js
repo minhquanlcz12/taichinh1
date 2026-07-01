@@ -369,28 +369,24 @@ const Attendance = {
             let localData = JSON.parse(localStorage.getItem('tl_attendance') || '[]');
             if (typeof DB !== 'undefined' && typeof DB.getAttendance === 'function') {
                 attendanceData = await DB.getAttendance() || [];
-                // Đồng bộ mồ côi từ LocalStorage lỡ lưu lúc chưa update
+
                 if (localData.length > 0) {
-                    let changed = false;
-                    localData.forEach(lr => {
-                        const existingIndex = attendanceData.findIndex(r => r.id === lr.id);
-                        if (existingIndex === -1) {
-                            attendanceData.push(lr);
-                            changed = true;
-                        } else if (Number(lr.checkoutTimestamp || lr.timestamp || 0) > Number(attendanceData[existingIndex].checkoutTimestamp || attendanceData[existingIndex].timestamp || 0)) {
-                            attendanceData[existingIndex] = { ...attendanceData[existingIndex], ...lr };
-                            changed = true;
+                    localData = localData.filter(r => !(r && r.status === 'absent_unexcused' && r.security && r.security.autoAudit));
+                    if (localData.length > 0) {
+                        const mergedData = (typeof DB.mergeAttendanceRecords === 'function')
+                            ? DB.mergeAttendanceRecords(attendanceData, localData)
+                            : [...attendanceData, ...localData.filter(lr => !attendanceData.find(r => r.id === lr.id))];
+                        if (mergedData.length !== attendanceData.length) {
+                            attendanceData = await DB.saveAttendance(mergedData);
                         }
-                    });
-                    if (changed) {
-                        await DB.saveAttendance(attendanceData);
                     }
+                    localStorage.removeItem('tl_attendance');
                 }
             } else {
                 attendanceData = localData;
             }
         } catch (e) {
-            console.error("Lỗi tải dữ liệu chấm công:", e);
+            console.error("Error loading attendance data:", e);
             attendanceData = JSON.parse(localStorage.getItem('tl_attendance') || '[]');
         }
         return attendanceData;
