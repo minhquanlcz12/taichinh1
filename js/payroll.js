@@ -1,8 +1,23 @@
 // js/payroll.js
 
+const PayrollDefaultCycleMonth = (() => {
+    const now = new Date();
+    let year = now.getFullYear();
+    let month = now.getMonth() + 1;
+    if (now.getDate() < 10) {
+        month -= 1;
+        if (month === 0) {
+            month = 12;
+            year -= 1;
+        }
+    }
+    return `${year}-${String(month).padStart(2, '0')}`;
+})();
+
 const PayrollModule = {
-    currentMonth: new Date().toISOString().slice(0, 7), // YYYY-MM
+    currentMonth: PayrollDefaultCycleMonth, // YYYY-MM payroll cycle key, not calendar month
     LATE_PENALTY: 20000,
+    _earlyCycleRepairPromise: null,
     usernameKey: (username) => {
         if (typeof Attendance !== 'undefined' && typeof Attendance.usernameKey === 'function') {
             return Attendance.usernameKey(username);
@@ -65,6 +80,13 @@ const PayrollModule = {
         };
     },
 
+    getCycleLabel: (monthStr) => {
+        const cycle = PayrollModule.getCycleRange(monthStr);
+        const [, month] = String(monthStr || '').split('-');
+        const format = (dateStr) => dateStr.split('-').reverse().join('/');
+        return `Kỳ lương tháng ${parseInt(month, 10)} (${format(cycle.startStr)} - ${format(cycle.endStr)})`;
+    },
+
     getCurrentCycleMonthStr: (date = new Date()) => {
         const y = date.getFullYear();
         const m = date.getMonth(); // 0-indexed
@@ -82,6 +104,123 @@ const PayrollModule = {
         }
 
         return `${targetYear}-${String(targetMonth).padStart(2, '0')}`;
+    },
+
+    getCalendarMonthStr: (date = new Date()) => {
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    },
+
+    getEarlyCycleRepairPair: (date = new Date()) => {
+        if (date.getDate() >= 10) return null;
+        const cycleMonth = PayrollModule.getCurrentCycleMonthStr(date);
+        const calendarMonth = PayrollModule.getCalendarMonthStr(date);
+        if (cycleMonth === calendarMonth) return null;
+        return { cycleMonth, calendarMonth };
+    },
+
+    _clonePlain: (value) => {
+        try {
+            return JSON.parse(JSON.stringify(value || {}));
+        } catch (e) {
+            return {};
+        }
+    },
+
+    _moveMisplacedPayrollBucket: (store, fromMonth, toMonth) => {
+        if (!store || typeof store !== 'object') return 0;
+        const from = store[fromMonth];
+        if (!from || typeof from !== 'object') return 0;
+        if (!store[toMonth] || typeof store[toMonth] !== 'object') {
+            store[toMonth] = {};
+        }
+
+        const to = store[toMonth];
+        let moved = 0;
+        Object.keys(from).forEach(fromUser => {
+            const existingKey = Object.keys(to).find(toUser => PayrollModule.sameUser(toUser, fromUser));
+            const existingVal = existingKey ? to[existingKey] : undefined;
+            const canRestore = !existingKey || existingVal === undefined || existingVal === null || existingVal === '' || existingVal === false || Number(existingVal) === 0;
+            if (!canRestore) return;
+
+            to[existingKey || fromUser] = from[fromUser];
+            delete from[fromUser];
+            moved += 1;
+        });
+
+        if (Object.keys(from).length === 0) {
+            delete store[fromMonth];
+        }
+        return moved;
+    },
+
+    getCycleBucket: (store, monthStr, date = new Date()) => {
+        const base = { ...((store && store[monthStr]) || {}) };
+        const pair = PayrollModule.getEarlyCycleRepairPair(date);
+        if (pair && monthStr === pair.cycleMonth && store && store[pair.calendarMonth]) {
+            Object.keys(store[pair.calendarMonth]).forEach(username => {
+                const existingKey = Object.keys(base).find(k => PayrollModule.sameUser(k, username));
+                if (!existingKey) {
+                    base[username] = store[pair.calendarMonth][username];
+                }
+            });
+        }
+        return base;
+    },
+
+    getCycleUserValue: (store, monthStr, username, fallback = 0) => {
+        return PayrollModule.getUserValue(PayrollModule.getCycleBucket(store, monthStr), username, fallback);
+    },
+
+    repairEarlyMonthPayrollBuckets: async () => {
+        if (PayrollModule._earlyCycleRepairPromise) {
+            return PayrollModule._earlyCycleRepairPromise;
+        }
+
+        PayrollModule._earlyCycleRepairPromise = (async () => {
+            const pair = PayrollModule.getEarlyCycleRepairPair(new Date());
+            if (!pair || typeof DB === 'undefined') return null;
+
+            const { calendarMonth, cycleMonth } = pair;
+            const allCustomBonuses = await DB.getCustomBonuses();
+            const allSalaryAdvances = await DB.getSalaryAdvances();
+            const allBonusApprovals = await DB.getBonusApprovals();
+
+            const backup = {
+                fromMonth: calendarMonth,
+                toMonth: cycleMonth,
+                customBonuses: PayrollModule._clonePlain(allCustomBonuses),
+                salaryAdvances: PayrollModule._clonePlain(allSalaryAdvances),
+                bonusApprovals: PayrollModule._clonePlain(allBonusApprovals),
+                backedUpAt: new Date().toISOString()
+            };
+
+            const movedCustomBonuses = PayrollModule._moveMisplacedPayrollBucket(allCustomBonuses, calendarMonth, cycleMonth);
+            const movedSalaryAdvances = PayrollModule._moveMisplacedPayrollBucket(allSalaryAdvances, calendarMonth, cycleMonth);
+            const movedBonusApprovals = PayrollModule._moveMisplacedPayrollBucket(allBonusApprovals, calendarMonth, cycleMonth);
+
+            if (movedCustomBonuses || movedSalaryAdvances || movedBonusApprovals) {
+                if (typeof Utils !== 'undefined' && Utils.storage) {
+                    Utils.storage.set(`payroll_cycle_repair_backup_${Date.now()}`, backup);
+                }
+                if (movedCustomBonuses) await DB.saveCustomBonuses(allCustomBonuses);
+                if (movedSalaryAdvances) await DB.saveSalaryAdvances(allSalaryAdvances);
+                if (movedBonusApprovals) await DB.saveBonusApprovals(allBonusApprovals);
+                console.log(`[Payroll] Restored early-cycle payroll buckets ${calendarMonth} -> ${cycleMonth}`, {
+                    movedCustomBonuses,
+                    movedSalaryAdvances,
+                    movedBonusApprovals
+                });
+                return { movedCustomBonuses, movedSalaryAdvances, movedBonusApprovals, fromMonth: calendarMonth, toMonth: cycleMonth };
+            }
+
+            return null;
+        })().catch(err => {
+            console.error('[Payroll] Early cycle payroll restore failed:', err);
+            PayrollModule._earlyCycleRepairPromise = null;
+            return null;
+        });
+
+        return PayrollModule._earlyCycleRepairPromise;
     },
 
     getWorkingDaysInCycle: (startDate, endDate) => {
@@ -151,7 +290,14 @@ const PayrollModule = {
         return '';
     },
 
-    getShiftKey: (record) => record && record.type ? record.type : 'morning',
+    getShiftKey: (record) => {
+        if (record && record.type) return record.type;
+        const ts = Number(record && record.timestamp);
+        if (Number.isFinite(ts) && ts > 0) {
+            return new Date(ts).getHours() < 12 ? 'morning' : 'afternoon';
+        }
+        return 'morning';
+    },
 
     isSundayStr: (dateStr) => {
         if (!dateStr) return false;
@@ -251,8 +397,17 @@ const PayrollModule = {
         };
     },
 
+    isEligibleForPunctualityBonus: (attendanceSummary) => {
+        if (!attendanceSummary || attendanceSummary.lateCount !== 0) return false;
+        const paidNoPenaltyDays = (attendanceSummary.onTimeDays || 0) +
+            (attendanceSummary.lateExcusedDays || 0) +
+            (attendanceSummary.approvedLeaveDays || 0);
+        return paidNoPenaltyDays >= 15;
+    },
+
     init: () => {
         PayrollModule.currentMonth = PayrollModule.getCurrentCycleMonthStr(new Date());
+        PayrollModule.repairEarlyMonthPayrollBuckets();
     },
 
     toggleViewMode: (mode) => {
@@ -266,6 +421,8 @@ const PayrollModule = {
 
         const currentUser = Auth.currentUser;
         if (!currentUser) return;
+        PayrollModule.currentMonth = PayrollModule.currentMonth || PayrollModule.getCurrentCycleMonthStr(new Date());
+        await PayrollModule.repairEarlyMonthPayrollBuckets();
 
         // Container structure
         container.innerHTML = `
@@ -284,10 +441,10 @@ const PayrollModule = {
                     </div>
 
                     <div style="display: flex; gap: 8px; align-items: center;">
-                        <label style="color: var(--text-secondary); font-size: 13px; font-weight: 500;">Chọn tháng:</label>
+                        <label style="color: var(--text-secondary); font-size: 13px; font-weight: 500;">Chọn kỳ:</label>
                         <button id="payroll-month-btn" class="btn btn-outline" style="min-width: 140px; border-color: rgba(255,255,255,0.12); color: #fff; background: rgba(20,20,30,0.6); height: 38px; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 8px; transition: all 0.3s;" onclick="PayrollModule.openMonthPicker()">
                             <i class="fa-solid fa-calendar-check" style="color: var(--success);"></i>
-                            <span style="font-weight: 600;">Tháng ${PayrollModule.currentMonth.split('-')[1]} ${PayrollModule.currentMonth.split('-')[0]}</span>
+                            <span style="font-weight: 600;">${PayrollModule.getCycleLabel(PayrollModule.currentMonth)}</span>
                         </button>
                         <button class="btn btn-success" style="border-radius: 8px; height: 38px; display: flex; align-items: center; gap: 6px;" onclick="PayrollModule.exportToExcel()"><i class="fa-solid fa-file-excel"></i> Excel</button>
                         <button class="btn btn-outline" style="border-color: #f1c40f; color: #f1c40f; border-radius: 8px; height: 38px; display: flex; align-items: center; gap: 6px;" onclick="PayrollModule.exportToPDF()"><i class="fa-solid fa-file-pdf"></i> PDF</button>
@@ -759,18 +916,24 @@ const PayrollModule = {
     },
 
     saveCustomBonus: async (username, amount) => {
-        const val = parseFloat(amount) || 0;
-        const monthStr = PayrollModule.currentMonth;
-        const allCustomBonuses = await DB.getCustomBonuses();
-        
-        if (!allCustomBonuses[monthStr]) {
-            allCustomBonuses[monthStr] = {};
+        try {
+            const val = parseFloat(amount) || 0;
+            const monthStr = PayrollModule.currentMonth;
+            const allCustomBonuses = await DB.getCustomBonuses();
+
+            if (!allCustomBonuses[monthStr]) {
+                allCustomBonuses[monthStr] = {};
+            }
+            const bonusKey = Object.keys(allCustomBonuses[monthStr]).find(k => PayrollModule.sameUser(k, username)) || username;
+            allCustomBonuses[monthStr][bonusKey] = val;
+
+            await DB.saveCustomBonuses(allCustomBonuses);
+            Utils.showToast(`Đã lưu Thưởng/Phạt cho ${username}`, 'success');
+            PayrollModule.calculateAndRenderBody();
+        } catch (e) {
+            console.error("Lỗi lưu thưởng/phạt:", e);
+            Utils.showToast("Chưa lưu được Thưởng/Phạt. Kiểm tra mạng rồi thử lại.", "error");
         }
-        allCustomBonuses[monthStr][username] = val;
-        
-        await DB.saveCustomBonuses(allCustomBonuses);
-        Utils.showToast(`Đã lưu Thưởng/Phạt cho ${username}`, 'success');
-        PayrollModule.calculateAndRenderBody();
     },
 
     applyAbsentPenalty: async (username, amount) => {
@@ -797,6 +960,7 @@ const PayrollModule = {
 
     calculateUserSalary: async (username, monthStr) => {
         try {
+            await PayrollModule.repairEarlyMonthPayrollBuckets();
             const accounts = await Auth.getAccounts();
             const acc = accounts.find(a => PayrollModule.sameUser(a.username, username));
             if (!acc) return 0;
@@ -808,6 +972,7 @@ const PayrollModule = {
             const allLeaves = await Attendance.loadLeaveData();
             const allCustomBonuses = await DB.getCustomBonuses();
             const allSalaryAdvances = await DB.getSalaryAdvances();
+            const allBonusApprovals = await DB.getBonusApprovals();
             
             const cycle = PayrollModule.getCycleRange(monthStr);
             const workingDays = PayrollModule.getWorkingDaysInCycle(cycle.startDate, cycle.endDate);
@@ -818,10 +983,12 @@ const PayrollModule = {
             
             const attendancePay = paidDays * dailyRate;
             const latePenaltyTotal = attendanceSummary.lateCount * PayrollModule.LATE_PENALTY;
-            const customBonus = parseFloat(PayrollModule.getUserValue(allCustomBonuses[monthStr] || {}, username, 0)) || 0;
-            const advance = parseFloat(PayrollModule.getUserValue(allSalaryAdvances[monthStr] || {}, username, 0)) || 0;
+            const customBonus = parseFloat(PayrollModule.getCycleUserValue(allCustomBonuses, monthStr, username, 0)) || 0;
+            const advance = parseFloat(PayrollModule.getCycleUserValue(allSalaryAdvances, monthStr, username, 0)) || 0;
+            const isApproved = PayrollModule.getCycleUserValue(allBonusApprovals, monthStr, username, false) === true;
+            const punctualityBonusVal = (PayrollModule.isEligibleForPunctualityBonus(attendanceSummary) && isApproved) ? 200000 : 0;
 
-            const netSalary = attendancePay + customBonus - latePenaltyTotal - advance;
+            const netSalary = attendancePay + customBonus + punctualityBonusVal - latePenaltyTotal - advance;
             const roundedNetSalary = Math.round(netSalary / 1000) * 1000;
             return Math.round(roundedNetSalary > 0 ? roundedNetSalary : 0);
         } catch (e) {
@@ -832,6 +999,10 @@ const PayrollModule = {
 
     changeMonth: (newMonth) => {
         PayrollModule.currentMonth = newMonth;
+        const monthLabel = document.querySelector('#payroll-month-btn span');
+        if (monthLabel) {
+            monthLabel.textContent = PayrollModule.getCycleLabel(newMonth);
+        }
         PayrollModule.calculateAndRenderBody();
     },
 
@@ -862,7 +1033,7 @@ const PayrollModule = {
                 : await Attendance.loadData();
             const allLeaves = await Attendance.loadLeaveData();
             const allBonusApprovals = await DB.getBonusApprovals();
-            const monthlyApprovals = allBonusApprovals[PayrollModule.currentMonth] || {};
+            const monthlyApprovals = PayrollModule.getCycleBucket(allBonusApprovals, PayrollModule.currentMonth);
             
             // Load tasks ensuring we wait for them if not loaded
             if (typeof WorkModule !== 'undefined' && WorkModule.data && Array.isArray(WorkModule.data.tasks) && WorkModule.data.tasks.length === 0 && document.getElementById('work-view')) {
@@ -872,9 +1043,9 @@ const PayrollModule = {
                 ? WorkModule.data.tasks
                 : [];
             const allCustomBonuses = await DB.getCustomBonuses();
-            const monthlyBonuses = allCustomBonuses[PayrollModule.currentMonth] || {};
+            const monthlyBonuses = PayrollModule.getCycleBucket(allCustomBonuses, PayrollModule.currentMonth);
             const allSalaryAdvances = await DB.getSalaryAdvances();
-            const monthlyAdvances = allSalaryAdvances[PayrollModule.currentMonth] || {};
+            const monthlyAdvances = PayrollModule.getCycleBucket(allSalaryAdvances, PayrollModule.currentMonth);
 
             const cycle = PayrollModule.getCycleRange(PayrollModule.currentMonth);
             const workingDays = PayrollModule.getWorkingDaysInCycle(cycle.startDate, cycle.endDate);
@@ -942,10 +1113,7 @@ const PayrollModule = {
                 const latePenaltyTotal = lateCount * PayrollModule.LATE_PENALTY;
                 
                 // Thưởng chuyên cần: 200k nếu đi muộn 0 lần và có đi làm ít nhất 15 ngày
-                let eligibleForBonus = false;
-                if (lateCount === 0 && (onTimeDays) >= 15) {
-                    eligibleForBonus = true;
-                }
+                const eligibleForBonus = PayrollModule.isEligibleForPunctualityBonus(attendanceSummary);
 
                 // Kiểm tra xem sếp đã duyệt chưa
                 const isApproved = PayrollModule.getUserValue(monthlyApprovals, username, false) === true;
@@ -995,7 +1163,7 @@ const PayrollModule = {
                                     <span class="stat-value text-gold">${Utils.formatCurrency(baseSalary)}</span>
                                 </div>
                                 
-                                <div class="stat-group-title">Chấm công tháng</div>
+                                <div class="stat-group-title">Chấm công kỳ lương</div>
                                 <div class="attendance-grid">
                                     <div class="att-box on-time" title="Đúng giờ">
                                         <span class="att-num">${onTimeDays}</span>
@@ -1334,11 +1502,17 @@ const PayrollModule = {
         const monthStr = PayrollModule.currentMonth;
 
         if (!allApprovals[monthStr]) allApprovals[monthStr] = {};
-        allApprovals[monthStr][username] = true;
+        const approvalKey = Object.keys(allApprovals[monthStr]).find(k => PayrollModule.sameUser(k, username)) || username;
+        allApprovals[monthStr][approvalKey] = true;
 
-        await DB.saveBonusApprovals(allApprovals);
-        Utils.showToast(`Đã duyệt thưởng cho ${username}`, 'success');
-        PayrollModule.calculateAndRenderBody();
+        try {
+            await DB.saveBonusApprovals(allApprovals);
+            Utils.showToast(`Đã duyệt thưởng cho ${username}`, 'success');
+            PayrollModule.calculateAndRenderBody();
+        } catch (e) {
+            console.error("Lỗi duyệt thưởng:", e);
+            Utils.showToast("Chưa lưu được phê duyệt thưởng. Thử lại sau.", "error");
+        }
     },
 
     exportToPDF: () => {
@@ -1370,7 +1544,7 @@ const PayrollModule = {
             <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #da251d; padding-bottom: 20px;">
                 <h1 style="color: #da251d; margin-bottom: 5px;">THANH LONG WORK</h1>
                 <h3>BẢNG LƯƠNG NHÂN SỰ TỔNG HỢP</h3>
-                <p>Kỳ lương: Tháng ${PayrollModule.currentMonth.split('-')[1]}/${PayrollModule.currentMonth.split('-')[0]} (${cycleStr}) &bull; Ngày xuất: ${today}</p>
+                <p>${PayrollModule.getCycleLabel(PayrollModule.currentMonth)} &bull; Ngày xuất: ${today}</p>
             </div>
 
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 40px; font-size: 12px; text-align: left;">
@@ -1481,9 +1655,11 @@ const PayrollModule = {
             : await Attendance.loadData();
         const allLeaves = await Attendance.loadLeaveData();
         const allCustomBonuses = await DB.getCustomBonuses();
-        const monthlyBonuses = allCustomBonuses[PayrollModule.currentMonth] || {};
+        const monthlyBonuses = PayrollModule.getCycleBucket(allCustomBonuses, PayrollModule.currentMonth);
         const allSalaryAdvances = await DB.getSalaryAdvances();
-        const monthlyAdvances = allSalaryAdvances[PayrollModule.currentMonth] || {};
+        const monthlyAdvances = PayrollModule.getCycleBucket(allSalaryAdvances, PayrollModule.currentMonth);
+        const allBonusApprovals = await DB.getBonusApprovals();
+        const monthlyApprovals = PayrollModule.getCycleBucket(allBonusApprovals, PayrollModule.currentMonth);
 
         const cycle = PayrollModule.getCycleRange(PayrollModule.currentMonth);
         const workingDays = PayrollModule.getWorkingDaysInCycle(cycle.startDate, cycle.endDate);
@@ -1507,13 +1683,15 @@ const PayrollModule = {
             const paidDays = onTimeDays + lateExcusedDays + lateDays + approvedLeaveDays;
             const attendancePay = paidDays * dailyRate;
             const latePenaltyTotal = lateCount * PayrollModule.LATE_PENALTY;
+            const isApproved = PayrollModule.getUserValue(monthlyApprovals, username, false) === true;
+            const punctualityBonusVal = (PayrollModule.isEligibleForPunctualityBonus(attendanceSummary) && isApproved) ? 200000 : 0;
             
             // Tìm thưởng/ứng không phân biệt hoa thường
             const customBonus = parseFloat(PayrollModule.getUserValue(monthlyBonuses, username, 0)) || 0;
             
             const advance = parseFloat(PayrollModule.getUserValue(monthlyAdvances, username, 0)) || 0;
             
-            const netSalary = attendancePay + customBonus - latePenaltyTotal - advance;
+            const netSalary = attendancePay + customBonus + punctualityBonusVal - latePenaltyTotal - advance;
             const roundedNetSalary = Math.round(netSalary > 0 ? Math.round(netSalary / 1000) * 1000 : 0);
 
             return {
@@ -1526,6 +1704,7 @@ const PayrollModule = {
                 'Nghỉ phép': approvedLeaveDays,
                 'Phạt muộn': -latePenaltyTotal,
                 'Tạm ứng': -advance,
+                'Thưởng chuyên cần': punctualityBonusVal,
                 'Thưởng/Phạt khác': customBonus,
                 'Thực lĩnh': roundedNetSalary
             };
@@ -1539,19 +1718,24 @@ const PayrollModule = {
     },
 
     saveSalaryAdvance: async (username, amount) => {
-        const val = parseFloat(amount) || 0;
-        const monthStr = PayrollModule.currentMonth;
-        const allSalaryAdvances = await DB.getSalaryAdvances();
-        
-        if (!allSalaryAdvances[monthStr]) {
-            allSalaryAdvances[monthStr] = {};
+        try {
+            const val = parseFloat(amount) || 0;
+            const monthStr = PayrollModule.currentMonth;
+            const allSalaryAdvances = await DB.getSalaryAdvances();
+
+            if (!allSalaryAdvances[monthStr]) {
+                allSalaryAdvances[monthStr] = {};
+            }
+            const advanceKey = Object.keys(allSalaryAdvances[monthStr]).find(k => PayrollModule.sameUser(k, username)) || username;
+            allSalaryAdvances[monthStr][advanceKey] = val;
+
+            await DB.saveSalaryAdvances(allSalaryAdvances);
+            Utils.showToast(`Đã lưu Tạm ứng cho ${username}`, 'success');
+            PayrollModule.calculateAndRenderBody();
+        } catch (e) {
+            console.error("Lỗi lưu tạm ứng:", e);
+            Utils.showToast("Chưa lưu được Tạm ứng. Kiểm tra mạng rồi thử lại.", "error");
         }
-        const advanceKey = Object.keys(allSalaryAdvances[monthStr]).find(k => PayrollModule.sameUser(k, username)) || username;
-        allSalaryAdvances[monthStr][advanceKey] = val;
-        
-        await DB.saveSalaryAdvances(allSalaryAdvances);
-        Utils.showToast(`Đã lưu Tạm ứng cho ${username}`, 'success');
-        PayrollModule.calculateAndRenderBody();
     },
 
     currentDetailReport: null,
@@ -1569,11 +1753,11 @@ const PayrollModule = {
                 : await Attendance.loadData();
             const allLeaves = await Attendance.loadLeaveData();
             const allBonusApprovals = await DB.getBonusApprovals();
-            const monthlyApprovals = allBonusApprovals[PayrollModule.currentMonth] || {};
+            const monthlyApprovals = PayrollModule.getCycleBucket(allBonusApprovals, PayrollModule.currentMonth);
             const allCustomBonuses = await DB.getCustomBonuses();
-            const monthlyBonuses = allCustomBonuses[PayrollModule.currentMonth] || {};
+            const monthlyBonuses = PayrollModule.getCycleBucket(allCustomBonuses, PayrollModule.currentMonth);
             const allSalaryAdvances = await DB.getSalaryAdvances();
-            const monthlyAdvances = allSalaryAdvances[PayrollModule.currentMonth] || {};
+            const monthlyAdvances = PayrollModule.getCycleBucket(allSalaryAdvances, PayrollModule.currentMonth);
 
             const cycle = PayrollModule.getCycleRange(PayrollModule.currentMonth);
             const workingDays = PayrollModule.getWorkingDaysInCycle(cycle.startDate, cycle.endDate);
@@ -1598,10 +1782,7 @@ const PayrollModule = {
             const attendancePay = paidDays * dailyRate;
             const latePenaltyTotal = lateCount * PayrollModule.LATE_PENALTY;
             
-            let eligibleForBonus = false;
-            if (lateCount === 0 && (onTimeDays + approvedLeaveDays) >= 15) {
-                eligibleForBonus = true;
-            }
+            const eligibleForBonus = PayrollModule.isEligibleForPunctualityBonus(attendanceSummary);
             const isApproved = PayrollModule.getUserValue(monthlyApprovals, username, false) === true;
             const punctualityBonusVal = (eligibleForBonus && isApproved) ? 200000 : 0;
 
@@ -1615,9 +1796,47 @@ const PayrollModule = {
             const netSalary = attendancePay + customBonus + punctualityBonusVal - latePenaltyTotal - advance;
             const roundedNetSalary = Math.round(netSalary > 0 ? Math.round(netSalary / 1000) * 1000 : 0);
 
+            const attendanceHistoryHtml = attendanceSummary.records
+                .slice()
+                .sort((a, b) => String(a.dateStr).localeCompare(String(b.dateStr)) || Number(a.timestamp || 0) - Number(b.timestamp || 0))
+                .map(r => {
+                    const shift = PayrollModule.getShiftKey(r) === 'afternoon' ? 'Chiều' : 'Sáng';
+                    const statusMap = {
+                        on_time: { label: 'Đúng giờ', color: 'var(--success)' },
+                        late_excused: { label: 'Trễ có phép', color: '#64ffda' },
+                        late: { label: `Muộn ${r.lateMinutes || 0}p`, color: 'var(--danger)' },
+                        absent_unexcused: { label: 'Vắng', color: 'var(--danger)' }
+                    };
+                    const statusInfo = statusMap[r.status] || { label: r.status || 'Không rõ', color: 'var(--text-secondary)' };
+                    const timeText = r.timestamp ? new Date(r.timestamp).toLocaleTimeString('vi-VN') : '--:--';
+                    return `
+                        <tr>
+                            <td style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.06);">${r.dateStr}</td>
+                            <td style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.06);">${shift}</td>
+                            <td style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.06);color:${statusInfo.color};font-weight:700;">${statusInfo.label}</td>
+                            <td style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.06);text-align:right;">${timeText}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+            const leaveHistoryHtml = (allLeaves || [])
+                .filter(l => PayrollModule.sameUser(l.username, username) && l.status === 'approved')
+                .filter(l => {
+                    const lDate = l.startDate || l.date || '';
+                    return lDate >= cycle.startStr && lDate <= cycle.endStr && lDate <= todayStr;
+                })
+                .sort((a, b) => String(a.startDate || a.date || '').localeCompare(String(b.startDate || b.date || '')))
+                .map(l => `
+                    <tr>
+                        <td style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.06);">${l.startDate || l.date || ''}</td>
+                        <td style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.06);color:#64ffda;font-weight:700;">Nghỉ phép</td>
+                        <td style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.06);text-align:right;">${parseFloat(l.days) || 1} ngày</td>
+                    </tr>
+                `).join('');
+
             PayrollModule.currentDetailReport = {
                 displayName: Utils.getUserDisplayName(username) || username,
-                month: PayrollModule.currentMonth.split('-')[1] + '/' + PayrollModule.currentMonth.split('-')[0],
+                month: PayrollModule.getCycleLabel(PayrollModule.currentMonth),
                 baseSalary,
                 workingDays,
                 paidDays,
@@ -1644,7 +1863,7 @@ const PayrollModule = {
                         </div>
                         <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px;">
                             <span style="color: var(--text-secondary);">Kỳ lương:</span>
-                            <strong>Tháng ${PayrollModule.currentMonth.split('-')[1]} / ${PayrollModule.currentMonth.split('-')[0]}</strong>
+                            <strong>${PayrollModule.getCycleLabel(PayrollModule.currentMonth)}</strong>
                         </div>
                         <div style="display: flex; justify-content: space-between; font-size: 13px;">
                             <span style="color: var(--text-secondary);">Mức lương cơ bản:</span>
@@ -1671,6 +1890,25 @@ const PayrollModule = {
                             <div style="color: var(--text-secondary); font-size: 11px;">Số ngày nghỉ không lương</div>
                             <strong style="color: var(--warning); font-size: 14px;">${absentDays} ngày</strong>
                         </div>
+                    </div>
+
+                    <h4 style="color: #64ffda; border-left: 3px solid #64ffda; padding-left: 8px; margin-bottom: 10px; font-size: 13px; text-transform: uppercase;">Lịch sử trong kỳ</h4>
+                    <div style="background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; margin-bottom: 16px; overflow: hidden;">
+                        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                            <thead style="background:rgba(255,255,255,0.04);color:var(--text-secondary);">
+                                <tr>
+                                    <th style="padding:7px 8px;text-align:left;">Ngày</th>
+                                    <th style="padding:7px 8px;text-align:left;">Ca/Loại</th>
+                                    <th style="padding:7px 8px;text-align:left;">Trạng thái</th>
+                                    <th style="padding:7px 8px;text-align:right;">Giờ/Số ngày</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${attendanceHistoryHtml || ''}
+                                ${leaveHistoryHtml || ''}
+                                ${(!attendanceHistoryHtml && !leaveHistoryHtml) ? '<tr><td colspan="4" style="padding:12px;text-align:center;color:var(--text-secondary);">Chưa có dữ liệu trong kỳ này</td></tr>' : ''}
+                            </tbody>
+                        </table>
                     </div>
 
                     <!-- Các khoản cộng -->

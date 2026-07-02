@@ -353,19 +353,22 @@ const Utils = {
             
             const renderPicker = (year) => {
                 const months = [
-                    'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4',
-                    'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8',
-                    'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'
+                    'Kỳ T1', 'Kỳ T2', 'Kỳ T3', 'Kỳ T4',
+                    'Kỳ T5', 'Kỳ T6', 'Kỳ T7', 'Kỳ T8',
+                    'Kỳ T9', 'Kỳ T10', 'Kỳ T11', 'Kỳ T12'
                 ];
                 
-                const currentMonthIdx = new Date().getMonth();
-                const currentYear = new Date().getFullYear();
+                const currentPayrollMonth = typeof PayrollModule !== 'undefined' && typeof PayrollModule.getCurrentCycleMonthStr === 'function'
+                    ? PayrollModule.getCurrentCycleMonthStr(new Date())
+                    : Utils.getCurrentPayrollMonth();
+                const [currentYear, currentMonth] = currentPayrollMonth.split('-').map(Number);
+                const currentMonthIdx = currentMonth - 1;
 
                 overlay.innerHTML = `
                     <div class="modal glass-card" style="width: 90%; max-width: 320px; padding: 20px; animation: scaleIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); border-radius: 16px; background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(255,255,255,0.1);">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 0 5px;">
                             <button id="prev-year" class="btn btn-text" style="color: var(--primary); font-size: 20px; padding: 5px 12px;"><i class="fa-solid fa-chevron-left"></i></button>
-                            <h2 style="font-size: 20px; font-weight: 700; color: #fff; margin: 0; letter-spacing: 1px;">Năm ${year}</h2>
+                            <h2 style="font-size: 20px; font-weight: 700; color: #fff; margin: 0; letter-spacing: 1px;">Chọn kỳ lương ${year}</h2>
                             <button id="next-year" class="btn btn-text" style="color: var(--primary); font-size: 20px; padding: 5px 12px;"><i class="fa-solid fa-chevron-right"></i></button>
                         </div>
                         
@@ -399,7 +402,7 @@ const Utils = {
                         
                         <div style="margin-top: 20px; display: flex; justify-content: center; gap: 10px;">
                             <button class="btn btn-text" id="picker-cancel" style="font-size: 13px; color: var(--text-secondary);">Hủy bỏ</button>
-                            ${year !== currentYear || initMonth !== (currentMonthIdx + 1) ? `<button class="btn btn-text" id="picker-today" style="font-size: 13px; color: var(--primary);">Tháng này</button>` : ''}
+                            ${year !== currentYear || initMonth !== (currentMonthIdx + 1) ? `<button class="btn btn-text" id="picker-today" style="font-size: 13px; color: var(--primary);">Kỳ hiện tại</button>` : ''}
                         </div>
                     </div>
                 `;
@@ -412,10 +415,8 @@ const Utils = {
                 const todayBtn = document.getElementById('picker-today');
                 if (todayBtn) {
                     todayBtn.onclick = () => {
-                        const now = new Date();
-                        const val = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
                         overlay.remove();
-                        resolve(val);
+                        resolve(currentPayrollMonth);
                     };
                 }
 

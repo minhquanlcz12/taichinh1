@@ -33,6 +33,8 @@ const Attendance = {
         allowedPublicIps: [],
         trustedDevices: []
     },
+    _checkInInFlight: false,
+    _leaveSubmitInFlight: false,
 
     usernameKey: (username) => {
         if (typeof Auth !== 'undefined' && typeof Auth.usernameKey === 'function') {
@@ -48,14 +50,28 @@ const Attendance = {
             .replace(/[^a-z0-9]/g, '');
     },
 
-    shiftKey: (record) => record && record.type ? record.type : 'morning',
+    shiftKey: (record) => {
+        if (record && record.type) return record.type;
+        const ts = Number(record && record.timestamp);
+        if (Number.isFinite(ts) && ts > 0) {
+            return new Date(ts).getHours() < 12 ? 'morning' : 'afternoon';
+        }
+        return 'morning';
+    },
 
     sameUser: (left, right) => Attendance.usernameKey(left) === Attendance.usernameKey(right),
 
     isSameAttendanceSlot: (record, userKey, dateStr, shift) => {
         return Attendance.usernameKey(record && record.username) === userKey &&
             record.dateStr === dateStr &&
-            (record.type === shift || (shift === 'morning' && !record.type));
+            Attendance.shiftKey(record) === shift;
+    },
+
+    isValidCheckInRecord: (record) => {
+        return !!record &&
+            record.status !== 'absent_unexcused' &&
+            !!record.dateStr &&
+            Number(record.timestamp || 0) > 0;
     },
 
     isSundayDate: (dateStr) => {
@@ -350,25 +366,28 @@ const Attendance = {
     loadData: async () => {
         let attendanceData = [];
         try {
+            let localData = JSON.parse(localStorage.getItem('tl_attendance') || '[]');
             if (typeof DB !== 'undefined' && typeof DB.getAttendance === 'function') {
                 attendanceData = await DB.getAttendance() || [];
                 // Đồng bộ mồ côi từ LocalStorage lỡ lưu lúc chưa update
-                let localData = JSON.parse(localStorage.getItem('tl_attendance') || '[]');
                 if (localData.length > 0) {
                     let changed = false;
                     localData.forEach(lr => {
-                        if (!attendanceData.find(r => r.id === lr.id)) {
+                        const existingIndex = attendanceData.findIndex(r => r.id === lr.id);
+                        if (existingIndex === -1) {
                             attendanceData.push(lr);
+                            changed = true;
+                        } else if (Number(lr.checkoutTimestamp || lr.timestamp || 0) > Number(attendanceData[existingIndex].checkoutTimestamp || attendanceData[existingIndex].timestamp || 0)) {
+                            attendanceData[existingIndex] = { ...attendanceData[existingIndex], ...lr };
                             changed = true;
                         }
                     });
                     if (changed) {
                         await DB.saveAttendance(attendanceData);
                     }
-                    localStorage.removeItem('tl_attendance');
                 }
             } else {
-                attendanceData = JSON.parse(localStorage.getItem('tl_attendance') || '[]');
+                attendanceData = localData;
             }
         } catch (e) {
             console.error("Lỗi tải dữ liệu chấm công:", e);
@@ -378,11 +397,10 @@ const Attendance = {
     },
 
     saveData: async (data) => {
+        localStorage.setItem('tl_attendance', JSON.stringify(data));
         try {
             if (typeof DB !== 'undefined' && typeof DB.saveAttendance === 'function') {
                 await DB.saveAttendance(data);
-            } else {
-                localStorage.setItem('tl_attendance', JSON.stringify(data));
             }
         } catch (e) {
             console.error("Lỗi lưu dữ liệu chấm công:", e);
@@ -1850,9 +1868,8 @@ const Attendance = {
             
             // Kiểm tra xem đã có bản ghi chưa
             const existingRecord = allData.find(r => 
-                Attendance.usernameKey(r.username) === normalizedU &&
-                r.dateStr === dateStr && 
-                (r.type === sessionType || (sessionType === 'morning' && !r.type))
+                Attendance.isValidCheckInRecord(r) &&
+                Attendance.isSameAttendanceSlot(r, normalizedU, dateStr, sessionType)
             );
 
             if (existingRecord) {
@@ -1947,32 +1964,48 @@ const Attendance = {
         const user = Auth.currentUser;
         if (!user) return;
 
+        if (Attendance._checkInInFlight) {
+            Utils.showToast('Đang xử lý điểm danh, chờ một chút nhé...', 'info');
+            return;
+        }
+
         const btn = document.getElementById('btn-check-in');
         if (!btn || btn.dataset.state === 'animating' || btn.dataset.state === 'loading') return;
 
         // --- State: loading ---
+        Attendance._checkInInFlight = true;
         btn.dataset.state = 'loading';
         const label = btn.querySelector('.wf-label');
         if (label) label.textContent = 'Đang xác minh máy/GPS...';
 
         if (!navigator.geolocation) {
             Utils.showToast('GPS không khả dụng. Sẽ thử xác minh bằng mạng công ty.', 'warning');
-            Attendance._runCheckin(null, null);
+            void Attendance._runCheckin(null, null);
             return;
         }
 
-        navigator.geolocation.getCurrentPosition(
-            async (pos) => Attendance._runCheckin(pos.coords.latitude, pos.coords.longitude),
-            async () => {
-                Utils.showToast('GPS không khả dụng. Sẽ thử xác minh bằng mạng công ty.', 'warning');
-                Attendance._runCheckin(null, null);
-            },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-        );
+        try {
+            navigator.geolocation.getCurrentPosition(
+                async (pos) => Attendance._runCheckin(pos.coords.latitude, pos.coords.longitude),
+                async () => {
+                    Utils.showToast('GPS không khả dụng. Sẽ thử xác minh bằng mạng công ty.', 'warning');
+                    Attendance._runCheckin(null, null);
+                },
+                { enableHighAccuracy: true, timeout: 6000, maximumAge: 30000 }
+            );
+        } catch (e) {
+            console.warn('Geolocation failed before callback:', e);
+            Utils.showToast('GPS không khả dụng. Sẽ thử xác minh bằng mạng công ty.', 'warning');
+            void Attendance._runCheckin(null, null);
+        }
     },
 
     _runCheckin: async (lat, lng) => {
         const user = Auth.currentUser;
+        if (!user) {
+            Attendance._checkInInFlight = false;
+            return;
+        }
         const btn = document.getElementById('btn-check-in');
         const now = new Date();
         const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
@@ -1986,11 +2019,13 @@ const Attendance = {
         } catch (e) {
             console.error('Attendance security check failed:', e);
             Utils.showToast('Không xác minh được máy/vị trí/mạng công ty.', 'error');
+            Attendance._checkInInFlight = false;
             Attendance.resetCheckInButton('🪵 GÕ MÕ ĐIỂM DANH');
             return;
         }
         if (!access.ok) {
             Utils.showToast(access.reason || 'Không đạt điều kiện điểm danh tại công ty.', 'error');
+            Attendance._checkInInFlight = false;
             Attendance.resetCheckInButton('🪵 GÕ MÕ ĐIỂM DANH');
             return;
         }
@@ -2115,13 +2150,13 @@ const Attendance = {
             const allData = await Attendance.loadData();
             const normalizedU = Attendance.usernameKey(user.username);
             const existingRecord = allData.find(r => 
-                Attendance.usernameKey(r.username) === normalizedU &&
-                r.dateStr === dateStr && 
-                (r.type === currentSession || (currentSession === 'morning' && !r.type))
+                Attendance.isValidCheckInRecord(r) &&
+                Attendance.isSameAttendanceSlot(r, normalizedU, dateStr, currentSession)
             );
             if (existingRecord) {
                 const sessionLabel = currentSession === 'afternoon' ? 'ca chiều' : 'ca sáng';
                 Utils.showToast(`Hôm nay bạn đã điểm danh ${sessionLabel} rồi!`, 'info');
+                Attendance._checkInInFlight = false;
                 if (btn) btn.dataset.state = 'idle';
                 return;
             }
@@ -2130,8 +2165,11 @@ const Attendance = {
             if (attendanceTelegramMsg) {
                 Utils.notifyTelegram(attendanceTelegramMsg);
             }
+            Attendance._checkInInFlight = false;
         } catch (err) {
+            console.error('Lỗi lưu điểm danh:', err);
             Utils.showToast('Lỗi lưu dữ liệu. Thử lại!', 'error');
+            Attendance._checkInInFlight = false;
             if (btn) {
                 btn.dataset.state = 'idle';
                 const l = btn.querySelector('.wf-label');
@@ -2202,9 +2240,15 @@ const Attendance = {
         const user = Auth.currentUser;
         if (!user) return;
 
+        if (Attendance._leaveSubmitInFlight) {
+            Utils.showToast('Đơn nghỉ phép đang được gửi, chờ một chút nhé...', 'info');
+            return;
+        }
+
         const startDateEl = document.getElementById('leave-start-date');
         const daysEl = document.getElementById('leave-days');
         const reasonEl = document.getElementById('leave-reason');
+        const submitBtn = document.getElementById('leave-submit-btn');
 
         if (!startDateEl || !daysEl || !reasonEl) {
             Utils.showToast("Không tìm thấy các phần tử nhập liệu xin nghỉ phép!", "error");
@@ -2212,39 +2256,74 @@ const Attendance = {
         }
 
         const startDate = startDateEl.value;
-        const days = daysEl.value;
-        const reason = reasonEl.value;
+        const days = parseFloat(daysEl.value);
+        const reason = reasonEl.value.trim();
 
-        if (!startDate || !days || !reason) {
+        if (!startDate || !Number.isFinite(days) || days <= 0 || !reason) {
             Utils.showToast("Vui lòng điền đầy đủ thông tin xin nghỉ!", "error");
             return;
         }
 
-        const now = new Date();
-        const submittedAtStr = now.toLocaleString('vi-VN');
+        Attendance._leaveSubmitInFlight = true;
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.dataset.originalHtml = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="margin-right: 6px;"></i>Đang gửi...';
+        }
 
-        const newLeave = {
-            id: 'leave_' + Date.now(),
-            username: user.username,
-            timestamp: Date.now(),
-            submittedAt: submittedAtStr, // Thêm ngày giờ nộp đơn
-            startDate: startDate,
-            days: parseFloat(days),
-            reason: reason,
-            status: 'pending' // pending, approved, rejected
-        };
+        try {
+            const now = new Date();
+            const submittedAtStr = now.toLocaleString('vi-VN');
+            const normalizedU = Attendance.usernameKey(user.username);
 
-        const allLeaves = await Attendance.loadLeaveData();
-        allLeaves.push(newLeave);
-        await Attendance.saveLeaveData(allLeaves);
+            const allLeaves = await Attendance.loadLeaveData();
+            const duplicatePending = allLeaves.find(l =>
+                Attendance.usernameKey(l.username) === normalizedU &&
+                l.startDate === startDate &&
+                l.status === 'pending'
+            );
 
-        Attendance.closeLeaveModal();
-        Utils.showToast("Đã gửi yêu cầu xin nghỉ phép thành công!", "success");
+            if (duplicatePending) {
+                Utils.showToast("Bạn đã có đơn nghỉ phép đang chờ duyệt cho ngày này rồi!", "warning");
+                return;
+            }
 
-        const msg = `📢 <b>[TỜ TRÌNH XIN NGHỈ PHÉP]</b>\n👤 Nhân viên: <b>${user.username}</b>\n📅 Từ ngày: ${startDate}\n⏳ Số ngày nghỉ: ${days}\n📝 Lý do: <i>${reason}</i>\n🕒 <b>Trình lúc:</b> ${submittedAtStr}\n\n👉 Sếp vào hệ thống kiểm tra và duyệt nhé!`;
-        Utils.notifyTelegram(msg);
+            const newLeave = {
+                id: 'leave_' + Date.now(),
+                username: user.username,
+                timestamp: Date.now(),
+                submittedAt: submittedAtStr,
+                startDate: startDate,
+                days: days,
+                reason: reason,
+                status: 'pending'
+            };
 
-        Attendance.render(); // Tải lại view
+            allLeaves.push(newLeave);
+            await Attendance.saveLeaveData(allLeaves);
+
+            Attendance.closeLeaveModal();
+            Utils.showToast("Đã gửi yêu cầu xin nghỉ phép thành công!", "success");
+
+            const msg = `📢 <b>[TỜ TRÌNH XIN NGHỈ PHÉP]</b>\n👤 Nhân viên: <b>${user.username}</b>\n📅 Từ ngày: ${startDate}\n⏳ Số ngày nghỉ: ${days}\n📝 Lý do: <i>${reason}</i>\n🕒 <b>Trình lúc:</b> ${submittedAtStr}\n\n👉 Sếp vào hệ thống kiểm tra và duyệt nhé!`;
+            try {
+                Utils.notifyTelegram(msg);
+            } catch (notifyErr) {
+                console.warn('Leave request saved but Telegram notify failed:', notifyErr);
+            }
+
+            Attendance.render();
+        } catch (err) {
+            console.error("Lỗi gửi yêu cầu nghỉ phép:", err);
+            Utils.showToast("Chưa gửi được yêu cầu nghỉ phép. Thử lại sau nhé!", "error");
+        } finally {
+            Attendance._leaveSubmitInFlight = false;
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = submitBtn.dataset.originalHtml || '<i class="fa-solid fa-paper-plane" style="margin-right: 6px;"></i>Gửi Yêu Cầu';
+                delete submitBtn.dataset.originalHtml;
+            }
+        }
     },
 
     updateLeaveStatus: async (leaveId, newStatus) => {
@@ -2320,8 +2399,13 @@ const Attendance = {
         
         const allData = await Attendance.loadData();
         const normalizedU = Attendance.usernameKey(user.username);
-        const todayRecord = allData.find(r => Attendance.usernameKey(r.username) === normalizedU && r.dateStr === dateStr && r.type === 'afternoon') ||
-                            allData.find(r => Attendance.usernameKey(r.username) === normalizedU && r.dateStr === dateStr && (r.type === 'morning' || !r.type));
+        const todayRecord = allData
+            .filter(r =>
+                Attendance.isValidCheckInRecord(r) &&
+                Attendance.usernameKey(r.username) === normalizedU &&
+                r.dateStr === dateStr
+            )
+            .sort((a, b) => Number(b.timestamp || 0) - Number(a.timestamp || 0))[0];
         
         if (todayRecord) {
             todayRecord.checkoutTimestamp = now.getTime();

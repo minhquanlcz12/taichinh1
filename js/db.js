@@ -249,6 +249,7 @@ const DB = {
             await db.collection("system").doc("custom_bonuses").set(bonusesObj);
         } catch (e) {
             console.error("Error saving custom bonuses:", e);
+            throw e;
         }
     },
 
@@ -272,6 +273,7 @@ const DB = {
             await db.collection("system").doc("salary_advances").set(advancesObj);
         } catch (e) {
             console.error("Error saving salary advances:", e);
+            throw e;
         }
     },
 
@@ -382,6 +384,7 @@ const DB = {
             await db.collection("system").doc("attendance").set({ data: attendanceArray });
         } catch (e) {
             console.error("Error saving attendance:", e);
+            throw e;
         }
     },
 
@@ -404,6 +407,7 @@ const DB = {
             await db.collection("system").doc("leave_requests").set({ data: leavesArray });
         } catch (e) {
             console.error("Error saving leave requests:", e);
+            throw e;
         }
     },
 
@@ -426,6 +430,7 @@ const DB = {
             await db.collection("system").doc("late_requests").set({ data: lateArray });
         } catch (e) {
             console.error("Error saving late requests:", e);
+            throw e;
         }
     },
 
@@ -521,7 +526,7 @@ const DB = {
             return true;
         } catch (e) {
             console.error("Error saving bonus approvals:", e);
-            return false;
+            throw e;
         }
     },
 
@@ -529,7 +534,9 @@ const DB = {
         try {
             const doc = await db.collection("system").doc("bonus_approvals").get();
             if (doc.exists && doc.data()) {
-                return doc.data();
+                const data = doc.data();
+                Utils.storage.set('backup_bonus_approvals', data);
+                return data;
             }
         } catch (e) {
             console.error("Error getting bonus approvals:", e);
