@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔧 Khôi phục Số dư CONGTY</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: #0a0f1a;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            max-width: 600px;
+            width: 90%;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+        }
+        h1 { font-size: 24px; margin-bottom: 12px; color: #00f0ff; }
+        p { color: #999; font-size: 14px; line-height: 1.6; margin-bottom: 20px; }
+        .target { background: rgba(16,185,129,0.1); border: 1px solid #10b981; border-radius: 12px; padding: 16px; margin: 20px 0; }
+        .target h2 { color: #10b981; font-size: 28px; }
+        .target span { font-size: 12px; color: #888; }
+        #run-btn {
+            background: linear-gradient(135deg, #00f0ff, #0066ff);
+            color: #000;
+            border: none;
+            padding: 14px 40px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+        #run-btn:hover { transform: scale(1.05); box-shadow: 0 0 20px rgba(0,240,255,0.4); }
+        #run-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        #log {
+            margin-top: 20px;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            padding: 16px;
+            text-align: left;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+        }
+        .log-line { margin: 4px 0; line-height: 1.5; }
+        .success { color: #10b981; }
+        .error { color: #ef4444; }
+        .info { color: #fbbf24; }
+    </style>
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Khôi phục Số dư CONGTY</h1>
+        <p>Công cụ này sẽ xóa sạch dữ liệu tài chính sai lệch của tài khoản CONGTY và tái thiết lập số dư chính xác dựa trên dữ liệu đối soát từ Telegram.</p>
+        
+        <div class="target">
+            <span>SỐ DƯ MỤC TIÊU</span>
+            <h2>4.969.000đ</h2>
+        </div>
+
+        <p style="font-size: 12px; color: #666;">
+            Giao dịch sẽ được ghi nhận:<br>
+            • 16/06: Số dư đầu kỳ +3.169.000đ<br>
+            • 17/06: Ứng dinhminh3003 -200.000đ<br>
+            • 18/06: Thu từ coowy +9.000.000đ<br>
+            • 18/06: Trả lương Long -6.500.000đ<br>
+            • 19/06: Ứng lương Minh -500.000đ
+        </p>
+
+        <button id="run-btn" onclick="runRecovery()">🚀 BẮT ĐẦU KHÔI PHỤC</button>
+        
+        <div id="log"></div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDnf92gy04FlMvifu2j_9GA2OYP8hVHW54",
+            authDomain: "taichinh-2f40d.firebaseapp.com",
+            projectId: "taichinh-2f40d",
+            storageBucket: "taichinh-2f40d.firebasestorage.app",
+            messagingSenderId: "302006845249",
+            appId: "1:302006845249:web:d1b72124789f30810cebc0"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        function log(msg, type = '') {
+            const logDiv = document.getElementById('log');
+            logDiv.style.display = 'block';
+            logDiv.innerHTML += `<div class="log-line ${type}">${msg}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function ownerKey(owner) {
+            if (!owner) return '';
+            return owner.toString().trim()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/[đĐ]/g, 'd')
+                .toLowerCase()
+                .replace(/[^a-z0-9]/g, '');
+        }
+
+        async function runRecovery() {
+            const btn = document.getElementById('run-btn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Đang xử lý...';
+
+            try {
+                log("🚀 Bắt đầu khôi phục...");
+
+                const doc = await db.collection("finance").doc("main").get();
+                const data = doc.data() || { transactions: [] };
+                let txs = data.transactions || [];
+
+                log(`📊 Tổng giao dịch hiện có: ${txs.length}`);
+
+                // 1. XÓA SẠCH tất cả giao dịch của CONGTY
+                const before = txs.length;
+                txs = txs.filter(t => ownerKey(t.owner) !== 'congty');
+                const removed = before - txs.length;
+                log(`🧹 Đã xóa ${removed} giao dịch CONGTY cũ`, 'info');
+
+                // 2. THÊM CÁC GIAO DỊCH MỚI
+                txs.push({
+                    id: 'v3_base', date: '2026-06-16', category: 'Số dư xác nhận',
+                    amount: 3169000, type: 'income', owner: 'congty',
+                    note: 'Số dư Telegram chốt ngày 16/06 (Đã bao gồm offset 200k)'
+                });
+                log("✅ Thêm: Số dư đầu kỳ +3.169.000đ");
+
+                txs.push({
+                    id: 'v3_tx_1', date: '2026-06-17', category: 'Tạm ứng',
+                    amount: 200000, type: 'expense', owner: 'congty',
+                    note: 'Ứng cho dinhminh3003 (Telegram)'
+                });
+                log("✅ Thêm: 17/06 Ứng dinhminh3003 -200.000đ");
+
+                txs.push({
+                    id: 'v3_tx_2', date: '2026-06-18', category: 'Thu nhập khác',
+                    amount: 9000000, type: 'income', owner: 'congty',
+                    note: 'Tiền lấy từ coowy (Telegram)'
+                });
+                log("✅ Thêm: 18/06 Thu từ coowy +9.000.000đ");
+
+                txs.push({
+                    id: 'v3_tx_3', date: '2026-06-18', category: 'Thanh toán lương',
+                    amount: 6500000, type: 'expense', owner: 'congty',
+                    note: 'Thanh toán lương cho Long (Telegram)'
+                });
+                log("✅ Thêm: 18/06 Trả lương Long -6.500.000đ");
+
+                txs.push({
+                    id: 'v3_tx_4', date: '2026-06-19', category: 'Tạm ứng',
+                    amount: 500000, type: 'expense', owner: 'congty',
+                    note: 'Ứng lương cho Minh (Telegram)'
+                });
+                log("✅ Thêm: 19/06 Ứng lương Minh -500.000đ");
+
+                // 3. KIỂM TRA SỐ DƯ
+                let finalSum = 0;
+                txs.forEach(t => {
+                    if (ownerKey(t.owner) === 'congty') {
+                        const amt = parseFloat(t.amount) || 0;
+                        if (t.type === 'income') finalSum += amt;
+                        else finalSum -= amt;
+                    }
+                });
+
+                log(`\n💰 SỐ DƯ TÍNH TOÁN: ${finalSum.toLocaleString()}đ`, finalSum === 4969000 ? 'success' : 'error');
+
+                if (Math.abs(finalSum - 4969000) < 1) {
+                    log("✅ KHỚP HOÀN HẢO! Đang lưu vào Firebase...", 'success');
+                    await db.collection("finance").doc("main").set({ ...data, transactions: txs });
+                    log("💾 ĐÃ LƯU THÀNH CÔNG!", 'success');
+                    log("\n🎉 HOÀN TẤT! Hãy mở lại trang web chính để kiểm tra.", 'success');
+                    btn.textContent = '✅ HOÀN TẤT';
+                    btn.style.background = '#10b981';
+                } else {
+                    log("❌ Sai lệch! Kiểm tra lại dữ liệu.", 'error');
+                    btn.textContent = '❌ Có lỗi';
+                    btn.style.background = '#ef4444';
+                }
+
+            } catch (e) {
+                log("❌ LỖI: " + e.message, 'error');
+                btn.textContent = '❌ Có lỗi';
+                btn.style.background = '#ef4444';
+            }
+        }
+    </script>
+</body>
+</html>

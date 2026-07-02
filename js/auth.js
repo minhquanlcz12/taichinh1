@@ -1297,7 +1297,7 @@ const Auth = {
         return perks;
     },
 
-    addExpToUser: async (username, rewardPoints) => {
+    addExpToUser: async (username, rewardPoints, options = {}) => {
         const expGained = rewardPoints * Auth.EXP_MULTIPLIER;
         const accounts = await Auth.getAccounts();
         const acc = accounts.find(a => a.username === username);
@@ -1328,7 +1328,7 @@ const Auth = {
         }
 
         const leveled = newLevel > oldLevel;
-        if (leveled) {
+        if (leveled && !options.silentLevelUp) {
             const titleInfo = Auth.getLevelTitle(newLevel);
             const perks = Auth.getLevelPerks(newLevel);
             const latestPerk = perks[perks.length - 1] || '';

@@ -616,7 +616,7 @@ window.LobbyNeon = {
                     top: 80px;
                     right: 20px;
                     bottom: 80px;
-                    width: 360px;
+                    width: min(390px, calc(100vw - 40px));
                     background: rgba(15, 23, 42, 0.95);
                     border: 2px solid #00f3ff;
                     border-radius: 16px;
@@ -674,6 +674,12 @@ window.LobbyNeon = {
                     flex: 1;
                     overflow-y: auto;
                     padding: 16px;
+                    min-height: 0;
+                    scrollbar-gutter: stable;
+                    overflow-anchor: none;
+                }
+                #hub-content-rpg {
+                    min-height: 620px;
                 }
                 .rpg-grid {
                     display: grid;
@@ -745,6 +751,7 @@ window.LobbyNeon = {
                     background: rgba(2, 6, 23, 0.55);
                     border: 1px solid rgba(148, 163, 184, 0.12);
                     overflow: hidden;
+                    contain: layout paint;
                 }
                 .rpg-skill-preview::before {
                     content: "";
@@ -1505,8 +1512,8 @@ window.LobbyNeon = {
                 }
                 .rpg-inventory-layout {
                     display: grid;
-                    grid-template-columns: 1.05fr .95fr;
-                    gap: 10px;
+                    grid-template-columns: 1fr;
+                    gap: 12px;
                 }
                 .rpg-equip-panel,
                 .rpg-bag-panel {
@@ -1530,7 +1537,7 @@ window.LobbyNeon = {
                 }
                 .rpg-character-frame {
                     position: relative;
-                    min-height: 128px;
+                    min-height: 158px;
                     border-radius: 12px;
                     border: 1px solid rgba(34,211,238,.22);
                     background:
@@ -1554,7 +1561,7 @@ window.LobbyNeon = {
                 .rpg-character-frame .rpg-player-sprite {
                     position: relative;
                     z-index: 2;
-                    transform: scale(1.05);
+                    transform: scale(1.18);
                 }
                 .rpg-equip-grid {
                     display: grid;
@@ -1602,18 +1609,31 @@ window.LobbyNeon = {
                 }
                 .rpg-bag-grid {
                     display: grid;
-                    grid-template-columns: repeat(4, minmax(0, 1fr));
-                    gap: 6px;
+                    grid-template-columns: repeat(5, minmax(0, 1fr));
+                    gap: 8px;
                 }
                 .rpg-bag-cell {
                     aspect-ratio: 1;
-                    border-radius: 8px;
+                    min-height: 48px;
+                    border-radius: 10px;
                     border: 1px solid rgba(148,163,184,.14);
                     background: rgba(15,23,42,.68);
                     display: grid;
                     place-items: center;
                     position: relative;
                     overflow: hidden;
+                    color: #e2e8f0;
+                    cursor: default;
+                }
+                button.rpg-bag-cell {
+                    cursor: pointer;
+                    padding: 0;
+                    font: inherit;
+                }
+                button.rpg-bag-cell:hover {
+                    transform: translateY(-1px);
+                    border-color: var(--item-color, #22d3ee);
+                    box-shadow: 0 0 16px color-mix(in srgb, var(--item-color, #22d3ee) 28%, transparent);
                 }
                 .rpg-bag-cell.has-item {
                     border-color: color-mix(in srgb, var(--item-color, #22d3ee) 44%, rgba(148,163,184,.14));
@@ -1622,7 +1642,7 @@ window.LobbyNeon = {
                         rgba(15,23,42,.82);
                 }
                 .rpg-bag-icon {
-                    font-size: 18px;
+                    font-size: 24px;
                     filter: drop-shadow(0 0 8px var(--item-color, #22d3ee));
                 }
                 .rpg-bag-qty {
@@ -1633,8 +1653,397 @@ window.LobbyNeon = {
                     border-radius: 5px;
                     background: rgba(0,0,0,.68);
                     color: #fff;
-                    font-size: 8px;
+                    font-size: 9px;
                     font-weight: 1000;
+                }
+                .rpg-stat-grid {
+                    display: grid;
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                    gap: 8px;
+                    margin-top: 10px;
+                }
+                .rpg-stat-row {
+                    border: 1px solid rgba(148,163,184,.16);
+                    border-radius: 10px;
+                    background: rgba(15,23,42,.72);
+                    padding: 8px;
+                    min-width: 0;
+                }
+                .rpg-stat-top {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    gap: 8px;
+                    color: #e2e8f0;
+                    font-size: 11px;
+                    font-weight: 900;
+                }
+                .rpg-stat-desc {
+                    margin-top: 3px;
+                    color: #94a3b8;
+                    font-size: 9px;
+                    line-height: 1.35;
+                }
+                .rpg-stat-add {
+                    border: 1px solid rgba(34,211,238,.4);
+                    background: rgba(34,211,238,.12);
+                    color: #67e8f9;
+                    width: 24px;
+                    height: 24px;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    font-weight: 1000;
+                }
+                .rpg-mu-shell {
+                    display: grid;
+                    gap: 12px;
+                }
+                .rpg-mu-top {
+                    position: relative;
+                    overflow: hidden;
+                    border-radius: 12px;
+                    border: 1px solid rgba(251,191,36,.28);
+                    background:
+                        radial-gradient(circle at 18% 20%, rgba(34,211,238,.18), transparent 34%),
+                        linear-gradient(135deg, rgba(15,23,42,.96), rgba(2,6,23,.98));
+                    padding: 12px;
+                    box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 12px 28px rgba(0,0,0,.28);
+                }
+                .rpg-mu-top::before,
+                .rpg-mu-panel::before {
+                    content: "";
+                    position: absolute;
+                    inset: 0;
+                    pointer-events: none;
+                    background: linear-gradient(135deg, rgba(255,255,255,.08), transparent 28%, rgba(251,191,36,.05));
+                    opacity: .72;
+                }
+                .rpg-mu-identity {
+                    position: relative;
+                    z-index: 1;
+                    display: grid;
+                    grid-template-columns: 58px 1fr;
+                    gap: 10px;
+                    align-items: center;
+                }
+                .rpg-mu-avatar {
+                    width: 58px;
+                    height: 58px;
+                    border-radius: 50%;
+                    display: grid;
+                    place-items: center;
+                    background:
+                        radial-gradient(circle at 50% 38%, rgba(34,211,238,.28), transparent 58%),
+                        rgba(2,6,23,.88);
+                    border: 1px solid rgba(34,211,238,.42);
+                    box-shadow: 0 0 22px rgba(34,211,238,.22);
+                    overflow: hidden;
+                }
+                .rpg-mu-avatar .rpg-player-sprite {
+                    transform: scale(.58);
+                }
+                .rpg-mu-name {
+                    color: #f8fafc;
+                    font-size: 16px;
+                    font-weight: 1000;
+                    line-height: 1.1;
+                    margin: 0;
+                }
+                .rpg-mu-level {
+                    color: #fbbf24;
+                    font-size: 12px;
+                    font-weight: 1000;
+                    margin-top: 3px;
+                }
+                .rpg-mu-power {
+                    margin-top: 8px;
+                    padding: 8px;
+                    border-radius: 10px;
+                    border: 1px solid rgba(251,191,36,.25);
+                    background: rgba(0,0,0,.22);
+                    color: #fbbf24;
+                    font-size: 20px;
+                    font-weight: 1000;
+                    text-align: center;
+                    text-shadow: 0 0 16px rgba(251,191,36,.46);
+                }
+                .rpg-mu-bars {
+                    position: relative;
+                    z-index: 1;
+                    display: grid;
+                    gap: 6px;
+                    margin-top: 10px;
+                }
+                .rpg-mu-bar {
+                    height: 16px;
+                    border-radius: 999px;
+                    border: 1px solid rgba(255,255,255,.13);
+                    background: rgba(2,6,23,.85);
+                    overflow: hidden;
+                    position: relative;
+                }
+                .rpg-mu-bar > span {
+                    display: block;
+                    height: 100%;
+                    border-radius: inherit;
+                }
+                .rpg-mu-bar b {
+                    position: absolute;
+                    inset: 0;
+                    display: grid;
+                    place-items: center;
+                    color: #f8fafc;
+                    font-size: 9px;
+                    font-weight: 1000;
+                    text-shadow: 0 1px 2px #000;
+                }
+                .rpg-mu-bar.exp > span { background: linear-gradient(90deg, #0284c7, #22d3ee); }
+                .rpg-mu-bar.hp > span { background: linear-gradient(90deg, #b91c1c, #ef4444, #f97316); }
+                .rpg-mu-bar.mp > span { background: linear-gradient(90deg, #1d4ed8, #38bdf8); }
+                .rpg-mu-currencies {
+                    position: relative;
+                    z-index: 1;
+                    display: grid;
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 6px;
+                    margin-top: 10px;
+                }
+                .rpg-mu-money {
+                    min-width: 0;
+                    border-radius: 9px;
+                    border: 1px solid rgba(148,163,184,.18);
+                    background: rgba(15,23,42,.74);
+                    padding: 6px;
+                    color: #e2e8f0;
+                    font-size: 10px;
+                    font-weight: 900;
+                    display: flex;
+                    justify-content: space-between;
+                    gap: 4px;
+                }
+                .rpg-mu-panel {
+                    position: relative;
+                    overflow: hidden;
+                    border-radius: 12px;
+                    border: 1px solid rgba(148,163,184,.18);
+                    background:
+                        linear-gradient(180deg, rgba(15,23,42,.92), rgba(2,6,23,.96));
+                    box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 12px 24px rgba(0,0,0,.24);
+                    padding: 10px;
+                }
+                .rpg-mu-heading {
+                    position: relative;
+                    z-index: 1;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 8px;
+                    margin-bottom: 10px;
+                    color: #fbbf24;
+                    font-size: 13px;
+                    font-weight: 1000;
+                    text-transform: uppercase;
+                    letter-spacing: .04em;
+                }
+                .rpg-mu-equipment {
+                    position: relative;
+                    z-index: 1;
+                    display: grid;
+                    grid-template-columns: 60px 1fr 60px;
+                    gap: 8px;
+                    align-items: center;
+                }
+                .rpg-mu-slot-col {
+                    display: grid;
+                    gap: 8px;
+                }
+                .rpg-mu-slot {
+                    min-height: 58px;
+                    border-radius: 10px;
+                    border: 1px solid color-mix(in srgb, var(--equip-color, #22d3ee) 48%, rgba(148,163,184,.16));
+                    background:
+                        radial-gradient(circle at 50% 34%, color-mix(in srgb, var(--equip-color, #22d3ee) 22%, transparent), transparent 70%),
+                        rgba(2,6,23,.78);
+                    display: grid;
+                    place-items: center;
+                    position: relative;
+                    color: #f8fafc;
+                    box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 0 14px color-mix(in srgb, var(--equip-color, #22d3ee) 16%, transparent);
+                }
+                .rpg-mu-slot-icon {
+                    font-size: 23px;
+                    filter: drop-shadow(0 0 8px var(--equip-color, #22d3ee));
+                }
+                .rpg-mu-slot-level {
+                    position: absolute;
+                    right: 4px;
+                    top: 3px;
+                    color: #fde68a;
+                    font-size: 9px;
+                    font-weight: 1000;
+                    text-shadow: 0 0 8px rgba(251,191,36,.72);
+                }
+                .rpg-mu-slot-label {
+                    position: absolute;
+                    left: 4px;
+                    right: 4px;
+                    bottom: 3px;
+                    color: #cbd5e1;
+                    font-size: 8px;
+                    font-weight: 900;
+                    text-align: center;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+                .rpg-mu-character {
+                    min-height: 284px;
+                    border-radius: 14px;
+                    display: grid;
+                    place-items: center;
+                    position: relative;
+                    overflow: hidden;
+                    background:
+                        radial-gradient(circle at 50% 54%, rgba(34,211,238,.24), transparent 46%),
+                        radial-gradient(circle at 50% 72%, rgba(251,191,36,.16), transparent 36%),
+                        linear-gradient(180deg, rgba(15,23,42,.78), rgba(2,6,23,.86));
+                    border: 1px solid rgba(34,211,238,.24);
+                }
+                .rpg-mu-character::before {
+                    content: "";
+                    position: absolute;
+                    width: 190px;
+                    height: 190px;
+                    border-radius: 50%;
+                    border: 2px solid rgba(34,211,238,.16);
+                    box-shadow: 0 0 34px rgba(34,211,238,.18), inset 0 0 24px rgba(59,130,246,.12);
+                }
+                .rpg-mu-character::after {
+                    content: "";
+                    position: absolute;
+                    left: 22%;
+                    right: 22%;
+                    bottom: 32px;
+                    height: 18px;
+                    border-radius: 50%;
+                    background: radial-gradient(ellipse at center, rgba(34,211,238,.52), transparent 72%);
+                    filter: blur(1px);
+                }
+                .rpg-mu-character .rpg-player-sprite {
+                    position: relative;
+                    z-index: 2;
+                    transform: scale(1.42);
+                    filter: drop-shadow(0 0 16px rgba(34,211,238,.46));
+                }
+                .rpg-mu-bag-tabs {
+                    position: relative;
+                    z-index: 1;
+                    display: grid;
+                    grid-template-columns: repeat(4, 1fr);
+                    gap: 5px;
+                    margin-bottom: 9px;
+                }
+                .rpg-mu-bag-tab {
+                    border: 1px solid rgba(148,163,184,.18);
+                    background: rgba(15,23,42,.72);
+                    color: #cbd5e1;
+                    border-radius: 8px;
+                    padding: 6px 4px;
+                    font-size: 9px;
+                    font-weight: 900;
+                }
+                .rpg-mu-bag-tab.active {
+                    color: #f8fafc;
+                    border-color: rgba(34,211,238,.58);
+                    background: linear-gradient(135deg, rgba(14,165,233,.38), rgba(30,41,59,.82));
+                    box-shadow: 0 0 16px rgba(34,211,238,.2);
+                }
+                .rpg-mu-bag-actions {
+                    position: relative;
+                    z-index: 1;
+                    display: grid;
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 6px;
+                    margin-top: 9px;
+                }
+                .rpg-mu-small-btn {
+                    border: 1px solid rgba(34,211,238,.26);
+                    border-radius: 9px;
+                    background: rgba(14,165,233,.1);
+                    color: #cbd5e1;
+                    font-size: 10px;
+                    font-weight: 900;
+                    padding: 7px 4px;
+                }
+                .rpg-mu-stat-effects {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 8px;
+                    margin-top: 10px;
+                }
+                .rpg-mu-effect-box {
+                    border: 1px solid rgba(148,163,184,.16);
+                    border-radius: 10px;
+                    background: rgba(2,6,23,.48);
+                    padding: 9px;
+                    color: #cbd5e1;
+                    font-size: 10px;
+                    line-height: 1.55;
+                }
+                .rpg-mu-effect-box b {
+                    color: #fde68a;
+                }
+                .rpg-mu-boss {
+                    position: relative;
+                    z-index: 1;
+                    display: grid;
+                    grid-template-columns: 104px 1fr;
+                    gap: 10px;
+                    align-items: stretch;
+                }
+                .rpg-mu-boss-art {
+                    border-radius: 12px;
+                    border: 1px solid rgba(248,113,113,.35);
+                    background:
+                        radial-gradient(circle at 54% 38%, rgba(248,113,113,.28), transparent 55%),
+                        linear-gradient(135deg, rgba(76,29,149,.35), rgba(2,6,23,.9));
+                    display: grid;
+                    place-items: center;
+                    min-height: 116px;
+                    overflow: hidden;
+                }
+                .rpg-mu-boss-art .rpg-monster-svg {
+                    width: 96px;
+                    height: 96px;
+                }
+                .rpg-mu-boss-info {
+                    min-width: 0;
+                    display: grid;
+                    gap: 7px;
+                }
+                .rpg-mu-boss-name {
+                    color: #fb7185;
+                    font-size: 12px;
+                    font-weight: 1000;
+                    line-height: 1.25;
+                }
+                .rpg-mu-boss-rewards {
+                    display: grid;
+                    grid-template-columns: repeat(6, minmax(0, 1fr));
+                    gap: 5px;
+                    margin-top: 8px;
+                }
+                .rpg-mu-reward {
+                    aspect-ratio: 1;
+                    border-radius: 8px;
+                    border: 1px solid color-mix(in srgb, var(--item-color, #fbbf24) 48%, rgba(148,163,184,.16));
+                    background:
+                        radial-gradient(circle, color-mix(in srgb, var(--item-color, #fbbf24) 20%, transparent), transparent 68%),
+                        rgba(2,6,23,.72);
+                    display: grid;
+                    place-items: center;
+                    color: #f8fafc;
+                    font-size: 18px;
                 }
                 .rpg-quick-skins {
                     display: grid;
@@ -3641,10 +4050,19 @@ window.LobbyNeon = {
             longAn: 0,
             fireShard: 0,
             thunderShard: 0,
-            moonShard: 0
+            moonShard: 0,
+            bossCore: 0
         },
         dailyKey: LobbyNeon.getRpgDailyKey(),
         stamina: 100,
+        statPoints: 0,
+        stats: {
+            str: 1,
+            int: 1,
+            agi: 1,
+            vit: 1,
+            luck: 1
+        },
         activeHunt: null,
         lootLog: [],
         totalHunts: 0,
@@ -3663,6 +4081,11 @@ window.LobbyNeon = {
                 ...defaults.inventory,
                 ...((profile && profile.inventory) || {})
             },
+            stats: {
+                ...defaults.stats,
+                ...((profile && profile.stats) || {})
+            },
+            statPoints: Number(profile?.statPoints || 0),
             unlockedSkins: Array.from(new Set([...(profile?.unlockedSkins || []), 'basic'])),
             lootLog: Array.isArray(profile?.lootLog) ? profile.lootLog.slice(0, 12) : []
         };
@@ -3681,6 +4104,10 @@ window.LobbyNeon = {
             merged.stamina = 100;
         }
         merged.stamina = Math.max(0, Math.min(100, Number(merged.stamina || 0)));
+        Object.keys(merged.stats).forEach(key => {
+            merged.stats[key] = Math.max(1, Number(merged.stats[key] || 1));
+        });
+        merged.statPoints = Math.max(0, Number(merged.statPoints || 0));
         return merged;
     },
 
@@ -3786,7 +4213,7 @@ window.LobbyNeon = {
         return Object.entries(items || {})
             .filter(([, qty]) => Number(qty) > 0)
             .map(([key, qty]) => {
-                const label = labels[key] || [key, '🎁'];
+                const label = key === 'bossCore' ? ['Loi Boss', 'Core'] : (labels[key] || [key, '🎁']);
                 return `${label[1]} ${LobbyNeon.escapeHtml(label[0])} x${qty}`;
             })
             .join(' · ') || 'Không có vật phẩm';
@@ -3794,7 +4221,225 @@ window.LobbyNeon = {
 
     getRpgPower: (profile) => {
         const level = Auth.currentUser?.level || 1;
-        return Math.round(level * 120 + (profile.totalHunts || 0) * 16 + (profile.totalRewardPoints || 0) * 20 + (profile.unlockedSkins?.length || 1) * 75);
+        const stats = profile?.stats || {};
+        const statPower = Number(stats.str || 0) * 34 + Number(stats.int || 0) * 36 + Number(stats.agi || 0) * 30 + Number(stats.vit || 0) * 42 + Number(stats.luck || 0) * 24;
+        return Math.round(level * 120 + statPower + (profile.totalHunts || 0) * 16 + (profile.totalRewardPoints || 0) * 20 + (profile.unlockedSkins?.length || 1) * 75);
+    },
+
+    awardRpgExp: async (username, rewardPoints, profile) => {
+        const expResult = await Auth.addExpToUser(username, Number(rewardPoints || 0), { silentLevelUp: true });
+        if (expResult?.leveled && profile) {
+            const gainedLevels = Math.max(1, Number(expResult.newLevel || 1) - Number(expResult.oldLevel || 1));
+            profile.statPoints = Number(profile.statPoints || 0) + gainedLevels * 3;
+            Utils.showToast(`Len cap ${expResult.newLevel}! +${gainedLevels * 3} diem chi so.`, 'success');
+        }
+        return expResult;
+    },
+
+    getRpgStatMeta: () => ({
+        str: { label: 'Lực', icon: '💪', desc: 'Tăng sát thương vật lý, hợp Kiếm Tông.' },
+        int: { label: 'Pháp', icon: '🔮', desc: 'Tăng sát thương pháp thuật, hợp Pháp Tông.' },
+        agi: { label: 'Ảnh', icon: '🌙', desc: 'Tăng né/crit, hợp Ảnh Sát.' },
+        vit: { label: 'Thể', icon: '🛡️', desc: 'Tăng sống sót khi đánh boss.' },
+        luck: { label: 'May', icon: '🍀', desc: 'Tăng tỉ lệ rơi đồ hiếm.' }
+    }),
+
+    renderRpgStatsPanel: (profile) => {
+        const meta = LobbyNeon.getRpgStatMeta();
+        const stats = profile.stats || {};
+        const points = Number(profile.statPoints || 0);
+        return `
+            <div class="rpg-card">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+                    <p class="rpg-title">📊 Chỉ số nhân vật</p>
+                    <span class="rpg-chip">+${points} điểm</span>
+                </div>
+                <div class="rpg-stat-grid">
+                    ${Object.entries(meta).map(([key, cfg]) => `
+                        <div class="rpg-stat-row">
+                            <div class="rpg-stat-top">
+                                <span>${cfg.icon} ${cfg.label}: ${Number(stats[key] || 1)}</span>
+                                <button class="rpg-stat-add" ${points <= 0 ? 'disabled' : ''} onclick="LobbyNeon.addRpgStat('${key}')">+</button>
+                            </div>
+                            <div class="rpg-stat-desc">${cfg.desc}</div>
+                        </div>
+                    `).join('')}
+                </div>
+                <button class="rpg-action-btn" style="width:100%; margin-top:10px;" ${points <= 0 ? 'disabled' : ''} onclick="LobbyNeon.autoAddRpgStats()">Tự cộng theo môn phái</button>
+            </div>
+        `;
+    },
+
+    addRpgStat: async (statKey) => {
+        const meta = LobbyNeon.getRpgStatMeta();
+        if (!meta[statKey]) return;
+        const { data, profile } = await LobbyNeon.getMyRpgProfile();
+        if (Number(profile.statPoints || 0) <= 0) {
+            Utils.showToast('Chưa có điểm chỉ số. Lên cấp hoặc thắng boss để nhận thêm.', 'warning');
+            return;
+        }
+        profile.stats[statKey] = Number(profile.stats[statKey] || 1) + 1;
+        profile.statPoints = Number(profile.statPoints || 0) - 1;
+        await LobbyNeon.saveMyRpgProfile(profile, data);
+        Utils.showToast(`Đã cộng +1 ${meta[statKey].label}.`, 'success');
+        LobbyNeon.renderRpgPanel();
+    },
+
+    autoAddRpgStats: async () => {
+        const { data, profile } = await LobbyNeon.getMyRpgProfile();
+        let points = Number(profile.statPoints || 0);
+        if (points <= 0) {
+            Utils.showToast('Chưa có điểm chỉ số để tự cộng.', 'warning');
+            return;
+        }
+        const plans = {
+            kiem_tong: ['str', 'vit', 'agi', 'luck'],
+            phap_tong: ['int', 'luck', 'vit', 'agi'],
+            anh_sat: ['agi', 'luck', 'str', 'vit'],
+            thien_y: ['vit', 'int', 'luck', 'agi']
+        };
+        const plan = plans[profile.classId] || plans.kiem_tong;
+        let index = 0;
+        while (points > 0) {
+            const key = plan[index % plan.length];
+            profile.stats[key] = Number(profile.stats[key] || 1) + 1;
+            points--;
+            index++;
+        }
+        profile.statPoints = 0;
+        await LobbyNeon.saveMyRpgProfile(profile, data);
+        Utils.showToast('Đã tự cộng điểm theo môn phái.', 'success');
+        LobbyNeon.renderRpgPanel();
+    },
+
+    getRpgBossCost: (zone) => Math.max(18, Math.round(Number(zone?.staminaCost || 10) * 1.8)),
+
+    getRpgBossPower: (zone) => {
+        const level = Auth.currentUser?.level || 1;
+        return Math.round((Number(zone?.minLevel || 1) * 210) + (Number(zone?.rewardPoints || 1) * 420) + (level * 65));
+    },
+
+    getRpgBossWinChance: (profile, zone) => {
+        const stats = profile?.stats || {};
+        const playerPower = LobbyNeon.getRpgPower(profile);
+        const bossPower = LobbyNeon.getRpgBossPower(zone);
+        const vitBonus = Number(stats.vit || 1) * 0.006;
+        const luckBonus = Number(stats.luck || 1) * 0.004;
+        const ratio = playerPower / Math.max(1, bossPower);
+        return Math.max(0.12, Math.min(0.92, 0.26 + ratio * 0.36 + vitBonus + luckBonus));
+    },
+
+    rollRpgBossReward: (zone, profile, won) => {
+        const stats = profile?.stats || {};
+        const luck = Number(stats.luck || 1);
+        const classCfg = LobbyNeon.rpgClasses[profile.classId] || LobbyNeon.rpgClasses.kiem_tong;
+        const shardMap = {
+            training_forest: 'thunderShard',
+            ghost_cave: 'moonShard',
+            secret_realm: 'fireShard'
+        };
+        const mult = won ? 3 : 0.45;
+        const rewardPoints = won ? Math.max(2, Number(zone.rewardPoints || 1) * 4) : 1;
+        const items = {
+            goldDust: Math.max(2, Math.round(Number(zone.gold || 10) * mult * (0.85 + Math.random() * 0.45))),
+            [zone.material]: Math.max(1, Math.round(Number(zone.rewardPoints || 1) * mult * classCfg.lootMult))
+        };
+        if (won) {
+            const shardChance = Math.min(0.82, 0.22 + Number(zone.rewardPoints || 1) * 0.11 + luck * 0.008);
+            const coreChance = Math.min(0.34, 0.05 + Number(zone.rewardPoints || 1) * 0.045 + luck * 0.006);
+            if (Math.random() < shardChance) items[shardMap[zone.id] || 'thunderShard'] = 1 + (Math.random() < 0.18 + luck * 0.004 ? 1 : 0);
+            if (Math.random() < coreChance) items.bossCore = 1;
+        }
+        return {
+            rewardPoints,
+            exp: rewardPoints * (Auth.EXP_MULTIPLIER || 80),
+            items,
+            generatedAt: Date.now()
+        };
+    },
+
+    renderRpgBossPanel: (profile) => {
+        const zone = LobbyNeon.rpgZones[LobbyNeon.state.selectedRpgZone] || LobbyNeon.rpgZones.secret_realm;
+        const level = Auth.currentUser?.level || 1;
+        const cost = LobbyNeon.getRpgBossCost(zone);
+        const locked = level < zone.minLevel;
+        const chance = Math.round(LobbyNeon.getRpgBossWinChance(profile, zone) * 100);
+        return `
+            <div class="rpg-card featured" style="border-color:${zone.color}66;">
+                <div style="display:flex; justify-content:space-between; gap:8px; align-items:flex-start;">
+                    <div>
+                        <p class="rpg-title">${zone.icon} Boss ${LobbyNeon.escapeHtml(zone.name)}</p>
+                        <div class="rpg-muted">Dung the luc de danh boss. Yeu qua co the thua, thang se roi nhieu tai nguyen hon.</div>
+                    </div>
+                    <span class="rpg-chip">${locked ? `Can cap ${zone.minLevel}` : `${chance}% thang`}</span>
+                </div>
+                <div style="display:flex; flex-wrap:wrap; gap:6px; margin:10px 0;">
+                    <span class="rpg-chip">Boss LC ${LobbyNeon.getRpgBossPower(zone)}</span>
+                    <span class="rpg-chip">Ton ${cost} the luc</span>
+                    <span class="rpg-chip">Do hiem ngau nhien</span>
+                </div>
+                <button class="rpg-action-btn" style="width:100%;" ${locked || profile.stamina < cost ? 'disabled' : ''} onclick="LobbyNeon.challengeRpgBoss('${zone.id}')">
+                    Danh boss
+                </button>
+            </div>
+        `;
+    },
+
+    challengeRpgBoss: async (zoneId) => {
+        const zone = LobbyNeon.rpgZones[zoneId] || LobbyNeon.rpgZones.secret_realm;
+        const { data, profile, username } = await LobbyNeon.getMyRpgProfile();
+        const level = Auth.currentUser?.level || 1;
+        if (level < zone.minLevel) {
+            Utils.showToast(`Can cap ${zone.minLevel} de danh boss nay.`, 'warning');
+            return;
+        }
+        const cost = LobbyNeon.getRpgBossCost(zone);
+        if (profile.stamina < cost) {
+            Utils.showToast('Khong du the luc de danh boss. Mai se hoi lai 100 the luc.', 'warning');
+            return;
+        }
+        const chance = LobbyNeon.getRpgBossWinChance(profile, zone);
+        const won = Math.random() < chance;
+        const reward = LobbyNeon.rollRpgBossReward(zone, profile, won);
+        profile.stamina = Math.max(0, Number(profile.stamina || 0) - cost);
+        profile.totalHunts = Number(profile.totalHunts || 0) + 1;
+        profile.bossWins = Number(profile.bossWins || 0) + (won ? 1 : 0);
+        profile.bossLosses = Number(profile.bossLosses || 0) + (won ? 0 : 1);
+        Object.entries(reward.items || {}).forEach(([key, qty]) => {
+            profile.inventory[key] = Number(profile.inventory[key] || 0) + Number(qty || 0);
+        });
+        profile.totalRewardPoints = Number(profile.totalRewardPoints || 0) + Number(reward.rewardPoints || 0);
+        profile.lootLog = [
+            {
+                time: Date.now(),
+                zoneName: `${zone.name} · ${won ? 'Boss win' : 'Boss lose'}`,
+                monster: zone.monster,
+                rewardPoints: reward.rewardPoints,
+                exp: won ? reward.exp : 0,
+                items: reward.items || {},
+                result: won ? 'win' : 'lose'
+            },
+            ...(profile.lootLog || [])
+        ].slice(0, 12);
+        if (won) await LobbyNeon.awardRpgExp(username, reward.rewardPoints, profile);
+        await LobbyNeon.saveMyRpgProfile(profile, data);
+        Utils.showToast(
+            won
+                ? `Thang boss: +${reward.exp} EXP · ${LobbyNeon.formatRpgItems(reward.items)}`
+                : `Thua boss, mat the luc nhung nhat duoc ${LobbyNeon.formatRpgItems(reward.items)}.`,
+            won ? 'success' : 'warning'
+        );
+        try {
+            await DB.sendLobbyChat({
+                sender: 'He Thong',
+                text: won
+                    ? `Boss: @${username} ha ${zone.monster}, nhan ${LobbyNeon.formatRpgItems(reward.items)}.`
+                    : `Boss: @${username} bi ${zone.monster} danh lui. Can tang chi so hon.`
+            });
+        } catch (e) {
+            console.warn('send rpg boss chat error:', e);
+        }
+        LobbyNeon.renderRpgPanel();
     },
 
     getRpgClassDefaultSkinId: (classId) => {
@@ -3830,7 +4475,47 @@ window.LobbyNeon = {
         const classCfg = LobbyNeon.rpgClasses[profile?.classId] || LobbyNeon.rpgClasses.kiem_tong;
         const level = Auth.currentUser?.level || 1;
         const base = Number(skin?.damage || 32);
-        return Math.max(12, Math.round(base + level * 4 + (classCfg.expMult || 1) * 7));
+        const stats = profile?.stats || {};
+        const mainStat = profile?.classId === 'phap_tong'
+            ? Number(stats.int || 1)
+            : profile?.classId === 'anh_sat'
+                ? Number(stats.agi || 1)
+                : Number(stats.str || 1);
+        return Math.max(12, Math.round(base + level * 4 + mainStat * 5 + (classCfg.expMult || 1) * 7));
+    },
+
+    getRpgItemMeta: (key) => {
+        const meta = {
+            goldDust: { name: 'Tinh kim', icon: '🪙', color: '#facc15', rarity: 'Thường', use: 'Tiền tệ luyện khí, dùng để nâng cấp trang bị và giao dịch sau này.', tip: 'Boss rơi nhiều hơn quái thường.' },
+            linhThach: { name: 'Linh thạch', icon: '💎', color: '#38bdf8', rarity: 'Thường', use: 'Nguyên liệu nền để cường hóa kỹ năng và pháp bảo.', tip: 'Có nhiều ở Rừng Deadline.' },
+            daCuongHoa: { name: 'Đá cường hóa', icon: '🪨', color: '#94a3b8', rarity: 'Hiếm', use: 'Dùng để nâng cấp trang bị, tăng lực chiến ổn định.', tip: 'Rơi tốt ở Hang Bug Ma.' },
+            longAn: { name: 'Long ấn', icon: '🔥', color: '#fb923c', rarity: 'Sử thi', use: 'Ấn boss, nguyên liệu mở nâng cấp bậc cao.', tip: 'Ưu tiên đánh Boss KPI khi đủ lực.' },
+            fireShard: { name: 'Mảnh Hỏa Long', icon: '🔥', color: '#f97316', rarity: 'Sử thi', use: 'Ghép/mở khóa skin chưởng hệ Hỏa Long.', tip: 'Tỉ lệ cao hơn khi thắng boss.' },
+            thunderShard: { name: 'Mảnh Lôi Ảnh', icon: '⚡', color: '#facc15', rarity: 'Hiếm', use: 'Ghép/mở khóa skin chưởng hệ Lôi.', tip: 'Hợp Kiếm Tông/Pháp Tông.' },
+            moonShard: { name: 'Mảnh Nguyệt Ảnh', icon: '🌙', color: '#c084fc', rarity: 'Hiếm', use: 'Ghép/mở khóa skin chưởng hệ Ám/Nguyệt.', tip: 'Ảnh Sát có lợi thế săn mảnh này.' },
+            bossCore: { name: 'Lõi Boss', icon: '🧿', color: '#fb7185', rarity: 'Huyền thoại', use: 'Vật phẩm hiếm rơi từ boss, dành cho nâng cấp cuối game.', tip: 'Rơi ngẫu nhiên, không đảm bảo mỗi trận.' }
+        };
+        return meta[key] || { name: key, icon: '🎁', color: '#22d3ee', rarity: 'Lạ', use: 'Vật phẩm chưa định danh.', tip: 'Có thể dùng trong bản cập nhật sau.' };
+    },
+
+    showRpgItemInfo: (key, qty = 0) => {
+        const item = LobbyNeon.getRpgItemMeta(key);
+        Utils.showModal(
+            `${item.icon} ${item.name}`,
+            `<div style="display:grid; gap:10px;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div style="width:58px; height:58px; border-radius:16px; display:grid; place-items:center; font-size:32px; background:rgba(15,23,42,.82); border:1px solid ${item.color}66; box-shadow:0 0 24px ${item.color}33;">${item.icon}</div>
+                    <div>
+                        <div style="color:${item.color}; font-weight:900; font-size:13px;">${item.rarity}</div>
+                        <div style="color:#cbd5e1; font-size:12px; margin-top:4px;">Đang có: <b>x${Number(qty || 0)}</b></div>
+                    </div>
+                </div>
+                <div style="color:#e2e8f0; font-size:13px; line-height:1.5;">${LobbyNeon.escapeHtml(item.use)}</div>
+                <div style="color:#94a3b8; font-size:12px; line-height:1.45; padding:10px; border-radius:10px; background:rgba(15,23,42,.66); border:1px solid rgba(148,163,184,.16);">${LobbyNeon.escapeHtml(item.tip)}</div>
+            </div>`,
+            null,
+            'ĐÃ HIỂU'
+        );
     },
 
     getRpgInventoryItems: (profile) => {
@@ -3845,14 +4530,14 @@ window.LobbyNeon = {
         };
         return Object.entries(profile?.inventory || {})
             .filter(([, qty]) => Number(qty) > 0)
-            .map(([key, qty]) => ({ key, qty: Number(qty), ...(meta[key] || { name: key, icon: '🎁', color: '#22d3ee' }) }));
+            .map(([key, qty]) => ({ key, qty: Number(qty), ...LobbyNeon.getRpgItemMeta(key) }));
     },
 
     renderRpgEquipmentPanel: (profile) => {
         const classCfg = LobbyNeon.rpgClasses[profile.classId] || LobbyNeon.rpgClasses.kiem_tong;
         const skin = LobbyNeon.rpgSkins[profile.equippedSkin] || LobbyNeon.rpgSkins.basic;
         const items = LobbyNeon.getRpgInventoryItems(profile);
-        const totalCells = Math.max(24, Math.ceil(Math.max(items.length, 1) / 4) * 4);
+        const totalCells = Math.max(25, Math.ceil(Math.max(items.length, 1) / 5) * 5);
         const cells = Array.from({ length: totalCells }, (_, index) => items[index] || null);
         const slots = [
             { label: 'Môn phái', icon: classCfg.icon, name: profile.classChosen ? classCfg.name : 'Chưa nhập môn', color: classCfg.color },
@@ -3891,13 +4576,218 @@ window.LobbyNeon = {
                     </div>
                     <div class="rpg-bag-grid">
                         ${cells.map(item => item ? `
-                            <div class="rpg-bag-cell has-item" title="${LobbyNeon.escapeHtml(item.name)} x${item.qty}" style="--item-color:${item.color};">
+                            <button type="button" class="rpg-bag-cell has-item" title="${LobbyNeon.escapeHtml(item.name)} x${item.qty}" style="--item-color:${item.color};" onclick="LobbyNeon.showRpgItemInfo('${item.key}', ${item.qty})">
                                 <span class="rpg-bag-icon">${item.icon}</span>
                                 <span class="rpg-bag-qty">x${item.qty}</span>
-                            </div>
+                            </button>
                         ` : `<div class="rpg-bag-cell"></div>`).join('')}
                     </div>
                 </div>
+            </div>
+        `;
+    },
+
+    renderRpgTopPanel: (profile) => {
+        const classCfg = LobbyNeon.rpgClasses[profile.classId] || LobbyNeon.rpgClasses.kiem_tong;
+        const equippedSkin = LobbyNeon.rpgSkins[profile.equippedSkin] || LobbyNeon.rpgSkins.basic;
+        const level = Auth.currentUser?.level || 1;
+        const exp = Auth.currentUser?.exp || 0;
+        const currentExp = Auth.getExpForLevel ? Auth.getExpForLevel(level) : 0;
+        const nextExp = Auth.getExpForLevel ? Auth.getExpForLevel(level + 1) : Math.max(1, exp + 1);
+        const expPct = Math.max(0, Math.min(100, ((exp - currentExp) / Math.max(1, nextExp - currentExp)) * 100));
+        const hp = Math.round(1200 + Number(profile.stats?.vit || 1) * 280 + level * 120);
+        const mp = Math.round(700 + Number(profile.stats?.int || 1) * 210 + level * 82);
+        return `
+            <div class="rpg-mu-top">
+                <div class="rpg-mu-identity">
+                    <div class="rpg-mu-avatar"><div class="rpg-player-sprite">${LobbyNeon.getRpgPlayerBattleSvg()}</div></div>
+                    <div>
+                        <p class="rpg-mu-name">${classCfg.icon} ${profile.classChosen ? classCfg.name : 'Nhan Vat'}</p>
+                        <div class="rpg-mu-level">Lv. ${level} · ${equippedSkin.icon} ${LobbyNeon.escapeHtml(equippedSkin.name)}</div>
+                    </div>
+                </div>
+                <div class="rpg-mu-power">LUC CHIEN ${LobbyNeon.getRpgPower(profile).toLocaleString('vi-VN')}</div>
+                <div class="rpg-mu-bars">
+                    <div class="rpg-mu-bar exp"><span style="width:${expPct}%;"></span><b>EXP ${expPct.toFixed(1)}%</b></div>
+                    <div class="rpg-mu-bar hp"><span style="width:100%;"></span><b>HP ${hp.toLocaleString('vi-VN')} / ${hp.toLocaleString('vi-VN')}</b></div>
+                    <div class="rpg-mu-bar mp"><span style="width:100%;"></span><b>MP ${mp.toLocaleString('vi-VN')} / ${mp.toLocaleString('vi-VN')}</b></div>
+                </div>
+                <div class="rpg-mu-currencies">
+                    <div class="rpg-mu-money"><span>🪙</span><b>${Number(profile.inventory?.goldDust || 0).toLocaleString('vi-VN')}</b></div>
+                    <div class="rpg-mu-money"><span>💎</span><b>${Number(profile.inventory?.linhThach || 0).toLocaleString('vi-VN')}</b></div>
+                    <div class="rpg-mu-money"><span>🧿</span><b>${Number(profile.inventory?.bossCore || 0).toLocaleString('vi-VN')}</b></div>
+                </div>
+            </div>
+        `;
+    },
+
+    renderRpgEquipmentPanel: (profile) => {
+        const classCfg = LobbyNeon.rpgClasses[profile.classId] || LobbyNeon.rpgClasses.kiem_tong;
+        const skin = LobbyNeon.rpgSkins[profile.equippedSkin] || LobbyNeon.rpgSkins.basic;
+        const items = LobbyNeon.getRpgInventoryItems(profile);
+        const totalCells = Math.max(25, Math.ceil(Math.max(items.length, 1) / 5) * 5);
+        const cells = Array.from({ length: totalCells }, (_, index) => items[index] || null);
+        const slots = [
+            { label: 'Vu khi', icon: skin.icon, level: '+9', color: skin.color },
+            { label: 'Mu', icon: classCfg.icon, level: '+7', color: classCfg.color },
+            { label: 'Ao', icon: '👕', level: '+8', color: '#ec4899' },
+            { label: 'Quan', icon: '🥾', level: '+6', color: '#60a5fa' },
+            { label: 'Gang', icon: '🧤', level: '+7', color: '#a78bfa' },
+            { label: 'Giay', icon: '👢', level: '+7', color: '#38bdf8' },
+            { label: 'Canh', icon: '🪽', level: '+8', color: '#22d3ee' },
+            { label: 'Pet', icon: '🐉', level: '+5', color: '#86efac' },
+            { label: 'Day chuyen', icon: '📿', level: '+6', color: '#fbbf24' },
+            { label: 'Nhan', icon: '💍', level: '+6', color: '#f472b6' }
+        ];
+        const leftSlots = slots.slice(0, 5);
+        const rightSlots = slots.slice(5);
+        return `
+            <div class="rpg-mu-shell">
+                <div class="rpg-mu-panel">
+                    <div class="rpg-mu-heading">
+                        <span>⚔️ Trang Bi</span>
+                        <button class="rpg-mini-btn" onclick="if(typeof ChibiModule !== 'undefined') ChibiModule.openBuilder()">Ngoai hinh</button>
+                    </div>
+                    <div class="rpg-mu-equipment">
+                        <div class="rpg-mu-slot-col">
+                            ${leftSlots.map(slot => `
+                                <div class="rpg-mu-slot" style="--equip-color:${slot.color};" title="${LobbyNeon.escapeHtml(slot.label)}">
+                                    <span class="rpg-mu-slot-level">${slot.level}</span>
+                                    <span class="rpg-mu-slot-icon">${slot.icon}</span>
+                                    <span class="rpg-mu-slot-label">${LobbyNeon.escapeHtml(slot.label)}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="rpg-mu-character">
+                            <div class="rpg-player-sprite">${LobbyNeon.getRpgPlayerBattleSvg()}</div>
+                        </div>
+                        <div class="rpg-mu-slot-col">
+                            ${rightSlots.map(slot => `
+                                <div class="rpg-mu-slot" style="--equip-color:${slot.color};" title="${LobbyNeon.escapeHtml(slot.label)}">
+                                    <span class="rpg-mu-slot-level">${slot.level}</span>
+                                    <span class="rpg-mu-slot-icon">${slot.icon}</span>
+                                    <span class="rpg-mu-slot-label">${LobbyNeon.escapeHtml(slot.label)}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+                <div class="rpg-mu-panel">
+                    <div class="rpg-mu-heading">
+                        <span>🎒 Ba Lo</span>
+                        <span class="rpg-chip">${items.length}/120</span>
+                    </div>
+                    <div class="rpg-mu-bag-tabs">
+                        <button class="rpg-mu-bag-tab active">Tat ca</button>
+                        <button class="rpg-mu-bag-tab">Trang bi</button>
+                        <button class="rpg-mu-bag-tab">Nguyen lieu</button>
+                        <button class="rpg-mu-bag-tab">Khac</button>
+                    </div>
+                    <div class="rpg-bag-grid">
+                        ${cells.map(item => item ? `
+                            <button type="button" class="rpg-bag-cell has-item" title="${LobbyNeon.escapeHtml(item.name)} x${item.qty}" style="--item-color:${item.color};" onclick="LobbyNeon.showRpgItemInfo('${item.key}', ${item.qty})">
+                                <span class="rpg-bag-icon">${item.icon}</span>
+                                <span class="rpg-bag-qty">x${item.qty}</span>
+                            </button>
+                        ` : `<div class="rpg-bag-cell"></div>`).join('')}
+                    </div>
+                    <div class="rpg-mu-bag-actions">
+                        <button class="rpg-mu-small-btn">Ban nhanh</button>
+                        <button class="rpg-mu-small-btn">Sap xep</button>
+                        <button class="rpg-mu-small-btn">Tach</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    },
+
+    renderRpgStatsPanel: (profile) => {
+        const meta = LobbyNeon.getRpgStatMeta();
+        const stats = profile.stats || {};
+        const points = Number(profile.statPoints || 0);
+        const power = LobbyNeon.getRpgPower(profile);
+        const effects = {
+            damage: Math.round(Number(stats.str || 1) * 18 + Number(stats.int || 1) * 20),
+            defense: Math.round(Number(stats.vit || 1) * 22 + Number(stats.agi || 1) * 8),
+            crit: Math.min(65, Math.round(5 + Number(stats.agi || 1) * 1.2 + Number(stats.luck || 1) * .9)),
+            dodge: Math.min(48, Math.round(3 + Number(stats.agi || 1) * .9))
+        };
+        return `
+            <div class="rpg-mu-panel">
+                <div class="rpg-mu-heading">
+                    <span>📊 Chi So</span>
+                    <span class="rpg-chip">Diem con: ${points}</span>
+                </div>
+                <div class="rpg-stat-grid">
+                    ${Object.entries(meta).map(([key, cfg]) => `
+                        <div class="rpg-stat-row">
+                            <div class="rpg-stat-top">
+                                <span>${cfg.icon} ${cfg.label}: ${Number(stats[key] || 1)}</span>
+                                <button class="rpg-stat-add" ${points <= 0 ? 'disabled' : ''} onclick="LobbyNeon.addRpgStat('${key}')">+</button>
+                            </div>
+                            <div class="rpg-stat-desc">${cfg.desc}</div>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="rpg-mu-stat-effects">
+                    <div class="rpg-mu-effect-box">
+                        <b>Hieu ung</b><br>
+                        Sat thuong: ${effects.damage.toLocaleString('vi-VN')}<br>
+                        Phong thu: ${effects.defense.toLocaleString('vi-VN')}<br>
+                        Chi mang: ${effects.crit}%<br>
+                        Ne tranh: ${effects.dodge}%
+                    </div>
+                    <div class="rpg-mu-effect-box">
+                        <b>Thong tin</b><br>
+                        Luc chien: ${power.toLocaleString('vi-VN')}<br>
+                        Boss win: ${Number(profile.bossWins || 0)}<br>
+                        Boss lose: ${Number(profile.bossLosses || 0)}<br>
+                        The luc: ${profile.stamina}/100
+                    </div>
+                </div>
+                <button class="rpg-action-btn" style="width:100%; margin-top:10px; background:linear-gradient(135deg,#b45309,#fbbf24); color:#111827;" ${points <= 0 ? 'disabled' : ''} onclick="LobbyNeon.autoAddRpgStats()">Tu Cong Diem Theo Mon Phai</button>
+            </div>
+        `;
+    },
+
+    renderRpgBossPanel: (profile) => {
+        const zone = LobbyNeon.rpgZones[LobbyNeon.state.selectedRpgZone] || LobbyNeon.rpgZones.secret_realm;
+        const level = Auth.currentUser?.level || 1;
+        const cost = LobbyNeon.getRpgBossCost(zone);
+        const locked = level < zone.minLevel;
+        const chance = Math.round(LobbyNeon.getRpgBossWinChance(profile, zone) * 100);
+        const bossPower = LobbyNeon.getRpgBossPower(zone);
+        const bossHpPct = Math.max(52, Math.min(96, 62 + Number(zone.rewardPoints || 1) * 9));
+        const rewards = [
+            LobbyNeon.getRpgItemMeta(zone.material),
+            LobbyNeon.getRpgItemMeta('goldDust'),
+            LobbyNeon.getRpgItemMeta('bossCore'),
+            LobbyNeon.getRpgItemMeta(zone.id === 'secret_realm' ? 'fireShard' : zone.id === 'ghost_cave' ? 'moonShard' : 'thunderShard'),
+            LobbyNeon.getRpgItemMeta('daCuongHoa'),
+            LobbyNeon.getRpgItemMeta('linhThach')
+        ];
+        return `
+            <div class="rpg-mu-panel">
+                <div class="rpg-mu-heading">
+                    <span>⚔️ Boss Arena</span>
+                    <span class="rpg-chip">${locked ? `Can Lv.${zone.minLevel}` : `${chance}% thang`}</span>
+                </div>
+                <div class="rpg-mu-boss">
+                    <div class="rpg-mu-boss-art">${LobbyNeon.getRpgMonsterSvg(zone.id)}</div>
+                    <div class="rpg-mu-boss-info">
+                        <div class="rpg-mu-boss-name">☠ ${LobbyNeon.escapeHtml(zone.monster)} - ${LobbyNeon.escapeHtml(zone.name)}</div>
+                        <div class="rpg-mu-bar hp"><span style="width:${bossHpPct}%;"></span><b>HP BOSS ${bossHpPct}%</b></div>
+                        <div class="rpg-muted">Boss LC: ${bossPower.toLocaleString('vi-VN')}</div>
+                        <div class="rpg-muted">LC cua ban: ${LobbyNeon.getRpgPower(profile).toLocaleString('vi-VN')}</div>
+                        <div class="rpg-muted">Tieu hao the luc: ${cost}</div>
+                    </div>
+                </div>
+                <div class="rpg-mu-boss-rewards">
+                    ${rewards.map(item => `<div class="rpg-mu-reward" style="--item-color:${item.color};" title="${LobbyNeon.escapeHtml(item.name)}">${item.icon}</div>`).join('')}
+                </div>
+                <button class="rpg-action-btn" style="width:100%; margin-top:10px; background:linear-gradient(135deg,#b45309,#f59e0b,#fbbf24); color:#111827;" ${locked || profile.stamina < cost ? 'disabled' : ''} onclick="LobbyNeon.challengeRpgBoss('${zone.id}')">
+                    Khieu Chien
+                </button>
             </div>
         `;
     },
@@ -4514,7 +5404,7 @@ window.LobbyNeon = {
             },
             ...(profile.lootLog || [])
         ].slice(0, 12);
-        await Auth.addExpToUser(username, rewardPoints);
+        await LobbyNeon.awardRpgExp(username, rewardPoints, profile);
         await LobbyNeon.saveMyRpgProfile(profile, data);
         const shouldToast = !options.auto || Date.now() - (LobbyNeon.state.rpgLastAutoToastAt || 0) > 7000;
         if (shouldToast) {
@@ -4822,7 +5712,7 @@ window.LobbyNeon = {
         ].slice(0, 12);
         profile.activeHunt = null;
 
-        await Auth.addExpToUser(username, Number(reward.rewardPoints || 0));
+        await LobbyNeon.awardRpgExp(username, Number(reward.rewardPoints || 0), profile);
         await LobbyNeon.saveMyRpgProfile(profile, data);
         LobbyNeon.renderRpgWorldCombatants();
 
@@ -4841,7 +5731,8 @@ window.LobbyNeon = {
     renderRpgPanel: async () => {
         const container = document.getElementById('hub-content-rpg');
         if (!container) return;
-        container.innerHTML = `
+        const previousScrollTop = container.scrollTop || 0;
+        if (!container.innerHTML.trim()) container.innerHTML = `
             <div style="text-align:center; color:#64748b; font-size:12px; padding:30px 10px;">
                 <i class="fa-solid fa-spinner fa-spin" style="font-size:22px; margin-bottom:10px; display:block;"></i>
                 Đang tải võ đường...
@@ -4956,6 +5847,8 @@ window.LobbyNeon = {
 
         container.innerHTML = `
             <div class="rpg-grid">
+                ${LobbyNeon.renderRpgTopPanel(profile)}
+
                 <div class="rpg-card featured">
                     <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
                         <div>
@@ -4977,6 +5870,8 @@ window.LobbyNeon = {
 
                 ${LobbyNeon.renderRpgEquipmentPanel(profile)}
 
+                ${LobbyNeon.renderRpgStatsPanel(profile)}
+
                 <div class="rpg-card">
                     <p class="rpg-title">🎮 Nút skin chưởng nhanh</p>
                     <div class="rpg-muted" style="margin:6px 0 10px;">Bấm một nút để trang bị skin chưởng rồi tung skill. Skin cơ bản mở theo cấp, skin VIP vẫn dùng mảnh để mở.</div>
@@ -4984,6 +5879,8 @@ window.LobbyNeon = {
                 </div>
 
                 ${activeHtml}
+
+                ${LobbyNeon.renderRpgBossPanel(profile)}
 
                 ${LobbyNeon.renderRpgPvpTeaser(profile)}
 
@@ -5008,6 +5905,7 @@ window.LobbyNeon = {
                 </div>
             </div>
         `;
+        container.scrollTop = previousScrollTop;
         LobbyNeon.renderRpgSkillWheel();
     },
 
