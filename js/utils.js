@@ -714,6 +714,35 @@ const Utils = {
             msg += `✅ 100% nhân sự đi làm đầy đủ!\n\n`;
         }
 
+        // Mảng 2.5: Tổng hợp Nghỉ Phép trong chu kỳ lương hiện tại
+        try {
+            if (typeof Attendance !== 'undefined' && typeof PayrollModule !== 'undefined') {
+                const allLeaves = await Attendance.loadLeaveData();
+                const cycleMonthStr = PayrollModule.getCurrentCycleMonthStr(new Date());
+                const cycle = PayrollModule.getCycleRange(cycleMonthStr);
+                const staffAccounts = accounts.filter(a => !Utils.isSystemAccount(a));
+                
+                let leaveLines = [];
+                staffAccounts.forEach(acc => {
+                    const leaveDays = PayrollModule.getUserCycleLeaveDays(allLeaves, acc.username, cycle, todayStr);
+                    if (leaveDays > 0) {
+                        const displayName = Utils.getUserDisplayName(acc.username) || acc.username;
+                        leaveLines.push(`- <b>${displayName}</b>: ${leaveDays} ngày`);
+                    }
+                });
+
+                msg += `<b>MẢNG 2.5: NGHỈ PHÉP (Chu kỳ ${cycle.startStr.slice(5)} → ${cycle.endStr.slice(5)})</b>\n`;
+                if (leaveLines.length > 0) {
+                    msg += `📋 Nghỉ phép đã duyệt:\n${leaveLines.join('\n')}\n`;
+                    msg += `<i>(Nghỉ phép được tính lương, đã phản ánh vào bảng lương)</i>\n\n`;
+                } else {
+                    msg += `✅ Chưa có ai nghỉ phép trong chu kỳ này.\n\n`;
+                }
+            }
+        } catch (e) {
+            console.warn('Lỗi tổng hợp nghỉ phép cho báo cáo:', e);
+        }
+
         msg += `<b>MẢNG 3: TIẾN ĐỘ THỰC THI (TASK)</b>\n`;
         msg += `✅ Hoàn thành (Deadline hôm nay): <b>${doneToday}</b>\n`;
         if (expiredTxs.length > 0) {

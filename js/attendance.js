@@ -2263,8 +2263,35 @@ const Attendance = {
         
         if (leaveIndex > -1) {
             allLeaves[leaveIndex].status = newStatus;
+            allLeaves[leaveIndex].resolvedAt = Date.now();
+            allLeaves[leaveIndex].resolvedBy = Auth.currentUser ? Auth.currentUser.username : 'admin';
             await Attendance.saveLeaveData(allLeaves);
             Utils.showToast(`Đã ${newStatus === 'approved' ? 'duyệt' : 'từ chối'} yêu cầu thành công!`, "success");
+
+            // Gửi thông báo Telegram khi duyệt/từ chối nghỉ phép
+            const leave = allLeaves[leaveIndex];
+            const displayName = Utils.getUserDisplayName(leave.username) || leave.username;
+            const adminName = Auth.currentUser ? (Utils.getUserDisplayName(Auth.currentUser.username) || Auth.currentUser.username) : 'Admin';
+            if (newStatus === 'approved') {
+                const msg = `✅ <b>[DUYỆT NGHỈ PHÉP]</b>\n\n` +
+                    `👤 <b>Nhân sự:</b> ${displayName} (@${leave.username})\n` +
+                    `📅 <b>Ngày nghỉ:</b> ${leave.startDate}\n` +
+                    `🔢 <b>Số ngày:</b> ${leave.days} ngày\n` +
+                    `📝 <b>Lý do:</b> ${leave.reason}\n` +
+                    `🛡️ <b>Người duyệt:</b> ${adminName}\n\n` +
+                    `<i>"Đơn nghỉ phép đã được duyệt. Ngày nghỉ sẽ được tính vào bảng lương (có lương)."</i>`;
+                Utils.notifyTelegram(msg);
+            } else {
+                const msg = `❌ <b>[TỪ CHỐI NGHỈ PHÉP]</b>\n\n` +
+                    `👤 <b>Nhân sự:</b> ${displayName} (@${leave.username})\n` +
+                    `📅 <b>Ngày nghỉ:</b> ${leave.startDate}\n` +
+                    `🔢 <b>Số ngày:</b> ${leave.days} ngày\n` +
+                    `📝 <b>Lý do:</b> ${leave.reason}\n` +
+                    `🛡️ <b>Người xử lý:</b> ${adminName}\n\n` +
+                    `<i>"Đơn nghỉ phép đã bị từ chối. Nhân viên vui lòng đi làm theo lịch hoặc liên hệ sếp."</i>`;
+                Utils.notifyTelegram(msg);
+            }
+
             Attendance.render(); // Tải lại view Admin
         }
     },
