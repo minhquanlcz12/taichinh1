@@ -1324,7 +1324,7 @@ const Attendance = {
                         </div>
                         <div style="text-align: right; font-size: 12px; color: var(--text-secondary);">
                             <div><i class="fa-solid fa-calendar-days" style="color: var(--primary); margin-right: 4px;"></i>${passedWorkDays} / ${workingDaysInCycle} ngày công</div>
-                            <div style="margin-top: 4px; font-size: 10px; color: rgba(255,255,255,0.3);">Cập nhật theo chấm công</div>
+                            <div style="margin-top: 4px; font-size: 10px; color: rgba(255,255,255,0.3);">Theo ngày công kỳ lương</div>
                         </div>
                     </div>
                 </div>

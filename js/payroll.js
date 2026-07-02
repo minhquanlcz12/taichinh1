@@ -240,13 +240,13 @@ const PayrollModule = {
         return count;
     },
 
-    getWorkedWorkingDaysInCycle: (startDate, endDate) => {
+    getWorkedWorkingDaysInCycle: (startDate, endDate, referenceDate = new Date()) => {
         const start = new Date(startDate);
         const end = new Date(endDate);
         start.setHours(0,0,0,0);
         end.setHours(0,0,0,0);
 
-        const now = new Date();
+        const now = new Date(referenceDate);
         now.setHours(0,0,0,0);
 
         const yesterday = new Date(now);
@@ -267,6 +267,13 @@ const PayrollModule = {
             current.setDate(current.getDate() + 1);
         }
         return count;
+    },
+
+    getAccruedSalaryDays: (cycle, attendanceSummary, referenceDate = new Date()) => {
+        const workingDays = PayrollModule.getWorkingDaysInCycle(cycle.startDate, cycle.endDate);
+        const accruedDays = PayrollModule.getWorkedWorkingDaysInCycle(cycle.startDate, cycle.endDate, referenceDate);
+        const absentUnexcusedDays = Math.max(0, parseFloat(attendanceSummary && attendanceSummary.absentUnexcusedDays) || 0);
+        return Math.max(0, Math.min(workingDays, accruedDays - absentUnexcusedDays));
     },
 
     getLocalTodayStr: () => {
@@ -366,13 +373,16 @@ const PayrollModule = {
         let onTimeDays = 0;
         let lateDays = 0;
         let lateExcusedDays = 0;
+        let absentUnexcusedDays = 0;
         let lateCount = 0;
 
         const records = PayrollModule.getUserCycleAttendanceRecords(allAttendance, username, cycle, todayStr);
         records.forEach(a => {
-            if (a.status === 'absent_unexcused') return;
-
             const weight = a.type ? 0.5 : 1.0;
+            if (a.status === 'absent_unexcused') {
+                absentUnexcusedDays += weight;
+                return;
+            }
             if (a.status === 'on_time') onTimeDays += weight;
             else if (a.status === 'late_excused') lateExcusedDays += weight;
             else if (a.status === 'late') {
@@ -392,6 +402,7 @@ const PayrollModule = {
             lateDays,
             lateExcusedDays,
             approvedLeaveDays,
+            absentUnexcusedDays,
             lateCount,
             paidDays
         };
@@ -979,7 +990,7 @@ const PayrollModule = {
             const attendanceSummary = PayrollModule.summarizeUserCycleAttendance(allAttendance, allLeaves, username, cycle);
 
             const dailyRate = baseSalary / workingDays;
-            const paidDays = attendanceSummary.paidDays;
+            const paidDays = PayrollModule.getAccruedSalaryDays(cycle, attendanceSummary);
             
             const attendancePay = paidDays * dailyRate;
             const latePenaltyTotal = attendanceSummary.lateCount * PayrollModule.LATE_PENALTY;
@@ -1107,7 +1118,7 @@ const PayrollModule = {
 
                 // 3. Calculation
                 const dailyRate = baseSalary / workingDays;
-                const paidDays = onTimeDays + lateExcusedDays + lateDays + approvedLeaveDays;
+                const paidDays = PayrollModule.getAccruedSalaryDays(cycle, attendanceSummary, now);
                 
                 const attendancePay = paidDays * dailyRate;
                 const latePenaltyTotal = lateCount * PayrollModule.LATE_PENALTY;
@@ -1343,11 +1354,11 @@ const PayrollModule = {
                                             <div style="font-size: 14px; font-weight: 800; color: #ffffff; margin-top: 4px;">${workingDays} ngày</div>
                                         </div>
                                         <div style="background: rgba(255,255,255,0.02); padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.04);">
-                                            <span style="color: var(--text-secondary); font-size: 10px; text-transform: uppercase;">Lương làm thực tế</span>
+                                            <span style="color: var(--text-secondary); font-size: 10px; text-transform: uppercase;">Ngày tính lương tạm</span>
                                             <div style="font-size: 14px; font-weight: 800; color: #10b981; margin-top: 4px;">${paidDays} ngày</div>
                                         </div>
                                         <div style="background: rgba(255,255,255,0.02); padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.04);">
-                                            <span style="color: var(--text-secondary); font-size: 10px; text-transform: uppercase;">Ngày nghỉ không lương</span>
+                                            <span style="color: var(--text-secondary); font-size: 10px; text-transform: uppercase;">Còn lại/chưa tính</span>
                                             <div style="font-size: 14px; font-weight: 800; color: var(--warning); margin-top: 4px;">${Math.max(0, workingDays - paidDays)} ngày</div>
                                         </div>
                                     </div>
@@ -1355,7 +1366,7 @@ const PayrollModule = {
                                     <!-- Formula Block -->
                                     <div style="background: rgba(0,0,0,0.35); padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06); font-size: 12px; color: var(--text-secondary); line-height: 1.5;">
                                         <div style="color: #64ffda; font-weight: bold; margin-bottom: 4px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;">Công thức tính Thực Lĩnh:</div>
-                                        Thực lĩnh = (Lương ngày &times; Ngày làm thực tế) + Thưởng - Phạt - Tạm ứng
+                                        Thực lĩnh = (Lương ngày &times; Ngày tính lương) + Thưởng - Phạt - Tạm ứng
                                         <div style="margin-top: 8px; font-size: 13px; color: #ffffff; font-weight: 600; border-top: 1px dashed rgba(255,255,255,0.08); padding-top: 8px;">
                                             = (${Utils.formatCurrency(Math.round(dailyRate))} &times; ${paidDays}) 
                                             ${customBonus !== 0 ? ` ${customBonus > 0 ? '+' : ''}${Utils.formatCurrency(customBonus)}` : ''}
@@ -1680,7 +1691,7 @@ const PayrollModule = {
             lateCount = attendanceSummary.lateCount;
 
             const dailyRate = baseSalary / workingDays;
-            const paidDays = onTimeDays + lateExcusedDays + lateDays + approvedLeaveDays;
+            const paidDays = PayrollModule.getAccruedSalaryDays(cycle, attendanceSummary, now);
             const attendancePay = paidDays * dailyRate;
             const latePenaltyTotal = lateCount * PayrollModule.LATE_PENALTY;
             const isApproved = PayrollModule.getUserValue(monthlyApprovals, username, false) === true;
@@ -1776,7 +1787,7 @@ const PayrollModule = {
             lateCount = attendanceSummary.lateCount;
 
             const dailyRate = baseSalary / workingDays;
-            const paidDays = onTimeDays + lateExcusedDays + lateDays + approvedLeaveDays;
+            const paidDays = PayrollModule.getAccruedSalaryDays(cycle, attendanceSummary, now);
             const absentDays = Math.max(0, workingDays - paidDays);
 
             const attendancePay = paidDays * dailyRate;
@@ -1879,7 +1890,7 @@ const PayrollModule = {
                             <strong style="font-size: 14px;">${workingDays} ngày</strong>
                         </div>
                         <div style="background: rgba(255,255,255,0.02); padding: 8px 10px; border-radius: 6px;">
-                            <div style="color: var(--text-secondary); font-size: 11px;">Số ngày làm thực tế</div>
+                            <div style="color: var(--text-secondary); font-size: 11px;">Số ngày tính lương</div>
                             <strong style="color: var(--success); font-size: 14px;">${paidDays} ngày</strong>
                         </div>
                         <div style="background: rgba(255,255,255,0.02); padding: 8px 10px; border-radius: 6px;">
@@ -1887,7 +1898,7 @@ const PayrollModule = {
                             <strong style="font-size: 14px;">${Utils.formatCurrency(Math.round(dailyRate))}</strong>
                         </div>
                         <div style="background: rgba(255,255,255,0.02); padding: 8px 10px; border-radius: 6px;">
-                            <div style="color: var(--text-secondary); font-size: 11px;">Số ngày nghỉ không lương</div>
+                            <div style="color: var(--text-secondary); font-size: 11px;">Còn lại/chưa tính lương</div>
                             <strong style="color: var(--warning); font-size: 14px;">${absentDays} ngày</strong>
                         </div>
                     </div>
@@ -1924,11 +1935,11 @@ const PayrollModule = {
                         </div>
                     </div>
 
-                    <!-- Chi tiết khấu trừ -->
-                    <h4 style="color: var(--danger); border-left: 3px solid var(--danger); padding-left: 8px; margin-bottom: 10px; font-size: 13px; text-transform: uppercase;">3. Chi tiết các khoản khấu trừ</h4>
+                    <!-- Chi tiết tạm tính & khấu trừ -->
+                    <h4 style="color: var(--danger); border-left: 3px solid var(--danger); padding-left: 8px; margin-bottom: 10px; font-size: 13px; text-transform: uppercase;">3. Tạm tính & khấu trừ</h4>
                     <div style="background: rgba(231,76,60,0.03); border: 1px solid rgba(231,76,60,0.1); padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 13px;">
                         <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                            <span>Trừ tiền ngày nghỉ (${absentDays} ngày):</span>
+                            <span>Ngày chưa tính/không lương (${absentDays} ngày):</span>
                             <span style="color: var(--danger); font-weight: bold;">-${Utils.formatCurrency(Math.round(dailyRate * absentDays))}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
@@ -1950,7 +1961,7 @@ const PayrollModule = {
                         <div style="color: var(--text-secondary); font-size: 11px; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; margin-bottom: 4px;">Số tiền lương thực lĩnh</div>
                         <div style="font-size: 24px; font-weight: 900; color: #10b981; margin-bottom: 6px;">${Utils.formatCurrency(roundedNetSalary)}</div>
                         <div style="font-size: 11px; color: var(--text-secondary); font-style: italic; line-height: 1.4; word-break: break-word;">
-                            Công thức: (Lương ngày &times; Ngày làm thực tế) + Thưởng - Phạt - Tạm ứng<br>
+                            Công thức: (Lương ngày &times; Ngày tính lương) + Thưởng - Phạt - Tạm ứng<br>
                             Chi tiết: (${Utils.formatCurrency(Math.round(dailyRate))} &times; ${paidDays}) 
                             ${totalAdditions > 0 ? ` + ${Utils.formatCurrency(totalAdditions)}` : ''} 
                             ${(latePenaltyTotal + (customBonus < 0 ? Math.abs(customBonus) : 0)) > 0 ? ` - ${Utils.formatCurrency(latePenaltyTotal + (customBonus < 0 ? Math.abs(customBonus) : 0))}` : ''}
@@ -1982,12 +1993,12 @@ const PayrollModule = {
 --------------------------------------
 - Mức lương cơ bản: ${Utils.formatCurrency(data.baseSalary)}
 - Số ngày công chuẩn: ${data.workingDays} ngày
-- Số ngày làm thực tế: ${data.paidDays} ngày
-- Số ngày nghỉ: ${data.absentDays} ngày
+- Số ngày tính lương: ${data.paidDays} ngày
+- Số ngày còn lại/chưa tính lương: ${data.absentDays} ngày
 - Lương 1 ngày công: ${Utils.formatCurrency(Math.round(data.dailyRate))}
 
 💸 CHI TIẾT CÁC KHOẢN KHẤU TRỪ:
-- Trừ tiền ngày nghỉ (${data.absentDays} ngày): ${Utils.formatCurrency(Math.round(data.absentDeduction))}
+- Ngày chưa tính/không lương (${data.absentDays} ngày): ${Utils.formatCurrency(Math.round(data.absentDeduction))}
 - Trừ tiền đã tạm ứng: ${Utils.formatCurrency(data.advance)}
 - Phạt đi muộn (${data.lateCount} lần): ${Utils.formatCurrency(data.latePenaltyTotal)}
 - Khấu trừ khác: ${Utils.formatCurrency(data.customBonus < 0 ? Math.abs(data.customBonus) : 0)}
@@ -1997,7 +2008,7 @@ const PayrollModule = {
 - Thưởng khác: ${Utils.formatCurrency(data.customBonus > 0 ? data.customBonus : 0)}
 
 💰 SỐ TIỀN LƯƠNG THỰC LĨNH:
-- Công thức: (Lương ngày x Ngày làm thực tế) + Thưởng - Phạt - Tạm ứng
+- Công thức: (Lương ngày x Ngày tính lương) + Thưởng - Phạt - Tạm ứng
 - Chi tiết: (${Utils.formatCurrency(Math.round(data.dailyRate))} x ${data.paidDays}) + ${Utils.formatCurrency(data.punctualityBonusVal + (data.customBonus > 0 ? data.customBonus : 0))} - ${Utils.formatCurrency(data.latePenaltyTotal + (data.customBonus < 0 ? Math.abs(data.customBonus) : 0))} - ${Utils.formatCurrency(data.advance)} = ${Utils.formatCurrency(Math.max(0, data.netSalary))}
 - Làm tròn: ${Utils.formatCurrency(data.roundedNetSalary)}
 --------------------------------------
