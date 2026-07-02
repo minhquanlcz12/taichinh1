@@ -32,12 +32,19 @@ window.LobbyNeon = {
         rpgWildMonsters: {},
         selectedWildMonsterId: null,
         rpgSkillCooldownUntil: 0,
+        rpgLastSkillCast: null,
+        rpgBagOpen: false,
+        rpgBagFilter: 'all',
+        rpgBagSortMode: 'rarity',
+        rpgSelectedItemKey: null,
+        rpgBossBattle: null,
         marqueeInterval: null,
         unsubscribeMissions: null,
         notifiedMissionIds: new Set(),
         activeQuestTab: 'new',
         activeHubTab: 'players',
         selectedRpgZone: 'training_forest',
+        rpgZoneManuallySelected: false,
         vipUsers: new Set(),
         caroHackMode: false,
         caroDelayMs: 1500,
@@ -156,6 +163,51 @@ window.LobbyNeon = {
             material: 'longAn',
             materialName: 'Long ấn',
             materialIcon: '🔥'
+        },
+        molten_keep: {
+            id: 'molten_keep',
+            name: 'Lò Lửa Deadline',
+            icon: '🌋',
+            monster: 'Hỏa Ma',
+            color: '#fb923c',
+            danger: 'Rất khó',
+            minLevel: 10,
+            staminaCost: 25,
+            rewardPoints: 5,
+            gold: 88,
+            material: 'longAn',
+            materialName: 'Long ấn',
+            materialIcon: '🔥'
+        },
+        frost_peak: {
+            id: 'frost_peak',
+            name: 'Đỉnh Băng Bug',
+            icon: '🏔️',
+            monster: 'Băng Yêu',
+            color: '#60a5fa',
+            danger: 'Ác mộng',
+            minLevel: 15,
+            staminaCost: 32,
+            rewardPoints: 7,
+            gold: 132,
+            material: 'daCuongHoa',
+            materialName: 'Đá cường hóa',
+            materialIcon: '🪨'
+        },
+        abyss_gate: {
+            id: 'abyss_gate',
+            name: 'Cổng Vực Sâu',
+            icon: '🕳️',
+            monster: 'Ma Vương Vực Sâu',
+            color: '#c084fc',
+            danger: 'Địa ngục',
+            minLevel: 22,
+            staminaCost: 42,
+            rewardPoints: 10,
+            gold: 190,
+            material: 'longAn',
+            materialName: 'Long ấn',
+            materialIcon: '🔥'
         }
     },
 
@@ -171,7 +223,8 @@ window.LobbyNeon = {
             bonusText: 'Dự phòng hệ thống',
             visualClass: 'basic',
             unlockLevel: 1,
-            damage: 28
+            damage: 28,
+            cooldownMs: 1200
         },
         kiem_tong_1: {
             id: 'kiem_tong_1',
@@ -183,7 +236,8 @@ window.LobbyNeon = {
             bonusText: 'Mở theo cấp 1',
             visualClass: 'slash',
             unlockLevel: 1,
-            damage: 36
+            damage: 36,
+            cooldownMs: 1200
         },
         kiem_tong_4: {
             id: 'kiem_tong_4',
@@ -195,7 +249,10 @@ window.LobbyNeon = {
             bonusText: 'Mở theo cấp 4',
             visualClass: 'moon_slash',
             unlockLevel: 4,
-            damage: 48
+            damage: 48,
+            cooldownMs: 1650,
+            aoeRadius: 135,
+            aoeDamageRatio: 0.68
         },
         kiem_tong_8: {
             id: 'kiem_tong_8',
@@ -207,7 +264,10 @@ window.LobbyNeon = {
             bonusText: 'Mở theo cấp 8',
             visualClass: 'sword_rain',
             unlockLevel: 8,
-            damage: 62
+            damage: 62,
+            cooldownMs: 2200,
+            aoeRadius: 180,
+            aoeDamageRatio: 0.72
         },
         phap_tong_1: {
             id: 'phap_tong_1',
@@ -219,7 +279,8 @@ window.LobbyNeon = {
             bonusText: 'Mở theo cấp 1',
             visualClass: 'arcane',
             unlockLevel: 1,
-            damage: 34
+            damage: 34,
+            cooldownMs: 1250
         },
         phap_tong_4: {
             id: 'phap_tong_4',
@@ -231,7 +292,10 @@ window.LobbyNeon = {
             bonusText: 'Mở theo cấp 4',
             visualClass: 'ice_lance',
             unlockLevel: 4,
-            damage: 46
+            damage: 46,
+            cooldownMs: 1700,
+            aoeRadius: 150,
+            aoeDamageRatio: 0.66
         },
         phap_tong_8: {
             id: 'phap_tong_8',
@@ -243,7 +307,10 @@ window.LobbyNeon = {
             bonusText: 'Mở theo cấp 8',
             visualClass: 'thunder',
             unlockLevel: 8,
-            damage: 64
+            damage: 64,
+            cooldownMs: 2400,
+            aoeRadius: 190,
+            aoeDamageRatio: 0.7
         },
         anh_sat_1: {
             id: 'anh_sat_1',
@@ -255,7 +322,8 @@ window.LobbyNeon = {
             bonusText: 'Mở theo cấp 1',
             visualClass: 'shadow',
             unlockLevel: 1,
-            damage: 38
+            damage: 38,
+            cooldownMs: 1100
         },
         anh_sat_4: {
             id: 'anh_sat_4',
@@ -267,7 +335,10 @@ window.LobbyNeon = {
             bonusText: 'Mở theo cấp 4',
             visualClass: 'moon_shadow',
             unlockLevel: 4,
-            damage: 50
+            damage: 50,
+            cooldownMs: 1650,
+            aoeRadius: 145,
+            aoeDamageRatio: 0.64
         },
         anh_sat_8: {
             id: 'anh_sat_8',
@@ -279,7 +350,10 @@ window.LobbyNeon = {
             bonusText: 'Mở theo cấp 8',
             visualClass: 'shadow_combo',
             unlockLevel: 8,
-            damage: 66
+            damage: 66,
+            cooldownMs: 2100,
+            aoeRadius: 170,
+            aoeDamageRatio: 0.7
         },
         thien_y_1: {
             id: 'thien_y_1',
@@ -291,7 +365,8 @@ window.LobbyNeon = {
             bonusText: 'Mở theo cấp 1',
             visualClass: 'leaf',
             unlockLevel: 1,
-            damage: 32
+            damage: 32,
+            cooldownMs: 1200
         },
         thien_y_4: {
             id: 'thien_y_4',
@@ -303,7 +378,10 @@ window.LobbyNeon = {
             bonusText: 'Mở theo cấp 4',
             visualClass: 'wind',
             unlockLevel: 4,
-            damage: 44
+            damage: 44,
+            cooldownMs: 1600,
+            aoeRadius: 150,
+            aoeDamageRatio: 0.62
         },
         thien_y_8: {
             id: 'thien_y_8',
@@ -315,7 +393,10 @@ window.LobbyNeon = {
             bonusText: 'Mở theo cấp 8',
             visualClass: 'leaf_dragon',
             unlockLevel: 8,
-            damage: 58
+            damage: 58,
+            cooldownMs: 2200,
+            aoeRadius: 180,
+            aoeDamageRatio: 0.68
         },
         fire_dragon: {
             id: 'fire_dragon',
@@ -329,6 +410,9 @@ window.LobbyNeon = {
             bonusText: 'VIP ghép mảnh · +5% EXP ở Ải Boss',
             visualClass: 'fire_dragon',
             damage: 74,
+            cooldownMs: 2600,
+            aoeRadius: 210,
+            aoeDamageRatio: 0.76,
             vip: true
         },
         thunder: {
@@ -343,6 +427,9 @@ window.LobbyNeon = {
             bonusText: 'VIP ghép mảnh · +5% vật phẩm',
             visualClass: 'thunder',
             damage: 72,
+            cooldownMs: 2400,
+            aoeRadius: 200,
+            aoeDamageRatio: 0.74,
             vip: true
         },
         moon_shadow: {
@@ -357,6 +444,9 @@ window.LobbyNeon = {
             bonusText: 'VIP ghép mảnh · +1 mảnh khi may mắn',
             visualClass: 'moon_shadow',
             damage: 70,
+            cooldownMs: 1900,
+            aoeRadius: 165,
+            aoeDamageRatio: 0.72,
             vip: true
         }
     },
@@ -691,6 +781,10 @@ window.LobbyNeon = {
                     border-radius: 12px;
                     padding: 12px;
                     box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+                }
+                .rpg-card[data-rpg-action],
+                [data-rpg-action] {
+                    cursor: pointer;
                 }
                 .rpg-card.featured {
                     border-color: rgba(34, 211, 238, 0.35);
@@ -1614,7 +1708,7 @@ window.LobbyNeon = {
                 }
                 .rpg-bag-cell {
                     aspect-ratio: 1;
-                    min-height: 48px;
+                    min-height: 58px;
                     border-radius: 10px;
                     border: 1px solid rgba(148,163,184,.14);
                     background: rgba(15,23,42,.68);
@@ -1642,7 +1736,7 @@ window.LobbyNeon = {
                         rgba(15,23,42,.82);
                 }
                 .rpg-bag-icon {
-                    font-size: 24px;
+                    font-size: 29px;
                     filter: drop-shadow(0 0 8px var(--item-color, #22d3ee));
                 }
                 .rpg-bag-qty {
@@ -1870,6 +1964,13 @@ window.LobbyNeon = {
                     color: #f8fafc;
                     box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 0 14px color-mix(in srgb, var(--equip-color, #22d3ee) 16%, transparent);
                 }
+                .rpg-mu-slot.empty {
+                    opacity: .48;
+                    filter: grayscale(.35);
+                }
+                .rpg-mu-slot.empty .rpg-mu-slot-icon {
+                    opacity: .62;
+                }
                 .rpg-mu-slot-icon {
                     font-size: 23px;
                     filter: drop-shadow(0 0 8px var(--equip-color, #22d3ee));
@@ -1958,11 +2059,49 @@ window.LobbyNeon = {
                     background: linear-gradient(135deg, rgba(14,165,233,.38), rgba(30,41,59,.82));
                     box-shadow: 0 0 16px rgba(34,211,238,.2);
                 }
+                .rpg-bag-summary {
+                    position: relative;
+                    z-index: 1;
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 6px;
+                    margin-bottom: 9px;
+                }
+                .rpg-bag-collapsed {
+                    position: relative;
+                    z-index: 1;
+                    width: 100%;
+                    min-height: 120px;
+                    border-radius: 12px;
+                    border: 1px dashed rgba(34,211,238,.38);
+                    background:
+                        radial-gradient(circle at 50% 20%, rgba(34,211,238,.18), transparent 55%),
+                        rgba(15,23,42,.72);
+                    color: #e2e8f0;
+                    display: grid;
+                    place-items: center;
+                    gap: 4px;
+                    padding: 12px;
+                    cursor: pointer;
+                    text-align: center;
+                }
+                .rpg-bag-collapsed span {
+                    font-size: 32px;
+                }
+                .rpg-bag-collapsed b {
+                    color: #f8fafc;
+                    font-size: 13px;
+                }
+                .rpg-bag-collapsed small {
+                    color: #94a3b8;
+                    font-size: 10px;
+                    line-height: 1.35;
+                }
                 .rpg-mu-bag-actions {
                     position: relative;
                     z-index: 1;
                     display: grid;
-                    grid-template-columns: repeat(3, 1fr);
+                    grid-template-columns: repeat(4, 1fr);
                     gap: 6px;
                     margin-top: 9px;
                 }
@@ -1974,6 +2113,49 @@ window.LobbyNeon = {
                     font-size: 10px;
                     font-weight: 900;
                     padding: 7px 4px;
+                    cursor: pointer;
+                    min-height: 34px;
+                }
+                .rpg-mu-small-btn:hover {
+                    border-color: rgba(251,191,36,.46);
+                    color: #f8fafc;
+                    background: rgba(251,191,36,.12);
+                }
+                .rpg-bag-cell.selected {
+                    border-color: #fbbf24;
+                    box-shadow: 0 0 18px rgba(251,191,36,.34), inset 0 0 0 1px rgba(251,191,36,.34);
+                }
+                .rpg-bag-empty {
+                    position: relative;
+                    z-index: 1;
+                    min-height: 90px;
+                    border-radius: 12px;
+                    border: 1px dashed rgba(148,163,184,.2);
+                    display: grid;
+                    place-items: center;
+                    color: #94a3b8;
+                    font-size: 11px;
+                    background: rgba(2,6,23,.46);
+                }
+                .rpg-selected-item {
+                    position: relative;
+                    z-index: 1;
+                    margin-top: 9px;
+                    border: 1px solid rgba(148,163,184,.16);
+                    border-radius: 10px;
+                    background: rgba(2,6,23,.55);
+                    padding: 9px;
+                    display: grid;
+                    grid-template-columns: auto 1fr;
+                    gap: 4px 8px;
+                    color: #e2e8f0;
+                    font-size: 11px;
+                    align-items: center;
+                }
+                .rpg-selected-item small {
+                    grid-column: 1 / -1;
+                    color: #94a3b8;
+                    line-height: 1.35;
                 }
                 .rpg-mu-stat-effects {
                     display: grid;
@@ -2045,6 +2227,156 @@ window.LobbyNeon = {
                     color: #f8fafc;
                     font-size: 18px;
                 }
+                .rpg-arena-panel {
+                    border-color: rgba(251,146,60,.36);
+                    background:
+                        radial-gradient(circle at 50% 0%, rgba(251,146,60,.16), transparent 38%),
+                        linear-gradient(180deg, rgba(30,41,59,.94), rgba(2,6,23,.98));
+                }
+                .rpg-arena-panel.arena-win {
+                    border-color: rgba(34,197,94,.44);
+                    box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 0 28px rgba(34,197,94,.16);
+                }
+                .rpg-arena-panel.arena-lose {
+                    border-color: rgba(248,113,113,.42);
+                    box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 0 28px rgba(248,113,113,.14);
+                }
+                .rpg-arena-stage {
+                    position: relative;
+                    z-index: 1;
+                    min-height: 158px;
+                    border-radius: 14px;
+                    border: 1px solid rgba(251,191,36,.18);
+                    background:
+                        radial-gradient(circle at 50% 72%, rgba(251,191,36,.18), transparent 44%),
+                        linear-gradient(180deg, rgba(15,23,42,.7), rgba(2,6,23,.82));
+                    display: grid;
+                    grid-template-columns: 1fr 58px 1fr;
+                    gap: 8px;
+                    align-items: center;
+                    padding: 10px;
+                    overflow: hidden;
+                }
+                .rpg-arena-stage::after {
+                    content: "";
+                    position: absolute;
+                    left: 12%;
+                    right: 12%;
+                    bottom: 18px;
+                    height: 14px;
+                    border-radius: 50%;
+                    background: radial-gradient(ellipse, rgba(251,191,36,.34), transparent 72%);
+                    filter: blur(1px);
+                }
+                .rpg-arena-fighter {
+                    position: relative;
+                    z-index: 2;
+                    display: grid;
+                    justify-items: center;
+                    gap: 5px;
+                    min-width: 0;
+                    color: #e2e8f0;
+                    text-align: center;
+                    font-size: 10px;
+                    font-weight: 900;
+                }
+                .rpg-arena-fighter b {
+                    max-width: 100%;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                    color: #f8fafc;
+                    font-size: 11px;
+                }
+                .rpg-arena-fighter span {
+                    color: #94a3b8;
+                    font-size: 9px;
+                }
+                .rpg-arena-avatar {
+                    width: 78px;
+                    height: 78px;
+                    border-radius: 50%;
+                    display: grid;
+                    place-items: center;
+                    background: rgba(2,6,23,.7);
+                    border: 1px solid rgba(34,211,238,.28);
+                    overflow: hidden;
+                    box-shadow: 0 0 20px rgba(34,211,238,.18);
+                }
+                .rpg-arena-avatar .rpg-player-sprite {
+                    transform: scale(.72);
+                }
+                .rpg-arena-avatar.boss-art {
+                    border-color: rgba(248,113,113,.36);
+                    box-shadow: 0 0 22px rgba(248,113,113,.18);
+                }
+                .rpg-arena-avatar.boss-art .rpg-monster-svg {
+                    width: 74px;
+                    height: 74px;
+                }
+                .rpg-arena-vs {
+                    position: relative;
+                    z-index: 3;
+                    display: grid;
+                    place-items: center;
+                    gap: 4px;
+                    color: #fbbf24;
+                    font-size: 18px;
+                    font-weight: 1000;
+                    text-shadow: 0 0 14px rgba(251,191,36,.48);
+                }
+                .rpg-arena-strike {
+                    border-radius: 999px;
+                    border: 1px solid rgba(251,191,36,.36);
+                    background: rgba(0,0,0,.45);
+                    padding: 2px 6px;
+                    color: #fff7ed;
+                    font-size: 8px;
+                    font-style: normal;
+                    animation: rpg-arena-pop .72s ease-out;
+                }
+                .rpg-arena-bars {
+                    position: relative;
+                    z-index: 1;
+                    display: grid;
+                    gap: 6px;
+                    margin-top: 9px;
+                }
+                .rpg-arena-result {
+                    position: relative;
+                    z-index: 1;
+                    margin-top: 9px;
+                    border-radius: 11px;
+                    border: 1px solid rgba(148,163,184,.16);
+                    background: rgba(2,6,23,.58);
+                    padding: 9px;
+                    display: grid;
+                    gap: 4px;
+                    color: #cbd5e1;
+                    font-size: 10px;
+                    line-height: 1.35;
+                }
+                .rpg-arena-result b {
+                    color: #f8fafc;
+                    font-size: 12px;
+                }
+                .rpg-arena-result span,
+                .rpg-arena-result small {
+                    color: #94a3b8;
+                }
+                .rpg-arena-result.win {
+                    border-color: rgba(34,197,94,.34);
+                    background: rgba(20,83,45,.24);
+                }
+                .rpg-arena-result.lose {
+                    border-color: rgba(248,113,113,.34);
+                    background: rgba(127,29,29,.22);
+                }
+                @keyframes rpg-arena-pop {
+                    0% { transform: scale(.55); opacity: 0; }
+                    55% { transform: scale(1.1); opacity: 1; }
+                    100% { transform: scale(1); opacity: 1; }
+                }
                 .rpg-quick-skins {
                     display: grid;
                     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -2069,6 +2401,10 @@ window.LobbyNeon = {
                 .rpg-skin-orb.active {
                     border-color: var(--skin-color, #22d3ee);
                     box-shadow: 0 0 18px color-mix(in srgb, var(--skin-color, #22d3ee) 38%, transparent);
+                }
+                .rpg-skin-orb.cooling,
+                .rpg-wheel-btn.cooling {
+                    pointer-events: none;
                 }
                 .rpg-skin-orb.locked {
                     opacity: .58;
@@ -2100,6 +2436,73 @@ window.LobbyNeon = {
                     color: #94a3b8;
                     font-size: 8px;
                     font-weight: 900;
+                    line-height: 1.15;
+                    text-align: center;
+                }
+                .rpg-skin-cooldown {
+                    position: absolute;
+                    inset: 0;
+                    display: none;
+                    place-items: center;
+                    background:
+                        conic-gradient(rgba(0,0,0,.62) var(--cooldown-pct, 0%), rgba(0,0,0,.2) 0),
+                        rgba(2,6,23,.28);
+                    color: #f8fafc;
+                    font-size: 18px;
+                    font-weight: 1000;
+                    text-shadow: 0 1px 3px #000;
+                }
+                .rpg-skin-orb.cooling .rpg-skin-cooldown,
+                .rpg-wheel-btn.cooling .rpg-skin-cooldown {
+                    display: grid;
+                }
+                .rpg-wheel-btn .rpg-skin-cooldown {
+                    border-radius: inherit;
+                    font-size: 13px;
+                }
+                .rpg-unlock-grid {
+                    position: relative;
+                    z-index: 1;
+                    display: grid;
+                    gap: 7px;
+                }
+                .rpg-unlock-row {
+                    border-radius: 10px;
+                    border: 1px solid rgba(148,163,184,.16);
+                    background: rgba(2,6,23,.48);
+                    padding: 8px;
+                    display: grid;
+                    grid-template-columns: 30px 1fr;
+                    gap: 8px;
+                    align-items: center;
+                    color: #e2e8f0;
+                }
+                .rpg-unlock-row > span {
+                    width: 30px;
+                    height: 30px;
+                    border-radius: 9px;
+                    display: grid;
+                    place-items: center;
+                    background: rgba(255,255,255,.06);
+                }
+                .rpg-unlock-row b {
+                    display: block;
+                    font-size: 10px;
+                    color: #f8fafc;
+                    line-height: 1.2;
+                }
+                .rpg-unlock-row small {
+                    display: block;
+                    margin-top: 2px;
+                    color: #94a3b8;
+                    font-size: 9px;
+                    line-height: 1.3;
+                }
+                .rpg-unlock-row.done {
+                    border-color: rgba(34,197,94,.28);
+                }
+                .rpg-unlock-row.locked {
+                    opacity: .56;
                 }
                 .rpg-mini-btn {
                     border: 1px solid rgba(34,211,238,.28);
@@ -2379,6 +2782,19 @@ window.LobbyNeon = {
                 </div>
             </div>
         `;
+
+        const hub = container.querySelector('#lobby-game-hub');
+        if (hub && !hub.dataset.rpgClickBound) {
+            hub.dataset.rpgClickBound = '1';
+            hub.addEventListener('mousedown', (e) => e.stopPropagation());
+            hub.addEventListener('click', LobbyNeon.handleRpgHubActionClick);
+        }
+        const wheel = container.querySelector('#rpg-skill-wheel');
+        if (wheel && !wheel.dataset.rpgClickBound) {
+            wheel.dataset.rpgClickBound = '1';
+            wheel.addEventListener('mousedown', (e) => e.stopPropagation());
+            wheel.addEventListener('click', LobbyNeon.handleRpgHubActionClick);
+        }
     },
 
     renderUser: (username, x, y, config, forceRefresh, extraData) => {
@@ -2795,6 +3211,67 @@ window.LobbyNeon = {
     },
 
     // ========== MOVEMENT ==========
+    handleRpgHubActionClick: async (e) => {
+        const trigger = e.target?.closest?.('[data-rpg-action]');
+        if (!trigger || trigger.disabled) return;
+
+        const action = trigger.dataset.rpgAction;
+        const value = trigger.dataset.rpgValue || '';
+        if (!action) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        try {
+            switch (action) {
+                case 'select-class':
+                    await LobbyNeon.selectRpgClass(value);
+                    break;
+                case 'equip-skin':
+                    await LobbyNeon.equipRpgSkin(value);
+                    break;
+                case 'quick-skin':
+                    await LobbyNeon.quickEquipAndCastRpgSkin(value);
+                    break;
+                case 'select-zone':
+                    LobbyNeon.selectRpgZone(value);
+                    break;
+                case 'spawn-zone':
+                    LobbyNeon.spawnRpgWildMonster(value, true);
+                    break;
+                case 'bag-toggle':
+                    LobbyNeon.toggleRpgBag(trigger.dataset.forceOpen === 'true' ? true : null);
+                    break;
+                case 'bag-filter':
+                    LobbyNeon.setRpgBagFilter(value);
+                    break;
+                case 'bag-select':
+                    await LobbyNeon.selectRpgBagItem(value, true);
+                    break;
+                case 'bag-equip':
+                    await LobbyNeon.equipRpgBagItem();
+                    break;
+                case 'bag-sell':
+                    await LobbyNeon.quickSellRpgBag();
+                    break;
+                case 'bag-sort':
+                    LobbyNeon.sortRpgBag();
+                    break;
+                case 'bag-split':
+                    await LobbyNeon.splitRpgBagItem();
+                    break;
+                case 'boss-challenge':
+                    await LobbyNeon.challengeRpgBoss(value);
+                    break;
+                default:
+                    break;
+            }
+        } catch (err) {
+            console.warn('rpg hub action error:', err);
+            Utils.showToast('Thao tác luyện công bị lỗi, thử lại giúp mình.', 'error');
+        }
+    },
+
     isNonFloorClickTarget: (target) => {
         if (!target) return true;
         return !!target.closest([
@@ -2824,6 +3301,11 @@ window.LobbyNeon = {
         const rect = e.currentTarget.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
+
+        if (LobbyNeon.state.rpgAutoFarm) {
+            LobbyNeon.stopRpgAutoFarm();
+            Utils.showToast('Đã tắt auto farm để bạn di chuyển tự do.', 'info');
+        }
 
         const ripple = document.createElement('div');
         ripple.className = 'lobby-click-ripple';
@@ -4063,6 +4545,7 @@ window.LobbyNeon = {
             vit: 1,
             luck: 1
         },
+        equipment: {},
         activeHunt: null,
         lootLog: [],
         totalHunts: 0,
@@ -4084,6 +4567,10 @@ window.LobbyNeon = {
             stats: {
                 ...defaults.stats,
                 ...((profile && profile.stats) || {})
+            },
+            equipment: {
+                ...defaults.equipment,
+                ...((profile && profile.equipment) || {})
             },
             statPoints: Number(profile?.statPoints || 0),
             unlockedSkins: Array.from(new Set([...(profile?.unlockedSkins || []), 'basic'])),
@@ -4173,7 +4660,10 @@ window.LobbyNeon = {
         const shardMap = {
             training_forest: 'thunderShard',
             ghost_cave: 'moonShard',
-            secret_realm: 'fireShard'
+            secret_realm: 'fireShard',
+            molten_keep: 'fireShard',
+            frost_peak: 'thunderShard',
+            abyss_gate: 'moonShard'
         };
         const shard = shardMap[zone.id] || 'thunderShard';
         const shardChance = Math.min(0.62, 0.12 * rounds * classCfg.lootMult * skinBonus.loot);
@@ -4223,7 +4713,8 @@ window.LobbyNeon = {
         const level = Auth.currentUser?.level || 1;
         const stats = profile?.stats || {};
         const statPower = Number(stats.str || 0) * 34 + Number(stats.int || 0) * 36 + Number(stats.agi || 0) * 30 + Number(stats.vit || 0) * 42 + Number(stats.luck || 0) * 24;
-        return Math.round(level * 120 + statPower + (profile.totalHunts || 0) * 16 + (profile.totalRewardPoints || 0) * 20 + (profile.unlockedSkins?.length || 1) * 75);
+        const equipPower = Object.values(profile?.equipment || {}).reduce((sum, item) => sum + Number(item?.enhance || 0) * 90, 0);
+        return Math.round(level * 120 + statPower + equipPower + (profile.totalHunts || 0) * 16 + (profile.totalRewardPoints || 0) * 20 + (profile.unlockedSkins?.length || 1) * 75);
     },
 
     awardRpgExp: async (username, rewardPoints, profile) => {
@@ -4336,7 +4827,10 @@ window.LobbyNeon = {
         const shardMap = {
             training_forest: 'thunderShard',
             ghost_cave: 'moonShard',
-            secret_realm: 'fireShard'
+            secret_realm: 'fireShard',
+            molten_keep: 'fireShard',
+            frost_peak: 'thunderShard',
+            abyss_gate: 'moonShard'
         };
         const mult = won ? 3 : 0.45;
         const rewardPoints = won ? Math.max(2, Number(zone.rewardPoints || 1) * 4) : 1;
@@ -4389,18 +4883,24 @@ window.LobbyNeon = {
         const zone = LobbyNeon.rpgZones[zoneId] || LobbyNeon.rpgZones.secret_realm;
         const { data, profile, username } = await LobbyNeon.getMyRpgProfile();
         const level = Auth.currentUser?.level || 1;
+        if (!profile.classChosen) {
+            Utils.showToast('Chọn môn phái chính thức trước khi vào Boss Arena.', 'warning');
+            return;
+        }
         if (level < zone.minLevel) {
-            Utils.showToast(`Can cap ${zone.minLevel} de danh boss nay.`, 'warning');
+            Utils.showToast(`Cần cấp ${zone.minLevel} để khiêu chiến boss này.`, 'warning');
             return;
         }
         const cost = LobbyNeon.getRpgBossCost(zone);
         if (profile.stamina < cost) {
-            Utils.showToast('Khong du the luc de danh boss. Mai se hoi lai 100 the luc.', 'warning');
+            Utils.showToast('Không đủ thể lực để đánh boss. Mai sẽ hồi lại 100 thể lực.', 'warning');
             return;
         }
         const chance = LobbyNeon.getRpgBossWinChance(profile, zone);
         const won = Math.random() < chance;
         const reward = LobbyNeon.rollRpgBossReward(zone, profile, won);
+        const playerPowerBefore = LobbyNeon.getRpgPower(profile);
+        const bossPower = LobbyNeon.getRpgBossPower(zone);
         profile.stamina = Math.max(0, Number(profile.stamina || 0) - cost);
         profile.totalHunts = Number(profile.totalHunts || 0) + 1;
         profile.bossWins = Number(profile.bossWins || 0) + (won ? 1 : 0);
@@ -4422,19 +4922,29 @@ window.LobbyNeon = {
             ...(profile.lootLog || [])
         ].slice(0, 12);
         if (won) await LobbyNeon.awardRpgExp(username, reward.rewardPoints, profile);
+        LobbyNeon.state.rpgBossBattle = {
+            zoneId: zone.id,
+            won,
+            reward,
+            cost,
+            chance: Math.round(chance * 100),
+            playerPower: playerPowerBefore,
+            bossPower,
+            time: Date.now()
+        };
         await LobbyNeon.saveMyRpgProfile(profile, data);
         Utils.showToast(
             won
-                ? `Thang boss: +${reward.exp} EXP · ${LobbyNeon.formatRpgItems(reward.items)}`
-                : `Thua boss, mat the luc nhung nhat duoc ${LobbyNeon.formatRpgItems(reward.items)}.`,
+                ? `Thắng boss: +${reward.exp} EXP · ${LobbyNeon.formatRpgItems(reward.items)}`
+                : `Thua boss, mất thể lực nhưng nhặt được ${LobbyNeon.formatRpgItems(reward.items)}.`,
             won ? 'success' : 'warning'
         );
         try {
             await DB.sendLobbyChat({
-                sender: 'He Thong',
+                sender: 'Hệ Thống',
                 text: won
-                    ? `Boss: @${username} ha ${zone.monster}, nhan ${LobbyNeon.formatRpgItems(reward.items)}.`
-                    : `Boss: @${username} bi ${zone.monster} danh lui. Can tang chi so hon.`
+                    ? `Boss: @${username} hạ ${zone.monster}, nhận ${LobbyNeon.formatRpgItems(reward.items)}.`
+                    : `Boss: @${username} bị ${zone.monster} đánh lui. Cần tăng chỉ số hơn.`
             });
         } catch (e) {
             console.warn('send rpg boss chat error:', e);
@@ -4484,22 +4994,39 @@ window.LobbyNeon = {
         return Math.max(12, Math.round(base + level * 4 + mainStat * 5 + (classCfg.expMult || 1) * 7));
     },
 
+    getRpgSkinCooldown: (skin) => Math.max(800, Number(skin?.cooldownMs || 1200)),
+
+    getRpgSkinAreaText: (skin) => {
+        const radius = Number(skin?.aoeRadius || 0);
+        if (!radius) return 'Đơn mục tiêu';
+        if (radius >= 190) return 'Lan rộng lớn';
+        return 'Lan rộng';
+    },
+
     getRpgItemMeta: (key) => {
         const meta = {
-            goldDust: { name: 'Tinh kim', icon: '🪙', color: '#facc15', rarity: 'Thường', use: 'Tiền tệ luyện khí, dùng để nâng cấp trang bị và giao dịch sau này.', tip: 'Boss rơi nhiều hơn quái thường.' },
-            linhThach: { name: 'Linh thạch', icon: '💎', color: '#38bdf8', rarity: 'Thường', use: 'Nguyên liệu nền để cường hóa kỹ năng và pháp bảo.', tip: 'Có nhiều ở Rừng Deadline.' },
-            daCuongHoa: { name: 'Đá cường hóa', icon: '🪨', color: '#94a3b8', rarity: 'Hiếm', use: 'Dùng để nâng cấp trang bị, tăng lực chiến ổn định.', tip: 'Rơi tốt ở Hang Bug Ma.' },
-            longAn: { name: 'Long ấn', icon: '🔥', color: '#fb923c', rarity: 'Sử thi', use: 'Ấn boss, nguyên liệu mở nâng cấp bậc cao.', tip: 'Ưu tiên đánh Boss KPI khi đủ lực.' },
-            fireShard: { name: 'Mảnh Hỏa Long', icon: '🔥', color: '#f97316', rarity: 'Sử thi', use: 'Ghép/mở khóa skin chưởng hệ Hỏa Long.', tip: 'Tỉ lệ cao hơn khi thắng boss.' },
-            thunderShard: { name: 'Mảnh Lôi Ảnh', icon: '⚡', color: '#facc15', rarity: 'Hiếm', use: 'Ghép/mở khóa skin chưởng hệ Lôi.', tip: 'Hợp Kiếm Tông/Pháp Tông.' },
-            moonShard: { name: 'Mảnh Nguyệt Ảnh', icon: '🌙', color: '#c084fc', rarity: 'Hiếm', use: 'Ghép/mở khóa skin chưởng hệ Ám/Nguyệt.', tip: 'Ảnh Sát có lợi thế săn mảnh này.' },
-            bossCore: { name: 'Lõi Boss', icon: '🧿', color: '#fb7185', rarity: 'Huyền thoại', use: 'Vật phẩm hiếm rơi từ boss, dành cho nâng cấp cuối game.', tip: 'Rơi ngẫu nhiên, không đảm bảo mỗi trận.' }
+            goldDust: { name: 'Tinh kim', icon: '🪙', color: '#facc15', rarity: 'Thường', rarityRank: 1, type: 'currency', sale: 0, use: 'Tiền tệ luyện khí. Dùng để trả phí cường hóa, giao dịch và mở tính năng nâng cấp sau này.', tip: 'Boss và bãi cấp cao rơi nhiều hơn quái thường.' },
+            linhThach: { name: 'Linh thạch', icon: '💎', color: '#38bdf8', rarity: 'Thường', rarityRank: 1, type: 'material', sale: 8, use: 'Nguyên liệu nền để cường hóa kỹ năng, pháp bảo và chế tạo vật phẩm cấp thấp.', tip: 'Có nhiều ở Rừng Deadline.' },
+            daCuongHoa: { name: 'Đá cường hóa', icon: '🪨', color: '#94a3b8', rarity: 'Hiếm', rarityRank: 2, type: 'material', sale: 18, use: 'Nguyên liệu nâng cấp trang bị thật. Khi chưa đập đồ, ô trang bị sẽ không tự hiện +7/+9 nữa.', tip: 'Rơi tốt ở Hang Bug Ma và Đỉnh Băng Bug.' },
+            longAn: { name: 'Long ấn', icon: '🔥', color: '#fb923c', rarity: 'Sử thi', rarityRank: 3, type: 'material', sale: 36, use: 'Ấn boss, dùng cho nâng cấp bậc cao và mở công thức cuối game.', tip: 'Ưu tiên đánh Boss Arena khi đủ lực.' },
+            fireShard: { name: 'Mảnh Hỏa Long', icon: '🔥', color: '#f97316', rarity: 'Sử thi', rarityRank: 3, type: 'shard', sale: 42, skinId: 'fire_dragon', use: 'Ghép/mở khóa skin chưởng Hỏa Long. Có đánh lan lớn nhưng hồi chiêu lâu.', tip: 'Tỉ lệ cao hơn khi thắng boss hệ lửa hoặc map cấp cao.' },
+            thunderShard: { name: 'Mảnh Lôi Ảnh', icon: '⚡', color: '#facc15', rarity: 'Hiếm', rarityRank: 2, type: 'shard', sale: 32, skinId: 'thunder', use: 'Ghép/mở khóa skin chưởng hệ Lôi. Hợp farm quái đông vì có vùng sát thương rộng.', tip: 'Hợp Kiếm Tông/Pháp Tông.' },
+            moonShard: { name: 'Mảnh Nguyệt Ảnh', icon: '🌙', color: '#c084fc', rarity: 'Hiếm', rarityRank: 2, type: 'shard', sale: 32, skinId: 'moon_shadow', use: 'Ghép/mở khóa skin chưởng Ám/Nguyệt. Hồi chiêu vừa, nhặt mảnh khá ổn.', tip: 'Ảnh Sát có lợi thế săn mảnh này.' },
+            bossCore: { name: 'Lõi Boss', icon: '🧿', color: '#fb7185', rarity: 'Huyền thoại', rarityRank: 4, type: 'rare', sale: 120, use: 'Vật phẩm hiếm rơi từ boss, dành cho nâng cấp cuối game. Có thể tách thành mảnh skin nếu đang thiếu nguyên liệu.', tip: 'Rơi ngẫu nhiên, không đảm bảo mỗi trận.' }
         };
-        return meta[key] || { name: key, icon: '🎁', color: '#22d3ee', rarity: 'Lạ', use: 'Vật phẩm chưa định danh.', tip: 'Có thể dùng trong bản cập nhật sau.' };
+        return meta[key] || { name: key, icon: '🎁', color: '#22d3ee', rarity: 'Lạ', rarityRank: 0, type: 'other', sale: 5, use: 'Vật phẩm chưa định danh.', tip: 'Có thể dùng trong bản cập nhật sau.' };
     },
 
     showRpgItemInfo: (key, qty = 0) => {
         const item = LobbyNeon.getRpgItemMeta(key);
+        const typeName = {
+            currency: 'Tiền tệ',
+            material: 'Nguyên liệu',
+            shard: 'Mảnh skin',
+            rare: 'Đồ hiếm',
+            equipment: 'Trang bị',
+            other: 'Khác'
+        }[item.type] || item.type;
         Utils.showModal(
             `${item.icon} ${item.name}`,
             `<div style="display:grid; gap:10px;">
@@ -4508,29 +5035,174 @@ window.LobbyNeon = {
                     <div>
                         <div style="color:${item.color}; font-weight:900; font-size:13px;">${item.rarity}</div>
                         <div style="color:#cbd5e1; font-size:12px; margin-top:4px;">Đang có: <b>x${Number(qty || 0)}</b></div>
+                        <div style="color:#94a3b8; font-size:11px; margin-top:4px;">Nhóm: <b>${typeName}</b>${item.sale ? ` · Giá bán: ${item.sale}/cái` : ''}</div>
                     </div>
                 </div>
                 <div style="color:#e2e8f0; font-size:13px; line-height:1.5;">${LobbyNeon.escapeHtml(item.use)}</div>
                 <div style="color:#94a3b8; font-size:12px; line-height:1.45; padding:10px; border-radius:10px; background:rgba(15,23,42,.66); border:1px solid rgba(148,163,184,.16);">${LobbyNeon.escapeHtml(item.tip)}</div>
             </div>`,
             null,
+            null,
             'ĐÃ HIỂU'
         );
     },
 
     getRpgInventoryItems: (profile) => {
-        const meta = {
-            goldDust: { name: 'Tinh kim', icon: '🪙', color: '#facc15' },
-            linhThach: { name: 'Linh thạch', icon: '💎', color: '#38bdf8' },
-            daCuongHoa: { name: 'Đá cường hóa', icon: '🪨', color: '#94a3b8' },
-            longAn: { name: 'Long ấn', icon: '🔥', color: '#fb923c' },
-            fireShard: { name: 'Mảnh Hỏa Long', icon: '🔥', color: '#f97316' },
-            thunderShard: { name: 'Mảnh Lôi Ảnh', icon: '⚡', color: '#facc15' },
-            moonShard: { name: 'Mảnh Nguyệt Ảnh', icon: '🌙', color: '#c084fc' }
-        };
-        return Object.entries(profile?.inventory || {})
+        const filter = LobbyNeon.state.rpgBagFilter || 'all';
+        const sortMode = LobbyNeon.state.rpgBagSortMode || 'rarity';
+        const items = Object.entries(profile?.inventory || {})
             .filter(([, qty]) => Number(qty) > 0)
             .map(([key, qty]) => ({ key, qty: Number(qty), ...LobbyNeon.getRpgItemMeta(key) }));
+
+        const filtered = items.filter(item => {
+            if (filter === 'all') return true;
+            if (filter === 'equipment') return item.type === 'equipment';
+            if (filter === 'material') return ['material', 'shard'].includes(item.type);
+            if (filter === 'other') return !['equipment', 'material', 'shard'].includes(item.type);
+            return true;
+        });
+
+        return filtered.sort((a, b) => {
+            if (sortMode === 'qty') return b.qty - a.qty || b.rarityRank - a.rarityRank || a.name.localeCompare(b.name, 'vi');
+            if (sortMode === 'name') return a.name.localeCompare(b.name, 'vi');
+            return b.rarityRank - a.rarityRank || b.qty - a.qty || a.name.localeCompare(b.name, 'vi');
+        });
+    },
+
+    getRpgEquipmentSlots: (profile) => {
+        const classCfg = LobbyNeon.rpgClasses[profile.classId] || LobbyNeon.rpgClasses.kiem_tong;
+        const skin = LobbyNeon.rpgSkins[profile.equippedSkin] || LobbyNeon.rpgSkins.basic;
+        const equipment = profile.equipment || {};
+        const build = (id, label, icon, color, fallbackName) => {
+            const item = equipment[id] || {};
+            const enhance = Number(item.enhance || 0);
+            return {
+                id,
+                label,
+                icon: item.icon || icon,
+                color: item.color || color,
+                name: item.name || fallbackName || 'Chưa trang bị',
+                level: enhance > 0 ? `+${enhance}` : '',
+                empty: !item.name && !fallbackName
+            };
+        };
+        return [
+            build('weapon', 'Vũ khí', skin.icon, skin.color, skin.name),
+            build('helm', 'Mũ', classCfg.icon, classCfg.color, ''),
+            build('armor', 'Áo', '👕', '#ec4899', ''),
+            build('pants', 'Quần', '🥾', '#60a5fa', ''),
+            build('glove', 'Găng', '🧤', '#a78bfa', ''),
+            build('boots', 'Giày', '👢', '#38bdf8', ''),
+            build('wing', 'Cánh', '🪽', '#22d3ee', ''),
+            build('pet', 'Pet', '🐉', '#86efac', ''),
+            build('necklace', 'Dây chuyền', '📿', '#fbbf24', ''),
+            build('ring', 'Nhẫn', '💍', '#f472b6', '')
+        ];
+    },
+
+    toggleRpgBag: (forceOpen = null) => {
+        LobbyNeon.state.rpgBagOpen = forceOpen === null ? !LobbyNeon.state.rpgBagOpen : Boolean(forceOpen);
+        LobbyNeon.renderRpgPanel();
+    },
+
+    setRpgBagFilter: (filter) => {
+        if (!['all', 'equipment', 'material', 'other'].includes(filter)) return;
+        LobbyNeon.state.rpgBagFilter = filter;
+        LobbyNeon.state.rpgBagOpen = true;
+        LobbyNeon.renderRpgPanel();
+    },
+
+    selectRpgBagItem: async (key, showInfo = true) => {
+        const { profile } = await LobbyNeon.getMyRpgProfile();
+        const qty = Number(profile.inventory?.[key] || 0);
+        if (qty <= 0) return;
+        const item = LobbyNeon.getRpgItemMeta(key);
+        LobbyNeon.state.rpgSelectedItemKey = key;
+        LobbyNeon.state.rpgBagOpen = true;
+        LobbyNeon.renderRpgPanel();
+        Utils.showToast(`Đã chọn ${item ? item.name : key} x${qty}.`, 'info');
+        if (showInfo) LobbyNeon.showRpgItemInfo(key, qty);
+    },
+
+    sortRpgBag: () => {
+        const modes = ['rarity', 'qty', 'name'];
+        const current = LobbyNeon.state.rpgBagSortMode || 'rarity';
+        const next = modes[(modes.indexOf(current) + 1) % modes.length];
+        LobbyNeon.state.rpgBagSortMode = next;
+        LobbyNeon.state.rpgBagOpen = true;
+        Utils.showToast(next === 'rarity' ? 'Đã sắp xếp theo độ hiếm.' : next === 'qty' ? 'Đã sắp xếp theo số lượng.' : 'Đã sắp xếp theo tên.', 'info');
+        LobbyNeon.renderRpgPanel();
+    },
+
+    quickSellRpgBag: async () => {
+        const { data, profile } = await LobbyNeon.getMyRpgProfile();
+        const sellableKeys = Object.keys(profile.inventory || {}).filter(key => {
+            const item = LobbyNeon.getRpgItemMeta(key);
+            return Number(item.sale || 0) > 0 && ['material', 'other'].includes(item.type) && Number(profile.inventory[key] || 0) > 0;
+        });
+        if (!sellableKeys.length) {
+            Utils.showToast('Không có nguyên liệu thường nào để bán nhanh. Mảnh skin và Lõi Boss được giữ lại.', 'info');
+            return;
+        }
+        const ok = confirm('Bán nhanh sẽ bán 25% nguyên liệu thường, không bán mảnh skin/Lõi Boss. Tiếp tục?');
+        if (!ok) return;
+        let goldGain = 0;
+        sellableKeys.forEach(key => {
+            const item = LobbyNeon.getRpgItemMeta(key);
+            const qty = Number(profile.inventory[key] || 0);
+            const sold = Math.max(1, Math.floor(qty * 0.25));
+            profile.inventory[key] = Math.max(0, qty - sold);
+            goldGain += sold * Number(item.sale || 0);
+        });
+        profile.inventory.goldDust = Number(profile.inventory.goldDust || 0) + goldGain;
+        await LobbyNeon.saveMyRpgProfile(profile, data);
+        Utils.showToast(`Đã bán nhanh nguyên liệu, nhận +${goldGain.toLocaleString('vi-VN')} tinh kim.`, 'success');
+        LobbyNeon.renderRpgPanel();
+    },
+
+    splitRpgBagItem: async () => {
+        const key = LobbyNeon.state.rpgSelectedItemKey;
+        const { data, profile } = await LobbyNeon.getMyRpgProfile();
+        const qty = Number(profile.inventory?.[key] || 0);
+        if (!key || qty <= 0) {
+            Utils.showToast('Chọn một vật phẩm trong túi trước khi tách.', 'warning');
+            return;
+        }
+        if (key === 'bossCore') {
+            profile.inventory.bossCore = qty - 1;
+            profile.inventory.fireShard = Number(profile.inventory.fireShard || 0) + 1;
+            profile.inventory.thunderShard = Number(profile.inventory.thunderShard || 0) + 1;
+            profile.inventory.moonShard = Number(profile.inventory.moonShard || 0) + 1;
+            await LobbyNeon.saveMyRpgProfile(profile, data);
+            Utils.showToast('Đã tách 1 Lõi Boss thành 3 mảnh skin hiếm.', 'success');
+            LobbyNeon.renderRpgPanel();
+            return;
+        }
+        if (key === 'longAn') {
+            profile.inventory.longAn = qty - 1;
+            profile.inventory.daCuongHoa = Number(profile.inventory.daCuongHoa || 0) + 3;
+            await LobbyNeon.saveMyRpgProfile(profile, data);
+            Utils.showToast('Đã tách 1 Long ấn thành 3 Đá cường hóa.', 'success');
+            LobbyNeon.renderRpgPanel();
+            return;
+        }
+        Utils.showToast('Vật phẩm này hiện không tách được. Hãy chọn Lõi Boss hoặc Long ấn.', 'info');
+    },
+
+    equipRpgBagItem: async () => {
+        const key = LobbyNeon.state.rpgSelectedItemKey;
+        const { profile } = await LobbyNeon.getMyRpgProfile();
+        const qty = Number(profile.inventory?.[key] || 0);
+        if (!key || qty <= 0) {
+            Utils.showToast('Chọn một vật phẩm trong túi trước.', 'warning');
+            return;
+        }
+        const item = LobbyNeon.getRpgItemMeta(key);
+        if (item.skinId) {
+            await LobbyNeon.equipRpgSkin(item.skinId);
+            return;
+        }
+        Utils.showToast(`${item.name} là ${item.rarity.toLowerCase()} dùng để nâng cấp/chế tạo, chưa phải trang bị mặc trực tiếp.`, 'info');
     },
 
     renderRpgEquipmentPanel: (profile) => {
@@ -4594,7 +5266,9 @@ window.LobbyNeon = {
         const exp = Auth.currentUser?.exp || 0;
         const currentExp = Auth.getExpForLevel ? Auth.getExpForLevel(level) : 0;
         const nextExp = Auth.getExpForLevel ? Auth.getExpForLevel(level + 1) : Math.max(1, exp + 1);
-        const expPct = Math.max(0, Math.min(100, ((exp - currentExp) / Math.max(1, nextExp - currentExp)) * 100));
+        const expInLevel = Math.max(0, exp - currentExp);
+        const expNeeded = Math.max(1, nextExp - currentExp);
+        const expPct = Math.max(0, Math.min(100, (expInLevel / expNeeded) * 100));
         const hp = Math.round(1200 + Number(profile.stats?.vit || 1) * 280 + level * 120);
         const mp = Math.round(700 + Number(profile.stats?.int || 1) * 210 + level * 82);
         return `
@@ -4608,7 +5282,7 @@ window.LobbyNeon = {
                 </div>
                 <div class="rpg-mu-power">LUC CHIEN ${LobbyNeon.getRpgPower(profile).toLocaleString('vi-VN')}</div>
                 <div class="rpg-mu-bars">
-                    <div class="rpg-mu-bar exp"><span style="width:${expPct}%;"></span><b>EXP ${expPct.toFixed(1)}%</b></div>
+                    <div class="rpg-mu-bar exp"><span style="width:${expPct}%;"></span><b>EXP ${expInLevel.toLocaleString('vi-VN')} / ${expNeeded.toLocaleString('vi-VN')} (${expPct.toFixed(1)}%)</b></div>
                     <div class="rpg-mu-bar hp"><span style="width:100%;"></span><b>HP ${hp.toLocaleString('vi-VN')} / ${hp.toLocaleString('vi-VN')}</b></div>
                     <div class="rpg-mu-bar mp"><span style="width:100%;"></span><b>MP ${mp.toLocaleString('vi-VN')} / ${mp.toLocaleString('vi-VN')}</b></div>
                 </div>
@@ -4622,37 +5296,35 @@ window.LobbyNeon = {
     },
 
     renderRpgEquipmentPanel: (profile) => {
-        const classCfg = LobbyNeon.rpgClasses[profile.classId] || LobbyNeon.rpgClasses.kiem_tong;
-        const skin = LobbyNeon.rpgSkins[profile.equippedSkin] || LobbyNeon.rpgSkins.basic;
         const items = LobbyNeon.getRpgInventoryItems(profile);
-        const totalCells = Math.max(25, Math.ceil(Math.max(items.length, 1) / 5) * 5);
+        const allItemCount = Object.values(profile.inventory || {}).filter(qty => Number(qty) > 0).length;
+        const bagOpen = Boolean(LobbyNeon.state.rpgBagOpen);
+        const totalCells = bagOpen ? Math.max(30, Math.ceil(Math.max(items.length, 1) / 5) * 5) : Math.max(10, Math.ceil(Math.max(items.length, 1) / 5) * 5);
         const cells = Array.from({ length: totalCells }, (_, index) => items[index] || null);
-        const slots = [
-            { label: 'Vu khi', icon: skin.icon, level: '+9', color: skin.color },
-            { label: 'Mu', icon: classCfg.icon, level: '+7', color: classCfg.color },
-            { label: 'Ao', icon: '👕', level: '+8', color: '#ec4899' },
-            { label: 'Quan', icon: '🥾', level: '+6', color: '#60a5fa' },
-            { label: 'Gang', icon: '🧤', level: '+7', color: '#a78bfa' },
-            { label: 'Giay', icon: '👢', level: '+7', color: '#38bdf8' },
-            { label: 'Canh', icon: '🪽', level: '+8', color: '#22d3ee' },
-            { label: 'Pet', icon: '🐉', level: '+5', color: '#86efac' },
-            { label: 'Day chuyen', icon: '📿', level: '+6', color: '#fbbf24' },
-            { label: 'Nhan', icon: '💍', level: '+6', color: '#f472b6' }
-        ];
+        const slots = LobbyNeon.getRpgEquipmentSlots(profile);
         const leftSlots = slots.slice(0, 5);
         const rightSlots = slots.slice(5);
+        const filters = [
+            { id: 'all', label: 'Tất cả' },
+            { id: 'equipment', label: 'Trang bị' },
+            { id: 'material', label: 'Nguyên liệu' },
+            { id: 'other', label: 'Khác' }
+        ];
+        const selectedKey = LobbyNeon.state.rpgSelectedItemKey;
+        const selectedQty = Number(profile.inventory?.[selectedKey] || 0);
+        const selectedItem = selectedQty > 0 ? LobbyNeon.getRpgItemMeta(selectedKey) : null;
         return `
             <div class="rpg-mu-shell">
                 <div class="rpg-mu-panel">
                     <div class="rpg-mu-heading">
-                        <span>⚔️ Trang Bi</span>
-                        <button class="rpg-mini-btn" onclick="if(typeof ChibiModule !== 'undefined') ChibiModule.openBuilder()">Ngoai hinh</button>
+                        <span>⚔️ Trang bị</span>
+                        <button class="rpg-mini-btn" onclick="if(typeof ChibiModule !== 'undefined') ChibiModule.openBuilder()">Ngoại hình</button>
                     </div>
                     <div class="rpg-mu-equipment">
                         <div class="rpg-mu-slot-col">
                             ${leftSlots.map(slot => `
-                                <div class="rpg-mu-slot" style="--equip-color:${slot.color};" title="${LobbyNeon.escapeHtml(slot.label)}">
-                                    <span class="rpg-mu-slot-level">${slot.level}</span>
+                                <div class="rpg-mu-slot ${slot.empty ? 'empty' : ''}" style="--equip-color:${slot.color};" title="${LobbyNeon.escapeHtml(slot.name)}">
+                                    ${slot.level ? `<span class="rpg-mu-slot-level">${slot.level}</span>` : ''}
                                     <span class="rpg-mu-slot-icon">${slot.icon}</span>
                                     <span class="rpg-mu-slot-label">${LobbyNeon.escapeHtml(slot.label)}</span>
                                 </div>
@@ -4663,8 +5335,8 @@ window.LobbyNeon = {
                         </div>
                         <div class="rpg-mu-slot-col">
                             ${rightSlots.map(slot => `
-                                <div class="rpg-mu-slot" style="--equip-color:${slot.color};" title="${LobbyNeon.escapeHtml(slot.label)}">
-                                    <span class="rpg-mu-slot-level">${slot.level}</span>
+                                <div class="rpg-mu-slot ${slot.empty ? 'empty' : ''}" style="--equip-color:${slot.color};" title="${LobbyNeon.escapeHtml(slot.name)}">
+                                    ${slot.level ? `<span class="rpg-mu-slot-level">${slot.level}</span>` : ''}
                                     <span class="rpg-mu-slot-icon">${slot.icon}</span>
                                     <span class="rpg-mu-slot-label">${LobbyNeon.escapeHtml(slot.label)}</span>
                                 </div>
@@ -4674,28 +5346,53 @@ window.LobbyNeon = {
                 </div>
                 <div class="rpg-mu-panel">
                     <div class="rpg-mu-heading">
-                        <span>🎒 Ba Lo</span>
-                        <span class="rpg-chip">${items.length}/120</span>
+                        <span>🎒 Ba lô</span>
+                        <button class="rpg-mini-btn" data-rpg-action="bag-toggle">${bagOpen ? 'Đóng' : 'Mở túi'}</button>
                     </div>
-                    <div class="rpg-mu-bag-tabs">
-                        <button class="rpg-mu-bag-tab active">Tat ca</button>
-                        <button class="rpg-mu-bag-tab">Trang bi</button>
-                        <button class="rpg-mu-bag-tab">Nguyen lieu</button>
-                        <button class="rpg-mu-bag-tab">Khac</button>
+                    <div class="rpg-bag-summary">
+                        <span class="rpg-chip">${allItemCount}/120 loại</span>
+                        <span class="rpg-chip">Lọc: ${filters.find(f => f.id === LobbyNeon.state.rpgBagFilter)?.label || 'Tất cả'}</span>
+                        <span class="rpg-chip">Sắp xếp: ${LobbyNeon.state.rpgBagSortMode === 'qty' ? 'Số lượng' : LobbyNeon.state.rpgBagSortMode === 'name' ? 'Tên' : 'Độ hiếm'}</span>
                     </div>
-                    <div class="rpg-bag-grid">
-                        ${cells.map(item => item ? `
-                            <button type="button" class="rpg-bag-cell has-item" title="${LobbyNeon.escapeHtml(item.name)} x${item.qty}" style="--item-color:${item.color};" onclick="LobbyNeon.showRpgItemInfo('${item.key}', ${item.qty})">
-                                <span class="rpg-bag-icon">${item.icon}</span>
-                                <span class="rpg-bag-qty">x${item.qty}</span>
-                            </button>
-                        ` : `<div class="rpg-bag-cell"></div>`).join('')}
-                    </div>
-                    <div class="rpg-mu-bag-actions">
-                        <button class="rpg-mu-small-btn">Ban nhanh</button>
-                        <button class="rpg-mu-small-btn">Sap xep</button>
-                        <button class="rpg-mu-small-btn">Tach</button>
-                    </div>
+                    ${bagOpen ? `
+                        <div class="rpg-mu-bag-tabs">
+                            ${filters.map(tab => `
+                                <button class="rpg-mu-bag-tab ${LobbyNeon.state.rpgBagFilter === tab.id ? 'active' : ''}" data-rpg-action="bag-filter" data-rpg-value="${tab.id}">${tab.label}</button>
+                            `).join('')}
+                        </div>
+                        ${items.length ? `
+                            <div class="rpg-bag-grid">
+                                ${cells.map(item => item ? `
+                                    <button type="button" class="rpg-bag-cell has-item ${selectedKey === item.key ? 'selected' : ''}" title="${LobbyNeon.escapeHtml(item.name)} x${item.qty}" style="--item-color:${item.color};" data-rpg-action="bag-select" data-rpg-value="${item.key}">
+                                        <span class="rpg-bag-icon">${item.icon}</span>
+                                        <span class="rpg-bag-qty">x${item.qty}</span>
+                                    </button>
+                                ` : `<div class="rpg-bag-cell"></div>`).join('')}
+                            </div>
+                        ` : `<div class="rpg-bag-empty">Không có vật phẩm trong nhóm này.</div>`}
+                        <div class="rpg-selected-item">
+                            ${selectedItem ? `
+                                <span style="color:${selectedItem.color};">${selectedItem.icon}</span>
+                                <b>${LobbyNeon.escapeHtml(selectedItem.name)}</b>
+                                <small>x${selectedQty} · ${selectedItem.rarity} · ${LobbyNeon.escapeHtml(selectedItem.use)}</small>
+                            ` : `
+                                <b>Chưa chọn vật phẩm</b>
+                                <small>Bấm vào một ô để xem tác dụng, rồi dùng các nút bên dưới.</small>
+                            `}
+                        </div>
+                        <div class="rpg-mu-bag-actions">
+                            <button class="rpg-mu-small-btn" data-rpg-action="bag-equip">Trang bị / Dùng</button>
+                            <button class="rpg-mu-small-btn" data-rpg-action="bag-sell">Bán nhanh</button>
+                            <button class="rpg-mu-small-btn" data-rpg-action="bag-sort">Sắp xếp</button>
+                            <button class="rpg-mu-small-btn" data-rpg-action="bag-split">Tách</button>
+                        </div>
+                    ` : `
+                        <button class="rpg-bag-collapsed" data-rpg-action="bag-toggle" data-force-open="true">
+                            <span>🎒</span>
+                            <b>Bấm để mở túi đồ</b>
+                            <small>Xem vật phẩm lớn hơn, lọc nguyên liệu/trang bị và thao tác bán/tách.</small>
+                        </button>
+                    `}
                 </div>
             </div>
         `;
@@ -4757,37 +5454,116 @@ window.LobbyNeon = {
         const locked = level < zone.minLevel;
         const chance = Math.round(LobbyNeon.getRpgBossWinChance(profile, zone) * 100);
         const bossPower = LobbyNeon.getRpgBossPower(zone);
-        const bossHpPct = Math.max(52, Math.min(96, 62 + Number(zone.rewardPoints || 1) * 9));
+        const playerPower = LobbyNeon.getRpgPower(profile);
+        const bossHpPct = Math.max(56, Math.min(100, 58 + Number(zone.rewardPoints || 1) * 8));
+        const shardByZone = {
+            training_forest: 'thunderShard',
+            ghost_cave: 'moonShard',
+            secret_realm: 'fireShard',
+            molten_keep: 'fireShard',
+            frost_peak: 'thunderShard',
+            abyss_gate: 'moonShard'
+        };
         const rewards = [
             LobbyNeon.getRpgItemMeta(zone.material),
             LobbyNeon.getRpgItemMeta('goldDust'),
             LobbyNeon.getRpgItemMeta('bossCore'),
-            LobbyNeon.getRpgItemMeta(zone.id === 'secret_realm' ? 'fireShard' : zone.id === 'ghost_cave' ? 'moonShard' : 'thunderShard'),
+            LobbyNeon.getRpgItemMeta(shardByZone[zone.id] || 'thunderShard'),
             LobbyNeon.getRpgItemMeta('daCuongHoa'),
             LobbyNeon.getRpgItemMeta('linhThach')
         ];
+        const battle = LobbyNeon.state.rpgBossBattle?.zoneId === zone.id ? LobbyNeon.state.rpgBossBattle : null;
+        const resultHtml = battle ? `
+            <div class="rpg-arena-result ${battle.won ? 'win' : 'lose'}">
+                <div>
+                    <b>${battle.won ? 'THẮNG BOSS' : 'BỊ ĐÁNH LUI'}</b>
+                    <span>${new Date(battle.time).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} · Tỉ lệ lúc đánh ${battle.chance}% · tốn ${battle.cost} thể lực</span>
+                </div>
+                <small>${battle.won ? `+${battle.reward.exp} EXP · ` : ''}${LobbyNeon.formatRpgItems(battle.reward.items)}</small>
+            </div>
+        ` : `
+            <div class="rpg-arena-result idle">
+                <div>
+                    <b>Sẵn sàng khiêu chiến</b>
+                    <span>Boss có thể thắng bạn nếu lực chiến/chỉ số còn yếu. Thắng sẽ rơi tài nguyên nhiều hơn và có tỉ lệ đồ hiếm.</span>
+                </div>
+            </div>
+        `;
+        const reason = !profile.classChosen
+            ? 'Chọn môn phái trước'
+            : locked
+                ? `Cần Lv.${zone.minLevel}`
+                : profile.stamina < cost
+                    ? `Thiếu ${cost - profile.stamina} thể lực`
+                    : `${chance}% thắng`;
         return `
-            <div class="rpg-mu-panel">
+            <div class="rpg-mu-panel rpg-arena-panel ${battle ? (battle.won ? 'arena-win' : 'arena-lose') : ''}">
                 <div class="rpg-mu-heading">
                     <span>⚔️ Boss Arena</span>
-                    <span class="rpg-chip">${locked ? `Can Lv.${zone.minLevel}` : `${chance}% thang`}</span>
+                    <span class="rpg-chip">${reason}</span>
                 </div>
-                <div class="rpg-mu-boss">
-                    <div class="rpg-mu-boss-art">${LobbyNeon.getRpgMonsterSvg(zone.id)}</div>
-                    <div class="rpg-mu-boss-info">
-                        <div class="rpg-mu-boss-name">☠ ${LobbyNeon.escapeHtml(zone.monster)} - ${LobbyNeon.escapeHtml(zone.name)}</div>
-                        <div class="rpg-mu-bar hp"><span style="width:${bossHpPct}%;"></span><b>HP BOSS ${bossHpPct}%</b></div>
-                        <div class="rpg-muted">Boss LC: ${bossPower.toLocaleString('vi-VN')}</div>
-                        <div class="rpg-muted">LC cua ban: ${LobbyNeon.getRpgPower(profile).toLocaleString('vi-VN')}</div>
-                        <div class="rpg-muted">Tieu hao the luc: ${cost}</div>
+                <div class="rpg-arena-stage">
+                    <div class="rpg-arena-fighter player">
+                        <div class="rpg-arena-avatar"><div class="rpg-player-sprite">${LobbyNeon.getRpgPlayerBattleSvg()}</div></div>
+                        <b>Nhân vật</b>
+                        <span>LC ${playerPower.toLocaleString('vi-VN')}</span>
                     </div>
+                    <div class="rpg-arena-vs">
+                        <span>VS</span>
+                        ${battle ? `<i class="rpg-arena-strike">${battle.won ? 'CRIT' : 'HIT'}</i>` : ''}
+                    </div>
+                    <div class="rpg-arena-fighter boss">
+                        <div class="rpg-arena-avatar boss-art">${LobbyNeon.getRpgMonsterSvg(zone.id)}</div>
+                        <b>${LobbyNeon.escapeHtml(zone.monster)}</b>
+                        <span>LC ${bossPower.toLocaleString('vi-VN')}</span>
+                    </div>
+                </div>
+                <div class="rpg-arena-bars">
+                    <div class="rpg-mu-bar hp"><span style="width:${locked ? 100 : bossHpPct}%;"></span><b>HP BOSS ${locked ? 'LOCK' : bossHpPct + '%'}</b></div>
+                    <div class="rpg-mu-bar mp"><span style="width:${Math.min(100, profile.stamina)}%;"></span><b>THỂ LỰC ${profile.stamina}/100 · Tốn ${cost}</b></div>
                 </div>
                 <div class="rpg-mu-boss-rewards">
                     ${rewards.map(item => `<div class="rpg-mu-reward" style="--item-color:${item.color};" title="${LobbyNeon.escapeHtml(item.name)}">${item.icon}</div>`).join('')}
                 </div>
-                <button class="rpg-action-btn" style="width:100%; margin-top:10px; background:linear-gradient(135deg,#b45309,#f59e0b,#fbbf24); color:#111827;" ${locked || profile.stamina < cost ? 'disabled' : ''} onclick="LobbyNeon.challengeRpgBoss('${zone.id}')">
-                    Khieu Chien
+                ${resultHtml}
+                <button class="rpg-action-btn" style="width:100%; margin-top:10px; background:linear-gradient(135deg,#b45309,#f59e0b,#fbbf24); color:#111827;" data-rpg-action="boss-challenge" data-rpg-value="${zone.id}">
+                    Khiêu chiến Boss Arena
                 </button>
+            </div>
+        `;
+    },
+
+    renderRpgUnlockPanel: () => {
+        const level = Auth.currentUser?.level || 1;
+        const unlocks = [
+            { level: 1, icon: '⚔️', title: 'Auto farm + skill cơ bản', desc: 'Bắt đầu treo quái và chọn môn phái.' },
+            { level: 3, icon: '👻', title: 'Hang Bug Ma', desc: 'Quái mạnh hơn, rơi Đá cường hóa.' },
+            { level: 4, icon: '🌊', title: 'Skill lan rộng', desc: 'Mỗi phái mở chiêu đánh nhiều mục tiêu.' },
+            { level: 6, icon: '🐉', title: 'Boss KPI', desc: 'Boss khó hơn, dùng thể lực, rơi tài nguyên nhiều.' },
+            { level: 10, icon: '🌋', title: 'Lò Lửa Deadline', desc: 'Map cấp cao, loot Hỏa Long tốt hơn.' },
+            { level: 15, icon: '🏔️', title: 'Đỉnh Băng Bug', desc: 'Quái rất trâu, thưởng EXP lớn hơn.' },
+            { level: 22, icon: '🕳️', title: 'Cổng Vực Sâu', desc: 'Bãi cuối hiện tại, boss cực mạnh.' }
+        ];
+        return `
+            <div class="rpg-mu-panel">
+                <div class="rpg-mu-heading">
+                    <span>🧭 Mở khóa theo cấp</span>
+                    <span class="rpg-chip">Lv.${level}</span>
+                </div>
+                <div class="rpg-unlock-grid">
+                    ${unlocks.map(item => {
+                        const done = level >= item.level;
+                        return `
+                            <div class="rpg-unlock-row ${done ? 'done' : 'locked'}">
+                                <span>${item.icon}</span>
+                                <div>
+                                    <b>Lv.${item.level} · ${LobbyNeon.escapeHtml(item.title)}</b>
+                                    <small>${LobbyNeon.escapeHtml(item.desc)}</small>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
             </div>
         `;
     },
@@ -4802,14 +5578,20 @@ window.LobbyNeon = {
                     const label = unlocked
                         ? (profile.equippedSkin === skin.id ? 'Đang dùng' : 'Bấm dùng')
                         : (skin.classId ? `Lv.${skin.unlockLevel}` : `${shardCount}/${skin.unlockNeed || 0}`);
+                    const cooldown = (LobbyNeon.getRpgSkinCooldown(skin) / 1000).toFixed(1).replace('.0', '');
+                    const areaText = LobbyNeon.getRpgSkinAreaText(skin);
                     return `
                         <button class="rpg-skin-orb ${profile.equippedSkin === skin.id ? 'active' : ''} ${!unlocked && !canUnlock ? 'locked' : ''}"
                             style="--skin-color:${skin.color};"
+                            data-rpg-skin-id="${skin.id}"
+                            data-rpg-action="quick-skin"
+                            data-rpg-value="${skin.id}"
                             title="${LobbyNeon.escapeHtml(skin.name)}"
-                            onclick="LobbyNeon.quickEquipAndCastRpgSkin('${skin.id}')">
+                            type="button">
                             <span class="rpg-skin-orb-icon">${skin.icon}</span>
                             <span class="rpg-skin-orb-name">${LobbyNeon.escapeHtml(skin.name)}</span>
-                            <span class="rpg-skin-orb-tag">${label}</span>
+                            <span class="rpg-skin-orb-tag">${label} · ${areaText} · ${cooldown}s</span>
+                            <span class="rpg-skin-cooldown"></span>
                         </button>
                     `;
                 }).join('')}
@@ -4839,10 +5621,13 @@ window.LobbyNeon = {
                 return `
                     <button class="rpg-wheel-btn ${profile.equippedSkin === skin.id ? 'active' : ''} ${unlocked ? '' : 'locked'}"
                         style="--wheel-color:${skin.color};"
-                        onclick="LobbyNeon.quickEquipAndCastRpgSkin('${skin.id}')"
+                        data-rpg-skin-id="${skin.id}"
+                        data-rpg-action="quick-skin"
+                        data-rpg-value="${skin.id}"
                         title="${LobbyNeon.escapeHtml(skin.name)}">
                         <span class="rpg-wheel-icon">${skin.icon}</span>
                         <span class="rpg-wheel-label">${unlocked ? LobbyNeon.escapeHtml(skin.name) : `Khóa ${skin.unlockLevel ? 'Lv.' + skin.unlockLevel : 'VIP'}`}</span>
+                        <span class="rpg-skin-cooldown"></span>
                     </button>
                 `;
             }).join('')}
@@ -4851,6 +5636,7 @@ window.LobbyNeon = {
                 <span class="rpg-wheel-label">Túi đồ</span>
             </button>
         `;
+        LobbyNeon.updateRpgSkillCooldownBadges();
     },
 
     quickEquipAndCastRpgSkin: async (skinId) => {
@@ -5055,6 +5841,21 @@ window.LobbyNeon = {
         return Object.values(LobbyNeon.rpgZones).filter(zone => level >= zone.minLevel);
     },
 
+    getRpgAutoSpawnZone: () => {
+        const unlocked = LobbyNeon.getRpgUnlockedZones().sort((a, b) => a.minLevel - b.minLevel);
+        const selected = LobbyNeon.rpgZones[LobbyNeon.state.selectedRpgZone];
+        if (LobbyNeon.state.rpgZoneManuallySelected && selected && unlocked.some(zone => zone.id === selected.id)) return selected;
+        const pool = unlocked.slice(-3);
+        if (!pool.length) return LobbyNeon.rpgZones.training_forest;
+        const totalWeight = pool.reduce((sum, zone) => sum + Number(zone.rewardPoints || 1), 0);
+        let roll = Math.random() * totalWeight;
+        for (const zone of pool) {
+            roll -= Number(zone.rewardPoints || 1);
+            if (roll <= 0) return zone;
+        }
+        return pool[pool.length - 1];
+    },
+
     getRpgRandomFarmPoint: (nearPlayer = false) => {
         const map = document.getElementById('lobby-map');
         const w = map?.offsetWidth || 1400;
@@ -5075,7 +5876,11 @@ window.LobbyNeon = {
     spawnRpgWildMonster: (zoneId = null, nearPlayer = false) => {
         const zones = LobbyNeon.getRpgUnlockedZones();
         if (!zones.length) return null;
-        const zone = LobbyNeon.rpgZones[zoneId] || zones[Math.floor(Math.random() * zones.length)] || LobbyNeon.rpgZones.training_forest;
+        const zone = LobbyNeon.rpgZones[zoneId] || LobbyNeon.getRpgAutoSpawnZone() || LobbyNeon.rpgZones.training_forest;
+        if (zoneId && !zones.some(unlocked => unlocked.id === zone.id)) {
+            Utils.showToast(`Bãi ${zone.name} cần cấp ${zone.minLevel}.`, 'warning');
+            return null;
+        }
         const point = LobbyNeon.getRpgRandomFarmPoint(nearPlayer);
         const id = `wild_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
         const hp = 85 + zone.rewardPoints * 35 + Math.floor(Math.random() * 35);
@@ -5215,6 +6020,7 @@ window.LobbyNeon = {
         }
         const wheelAuto = document.querySelector('#rpg-skill-wheel .rpg-wheel-btn');
         if (wheelAuto) wheelAuto.classList.toggle('auto-on', Boolean(LobbyNeon.state.rpgAutoFarm));
+        LobbyNeon.updateRpgSkillCooldownBadges();
         if (!nearest) {
             hint.textContent = 'Chưa thấy quái. Hệ thống đang sinh quái tự động...';
             return;
@@ -5229,6 +6035,23 @@ window.LobbyNeon = {
         hint.textContent = nearest.dist <= 175
             ? `Trong tầm: ${zone.monster} · bấm SKILL để đánh`
             : `Cách ${Math.round(nearest.dist)}px: bấm SKILL để chạy tới gần`;
+        LobbyNeon.updateRpgSkillCooldownBadges();
+    },
+
+    updateRpgSkillCooldownBadges: () => {
+        const now = Date.now();
+        const lastCast = LobbyNeon.state.rpgLastSkillCast;
+        const remaining = Math.max(0, (LobbyNeon.state.rpgSkillCooldownUntil || 0) - now);
+        document.querySelectorAll('[data-rpg-skin-id]').forEach(el => {
+            const label = el.querySelector('.rpg-skin-cooldown');
+            const isActive = lastCast?.skinId && el.dataset.rpgSkinId === lastCast.skinId && remaining > 0;
+            el.classList.toggle('cooling', Boolean(isActive));
+            if (label) {
+                label.textContent = isActive ? `${Math.ceil(remaining / 1000)}s` : '';
+                const pct = isActive ? Math.max(0, Math.min(100, (remaining / Math.max(1, lastCast.cooldownMs || 1200)) * 100)) : 0;
+                label.style.setProperty('--cooldown-pct', `${pct}%`);
+            }
+        });
     },
 
     startRpgAutoFarm: () => {
@@ -5286,7 +6109,13 @@ window.LobbyNeon = {
 
     castRpgSkill: async (options = {}) => {
         const now = Date.now();
-        if (now < LobbyNeon.state.rpgSkillCooldownUntil) return;
+        if (now < LobbyNeon.state.rpgSkillCooldownUntil) {
+            if (!options.silent) {
+                Utils.showToast(`Skill đang hồi ${Math.ceil((LobbyNeon.state.rpgSkillCooldownUntil - now) / 1000)}s.`, 'info');
+            }
+            LobbyNeon.updateRpgFarmHud();
+            return;
+        }
 
         const { data, profile, username } = await LobbyNeon.getMyRpgProfile();
         if (!profile.classChosen) {
@@ -5327,7 +6156,14 @@ window.LobbyNeon = {
         }
         const activeSkin = LobbyNeon.rpgSkins[profile.equippedSkin] || LobbyNeon.rpgSkins.basic;
         const damage = Math.max(10, LobbyNeon.getRpgSkillDamage(profile, activeSkin) + Math.floor(Math.random() * 12));
-        LobbyNeon.state.rpgSkillCooldownUntil = now + 1200;
+        const cooldownMs = LobbyNeon.getRpgSkinCooldown(activeSkin);
+        LobbyNeon.state.rpgSkillCooldownUntil = now + cooldownMs;
+        LobbyNeon.state.rpgLastSkillCast = {
+            skinId: activeSkin.id,
+            cooldownMs,
+            startedAt: now,
+            until: LobbyNeon.state.rpgSkillCooldownUntil
+        };
 
         LobbyNeon.showRpgMapProjectile(activeSkin, LobbyNeon.state.myPos, target);
         const userEl = document.getElementById(`user-${Auth.currentUser?.username}`);
@@ -5336,22 +6172,41 @@ window.LobbyNeon = {
             setTimeout(() => userEl.classList.remove('rpg-world-fighting'), 820);
         }
 
-        target.hp = Math.max(0, target.hp - damage);
-        target.lastDamage = damage;
-        target.lastHitAt = Date.now();
-        if (target.hp <= 0 && !target.claimed) {
-            target.defeated = true;
-            await LobbyNeon.rewardRpgWildKill(target, profile, data, username, options);
+        const aoeRadius = Number(activeSkin.aoeRadius || 0);
+        const hitTargets = [target];
+        if (aoeRadius > 0) {
+            Object.values(LobbyNeon.state.rpgWildMonsters || {}).forEach(monster => {
+                if (!monster || monster.id === target.id || monster.defeated) return;
+                const dx = monster.x - target.x;
+                const dy = monster.y - target.y;
+                if (Math.sqrt(dx * dx + dy * dy) <= aoeRadius) hitTargets.push(monster);
+            });
+        }
+
+        const defeatedTargets = [];
+        hitTargets.forEach((monster, index) => {
+            const hitDamage = index === 0 ? damage : Math.max(6, Math.round(damage * Number(activeSkin.aoeDamageRatio || 0.65)));
+            monster.hp = Math.max(0, monster.hp - hitDamage);
+            monster.lastDamage = hitDamage;
+            monster.lastHitAt = Date.now();
+            if (monster.hp <= 0 && !monster.claimed) {
+                monster.defeated = true;
+                defeatedTargets.push(monster);
+            }
+        });
+
+        for (const defeated of defeatedTargets) {
+            await LobbyNeon.rewardRpgWildKill(defeated, profile, data, username, options);
             setTimeout(() => {
-                const el = document.getElementById(`rpg-wild-${target.id}`);
+                const el = document.getElementById(`rpg-wild-${defeated.id}`);
                 if (el) el.remove();
-                delete LobbyNeon.state.rpgWildMonsters[target.id];
-                if (LobbyNeon.state.selectedWildMonsterId === target.id) LobbyNeon.state.selectedWildMonsterId = null;
+                delete LobbyNeon.state.rpgWildMonsters[defeated.id];
+                if (LobbyNeon.state.selectedWildMonsterId === defeated.id) LobbyNeon.state.selectedWildMonsterId = null;
                 LobbyNeon.spawnRpgWildMonster(null, false);
                 LobbyNeon.updateRpgFarmHud();
             }, 1400);
         }
-        LobbyNeon.renderRpgWildMonster(target);
+        hitTargets.forEach(monster => LobbyNeon.renderRpgWildMonster(monster));
         LobbyNeon.updateRpgFarmHud();
     },
 
@@ -5383,7 +6238,10 @@ window.LobbyNeon = {
         const shardMap = {
             training_forest: 'thunderShard',
             ghost_cave: 'moonShard',
-            secret_realm: 'fireShard'
+            secret_realm: 'fireShard',
+            molten_keep: 'fireShard',
+            frost_peak: 'thunderShard',
+            abyss_gate: 'moonShard'
         };
         if (Math.random() < 0.12 + zone.rewardPoints * 0.04) {
             items[shardMap[zone.id] || 'thunderShard'] = 1;
@@ -5415,13 +6273,80 @@ window.LobbyNeon = {
     },
 
     selectRpgZone: (zoneId) => {
-        if (!LobbyNeon.rpgZones[zoneId]) return;
+        const zone = LobbyNeon.rpgZones[zoneId];
+        if (!zone) return;
+        const level = Auth.currentUser?.level || 1;
+        if (level < zone.minLevel) {
+            Utils.showToast(`Bãi ${zone.name} cần cấp ${zone.minLevel}.`, 'warning');
+            return;
+        }
         LobbyNeon.state.selectedRpgZone = zoneId;
+        LobbyNeon.state.rpgZoneManuallySelected = true;
+        Utils.showToast(`Đã chọn bãi farm: ${zone.name}. Quái mới sẽ ưu tiên map này.`, 'info');
         LobbyNeon.renderRpgPanel();
     },
 
     getRpgMonsterSvg: (zoneId, defeated = false) => {
         const opacity = defeated ? '0.45' : '1';
+        if (zoneId === 'molten_keep') {
+            return `
+                <svg class="rpg-monster-svg" viewBox="0 0 120 120" aria-hidden="true" style="opacity:${opacity}">
+                    <defs>
+                        <linearGradient id="moltenFiend" x1="0%" x2="100%">
+                            <stop offset="0%" stop-color="#7c2d12"/>
+                            <stop offset="52%" stop-color="#f97316"/>
+                            <stop offset="100%" stop-color="#fde047"/>
+                        </linearGradient>
+                    </defs>
+                    <path d="M20 82 C25 48 39 24 61 22 C84 25 99 50 101 83 C91 101 31 102 20 82 Z" fill="url(#moltenFiend)" stroke="#fed7aa" stroke-width="4"/>
+                    <path d="M38 29 L33 8 L51 23 Z M78 28 L94 9 L89 36 Z" fill="#ef4444" stroke="#fed7aa" stroke-width="3"/>
+                    <circle cx="48" cy="58" r="6" fill="#111827"/>
+                    <circle cx="75" cy="58" r="6" fill="#111827"/>
+                    <path d="M47 79 C57 88 70 88 80 78" fill="none" stroke="#431407" stroke-width="5" stroke-linecap="round"/>
+                    <path d="M26 86 C11 92 19 110 36 97" fill="none" stroke="#fb923c" stroke-width="7" stroke-linecap="round"/>
+                    <path d="M96 86 C112 92 103 110 86 97" fill="none" stroke="#fb923c" stroke-width="7" stroke-linecap="round"/>
+                </svg>
+            `;
+        }
+        if (zoneId === 'frost_peak') {
+            return `
+                <svg class="rpg-monster-svg" viewBox="0 0 120 120" aria-hidden="true" style="opacity:${opacity}">
+                    <defs>
+                        <radialGradient id="frostWraith" cx="50%" cy="35%" r="72%">
+                            <stop offset="0%" stop-color="#eff6ff"/>
+                            <stop offset="48%" stop-color="#60a5fa"/>
+                            <stop offset="100%" stop-color="#1e3a8a"/>
+                        </radialGradient>
+                    </defs>
+                    <path d="M25 86 C20 55 36 23 61 18 C86 23 101 54 96 86 C88 78 82 81 78 94 C69 82 55 82 45 94 C40 81 32 78 25 86 Z" fill="url(#frostWraith)" stroke="#bfdbfe" stroke-width="4"/>
+                    <path d="M34 31 L24 12 L47 25 Z M85 31 L99 13 L94 39 Z" fill="#dbeafe" stroke="#93c5fd" stroke-width="3"/>
+                    <circle cx="49" cy="57" r="6" fill="#0f172a"/>
+                    <circle cx="74" cy="57" r="6" fill="#0f172a"/>
+                    <path d="M48 77 C58 71 68 71 79 77" fill="none" stroke="#0f172a" stroke-width="5" stroke-linecap="round"/>
+                    <path d="M17 74 L35 70 M85 70 L105 74" stroke="#bfdbfe" stroke-width="6" stroke-linecap="round"/>
+                </svg>
+            `;
+        }
+        if (zoneId === 'abyss_gate') {
+            return `
+                <svg class="rpg-monster-svg" viewBox="0 0 120 120" aria-hidden="true" style="opacity:${opacity}">
+                    <defs>
+                        <radialGradient id="abyssLord" cx="50%" cy="42%" r="70%">
+                            <stop offset="0%" stop-color="#f5d0fe"/>
+                            <stop offset="45%" stop-color="#a855f7"/>
+                            <stop offset="100%" stop-color="#1e1b4b"/>
+                        </radialGradient>
+                    </defs>
+                    <path d="M22 76 C24 38 41 16 62 16 C86 17 102 40 99 77 C96 102 80 111 60 110 C38 109 23 99 22 76 Z" fill="url(#abyssLord)" stroke="#e9d5ff" stroke-width="4"/>
+                    <path d="M38 23 L27 3 L54 17 Z M82 22 L101 4 L93 34 Z" fill="#7e22ce" stroke="#e9d5ff" stroke-width="3"/>
+                    <circle cx="49" cy="55" r="7" fill="#020617"/>
+                    <circle cx="76" cy="55" r="7" fill="#020617"/>
+                    <path d="M47 78 C58 88 71 88 82 77" fill="none" stroke="#020617" stroke-width="5" stroke-linecap="round"/>
+                    <path d="M20 83 C2 82 6 105 28 97" fill="none" stroke="#a855f7" stroke-width="7" stroke-linecap="round"/>
+                    <path d="M100 83 C118 82 114 105 92 97" fill="none" stroke="#a855f7" stroke-width="7" stroke-linecap="round"/>
+                </svg>
+            `;
+        }
         if (zoneId === 'ghost_cave') {
             return `
                 <svg class="rpg-monster-svg" viewBox="0 0 120 120" aria-hidden="true" style="opacity:${opacity}">
@@ -5759,7 +6684,7 @@ window.LobbyNeon = {
         }
 
         const classHtml = Object.values(LobbyNeon.rpgClasses).map(c => `
-            <button class="rpg-choice ${profile.classId === c.id ? 'active' : ''}" style="--rpg-color:${c.color};" onclick="LobbyNeon.selectRpgClass('${c.id}')">
+            <button class="rpg-choice ${profile.classId === c.id ? 'active' : ''}" style="--rpg-color:${c.color};" data-rpg-action="select-class" data-rpg-value="${c.id}">
                 <div style="display:flex; justify-content:space-between; gap:8px;">
                     <strong style="color:${c.color}; font-size:12px;">${c.icon} ${c.name}</strong>
                     <span class="rpg-chip">${profile.classChosen && profile.classId === c.id ? 'Môn chính' : (profile.classId === c.id ? 'Đang xem' : 'Chọn')}</span>
@@ -5777,7 +6702,7 @@ window.LobbyNeon = {
                 : (skin.classId ? `Cấp ${skin.unlockLevel}` : (canUnlock ? 'Mở khóa VIP' : `${shardCount}/${skin.unlockNeed || 0} mảnh`));
             const visualClass = LobbyNeon.getRpgSkillVisualClass(skin);
             return `
-                <button class="rpg-choice ${profile.equippedSkin === skin.id ? 'active' : ''}" style="--rpg-color:${skin.color}; ${!unlocked && !canUnlock ? 'opacity:.7;' : ''}" onclick="LobbyNeon.equipRpgSkin('${skin.id}')">
+                <button class="rpg-choice ${profile.equippedSkin === skin.id ? 'active' : ''}" style="--rpg-color:${skin.color}; ${!unlocked && !canUnlock ? 'opacity:.7;' : ''}" data-rpg-action="equip-skin" data-rpg-value="${skin.id}">
                     <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
                         <strong style="color:${skin.color}; font-size:12px;">${skin.icon} ${skin.name}</strong>
                         <span class="rpg-chip">${label}</span>
@@ -5795,7 +6720,7 @@ window.LobbyNeon = {
             const isSelected = displayZone.id === zone.id;
             const disabled = levelLocked;
             return `
-                <div class="rpg-card ${isSelected ? 'featured' : ''}" onclick="LobbyNeon.selectRpgZone('${zone.id}')" style="border-color:${zone.color}55; cursor:pointer;">
+                <div class="rpg-card ${isSelected ? 'featured' : ''}" data-rpg-action="select-zone" data-rpg-value="${zone.id}" style="border-color:${zone.color}55;">
                     <div style="display:flex; justify-content:space-between; gap:8px; align-items:flex-start;">
                         <div>
                             <p class="rpg-title" style="color:${zone.color};">${zone.icon} ${zone.name}</p>
@@ -5804,7 +6729,7 @@ window.LobbyNeon = {
                         <span class="rpg-chip">${isSelected ? 'Đang xem' : `+${zone.rewardPoints * (Auth.EXP_MULTIPLIER || 80)} EXP/kill`}</span>
                     </div>
                     ${levelLocked ? `<div class="rpg-muted" style="margin-top:8px; color:#fbbf24;">Cần cấp ${zone.minLevel} để vào ải này.</div>` : ''}
-                    <button class="rpg-action-btn" style="width:100%; margin-top:8px;" ${disabled ? 'disabled' : ''} onclick="event.stopPropagation(); LobbyNeon.spawnRpgWildMonster('${zone.id}', true)">
+                    <button class="rpg-action-btn" style="width:100%; margin-top:8px;" ${disabled ? 'disabled' : ''} data-rpg-action="spawn-zone" data-rpg-value="${zone.id}">
                         🧲 Gọi thêm quái gần tôi
                     </button>
                 </div>
@@ -5882,6 +6807,8 @@ window.LobbyNeon = {
 
                 ${LobbyNeon.renderRpgBossPanel(profile)}
 
+                ${LobbyNeon.renderRpgUnlockPanel(profile)}
+
                 ${LobbyNeon.renderRpgPvpTeaser(profile)}
 
                 <div class="rpg-card">
@@ -5907,6 +6834,7 @@ window.LobbyNeon = {
         `;
         container.scrollTop = previousScrollTop;
         LobbyNeon.renderRpgSkillWheel();
+        LobbyNeon.updateRpgSkillCooldownBadges();
     },
 
     // ========== QUEST SYSTEM ==========

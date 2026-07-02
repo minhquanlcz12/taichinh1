@@ -2178,27 +2178,42 @@ const Attendance = {
     },
 
     showLeaveModal: () => {
-        document.getElementById('leave-form').reset();
+        const form = document.getElementById('leave-form');
+        if (form) form.reset();
         
         // Đặt mặc định ngày là hôm nay
-        const today = new Date();
-        const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-        document.getElementById('leave-start-date').value = dateStr;
+        const dateInput = document.getElementById('leave-start-date');
+        if (dateInput) {
+            const today = new Date();
+            const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+            dateInput.value = dateStr;
+        }
         
-        document.getElementById('leave-modal-overlay').classList.add('active');
+        const overlay = document.getElementById('leave-modal-overlay');
+        if (overlay) overlay.classList.add('active');
     },
 
     closeLeaveModal: () => {
-        document.getElementById('leave-modal-overlay').classList.remove('active');
+        const overlay = document.getElementById('leave-modal-overlay');
+        if (overlay) overlay.classList.remove('active');
     },
 
     submitLeaveRequest: async () => {
         const user = Auth.currentUser;
         if (!user) return;
 
-        const startDate = document.getElementById('leave-start-date').value;
-        const days = document.getElementById('leave-days').value;
-        const reason = document.getElementById('leave-reason').value;
+        const startDateEl = document.getElementById('leave-start-date');
+        const daysEl = document.getElementById('leave-days');
+        const reasonEl = document.getElementById('leave-reason');
+
+        if (!startDateEl || !daysEl || !reasonEl) {
+            Utils.showToast("Không tìm thấy các phần tử nhập liệu xin nghỉ phép!", "error");
+            return;
+        }
+
+        const startDate = startDateEl.value;
+        const days = daysEl.value;
+        const reason = reasonEl.value;
 
         if (!startDate || !days || !reason) {
             Utils.showToast("Vui lòng điền đầy đủ thông tin xin nghỉ!", "error");

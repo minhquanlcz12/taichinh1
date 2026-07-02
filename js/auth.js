@@ -1010,12 +1010,12 @@ const Auth = {
     EXP_MULTIPLIER: 80, // 1 reward point = 80 EXP
 
     getExpForLevel: (level) => {
-        // EXP cần để lên từ cấp (N-1) sang cấp N = 60 × N
-        // Tổng EXP tích lũy để đạt cấp N = sum(60×2 + 60×3 + ... + 60×N)
-        // ~3 tháng để đạt cấp 15 (max) với ~2400 EXP/tháng
+        // EXP cần để lên cấp tăng dần theo cấp, để đầu game nhanh và mid/late game cày lâu hơn.
         if (level <= 1) return 0;
         let total = 0;
-        for (let i = 2; i <= level; i++) total += 60 * i;
+        for (let i = 2; i <= level; i++) {
+            total += Math.round(70 * i + Math.pow(i, 1.85) * 18);
+        }
         return total;
     },
 
@@ -1370,7 +1370,7 @@ const Auth = {
     renderExpBar: (exp, level, compact = false) => {
         const currentLevelExp = Auth.getExpForLevel(level);
         const nextLevelExp = Auth.getExpForLevel(level + 1);
-        const expInLevel = exp - currentLevelExp;
+        const expInLevel = Math.max(0, exp - currentLevelExp);
         const expNeeded = nextLevelExp - currentLevelExp;
         const progress = expNeeded > 0 ? Math.min((expInLevel / expNeeded) * 100, 100) : 100;
         const titleInfo = Auth.getLevelTitle(level);
