@@ -3377,6 +3377,9 @@ window.LobbyNeon = {
                 case 'bag-sell':
                     await LobbyNeon.quickSellRpgBag();
                     break;
+                case 'bag-upgrade':
+                    await LobbyNeon.upgradeRpgSelectedEquipment();
+                    break;
                 case 'bag-sort':
                     LobbyNeon.sortRpgBag();
                     break;
@@ -4673,6 +4676,7 @@ window.LobbyNeon = {
         inventorySlots: [],
         itemLogs: [],
         bossLogs: [],
+        upgradeLogs: [],
         autoSettings: {
             lootMinRarity: 'white',
             autoSellMaxRarity: 'none',
@@ -4733,6 +4737,7 @@ window.LobbyNeon = {
             inventorySlots: Array.isArray(profile?.inventorySlots) ? profile.inventorySlots.slice(0, 120) : [],
             itemLogs: Array.isArray(profile?.itemLogs) ? profile.itemLogs.slice(0, 80) : [],
             bossLogs: Array.isArray(profile?.bossLogs) ? profile.bossLogs.slice(0, 80) : [],
+            upgradeLogs: Array.isArray(profile?.upgradeLogs) ? profile.upgradeLogs.slice(0, 120) : [],
             lootLog: Array.isArray(profile?.lootLog) ? profile.lootLog.slice(0, 12) : []
         };
         if (!LobbyNeon.rpgClasses[merged.classId]) merged.classId = 'kiem_tong';
@@ -5831,6 +5836,7 @@ window.LobbyNeon = {
                 </div>
                 <div style="display:flex; gap:8px;">
                     <button class="btn-primary" style="flex:1;" onclick="LobbyNeon.equipRpgEquipment('${uid}'); Utils.closeModal();">Mac trang bi</button>
+                    <button class="btn-primary" style="flex:1; background:linear-gradient(135deg,#b45309,#fbbf24); color:#111827;" onclick="LobbyNeon.state.rpgSelectedItemKey='eq:${uid}'; LobbyNeon.upgradeRpgSelectedEquipment(); Utils.closeModal();">Cuong hoa</button>
                     <button class="btn-secondary" style="flex:1;" onclick="LobbyNeon.sellRpgEquipment('${uid}'); Utils.closeModal();">Ban lay vang</button>
                 </div>
             </div>`,
@@ -5984,6 +5990,56 @@ window.LobbyNeon = {
         profile.inventory.goldDust = Number(profile.inventory.goldDust || 0) + goldGain;
         await LobbyNeon.saveMyRpgProfile(profile, data);
         Utils.showToast(`Đã bán nhanh nguyên liệu, nhận +${goldGain.toLocaleString('vi-VN')} tinh kim.`, 'success');
+        LobbyNeon.renderRpgPanel();
+    },
+
+    upgradeRpgSelectedEquipment: async () => {
+        const selectedKey = LobbyNeon.state.rpgSelectedItemKey;
+        if (!String(selectedKey || '').startsWith('eq:')) {
+            Utils.showToast('Chon mot trang bi trong tui truoc khi cuong hoa.', 'warning');
+            return;
+        }
+        if (!window.GameServices?.UpgradeService?.upgradeItem) {
+            Utils.showToast('He thong cuong hoa chua san sang.', 'warning');
+            return;
+        }
+
+        const itemId = String(selectedKey).slice(3);
+        const { data, profile } = await LobbyNeon.getMyRpgProfile();
+        const result = window.GameServices.UpgradeService.upgradeItem(profile, itemId, {
+            ownerId: LobbyNeon.getRpgUsername()
+        });
+
+        if (!result.ok) {
+            const materialText = result.cost
+                ? Object.entries(result.cost).map(([key, qty]) => `${LobbyNeon.getRpgItemMeta(key)?.name || key} x${qty}`).join(', ')
+                : '';
+            const messages = {
+                item_not_found: 'Khong tim thay trang bi can cuong hoa.',
+                locked_item: 'Trang bi dang khoa, khong the cuong hoa.',
+                max_level: 'Trang bi da dat cap cuong hoa toi da.',
+                missing_material: `Thieu nguyen lieu: ${materialText}`,
+                missing_rate: 'Chua co cau hinh ti le cho cap nay.'
+            };
+            Utils.showToast(messages[result.reason] || 'Khong the cuong hoa luc nay.', 'warning');
+            return;
+        }
+
+        if (window.GameServices?.CharacterService?.hydrateProfile) {
+            window.GameServices.CharacterService.hydrateProfile(profile, {
+                username: LobbyNeon.getRpgUsername(),
+                auth: window.Auth,
+                authUser: window.Auth?.currentUser
+            });
+        }
+        await LobbyNeon.saveMyRpgProfile(profile, data);
+        const chanceText = Math.round(Number(result.successRate || 0) * 100);
+        Utils.showToast(
+            result.success
+                ? `Cuong hoa thanh cong ${result.item.name} +${result.toLevel} (${chanceText}%).`
+                : `Cuong hoa that bai ${result.item.name}: +${result.fromLevel} -> +${result.toLevel} (${chanceText}%).`,
+            result.success ? 'success' : 'warning'
+        );
         LobbyNeon.renderRpgPanel();
     },
 
@@ -6227,6 +6283,7 @@ window.LobbyNeon = {
                         <div class="rpg-mu-bag-actions">
                             <button class="rpg-mu-small-btn" data-rpg-action="bag-equip">Trang bị / Dùng</button>
                             <button class="rpg-mu-small-btn" data-rpg-action="bag-sell">Bán nhanh</button>
+                            <button class="rpg-mu-small-btn" data-rpg-action="bag-upgrade">Cường hóa</button>
                             <button class="rpg-mu-small-btn" data-rpg-action="bag-sort">Sắp xếp</button>
                             <button class="rpg-mu-small-btn" data-rpg-action="bag-split">Tách</button>
                         </div>
@@ -7690,8 +7747,11 @@ window.LobbyNeon = {
             Utils.showToast('Skin nay da dat cap toi da.', 'info');
             return;
         }
-        const stoneCost = currentLevel * 2 + (skin.vip ? 2 : 0);
-        const shardCost = skin.shard ? Math.max(1, Math.ceil(currentLevel / 2)) : 0;
+        const cost = window.GameServices?.UpgradeService?.getSkinUpgradeCost
+            ? window.GameServices.UpgradeService.getSkinUpgradeCost(currentLevel, skin)
+            : { daCuongHoa: currentLevel * 2 + (skin.vip ? 2 : 0), [skin.shard]: skin.shard ? Math.max(1, Math.ceil(currentLevel / 2)) : 0 };
+        const stoneCost = Number(cost.daCuongHoa || 0);
+        const shardCost = skin.shard ? Number(cost[skin.shard] || 0) : 0;
         if (Number(profile.inventory.daCuongHoa || 0) < stoneCost) {
             Utils.showToast(`Thieu ${stoneCost} da cuong hoa de nang skin.`, 'warning');
             return;
@@ -7703,6 +7763,18 @@ window.LobbyNeon = {
         profile.inventory.daCuongHoa = Number(profile.inventory.daCuongHoa || 0) - stoneCost;
         if (shardCost > 0) profile.inventory[skin.shard] = Number(profile.inventory[skin.shard] || 0) - shardCost;
         profile.skinLevels[skinId] = currentLevel + 1;
+        if (window.GameServices?.UpgradeService?.appendUpgradeLog) {
+            window.GameServices.UpgradeService.appendUpgradeLog(profile, {
+                action: 'skin_level',
+                skinId,
+                name: skin.name,
+                fromLevel: currentLevel,
+                toLevel: currentLevel + 1,
+                success: true,
+                successRate: 1,
+                cost
+            });
+        }
         await LobbyNeon.saveMyRpgProfile(profile, data);
         Utils.showToast(`Da nang ${skin.name} len cap ${currentLevel + 1}.`, 'success');
         LobbyNeon.renderRpgPanel();
