@@ -1300,7 +1300,8 @@ const Auth = {
     addExpToUser: async (username, rewardPoints, options = {}) => {
         const expGained = rewardPoints * Auth.EXP_MULTIPLIER;
         const accounts = await Auth.getAccounts();
-        const acc = accounts.find(a => a.username === username);
+        const targetKey = Auth.usernameKey(username);
+        const acc = accounts.find(a => Auth.usernameKey(a?.username) === targetKey);
         if (!acc) return { leveled: false, expGained: 0 };
 
         const oldLevel = acc.level || 1;
@@ -1321,9 +1322,10 @@ const Auth = {
         await Auth.saveAccounts(accounts);
 
         // Cập nhật session hiện tại nếu là user đang đăng nhập
-        if (Auth.currentUser && Auth.currentUser.username === username) {
+        if (Auth.currentUser && Auth.usernameKey(Auth.currentUser.username) === targetKey) {
             Auth.currentUser.exp = acc.exp;
             Auth.currentUser.level = newLevel;
+            Auth.currentUser.username = Auth.canonicalUsername(acc.username || Auth.currentUser.username);
             Utils.storage.set(Auth.currentUserKey, Auth.currentUser);
         }
 

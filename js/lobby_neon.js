@@ -28,6 +28,9 @@ window.LobbyNeon = {
         rpgAutoFarmInterval: null,
         rpgAutoFarm: false,
         rpgAutoFarmBusy: false,
+        rpgMaxWildMonsters: 4,
+        rpgLastWildSpawnAt: 0,
+        rpgLastAutoSkinId: null,
         rpgLastAutoToastAt: 0,
         rpgWildMonsters: {},
         selectedWildMonsterId: null,
@@ -45,6 +48,7 @@ window.LobbyNeon = {
         activeHubTab: 'players',
         selectedRpgZone: 'training_forest',
         rpgZoneManuallySelected: false,
+        rpgMapOpen: false,
         vipUsers: new Set(),
         caroHackMode: false,
         caroDelayMs: 1500,
@@ -212,6 +216,29 @@ window.LobbyNeon = {
     },
 
     rpgDurations: [15, 30, 60],
+
+    rpgEquipmentRarities: {
+        white: { id: 'white', name: 'Trang bi trang', color: '#e5e7eb', rank: 1, attrLines: 1, sale: 18, normal: true },
+        blue: { id: 'blue', name: 'Xanh lam', color: '#38bdf8', rank: 2, attrLines: 2, sale: 55, normal: true },
+        yellow: { id: 'yellow', name: 'Vang', color: '#facc15', rank: 3, attrLines: 3, sale: 110, normal: true },
+        green: { id: 'green', name: 'Tinh anh xanh luc', color: '#22c55e', rank: 4, attrLines: 4, sale: 190, normal: true },
+        orange: { id: 'orange', name: 'Cam boss', color: '#fb923c', rank: 5, attrLines: 5, sale: 360, boss: true },
+        pink: { id: 'pink', name: 'Hong boss', color: '#f472b6', rank: 6, attrLines: 6, sale: 620, boss: true },
+        red: { id: 'red', name: 'Do boss', color: '#ef4444', rank: 7, attrLines: 6, sale: 950, boss: true }
+    },
+
+    rpgEquipmentSlotMeta: {
+        weapon: { id: 'weapon', label: 'Vu khi', icon: 'WPN' },
+        helm: { id: 'helm', label: 'Mu', icon: 'HLM' },
+        armor: { id: 'armor', label: 'Ao', icon: 'ARM' },
+        pants: { id: 'pants', label: 'Quan', icon: 'LEG' },
+        glove: { id: 'glove', label: 'Gang', icon: 'GLV' },
+        boots: { id: 'boots', label: 'Giay', icon: 'BOT' },
+        wing: { id: 'wing', label: 'Canh', icon: 'WNG' },
+        pet: { id: 'pet', label: 'Pet', icon: 'PET' },
+        necklace: { id: 'necklace', label: 'Day chuyen', icon: 'NEC' },
+        ring: { id: 'ring', label: 'Nhan', icon: 'RNG' }
+    },
 
     rpgSkins: {
         basic: {
@@ -509,11 +536,13 @@ window.LobbyNeon = {
         }, 15000);
         LobbyNeon.startRpgWorldLoop();
         LobbyNeon.startRpgWildMonsters();
+        LobbyNeon.applyRpgZoneTheme(LobbyNeon.rpgZones[LobbyNeon.state.selectedRpgZone] || LobbyNeon.rpgZones.training_forest);
 
         const container = document.getElementById('lobby-map-container');
         if (container) {
             container.addEventListener('mousedown', LobbyNeon.handleMapClick);
         }
+        document.addEventListener('keydown', LobbyNeon.handleLobbyKeydown);
     },
 
     leaveLobby: () => {
@@ -550,8 +579,11 @@ window.LobbyNeon = {
         LobbyNeon.state.rpgWildMonsters = {};
         document.querySelectorAll('.rpg-world-monster').forEach(el => el.remove());
         document.querySelectorAll('.rpg-wild-monster').forEach(el => el.remove());
+        document.querySelectorAll('.rpg-map-overlay').forEach(el => el.remove());
         document.querySelectorAll('.rpg-map-projectile').forEach(el => el.remove());
         document.querySelectorAll('.lobby-user-wrapper.rpg-world-fighting').forEach(el => el.classList.remove('rpg-world-fighting'));
+        document.removeEventListener('keydown', LobbyNeon.handleLobbyKeydown);
+        LobbyNeon.state.rpgMapOpen = false;
         LobbyNeon.state.isConnected = false;
         LobbyNeon.state.currentGameId = null;
     },
@@ -770,6 +802,68 @@ window.LobbyNeon = {
                 }
                 #hub-content-rpg {
                     min-height: 620px;
+                }
+                .rpg-map-overlay {
+                    position: absolute;
+                    inset: 0;
+                    z-index: 1200;
+                    background: rgba(2, 6, 23, 0.84);
+                    backdrop-filter: blur(8px);
+                    display: grid;
+                    place-items: center;
+                    padding: 20px;
+                }
+                .rpg-map-modal {
+                    width: min(880px, 94vw);
+                    max-height: min(720px, 88vh);
+                    overflow: auto;
+                    border: 1px solid rgba(34,211,238,.42);
+                    border-radius: 14px;
+                    background: rgba(15,23,42,.96);
+                    box-shadow: 0 0 40px rgba(34,211,238,.22);
+                    padding: 16px;
+                }
+                .rpg-map-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+                    gap: 10px;
+                    margin-top: 12px;
+                }
+                .rpg-map-card {
+                    border: 1px solid var(--zone-color, rgba(148,163,184,.2));
+                    background: linear-gradient(135deg, rgba(15,23,42,.92), rgba(2,6,23,.74));
+                    border-radius: 10px;
+                    padding: 12px;
+                    color: #e2e8f0;
+                    text-align: left;
+                    min-height: 118px;
+                    cursor: pointer;
+                }
+                .rpg-map-card.locked {
+                    cursor: not-allowed;
+                    opacity: .52;
+                }
+                .rpg-map-card.active {
+                    box-shadow: 0 0 22px var(--zone-glow, rgba(34,211,238,.25));
+                    background: linear-gradient(135deg, rgba(34,211,238,.16), rgba(15,23,42,.92));
+                }
+                #lobby-map[data-rpg-zone]::after {
+                    content: attr(data-rpg-zone-name);
+                    position: absolute;
+                    left: 280px;
+                    top: 18px;
+                    z-index: 4;
+                    pointer-events: none;
+                    color: var(--rpg-zone-color, #22d3ee);
+                    font-size: 12px;
+                    font-weight: 900;
+                    letter-spacing: .08em;
+                    text-transform: uppercase;
+                    padding: 8px 12px;
+                    border: 1px solid color-mix(in srgb, var(--rpg-zone-color, #22d3ee) 48%, transparent);
+                    border-radius: 10px;
+                    background: rgba(2,6,23,.72);
+                    box-shadow: 0 0 24px color-mix(in srgb, var(--rpg-zone-color, #22d3ee) 26%, transparent);
                 }
                 .rpg-grid {
                     display: grid;
@@ -2121,6 +2215,18 @@ window.LobbyNeon = {
                     color: #f8fafc;
                     background: rgba(251,191,36,.12);
                 }
+                .rpg-mini-select {
+                    width: 100%;
+                    min-height: 34px;
+                    border: 1px solid rgba(34,211,238,.26);
+                    border-radius: 9px;
+                    background: rgba(2,6,23,.74);
+                    color: #e2e8f0;
+                    font-size: 11px;
+                    font-weight: 800;
+                    padding: 6px 8px;
+                    outline: none;
+                }
                 .rpg-bag-cell.selected {
                     border-color: #fbbf24;
                     box-shadow: 0 0 18px rgba(251,191,36,.34), inset 0 0 0 1px rgba(251,191,36,.34);
@@ -3211,6 +3317,16 @@ window.LobbyNeon = {
     },
 
     // ========== MOVEMENT ==========
+    handleLobbyKeydown: (e) => {
+        if (!LobbyNeon.state.isConnected) return;
+        const target = e.target;
+        if (target?.closest?.('input, textarea, select, [contenteditable="true"], .modal, .modal-overlay')) return;
+        if (String(e.key || '').toLowerCase() === 'm') {
+            e.preventDefault();
+            LobbyNeon.toggleRpgMapOverlay();
+        }
+    },
+
     handleRpgHubActionClick: async (e) => {
         const trigger = e.target?.closest?.('[data-rpg-action]');
         if (!trigger || trigger.disabled) return;
@@ -3239,6 +3355,12 @@ window.LobbyNeon = {
                 case 'spawn-zone':
                     LobbyNeon.spawnRpgWildMonster(value, true);
                     break;
+                case 'travel-zone':
+                    await LobbyNeon.travelRpgZone(value);
+                    break;
+                case 'map-close':
+                    LobbyNeon.closeRpgMapOverlay();
+                    break;
                 case 'bag-toggle':
                     LobbyNeon.toggleRpgBag(trigger.dataset.forceOpen === 'true' ? true : null);
                     break;
@@ -3259,6 +3381,12 @@ window.LobbyNeon = {
                     break;
                 case 'bag-split':
                     await LobbyNeon.splitRpgBagItem();
+                    break;
+                case 'skin-upgrade':
+                    await LobbyNeon.upgradeRpgSkin(value);
+                    break;
+                case 'toggle-auto-skins':
+                    await LobbyNeon.toggleRpgAutoSkinRotation();
                     break;
                 case 'boss-challenge':
                     await LobbyNeon.challengeRpgBoss(value);
@@ -4508,7 +4636,7 @@ window.LobbyNeon = {
     saveRpgData: async (data) => {
         const nextData = {
             ...(data || {}),
-            version: '2026.06.27_chibi_rpg_v1',
+            version: '2026.07.03_chibi_rpg_loot_map_v2',
             updatedAt: Date.now()
         };
         if (!nextData.users || typeof nextData.users !== 'object') nextData.users = {};
@@ -4537,6 +4665,15 @@ window.LobbyNeon = {
         },
         dailyKey: LobbyNeon.getRpgDailyKey(),
         stamina: 100,
+        skinLevels: {
+            basic: 1
+        },
+        equipmentBag: [],
+        autoSettings: {
+            lootMinRarity: 'white',
+            autoSellMaxRarity: 'none',
+            rotateSkins: true
+        },
         statPoints: 0,
         stats: {
             str: 1,
@@ -4572,8 +4709,23 @@ window.LobbyNeon = {
                 ...defaults.equipment,
                 ...((profile && profile.equipment) || {})
             },
+            skinLevels: {
+                ...defaults.skinLevels,
+                ...((profile && profile.skinLevels) || {})
+            },
+            autoSettings: {
+                ...defaults.autoSettings,
+                ...((profile && profile.autoSettings) || {})
+            },
             statPoints: Number(profile?.statPoints || 0),
             unlockedSkins: Array.from(new Set([...(profile?.unlockedSkins || []), 'basic'])),
+            equipmentBag: Array.isArray(profile?.equipmentBag)
+                ? profile.equipmentBag.filter(Boolean).slice(0, 120).map((item, index) => ({
+                    ...item,
+                    uid: item.uid || `eq_old_${Date.now()}_${index}`,
+                    type: 'equipment'
+                }))
+                : [],
             lootLog: Array.isArray(profile?.lootLog) ? profile.lootLog.slice(0, 12) : []
         };
         if (!LobbyNeon.rpgClasses[merged.classId]) merged.classId = 'kiem_tong';
@@ -4591,6 +4743,15 @@ window.LobbyNeon = {
             merged.stamina = 100;
         }
         merged.stamina = Math.max(0, Math.min(100, Number(merged.stamina || 0)));
+        merged.skinLevels.basic = Math.max(1, Number(merged.skinLevels.basic || 1));
+        merged.unlockedSkins.forEach(skinId => {
+            merged.skinLevels[skinId] = Math.max(1, Number(merged.skinLevels[skinId] || 1));
+        });
+        if (!LobbyNeon.rpgEquipmentRarities[merged.autoSettings.lootMinRarity]) merged.autoSettings.lootMinRarity = 'white';
+        if (merged.autoSettings.autoSellMaxRarity !== 'none' && !LobbyNeon.rpgEquipmentRarities[merged.autoSettings.autoSellMaxRarity]) {
+            merged.autoSettings.autoSellMaxRarity = 'none';
+        }
+        merged.autoSettings.rotateSkins = merged.autoSettings.rotateSkins !== false;
         Object.keys(merged.stats).forEach(key => {
             merged.stats[key] = Math.max(1, Number(merged.stats[key] || 1));
         });
@@ -4644,6 +4805,151 @@ window.LobbyNeon = {
         return { exp: 1, loot: 1 };
     },
 
+    getRpgRarityRank: (rarity) => Number(LobbyNeon.rpgEquipmentRarities[rarity]?.rank || 0),
+
+    getRpgEquipmentSaleValue: (item) => {
+        const meta = LobbyNeon.rpgEquipmentRarities[item?.rarity] || LobbyNeon.rpgEquipmentRarities.white;
+        return Math.max(1, Math.round(Number(meta.sale || 10) + Number(item?.power || 0) * 0.08 + Number(item?.levelReq || 1) * 2));
+    },
+
+    rollRpgEquipmentRarity: (zone, profile, source = 'monster', won = true) => {
+        const luck = Number(profile?.stats?.luck || 1);
+        const zonePower = Number(zone?.rewardPoints || 1);
+        const roll = Math.random();
+        if (source === 'boss') {
+            if (!won) return roll < 0.72 ? 'blue' : 'yellow';
+            const redChance = Math.min(0.08, 0.012 + zonePower * 0.006 + luck * 0.0015);
+            const pinkChance = Math.min(0.18, 0.035 + zonePower * 0.012 + luck * 0.002);
+            const orangeChance = Math.min(0.42, 0.12 + zonePower * 0.024 + luck * 0.003);
+            if (roll < redChance) return 'red';
+            if (roll < redChance + pinkChance) return 'pink';
+            if (roll < redChance + pinkChance + orangeChance) return 'orange';
+            return roll < 0.82 ? 'green' : 'yellow';
+        }
+        const greenChance = Math.min(0.12, 0.025 + zonePower * 0.006 + luck * 0.0018);
+        const yellowChance = Math.min(0.23, 0.075 + zonePower * 0.01 + luck * 0.002);
+        const blueChance = Math.min(0.48, 0.26 + zonePower * 0.018 + luck * 0.002);
+        if (roll < greenChance) return 'green';
+        if (roll < greenChance + yellowChance) return 'yellow';
+        if (roll < greenChance + yellowChance + blueChance) return 'blue';
+        return 'white';
+    },
+
+    createRpgEquipmentDrop: (zone, profile, source = 'monster', won = true) => {
+        const rarityId = LobbyNeon.rollRpgEquipmentRarity(zone, profile, source, won);
+        const rarity = LobbyNeon.rpgEquipmentRarities[rarityId] || LobbyNeon.rpgEquipmentRarities.white;
+        const slots = Object.values(LobbyNeon.rpgEquipmentSlotMeta);
+        const slot = slots[Math.floor(Math.random() * slots.length)] || LobbyNeon.rpgEquipmentSlotMeta.weapon;
+        const classCfg = LobbyNeon.rpgClasses[profile?.classId] || LobbyNeon.rpgClasses.kiem_tong;
+        const levelReq = Math.max(1, Number(zone?.minLevel || 1) + Math.floor(Math.random() * 3));
+        const rank = Number(rarity.rank || 1);
+        const attrPool = [
+            { key: 'str', label: 'Luc', min: 2, max: 7 },
+            { key: 'int', label: 'Phep', min: 2, max: 7 },
+            { key: 'agi', label: 'Nhanh', min: 2, max: 7 },
+            { key: 'vit', label: 'The', min: 2, max: 8 },
+            { key: 'luck', label: 'May', min: 1, max: 5 },
+            { key: 'damage', label: 'Sat thuong', min: 8, max: 24 },
+            { key: 'defense', label: 'Phong thu', min: 8, max: 22 },
+            { key: 'hp', label: 'HP', min: 45, max: 120 },
+            { key: 'crit', label: 'Chi mang', min: 1, max: 4 }
+        ].sort(() => Math.random() - 0.5);
+        const attrLines = attrPool.slice(0, Number(rarity.attrLines || 1)).map(attr => {
+            const raw = attr.min + Math.floor(Math.random() * Math.max(1, attr.max - attr.min + 1));
+            const value = Math.max(1, Math.round(raw * (0.65 + rank * 0.28 + Number(zone?.rewardPoints || 1) * 0.08)));
+            return { key: attr.key, label: attr.label, value };
+        });
+        const attrPower = attrLines.reduce((sum, line) => sum + Number(line.value || 0), 0);
+        const power = Math.round(levelReq * 42 + Number(zone?.rewardPoints || 1) * 58 + rank * 92 + attrPower * 4);
+        return {
+            uid: `eq_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
+            type: 'equipment',
+            slot: slot.id,
+            slotLabel: slot.label,
+            icon: slot.icon,
+            name: `${rarity.name} ${slot.label} ${classCfg.name || ''}`.trim(),
+            rarity: rarity.id,
+            rarityName: rarity.name,
+            color: rarity.color,
+            levelReq,
+            power,
+            attrLines,
+            source,
+            zoneId: zone?.id || 'training_forest',
+            zoneName: zone?.name || '',
+            createdAt: Date.now()
+        };
+    },
+
+    rollRpgEquipmentDrops: (zone, profile, source = 'monster', options = {}) => {
+        const drops = [];
+        const luck = Number(profile?.stats?.luck || 1);
+        const zonePower = Number(zone?.rewardPoints || 1);
+        const rounds = Math.max(1, Number(options.rounds || 1));
+        const won = options.won !== false;
+        if (source === 'boss') {
+            const chance = won
+                ? Math.min(0.78, 0.28 + zonePower * 0.05 + luck * 0.006)
+                : Math.min(0.18, 0.04 + zonePower * 0.012 + luck * 0.002);
+            if (Math.random() < chance) drops.push(LobbyNeon.createRpgEquipmentDrop(zone, profile, 'boss', won));
+            if (won && Math.random() < Math.min(0.22, 0.04 + zonePower * 0.015 + luck * 0.002)) {
+                drops.push(LobbyNeon.createRpgEquipmentDrop(zone, profile, 'boss', won));
+            }
+            return drops;
+        }
+        const checks = source === 'hunt' ? Math.max(1, Math.round(rounds)) : 1;
+        for (let i = 0; i < checks; i++) {
+            const chance = source === 'hunt'
+                ? Math.min(0.64, 0.28 + zonePower * 0.025 + luck * 0.004)
+                : Math.min(0.38, 0.16 + zonePower * 0.018 + luck * 0.003);
+            if (Math.random() < chance) drops.push(LobbyNeon.createRpgEquipmentDrop(zone, profile, 'monster', true));
+        }
+        return drops;
+    },
+
+    addRpgEquipmentDrop: (profile, item) => {
+        if (!profile || !item) return { kept: false, sold: false, skipped: true, gold: 0, item };
+        if (!Array.isArray(profile.equipmentBag)) profile.equipmentBag = [];
+        if (!profile.inventory) profile.inventory = {};
+        const settings = profile.autoSettings || {};
+        const rank = LobbyNeon.getRpgRarityRank(item.rarity);
+        const minRank = LobbyNeon.getRpgRarityRank(settings.lootMinRarity || 'white') || 1;
+        if (rank < minRank) {
+            return { kept: false, sold: false, skipped: true, gold: 0, item };
+        }
+        const sellRank = settings.autoSellMaxRarity === 'none' ? 0 : LobbyNeon.getRpgRarityRank(settings.autoSellMaxRarity);
+        if (sellRank > 0 && rank <= sellRank) {
+            const gold = LobbyNeon.getRpgEquipmentSaleValue(item);
+            profile.inventory.goldDust = Number(profile.inventory.goldDust || 0) + gold;
+            return { kept: false, sold: true, skipped: false, gold, item };
+        }
+        profile.equipmentBag.unshift(item);
+        let soldOverflow = 0;
+        if (profile.equipmentBag.length > 120) {
+            profile.equipmentBag.sort((a, b) => LobbyNeon.getRpgRarityRank(b.rarity) - LobbyNeon.getRpgRarityRank(a.rarity) || Number(b.power || 0) - Number(a.power || 0));
+            const overflow = profile.equipmentBag.splice(120);
+            soldOverflow = overflow.reduce((sum, eq) => sum + LobbyNeon.getRpgEquipmentSaleValue(eq), 0);
+            profile.inventory.goldDust = Number(profile.inventory.goldDust || 0) + soldOverflow;
+        }
+        return { kept: true, sold: false, skipped: false, gold: soldOverflow, item };
+    },
+
+    applyRpgRewardToProfile: (profile, reward) => {
+        if (!profile.inventory) profile.inventory = {};
+        Object.entries(reward?.items || {}).forEach(([key, qty]) => {
+            profile.inventory[key] = Number(profile.inventory[key] || 0) + Number(qty || 0);
+        });
+        const result = { equipment: [], soldEquipment: [], skippedEquipment: [], soldGold: 0 };
+        (reward?.equipment || reward?.equipmentDrops || []).forEach(item => {
+            const applied = LobbyNeon.addRpgEquipmentDrop(profile, item);
+            if (applied.kept) result.equipment.push(item);
+            if (applied.sold) result.soldEquipment.push(item);
+            if (applied.skipped) result.skippedEquipment.push(item);
+            result.soldGold += Number(applied.gold || 0);
+        });
+        return result;
+    },
+
     rollRpgReward: (zone, durationMin, profile) => {
         const classCfg = LobbyNeon.rpgClasses[profile.classId] || LobbyNeon.rpgClasses.kiem_tong;
         const skinBonus = LobbyNeon.getRpgSkinBonus(profile.equippedSkin, zone.id);
@@ -4675,6 +4981,7 @@ window.LobbyNeon = {
             rewardPoints,
             exp,
             items,
+            equipment: LobbyNeon.rollRpgEquipmentDrops(zone, profile, 'hunt', { rounds }),
             generatedAt: Date.now()
         };
     },
@@ -4709,12 +5016,28 @@ window.LobbyNeon = {
             .join(' · ') || 'Không có vật phẩm';
     },
 
+    formatRpgEquipmentDrops: (equipment = []) => {
+        const list = (equipment || []).filter(Boolean);
+        if (!list.length) return '';
+        return list.map(item => `${LobbyNeon.escapeHtml(item.name)} +${Number(item.power || 0)}`).join(' · ');
+    },
+
+    formatRpgReward: (reward) => {
+        const parts = [];
+        const itemsText = LobbyNeon.formatRpgItems(reward?.items || {});
+        if (itemsText && !itemsText.startsWith('Không')) parts.push(itemsText);
+        const equipText = LobbyNeon.formatRpgEquipmentDrops(reward?.equipment || reward?.equipmentDrops || []);
+        if (equipText) parts.push(equipText);
+        return parts.join(' · ') || 'Khong co vat pham';
+    },
+
     getRpgPower: (profile) => {
         const level = Auth.currentUser?.level || 1;
         const stats = profile?.stats || {};
         const statPower = Number(stats.str || 0) * 34 + Number(stats.int || 0) * 36 + Number(stats.agi || 0) * 30 + Number(stats.vit || 0) * 42 + Number(stats.luck || 0) * 24;
-        const equipPower = Object.values(profile?.equipment || {}).reduce((sum, item) => sum + Number(item?.enhance || 0) * 90, 0);
-        return Math.round(level * 120 + statPower + equipPower + (profile.totalHunts || 0) * 16 + (profile.totalRewardPoints || 0) * 20 + (profile.unlockedSkins?.length || 1) * 75);
+        const equipPower = Object.values(profile?.equipment || {}).reduce((sum, item) => sum + Number(item?.power || 0) + Number(item?.enhance || 0) * 90, 0);
+        const skinPower = Object.values(profile?.skinLevels || {}).reduce((sum, n) => sum + Math.max(0, Number(n || 1) - 1) * 45, 0);
+        return Math.round(level * 120 + statPower + equipPower + skinPower + (profile.totalHunts || 0) * 16 + (profile.totalRewardPoints || 0) * 20 + (profile.unlockedSkins?.length || 1) * 75);
     },
 
     awardRpgExp: async (username, rewardPoints, profile) => {
@@ -4848,6 +5171,7 @@ window.LobbyNeon = {
             rewardPoints,
             exp: rewardPoints * (Auth.EXP_MULTIPLIER || 80),
             items,
+            equipment: LobbyNeon.rollRpgEquipmentDrops(zone, profile, 'boss', { won }),
             generatedAt: Date.now()
         };
     },
@@ -4905,9 +5229,7 @@ window.LobbyNeon = {
         profile.totalHunts = Number(profile.totalHunts || 0) + 1;
         profile.bossWins = Number(profile.bossWins || 0) + (won ? 1 : 0);
         profile.bossLosses = Number(profile.bossLosses || 0) + (won ? 0 : 1);
-        Object.entries(reward.items || {}).forEach(([key, qty]) => {
-            profile.inventory[key] = Number(profile.inventory[key] || 0) + Number(qty || 0);
-        });
+        const appliedReward = LobbyNeon.applyRpgRewardToProfile(profile, reward);
         profile.totalRewardPoints = Number(profile.totalRewardPoints || 0) + Number(reward.rewardPoints || 0);
         profile.lootLog = [
             {
@@ -4917,6 +5239,9 @@ window.LobbyNeon = {
                 rewardPoints: reward.rewardPoints,
                 exp: won ? reward.exp : 0,
                 items: reward.items || {},
+                equipment: appliedReward.equipment,
+                soldEquipment: appliedReward.soldEquipment,
+                soldGold: appliedReward.soldGold,
                 result: won ? 'win' : 'lose'
             },
             ...(profile.lootLog || [])
@@ -4935,15 +5260,15 @@ window.LobbyNeon = {
         await LobbyNeon.saveMyRpgProfile(profile, data);
         Utils.showToast(
             won
-                ? `Thắng boss: +${reward.exp} EXP · ${LobbyNeon.formatRpgItems(reward.items)}`
-                : `Thua boss, mất thể lực nhưng nhặt được ${LobbyNeon.formatRpgItems(reward.items)}.`,
+                ? `Thắng boss: +${reward.exp} EXP · ${LobbyNeon.formatRpgReward(reward)}`
+                : `Thua boss, mất thể lực nhưng nhặt được ${LobbyNeon.formatRpgReward(reward)}.`,
             won ? 'success' : 'warning'
         );
         try {
             await DB.sendLobbyChat({
                 sender: 'Hệ Thống',
                 text: won
-                    ? `Boss: @${username} hạ ${zone.monster}, nhận ${LobbyNeon.formatRpgItems(reward.items)}.`
+                    ? `Boss: @${username} hạ ${zone.monster}, nhận ${LobbyNeon.formatRpgReward(reward)}.`
                     : `Boss: @${username} bị ${zone.monster} đánh lui. Cần tăng chỉ số hơn.`
             });
         } catch (e) {
@@ -4991,7 +5316,8 @@ window.LobbyNeon = {
             : profile?.classId === 'anh_sat'
                 ? Number(stats.agi || 1)
                 : Number(stats.str || 1);
-        return Math.max(12, Math.round(base + level * 4 + mainStat * 5 + (classCfg.expMult || 1) * 7));
+        const skinLevel = Math.max(1, Number(profile?.skinLevels?.[skin?.id] || 1));
+        return Math.max(12, Math.round(base + level * 4 + mainStat * 5 + (classCfg.expMult || 1) * 7 + (skinLevel - 1) * 8));
     },
 
     getRpgSkinCooldown: (skin) => Math.max(800, Number(skin?.cooldownMs || 1200)),
@@ -5069,6 +5395,39 @@ window.LobbyNeon = {
         });
     },
 
+    getRpgEquipmentBagItems: (profile) => {
+        const filter = LobbyNeon.state.rpgBagFilter || 'all';
+        if (!['all', 'equipment'].includes(filter)) return [];
+        return (profile?.equipmentBag || []).map(item => {
+            const rarity = LobbyNeon.rpgEquipmentRarities[item.rarity] || LobbyNeon.rpgEquipmentRarities.white;
+            return {
+                ...item,
+                key: `eq:${item.uid}`,
+                qty: 1,
+                icon: item.icon || LobbyNeon.rpgEquipmentSlotMeta[item.slot]?.icon || 'EQ',
+                color: item.color || rarity.color,
+                rarity: rarity.name,
+                rarityId: item.rarity,
+                rarityRank: rarity.rank,
+                type: 'equipment',
+                use: `${item.slotLabel || item.slot} · LC +${Number(item.power || 0)} · ${Number(item.attrLines?.length || 0)} dong`
+            };
+        });
+    },
+
+    getRpgBagItems: (profile) => {
+        const sortMode = LobbyNeon.state.rpgBagSortMode || 'rarity';
+        const items = [
+            ...LobbyNeon.getRpgEquipmentBagItems(profile),
+            ...LobbyNeon.getRpgInventoryItems(profile)
+        ];
+        return items.sort((a, b) => {
+            if (sortMode === 'qty') return Number(b.qty || 1) - Number(a.qty || 1) || Number(b.rarityRank || 0) - Number(a.rarityRank || 0) || a.name.localeCompare(b.name, 'vi');
+            if (sortMode === 'name') return a.name.localeCompare(b.name, 'vi');
+            return Number(b.rarityRank || 0) - Number(a.rarityRank || 0) || Number(b.power || 0) - Number(a.power || 0) || Number(b.qty || 1) - Number(a.qty || 1) || a.name.localeCompare(b.name, 'vi');
+        });
+    },
+
     getRpgEquipmentSlots: (profile) => {
         const classCfg = LobbyNeon.rpgClasses[profile.classId] || LobbyNeon.rpgClasses.kiem_tong;
         const skin = LobbyNeon.rpgSkins[profile.equippedSkin] || LobbyNeon.rpgSkins.basic;
@@ -5076,13 +5435,14 @@ window.LobbyNeon = {
         const build = (id, label, icon, color, fallbackName) => {
             const item = equipment[id] || {};
             const enhance = Number(item.enhance || 0);
+            const power = Number(item.power || 0);
             return {
                 id,
                 label,
                 icon: item.icon || icon,
                 color: item.color || color,
                 name: item.name || fallbackName || 'Chưa trang bị',
-                level: enhance > 0 ? `+${enhance}` : '',
+                level: power > 0 ? `+${power}` : (enhance > 0 ? `+${enhance}` : ''),
                 empty: !item.name && !fallbackName
             };
         };
@@ -5112,8 +5472,45 @@ window.LobbyNeon = {
         LobbyNeon.renderRpgPanel();
     },
 
+    setRpgLootMinRarity: async (rarity) => {
+        if (!LobbyNeon.rpgEquipmentRarities[rarity]) return;
+        const { data, profile } = await LobbyNeon.getMyRpgProfile();
+        profile.autoSettings.lootMinRarity = rarity;
+        await LobbyNeon.saveMyRpgProfile(profile, data);
+        Utils.showToast(`Loc nhat tu bac ${LobbyNeon.rpgEquipmentRarities[rarity].name}.`, 'success');
+        LobbyNeon.renderRpgPanel();
+    },
+
+    setRpgAutoSellMaxRarity: async (rarity) => {
+        if (rarity !== 'none' && !LobbyNeon.rpgEquipmentRarities[rarity]) return;
+        const { data, profile } = await LobbyNeon.getMyRpgProfile();
+        profile.autoSettings.autoSellMaxRarity = rarity;
+        await LobbyNeon.saveMyRpgProfile(profile, data);
+        Utils.showToast(rarity === 'none' ? 'Da tat tu dong ban do.' : `Tu dong ban do <= ${LobbyNeon.rpgEquipmentRarities[rarity].name}.`, 'success');
+        LobbyNeon.renderRpgPanel();
+    },
+
+    toggleRpgAutoSkinRotation: async () => {
+        const { data, profile } = await LobbyNeon.getMyRpgProfile();
+        profile.autoSettings.rotateSkins = profile.autoSettings.rotateSkins === false;
+        await LobbyNeon.saveMyRpgProfile(profile, data);
+        Utils.showToast(profile.autoSettings.rotateSkins ? 'Auto se xoay vong skin da mo.' : 'Auto chi dung skin dang chon.', 'info');
+        LobbyNeon.renderRpgPanel();
+    },
+
     selectRpgBagItem: async (key, showInfo = true) => {
         const { profile } = await LobbyNeon.getMyRpgProfile();
+        if (String(key || '').startsWith('eq:')) {
+            const uid = String(key).slice(3);
+            const item = (profile.equipmentBag || []).find(eq => eq.uid === uid);
+            if (!item) return;
+            LobbyNeon.state.rpgSelectedItemKey = key;
+            LobbyNeon.state.rpgBagOpen = true;
+            LobbyNeon.renderRpgPanel();
+            Utils.showToast(`Da chon ${item.name}.`, 'info');
+            if (showInfo) LobbyNeon.showRpgEquipmentInfo(uid);
+            return;
+        }
         const qty = Number(profile.inventory?.[key] || 0);
         if (qty <= 0) return;
         const item = LobbyNeon.getRpgItemMeta(key);
@@ -5122,6 +5519,87 @@ window.LobbyNeon = {
         LobbyNeon.renderRpgPanel();
         Utils.showToast(`Đã chọn ${item ? item.name : key} x${qty}.`, 'info');
         if (showInfo) LobbyNeon.showRpgItemInfo(key, qty);
+    },
+
+    showRpgEquipmentInfo: async (uid) => {
+        const { profile } = await LobbyNeon.getMyRpgProfile();
+        const item = (profile.equipmentBag || []).find(eq => eq.uid === uid) || Object.values(profile.equipment || {}).find(eq => eq?.uid === uid);
+        if (!item) return;
+        const rarity = LobbyNeon.rpgEquipmentRarities[item.rarity] || LobbyNeon.rpgEquipmentRarities.white;
+        const attrs = (item.attrLines || []).map(line => `
+            <div style="display:flex; justify-content:space-between; gap:10px; padding:6px 0; border-bottom:1px solid rgba(148,163,184,.12);">
+                <span>${LobbyNeon.escapeHtml(line.label)}</span>
+                <b>+${Number(line.value || 0).toLocaleString('vi-VN')}</b>
+            </div>
+        `).join('');
+        Utils.showModal(
+            `${item.icon || 'EQ'} ${LobbyNeon.escapeHtml(item.name)}`,
+            `<div style="display:grid; gap:10px;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div style="width:58px; height:58px; border-radius:14px; display:grid; place-items:center; font-size:16px; font-weight:900; background:rgba(15,23,42,.85); border:1px solid ${rarity.color}88; color:${rarity.color};">${item.icon || 'EQ'}</div>
+                    <div>
+                        <div style="color:${rarity.color}; font-weight:900;">${LobbyNeon.escapeHtml(rarity.name)}</div>
+                        <div style="color:#cbd5e1; font-size:12px;">Slot: ${LobbyNeon.escapeHtml(item.slotLabel || item.slot)} · Lv.${Number(item.levelReq || 1)} · LC +${Number(item.power || 0).toLocaleString('vi-VN')}</div>
+                        <div style="color:#94a3b8; font-size:11px;">Gia ban: ${LobbyNeon.getRpgEquipmentSaleValue(item).toLocaleString('vi-VN')} tinh kim</div>
+                    </div>
+                </div>
+                <div style="padding:8px 10px; border-radius:10px; background:rgba(15,23,42,.66); border:1px solid rgba(148,163,184,.16); color:#e2e8f0; font-size:12px;">
+                    ${attrs || 'Khong co dong thuoc tinh'}
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn-primary" style="flex:1;" onclick="LobbyNeon.equipRpgEquipment('${uid}'); Utils.closeModal();">Mac trang bi</button>
+                    <button class="btn-secondary" style="flex:1;" onclick="LobbyNeon.sellRpgEquipment('${uid}'); Utils.closeModal();">Ban lay vang</button>
+                </div>
+            </div>`,
+            null,
+            null,
+            'DONG'
+        );
+    },
+
+    equipRpgEquipment: async (uid) => {
+        const { data, profile } = await LobbyNeon.getMyRpgProfile();
+        const bag = Array.isArray(profile.equipmentBag) ? profile.equipmentBag : [];
+        const index = bag.findIndex(item => item.uid === uid);
+        if (index < 0) {
+            Utils.showToast('Khong tim thay trang bi trong tui.', 'warning');
+            return;
+        }
+        const item = bag[index];
+        const level = Auth.currentUser?.level || 1;
+        if (level < Number(item.levelReq || 1)) {
+            Utils.showToast(`Can cap ${item.levelReq} de mac mon nay.`, 'warning');
+            return;
+        }
+        const current = profile.equipment?.[item.slot];
+        if (!profile.equipment) profile.equipment = {};
+        bag.splice(index, 1);
+        if (current && current.uid) bag.unshift(current);
+        profile.equipment[item.slot] = item;
+        profile.equipmentBag = bag.slice(0, 120);
+        LobbyNeon.state.rpgSelectedItemKey = `eq:${item.uid}`;
+        await LobbyNeon.saveMyRpgProfile(profile, data);
+        Utils.showToast(`Da mac ${item.name}.`, 'success');
+        LobbyNeon.renderRpgPanel();
+    },
+
+    sellRpgEquipment: async (uid) => {
+        const { data, profile } = await LobbyNeon.getMyRpgProfile();
+        const bag = Array.isArray(profile.equipmentBag) ? profile.equipmentBag : [];
+        const index = bag.findIndex(item => item.uid === uid);
+        if (index < 0) {
+            Utils.showToast('Khong tim thay trang bi trong tui.', 'warning');
+            return;
+        }
+        const item = bag[index];
+        const gold = LobbyNeon.getRpgEquipmentSaleValue(item);
+        bag.splice(index, 1);
+        profile.equipmentBag = bag;
+        profile.inventory.goldDust = Number(profile.inventory.goldDust || 0) + gold;
+        if (LobbyNeon.state.rpgSelectedItemKey === `eq:${uid}`) LobbyNeon.state.rpgSelectedItemKey = null;
+        await LobbyNeon.saveMyRpgProfile(profile, data);
+        Utils.showToast(`Da ban ${item.name}, nhan +${gold.toLocaleString('vi-VN')} tinh kim.`, 'success');
+        LobbyNeon.renderRpgPanel();
     },
 
     sortRpgBag: () => {
@@ -5135,6 +5613,11 @@ window.LobbyNeon = {
     },
 
     quickSellRpgBag: async () => {
+        const selectedKey = LobbyNeon.state.rpgSelectedItemKey;
+        if (String(selectedKey || '').startsWith('eq:')) {
+            await LobbyNeon.sellRpgEquipment(String(selectedKey).slice(3));
+            return;
+        }
         const { data, profile } = await LobbyNeon.getMyRpgProfile();
         const sellableKeys = Object.keys(profile.inventory || {}).filter(key => {
             const item = LobbyNeon.getRpgItemMeta(key);
@@ -5191,6 +5674,10 @@ window.LobbyNeon = {
 
     equipRpgBagItem: async () => {
         const key = LobbyNeon.state.rpgSelectedItemKey;
+        if (String(key || '').startsWith('eq:')) {
+            await LobbyNeon.equipRpgEquipment(String(key).slice(3));
+            return;
+        }
         const { profile } = await LobbyNeon.getMyRpgProfile();
         const qty = Number(profile.inventory?.[key] || 0);
         if (!key || qty <= 0) {
@@ -5296,8 +5783,8 @@ window.LobbyNeon = {
     },
 
     renderRpgEquipmentPanel: (profile) => {
-        const items = LobbyNeon.getRpgInventoryItems(profile);
-        const allItemCount = Object.values(profile.inventory || {}).filter(qty => Number(qty) > 0).length;
+        const items = LobbyNeon.getRpgBagItems(profile);
+        const allItemCount = Object.values(profile.inventory || {}).filter(qty => Number(qty) > 0).length + Number(profile.equipmentBag?.length || 0);
         const bagOpen = Boolean(LobbyNeon.state.rpgBagOpen);
         const totalCells = bagOpen ? Math.max(30, Math.ceil(Math.max(items.length, 1) / 5) * 5) : Math.max(10, Math.ceil(Math.max(items.length, 1) / 5) * 5);
         const cells = Array.from({ length: totalCells }, (_, index) => items[index] || null);
@@ -5311,8 +5798,19 @@ window.LobbyNeon = {
             { id: 'other', label: 'Khác' }
         ];
         const selectedKey = LobbyNeon.state.rpgSelectedItemKey;
-        const selectedQty = Number(profile.inventory?.[selectedKey] || 0);
-        const selectedItem = selectedQty > 0 ? LobbyNeon.getRpgItemMeta(selectedKey) : null;
+        const selectedEquipment = String(selectedKey || '').startsWith('eq:')
+            ? (profile.equipmentBag || []).find(item => item.uid === String(selectedKey).slice(3))
+            : null;
+        const selectedQty = selectedEquipment ? 1 : Number(profile.inventory?.[selectedKey] || 0);
+        const selectedItem = selectedEquipment
+            ? {
+                ...selectedEquipment,
+                color: selectedEquipment.color || LobbyNeon.rpgEquipmentRarities[selectedEquipment.rarity]?.color || '#e5e7eb',
+                icon: selectedEquipment.icon || 'EQ',
+                rarity: LobbyNeon.rpgEquipmentRarities[selectedEquipment.rarity]?.name || selectedEquipment.rarity,
+                use: `Slot ${selectedEquipment.slotLabel || selectedEquipment.slot} · LC +${Number(selectedEquipment.power || 0)}`
+            }
+            : (selectedQty > 0 ? LobbyNeon.getRpgItemMeta(selectedKey) : null);
         return `
             <div class="rpg-mu-shell">
                 <div class="rpg-mu-panel">
@@ -5365,7 +5863,7 @@ window.LobbyNeon = {
                                 ${cells.map(item => item ? `
                                     <button type="button" class="rpg-bag-cell has-item ${selectedKey === item.key ? 'selected' : ''}" title="${LobbyNeon.escapeHtml(item.name)} x${item.qty}" style="--item-color:${item.color};" data-rpg-action="bag-select" data-rpg-value="${item.key}">
                                         <span class="rpg-bag-icon">${item.icon}</span>
-                                        <span class="rpg-bag-qty">x${item.qty}</span>
+                                        <span class="rpg-bag-qty">${item.type === 'equipment' ? `+${Number(item.power || 0)}` : `x${item.qty}`}</span>
                                     </button>
                                 ` : `<div class="rpg-bag-cell"></div>`).join('')}
                             </div>
@@ -5447,6 +5945,42 @@ window.LobbyNeon = {
         `;
     },
 
+    renderRpgAutoSettingsPanel: (profile) => {
+        const settings = profile.autoSettings || {};
+        const rarityOptions = Object.values(LobbyNeon.rpgEquipmentRarities)
+            .filter(meta => meta.normal)
+            .map(meta => `<option value="${meta.id}" ${settings.lootMinRarity === meta.id ? 'selected' : ''}>${LobbyNeon.escapeHtml(meta.name)}</option>`)
+            .join('');
+        const sellOptions = [
+            `<option value="none" ${settings.autoSellMaxRarity === 'none' ? 'selected' : ''}>Khong tu ban</option>`,
+            ...Object.values(LobbyNeon.rpgEquipmentRarities)
+                .filter(meta => meta.normal)
+                .map(meta => `<option value="${meta.id}" ${settings.autoSellMaxRarity === meta.id ? 'selected' : ''}>Ban <= ${LobbyNeon.escapeHtml(meta.name)}</option>`)
+        ].join('');
+        return `
+            <div class="rpg-mu-panel">
+                <div class="rpg-mu-heading">
+                    <span>Auto farm settings</span>
+                    <span class="rpg-chip">${settings.rotateSkins === false ? '1 skin' : 'xoay skin'}</span>
+                </div>
+                <div class="rpg-stat-grid">
+                    <div class="rpg-stat-row">
+                        <div class="rpg-stat-top"><span>Loc nhat do</span></div>
+                        <select class="rpg-mini-select" onchange="LobbyNeon.setRpgLootMinRarity(this.value)">${rarityOptions}</select>
+                    </div>
+                    <div class="rpg-stat-row">
+                        <div class="rpg-stat-top"><span>Tu dong ban</span></div>
+                        <select class="rpg-mini-select" onchange="LobbyNeon.setRpgAutoSellMaxRarity(this.value)">${sellOptions}</select>
+                    </div>
+                </div>
+                <button class="rpg-action-btn" style="width:100%; margin-top:10px;" data-rpg-action="toggle-auto-skins">
+                    ${settings.rotateSkins === false ? 'Bat auto xoay skin' : 'Tat auto xoay skin'}
+                </button>
+                <div class="rpg-muted" style="margin-top:8px;">Quai thuong chi roi trang/xanh lam/vang/xanh luc. Cam, hong, do chi roi tu Boss Arena.</div>
+            </div>
+        `;
+    },
+
     renderRpgBossPanel: (profile) => {
         const zone = LobbyNeon.rpgZones[LobbyNeon.state.selectedRpgZone] || LobbyNeon.rpgZones.secret_realm;
         const level = Auth.currentUser?.level || 1;
@@ -5479,7 +6013,7 @@ window.LobbyNeon = {
                     <b>${battle.won ? 'THẮNG BOSS' : 'BỊ ĐÁNH LUI'}</b>
                     <span>${new Date(battle.time).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} · Tỉ lệ lúc đánh ${battle.chance}% · tốn ${battle.cost} thể lực</span>
                 </div>
-                <small>${battle.won ? `+${battle.reward.exp} EXP · ` : ''}${LobbyNeon.formatRpgItems(battle.reward.items)}</small>
+                <small>${battle.won ? `+${battle.reward.exp} EXP · ` : ''}${LobbyNeon.formatRpgReward(battle.reward)}</small>
             </div>
         ` : `
             <div class="rpg-arena-result idle">
@@ -5599,6 +6133,38 @@ window.LobbyNeon = {
         `;
     },
 
+    renderRpgSkinUpgradePanel: (profile) => {
+        const unlockedSkins = LobbyNeon.getRpgVisibleSkins(profile).filter(skin => LobbyNeon.isRpgSkinUnlocked(profile, skin));
+        return `
+            <div class="rpg-mu-panel">
+                <div class="rpg-mu-heading">
+                    <span>Nang cap skin</span>
+                    <span class="rpg-chip">${Number(profile.inventory?.daCuongHoa || 0)} da</span>
+                </div>
+                <div class="rpg-unlock-grid">
+                    ${unlockedSkins.map(skin => {
+                        const level = Math.max(1, Number(profile.skinLevels?.[skin.id] || 1));
+                        const maxed = level >= 10;
+                        const stoneCost = level * 2 + (skin.vip ? 2 : 0);
+                        const shardCost = skin.shard ? Math.max(1, Math.ceil(level / 2)) : 0;
+                        const shardHave = skin.shard ? Number(profile.inventory?.[skin.shard] || 0) : 0;
+                        const enough = !maxed && Number(profile.inventory?.daCuongHoa || 0) >= stoneCost && (!skin.shard || shardHave >= shardCost);
+                        return `
+                            <div class="rpg-unlock-row done">
+                                <span style="color:${skin.color};">${skin.icon}</span>
+                                <div>
+                                    <b>${LobbyNeon.escapeHtml(skin.name)} · Lv.${level}</b>
+                                    <small>${maxed ? 'Da toi da' : `Cost: ${stoneCost} da${skin.shard ? ` · ${shardCost}/${shardHave} manh` : ''} · Sat thuong +${(level - 1) * 8}`}</small>
+                                </div>
+                                <button class="rpg-stat-add" ${enough ? '' : 'disabled'} data-rpg-action="skin-upgrade" data-rpg-value="${skin.id}">+</button>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+    },
+
     renderRpgSkillWheel: async () => {
         const wheel = document.getElementById('rpg-skill-wheel');
         if (!wheel) return;
@@ -5654,6 +6220,7 @@ window.LobbyNeon = {
             if (skin.shard && shardCount >= skin.unlockNeed) {
                 profile.inventory[skin.shard] = shardCount - skin.unlockNeed;
                 profile.unlockedSkins = Array.from(new Set([...(profile.unlockedSkins || []), skinId]));
+                profile.skinLevels[skinId] = Math.max(1, Number(profile.skinLevels?.[skinId] || 1));
                 changed = true;
                 Utils.showToast(`Đã mở khóa skin VIP ${skin.name}.`, 'success');
             } else {
@@ -5668,6 +6235,7 @@ window.LobbyNeon = {
         }
         if (profile.equippedSkin !== skinId || changed) {
             profile.equippedSkin = skinId;
+            profile.skinLevels[skinId] = Math.max(1, Number(profile.skinLevels?.[skinId] || 1));
             await LobbyNeon.saveMyRpgProfile(profile, data);
             if (LobbyNeon.state.activeHubTab === 'rpg') LobbyNeon.renderRpgPanel();
             await LobbyNeon.renderRpgSkillWheel();
@@ -5900,6 +6468,7 @@ window.LobbyNeon = {
             claimed: false
         };
         LobbyNeon.state.rpgWildMonsters[id] = monster;
+        LobbyNeon.state.rpgLastWildSpawnAt = Date.now();
         LobbyNeon.renderRpgWildMonster(monster);
         LobbyNeon.updateRpgFarmHud();
         return monster;
@@ -5908,22 +6477,24 @@ window.LobbyNeon = {
     startRpgWildMonsters: () => {
         if (LobbyNeon.state.rpgWildInterval) clearInterval(LobbyNeon.state.rpgWildInterval);
         if (LobbyNeon.state.rpgHudInterval) clearInterval(LobbyNeon.state.rpgHudInterval);
-        for (let i = Object.keys(LobbyNeon.state.rpgWildMonsters).length; i < 5; i++) {
+        const targetCount = Number(LobbyNeon.state.rpgMaxWildMonsters || 4);
+        for (let i = Object.keys(LobbyNeon.state.rpgWildMonsters).length; i < targetCount; i++) {
             LobbyNeon.spawnRpgWildMonster(null, false);
         }
-        LobbyNeon.state.rpgWildInterval = setInterval(() => LobbyNeon.tickRpgWildMonsters(), 650);
-        LobbyNeon.state.rpgHudInterval = setInterval(() => LobbyNeon.updateRpgFarmHud(), 350);
+        LobbyNeon.state.rpgWildInterval = setInterval(() => LobbyNeon.tickRpgWildMonsters(), 950);
+        LobbyNeon.state.rpgHudInterval = setInterval(() => LobbyNeon.updateRpgFarmHud(), 700);
         LobbyNeon.renderRpgSkillWheel();
     },
 
     tickRpgWildMonsters: () => {
         const monsters = LobbyNeon.state.rpgWildMonsters || {};
         const livingCount = Object.values(monsters).filter(monster => monster && !monster.defeated).length;
-        if (livingCount < 5) {
+        const now = Date.now();
+        const targetCount = Number(LobbyNeon.state.rpgMaxWildMonsters || 4);
+        if (livingCount < targetCount && now - Number(LobbyNeon.state.rpgLastWildSpawnAt || 0) > 1800) {
             LobbyNeon.spawnRpgWildMonster(null, false);
         }
 
-        const now = Date.now();
         Object.values(monsters).forEach(monster => {
             if (!monster || monster.defeated) return;
             const zone = LobbyNeon.rpgZones[monster.zoneId] || LobbyNeon.rpgZones.training_forest;
@@ -5968,13 +6539,20 @@ window.LobbyNeon = {
         el.style.left = `${Math.round(monster.x)}px`;
         el.style.top = `${Math.round(monster.y)}px`;
         el.style.setProperty('--zone-color', zone.color || '#22d3ee');
-        el.innerHTML = `
-            <div class="rpg-world-name">${isTargeted ? '🎯 ' : ''}${zone.icon} ${LobbyNeon.escapeHtml(zone.monster)}</div>
-            <div class="rpg-world-hp"><span style="width:${hpPct}%;"></span></div>
-            <div class="rpg-world-body">${LobbyNeon.getRpgMonsterSvg(zone.id, monster.defeated)}</div>
-            ${hitRecent ? `<div class="rpg-world-hit"></div><div class="rpg-world-damage">-${monster.lastDamage || 0}</div>` : ''}
-            ${monster.defeated ? '<div class="rpg-world-loot">🎁 💎 ✨</div>' : ''}
-        `;
+        const renderKey = `${monster.defeated ? 1 : 0}|${isTargeted ? 1 : 0}|${hpPct}|${hitRecent ? Number(monster.lastHitAt || 0) : 0}`;
+        if (el.dataset.renderKey !== renderKey) {
+            el.dataset.renderKey = renderKey;
+            el.innerHTML = `
+                <div class="rpg-world-name">${isTargeted ? '🎯 ' : ''}${zone.icon} ${LobbyNeon.escapeHtml(zone.monster)}</div>
+                <div class="rpg-world-hp"><span style="width:${hpPct}%;"></span></div>
+                <div class="rpg-world-body">${LobbyNeon.getRpgMonsterSvg(zone.id, monster.defeated)}</div>
+                ${hitRecent ? `<div class="rpg-world-hit"></div><div class="rpg-world-damage">-${monster.lastDamage || 0}</div>` : ''}
+                ${monster.defeated ? '<div class="rpg-world-loot">🎁 💎 ✨</div>' : ''}
+            `;
+        } else {
+            const hpBar = el.querySelector('.rpg-world-hp span');
+            if (hpBar) hpBar.style.width = `${hpPct}%`;
+        }
     },
 
     targetRpgMonster: (monsterId) => {
@@ -6107,6 +6685,31 @@ window.LobbyNeon = {
         }
     },
 
+    getRpgAutoSkin: (profile, target) => {
+        const current = LobbyNeon.rpgSkins[profile.equippedSkin] || LobbyNeon.rpgSkins.basic;
+        if (!profile?.autoSettings || profile.autoSettings.rotateSkins === false) return current;
+        const skins = LobbyNeon.getRpgVisibleSkins(profile)
+            .filter(skin => LobbyNeon.isRpgSkinUnlocked(profile, skin))
+            .filter(skin => !skin.classId || skin.classId === profile.classId);
+        if (!skins.length) return current;
+        let nearby = 0;
+        if (target) {
+            Object.values(LobbyNeon.state.rpgWildMonsters || {}).forEach(monster => {
+                if (!monster || monster.defeated) return;
+                const dx = monster.x - target.x;
+                const dy = monster.y - target.y;
+                if (Math.sqrt(dx * dx + dy * dy) <= 170) nearby++;
+            });
+        }
+        const pool = nearby >= 2 ? skins.filter(skin => Number(skin.aoeRadius || 0) > 0) : skins;
+        const usable = pool.length ? pool : skins;
+        const lastId = LobbyNeon.state.rpgLastAutoSkinId;
+        const lastIndex = usable.findIndex(skin => skin.id === lastId);
+        const next = usable[(lastIndex + 1 + usable.length) % usable.length] || current;
+        LobbyNeon.state.rpgLastAutoSkinId = next.id;
+        return next;
+    },
+
     castRpgSkill: async (options = {}) => {
         const now = Date.now();
         if (now < LobbyNeon.state.rpgSkillCooldownUntil) {
@@ -6154,7 +6757,9 @@ window.LobbyNeon = {
         if (!LobbyNeon.isRpgSkinUnlocked(profile, skin)) {
             profile.equippedSkin = LobbyNeon.getRpgClassDefaultSkinId(profile.classId);
         }
-        const activeSkin = LobbyNeon.rpgSkins[profile.equippedSkin] || LobbyNeon.rpgSkins.basic;
+        const activeSkin = options.auto
+            ? LobbyNeon.getRpgAutoSkin(profile, target)
+            : (LobbyNeon.rpgSkins[profile.equippedSkin] || LobbyNeon.rpgSkins.basic);
         const damage = Math.max(10, LobbyNeon.getRpgSkillDamage(profile, activeSkin) + Math.floor(Math.random() * 12));
         const cooldownMs = LobbyNeon.getRpgSkinCooldown(activeSkin);
         LobbyNeon.state.rpgSkillCooldownUntil = now + cooldownMs;
@@ -6202,7 +6807,6 @@ window.LobbyNeon = {
                 if (el) el.remove();
                 delete LobbyNeon.state.rpgWildMonsters[defeated.id];
                 if (LobbyNeon.state.selectedWildMonsterId === defeated.id) LobbyNeon.state.selectedWildMonsterId = null;
-                LobbyNeon.spawnRpgWildMonster(null, false);
                 LobbyNeon.updateRpgFarmHud();
             }, 1400);
         }
@@ -6246,9 +6850,13 @@ window.LobbyNeon = {
         if (Math.random() < 0.12 + zone.rewardPoints * 0.04) {
             items[shardMap[zone.id] || 'thunderShard'] = 1;
         }
-        Object.entries(items).forEach(([key, qty]) => {
-            profile.inventory[key] = Number(profile.inventory[key] || 0) + Number(qty || 0);
-        });
+        const reward = {
+            rewardPoints,
+            exp,
+            items,
+            equipment: LobbyNeon.rollRpgEquipmentDrops(zone, profile, 'monster')
+        };
+        const appliedReward = LobbyNeon.applyRpgRewardToProfile(profile, reward);
         profile.wildKills = Number(profile.wildKills || 0) + 1;
         profile.totalRewardPoints = Number(profile.totalRewardPoints || 0) + rewardPoints;
         profile.lootLog = [
@@ -6258,7 +6866,10 @@ window.LobbyNeon = {
                 monster: zone.monster,
                 rewardPoints,
                 exp,
-                items
+                items,
+                equipment: appliedReward.equipment,
+                soldEquipment: appliedReward.soldEquipment,
+                soldGold: appliedReward.soldGold
             },
             ...(profile.lootLog || [])
         ].slice(0, 12);
@@ -6267,9 +6878,107 @@ window.LobbyNeon = {
         const shouldToast = !options.auto || Date.now() - (LobbyNeon.state.rpgLastAutoToastAt || 0) > 7000;
         if (shouldToast) {
             LobbyNeon.state.rpgLastAutoToastAt = Date.now();
-            Utils.showToast(`Hạ ${zone.monster}: +${exp} EXP · ${LobbyNeon.formatRpgItems(items)}`, 'success');
+            Utils.showToast(`Hạ ${zone.monster}: +${exp} EXP · ${LobbyNeon.formatRpgReward(reward)}`, 'success');
         }
         if (LobbyNeon.state.activeHubTab === 'rpg') LobbyNeon.renderRpgPanel();
+    },
+
+    toggleRpgMapOverlay: () => {
+        if (LobbyNeon.state.rpgMapOpen) {
+            LobbyNeon.closeRpgMapOverlay();
+            return;
+        }
+        LobbyNeon.openRpgMapOverlay();
+    },
+
+    openRpgMapOverlay: () => {
+        const container = document.getElementById('lobby-map-container');
+        if (!container) return;
+        LobbyNeon.state.rpgMapOpen = true;
+        let overlay = document.getElementById('rpg-map-overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'rpg-map-overlay';
+            overlay.className = 'rpg-map-overlay';
+            overlay.addEventListener('mousedown', (e) => {
+                if (e.target === overlay) LobbyNeon.closeRpgMapOverlay();
+            });
+            overlay.addEventListener('click', LobbyNeon.handleRpgHubActionClick);
+            container.appendChild(overlay);
+        }
+        const level = Auth.currentUser?.level || 1;
+        overlay.innerHTML = `
+            <div class="rpg-map-modal">
+                <div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start;">
+                    <div>
+                        <p class="rpg-title">Ban do MU mini</p>
+                        <div class="rpg-muted">Bam M de dong/mo. Chon map theo cap de doi quai dang farm.</div>
+                    </div>
+                    <button class="rpg-mu-small-btn" data-rpg-action="map-close" style="width:74px;">Dong</button>
+                </div>
+                <div class="rpg-map-grid">
+                    ${Object.values(LobbyNeon.rpgZones).map(zone => {
+                        const locked = level < zone.minLevel;
+                        const active = LobbyNeon.state.selectedRpgZone === zone.id;
+                        return `
+                            <button class="rpg-map-card ${locked ? 'locked' : ''} ${active ? 'active' : ''}"
+                                style="--zone-color:${zone.color}; --zone-glow:${zone.color}55;"
+                                ${locked ? 'disabled' : ''}
+                                data-rpg-action="travel-zone"
+                                data-rpg-value="${zone.id}">
+                                <div style="display:flex; justify-content:space-between; gap:8px;">
+                                    <b style="color:${zone.color};">${zone.icon} ${LobbyNeon.escapeHtml(zone.name)}</b>
+                                    <span class="rpg-chip">Lv.${zone.minLevel}+</span>
+                                </div>
+                                <div class="rpg-muted" style="margin-top:8px;">Quai: ${LobbyNeon.escapeHtml(zone.monster)}</div>
+                                <div class="rpg-muted">Do roi: trang/xanh/vang/xanh luc</div>
+                                <div class="rpg-muted">${locked ? `Can Lv.${zone.minLevel}` : (active ? 'Dang o map nay' : 'Di chuyen')}</div>
+                            </button>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+    },
+
+    closeRpgMapOverlay: () => {
+        LobbyNeon.state.rpgMapOpen = false;
+        document.getElementById('rpg-map-overlay')?.remove();
+    },
+
+    applyRpgZoneTheme: (zone) => {
+        const map = document.getElementById('lobby-map');
+        if (!map || !zone) return;
+        map.dataset.rpgZone = zone.id;
+        map.dataset.rpgZoneName = zone.name;
+        map.style.setProperty('--rpg-zone-color', zone.color || '#22d3ee');
+    },
+
+    travelRpgZone: async (zoneId) => {
+        const zone = LobbyNeon.rpgZones[zoneId];
+        if (!zone) return;
+        const level = Auth.currentUser?.level || 1;
+        if (level < zone.minLevel) {
+            Utils.showToast(`Can cap ${zone.minLevel} de vao map nay.`, 'warning');
+            return;
+        }
+        LobbyNeon.state.selectedRpgZone = zoneId;
+        LobbyNeon.state.rpgZoneManuallySelected = true;
+        LobbyNeon.state.selectedWildMonsterId = null;
+        LobbyNeon.closeRpgMapOverlay();
+        Object.keys(LobbyNeon.state.rpgWildMonsters || {}).forEach(id => {
+            document.getElementById(`rpg-wild-${id}`)?.remove();
+        });
+        LobbyNeon.state.rpgWildMonsters = {};
+        LobbyNeon.applyRpgZoneTheme(zone);
+        const point = LobbyNeon.getRpgRandomFarmPoint(true);
+        await LobbyNeon.moveTo(Math.max(90, point.x - 120), Math.max(160, point.y + 12));
+        for (let i = 0; i < LobbyNeon.state.rpgMaxWildMonsters; i++) {
+            LobbyNeon.spawnRpgWildMonster(zone.id, i === 0);
+        }
+        Utils.showToast(`Da vao ${zone.name}. Quai se doi sang ${zone.monster}.`, 'success');
+        if (LobbyNeon.state.activeHubTab === 'rpg') LobbyNeon.renderRpgPanel();
+        LobbyNeon.updateRpgFarmHud();
     },
 
     selectRpgZone: (zoneId) => {
@@ -6282,6 +6991,7 @@ window.LobbyNeon = {
         }
         LobbyNeon.state.selectedRpgZone = zoneId;
         LobbyNeon.state.rpgZoneManuallySelected = true;
+        LobbyNeon.applyRpgZoneTheme(zone);
         Utils.showToast(`Đã chọn bãi farm: ${zone.name}. Quái mới sẽ ưu tiên map này.`, 'info');
         LobbyNeon.renderRpgPanel();
     },
@@ -6543,11 +7253,45 @@ window.LobbyNeon = {
             }
             profile.inventory[shardKey] = current - skin.unlockNeed;
             profile.unlockedSkins.push(skinId);
+            profile.skinLevels[skinId] = Math.max(1, Number(profile.skinLevels?.[skinId] || 1));
         }
 
         profile.equippedSkin = skinId;
+        profile.skinLevels[skinId] = Math.max(1, Number(profile.skinLevels?.[skinId] || 1));
         await LobbyNeon.saveMyRpgProfile(profile, data);
         Utils.showToast(`Đã trang bị ${skin.name}.`, 'success');
+        LobbyNeon.renderRpgPanel();
+        LobbyNeon.renderRpgSkillWheel();
+    },
+
+    upgradeRpgSkin: async (skinId) => {
+        const skin = LobbyNeon.rpgSkins[skinId];
+        if (!skin) return;
+        const { data, profile } = await LobbyNeon.getMyRpgProfile();
+        if (!LobbyNeon.isRpgSkinUnlocked(profile, skin)) {
+            Utils.showToast('Mo khoa skin truoc khi nang cap.', 'warning');
+            return;
+        }
+        const currentLevel = Math.max(1, Number(profile.skinLevels?.[skinId] || 1));
+        if (currentLevel >= 10) {
+            Utils.showToast('Skin nay da dat cap toi da.', 'info');
+            return;
+        }
+        const stoneCost = currentLevel * 2 + (skin.vip ? 2 : 0);
+        const shardCost = skin.shard ? Math.max(1, Math.ceil(currentLevel / 2)) : 0;
+        if (Number(profile.inventory.daCuongHoa || 0) < stoneCost) {
+            Utils.showToast(`Thieu ${stoneCost} da cuong hoa de nang skin.`, 'warning');
+            return;
+        }
+        if (shardCost > 0 && Number(profile.inventory[skin.shard] || 0) < shardCost) {
+            Utils.showToast(`Thieu ${shardCost} manh skin ${skin.name}.`, 'warning');
+            return;
+        }
+        profile.inventory.daCuongHoa = Number(profile.inventory.daCuongHoa || 0) - stoneCost;
+        if (shardCost > 0) profile.inventory[skin.shard] = Number(profile.inventory[skin.shard] || 0) - shardCost;
+        profile.skinLevels[skinId] = currentLevel + 1;
+        await LobbyNeon.saveMyRpgProfile(profile, data);
+        Utils.showToast(`Da nang ${skin.name} len cap ${currentLevel + 1}.`, 'success');
         LobbyNeon.renderRpgPanel();
         LobbyNeon.renderRpgSkillWheel();
     },
@@ -6620,9 +7364,7 @@ window.LobbyNeon = {
 
         const zone = LobbyNeon.rpgZones[hunt.zoneId] || LobbyNeon.rpgZones.training_forest;
         const reward = hunt.reward || LobbyNeon.rollRpgReward(zone, hunt.durationMin || 15, profile);
-        Object.entries(reward.items || {}).forEach(([key, qty]) => {
-            profile.inventory[key] = Number(profile.inventory[key] || 0) + Number(qty || 0);
-        });
+        const appliedReward = LobbyNeon.applyRpgRewardToProfile(profile, reward);
         profile.totalRewardPoints = Number(profile.totalRewardPoints || 0) + Number(reward.rewardPoints || 0);
         profile.lootLog = [
             {
@@ -6631,7 +7373,10 @@ window.LobbyNeon = {
                 monster: zone.monster,
                 rewardPoints: reward.rewardPoints,
                 exp: reward.exp,
-                items: reward.items || {}
+                items: reward.items || {},
+                equipment: appliedReward.equipment,
+                soldEquipment: appliedReward.soldEquipment,
+                soldGold: appliedReward.soldGold
             },
             ...(profile.lootLog || [])
         ].slice(0, 12);
@@ -6641,11 +7386,11 @@ window.LobbyNeon = {
         await LobbyNeon.saveMyRpgProfile(profile, data);
         LobbyNeon.renderRpgWorldCombatants();
 
-        Utils.showToast(`Nhận ${reward.exp} EXP và ${LobbyNeon.formatRpgItems(reward.items)}.`, 'success');
+        Utils.showToast(`Nhận ${reward.exp} EXP và ${LobbyNeon.formatRpgReward(reward)}.`, 'success');
         try {
             await DB.sendLobbyChat({
                 sender: 'Hệ Thống',
-                text: `🎁 @${username} vừa hạ ${zone.monster}: +${reward.exp} EXP, ${LobbyNeon.formatRpgItems(reward.items)}.`
+                text: `🎁 @${username} vừa hạ ${zone.monster}: +${reward.exp} EXP, ${LobbyNeon.formatRpgReward(reward)}.`
             });
         } catch (e) {
             console.warn('send rpg reward chat error:', e);
@@ -6747,7 +7492,7 @@ window.LobbyNeon = {
                 </div>
                 <div class="rpg-progress" style="margin:12px 0 10px;"><span style="width:${progress}%;"></span></div>
                 <div class="rpg-muted" style="margin-bottom:10px;">
-                    Dự kiến: +${active.reward?.exp || 0} EXP · ${LobbyNeon.formatRpgItems(active.reward?.items)}
+                    Dự kiến: +${active.reward?.exp || 0} EXP · ${LobbyNeon.formatRpgReward(active.reward)}
                 </div>
                 <button class="rpg-action-btn" style="width:100%;" ${isDone ? '' : 'disabled'} onclick="LobbyNeon.claimRpgHunt()">
                     ${isDone ? '🎁 NHẬN THƯỞNG' : 'Đang luyện công...'}
@@ -6766,7 +7511,7 @@ window.LobbyNeon = {
                     <strong style="font-size:11px; color:#e2e8f0;">${LobbyNeon.escapeHtml(log.zoneName)} · +${log.exp || 0} EXP</strong>
                     <span class="rpg-muted">${new Date(log.time).toLocaleDateString('vi-VN')}</span>
                 </div>
-                <div class="rpg-muted" style="margin-top:4px;">${LobbyNeon.formatRpgItems(log.items)}</div>
+                <div class="rpg-muted" style="margin-top:4px;">${LobbyNeon.formatRpgReward(log)}</div>
             </div>
         `).join('') : `<div class="rpg-muted" style="text-align:center; padding:12px;">Chưa có chiến lợi phẩm nào.</div>`;
 
@@ -6797,11 +7542,15 @@ window.LobbyNeon = {
 
                 ${LobbyNeon.renderRpgStatsPanel(profile)}
 
+                ${LobbyNeon.renderRpgAutoSettingsPanel(profile)}
+
                 <div class="rpg-card">
                     <p class="rpg-title">🎮 Nút skin chưởng nhanh</p>
                     <div class="rpg-muted" style="margin:6px 0 10px;">Bấm một nút để trang bị skin chưởng rồi tung skill. Skin cơ bản mở theo cấp, skin VIP vẫn dùng mảnh để mở.</div>
                     ${LobbyNeon.renderRpgQuickSkinButtons(profile)}
                 </div>
+
+                ${LobbyNeon.renderRpgSkinUpgradePanel(profile)}
 
                 ${activeHtml}
 
