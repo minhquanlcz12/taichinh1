@@ -4672,6 +4672,7 @@ window.LobbyNeon = {
         equipmentBag: [],
         inventorySlots: [],
         itemLogs: [],
+        bossLogs: [],
         autoSettings: {
             lootMinRarity: 'white',
             autoSellMaxRarity: 'none',
@@ -4731,6 +4732,7 @@ window.LobbyNeon = {
                 : [],
             inventorySlots: Array.isArray(profile?.inventorySlots) ? profile.inventorySlots.slice(0, 120) : [],
             itemLogs: Array.isArray(profile?.itemLogs) ? profile.itemLogs.slice(0, 80) : [],
+            bossLogs: Array.isArray(profile?.bossLogs) ? profile.bossLogs.slice(0, 80) : [],
             lootLog: Array.isArray(profile?.lootLog) ? profile.lootLog.slice(0, 12) : []
         };
         if (!LobbyNeon.rpgClasses[merged.classId]) merged.classId = 'kiem_tong';
@@ -4838,6 +4840,14 @@ window.LobbyNeon = {
     rollRpgEquipmentRarity: (zone, profile, source = 'monster', won = true) => {
         const luck = Number(profile?.stats?.luck || 1);
         const zonePower = Number(zone?.rewardPoints || 1);
+        if (window.GameServices?.DropService?.rollEquipmentRarity) {
+            return window.GameServices.DropService.rollEquipmentRarity({
+                source,
+                won,
+                luck,
+                rewardPoints: zonePower
+            });
+        }
         const roll = Math.random();
         if (source === 'boss') {
             if (!won) return roll < 0.72 ? 'blue' : 'yellow';
@@ -4931,6 +4941,19 @@ window.LobbyNeon = {
         const zonePower = Number(zone?.rewardPoints || 1);
         const rounds = Math.max(1, Number(options.rounds || 1));
         const won = options.won !== false;
+        if (window.GameServices?.DropService?.rollEquipmentDropCount) {
+            const count = window.GameServices.DropService.rollEquipmentDropCount({
+                source,
+                won,
+                luck,
+                rewardPoints: zonePower,
+                rounds
+            });
+            for (let i = 0; i < count; i++) {
+                drops.push(LobbyNeon.createRpgEquipmentDrop(zone, profile, source === 'hunt' ? 'monster' : source, won));
+            }
+            return drops;
+        }
         if (source === 'boss') {
             const chance = won
                 ? Math.min(0.78, 0.28 + zonePower * 0.05 + luck * 0.006)
@@ -5234,10 +5257,20 @@ window.LobbyNeon = {
         LobbyNeon.renderRpgPanel();
     },
 
-    getRpgBossCost: (zone) => Math.max(18, Math.round(Number(zone?.staminaCost || 10) * 1.8)),
+    getRpgBossCost: (zone) => {
+        if (window.GameServices?.BossService?.getChallengeCost) {
+            const template = window.GameServices.BossService.getBossForMap?.(zone?.id);
+            return window.GameServices.BossService.getChallengeCost(zone, template);
+        }
+        return Math.max(18, Math.round(Number(zone?.staminaCost || 10) * 1.8));
+    },
 
     getRpgBossPower: (zone) => {
         const level = Auth.currentUser?.level || 1;
+        if (window.GameServices?.BossService?.getBossPower) {
+            const template = window.GameServices.BossService.getBossForMap?.(zone?.id);
+            return window.GameServices.BossService.getBossPower(zone, template, { playerLevel: level });
+        }
         return Math.round((Number(zone?.minLevel || 1) * 210) + (Number(zone?.rewardPoints || 1) * 420) + (level * 65));
     },
 
@@ -5247,6 +5280,18 @@ window.LobbyNeon = {
         const stats = profile?.stats || {};
         const playerPower = LobbyNeon.getRpgPower(profile);
         const bossPower = LobbyNeon.getRpgBossPower(zone);
+        if (window.GameServices?.BossService?.calculateWinChance) {
+            const template = window.GameServices.BossService.getBossForMap?.(zone?.id);
+            return window.GameServices.BossService.calculateWinChance({
+                profile,
+                zone,
+                template,
+                totalStats,
+                playerPower,
+                bossPower,
+                playerLevel: Auth.currentUser?.level || 1
+            });
+        }
         const vitBonus = Number(totalStats.vitality || stats.vit || 1) * 0.006;
         const luckBonus = Number(totalStats.luck || stats.luck || 1) * 0.004;
         const ratio = playerPower / Math.max(1, bossPower);
@@ -5254,6 +5299,25 @@ window.LobbyNeon = {
     },
 
     rollRpgBossReward: (zone, profile, won) => {
+        if (window.GameServices?.DropService?.rollBossReward) {
+            const template = window.GameServices.BossService?.getBossForMap?.(zone?.id);
+            const classCfg = LobbyNeon.rpgClasses[profile.classId] || LobbyNeon.rpgClasses.kiem_tong;
+            const baseReward = window.GameServices.DropService.rollBossReward({
+                zone,
+                profile,
+                won,
+                rewardProfileId: template?.rewardProfileId,
+                dropProfileId: template?.rewardProfileId,
+                classLootMult: classCfg.lootMult,
+                expMultiplier: Auth.EXP_MULTIPLIER || 80,
+                now: Date.now()
+            });
+            return {
+                ...baseReward,
+                equipment: LobbyNeon.rollRpgEquipmentDrops(zone, profile, 'boss', { won }),
+                generatedAt: Date.now()
+            };
+        }
         const stats = profile?.stats || {};
         const luck = Number(stats.luck || 1);
         const classCfg = LobbyNeon.rpgClasses[profile.classId] || LobbyNeon.rpgClasses.kiem_tong;
@@ -5330,11 +5394,44 @@ window.LobbyNeon = {
             Utils.showToast('Không đủ thể lực để đánh boss. Mai sẽ hồi lại 100 thể lực.', 'warning');
             return;
         }
-        const chance = LobbyNeon.getRpgBossWinChance(profile, zone);
-        const won = Math.random() < chance;
-        const reward = LobbyNeon.rollRpgBossReward(zone, profile, won);
         const playerPowerBefore = LobbyNeon.getRpgPower(profile);
-        const bossPower = LobbyNeon.getRpgBossPower(zone);
+        let chance = LobbyNeon.getRpgBossWinChance(profile, zone);
+        let won = Math.random() < chance;
+        let reward = LobbyNeon.rollRpgBossReward(zone, profile, won);
+        let bossPower = LobbyNeon.getRpgBossPower(zone);
+        let bossTemplate = window.GameServices?.BossService?.getBossForMap?.(zone.id) || null;
+        let bossInstance = null;
+        let damageRanking = [];
+
+        if (window.GameServices?.BossService?.resolveChallenge) {
+            const characterStats = LobbyNeon.getRpgCharacterStats(profile);
+            const classCfg = LobbyNeon.rpgClasses[profile.classId] || LobbyNeon.rpgClasses.kiem_tong;
+            const challenge = window.GameServices.BossService.resolveChallenge({
+                profile,
+                zone,
+                template: bossTemplate,
+                ownerId: username,
+                playerLevel: level,
+                playerPower: playerPowerBefore,
+                totalStats: characterStats?.totalStats || {},
+                classLootMult: classCfg.lootMult,
+                expMultiplier: Auth.EXP_MULTIPLIER || 80,
+                now: Date.now()
+            });
+            if (challenge?.ok) {
+                chance = challenge.chance;
+                won = challenge.won;
+                reward = {
+                    ...challenge.reward,
+                    equipment: LobbyNeon.rollRpgEquipmentDrops(zone, profile, 'boss', { won }),
+                    generatedAt: Date.now()
+                };
+                bossPower = challenge.bossPower;
+                bossTemplate = challenge.boss || bossTemplate;
+                bossInstance = challenge.bossInstance;
+                damageRanking = challenge.damageRanking || [];
+            }
+        }
         profile.stamina = Math.max(0, Number(profile.stamina || 0) - cost);
         profile.totalHunts = Number(profile.totalHunts || 0) + 1;
         profile.bossWins = Number(profile.bossWins || 0) + (won ? 1 : 0);
@@ -5345,8 +5442,9 @@ window.LobbyNeon = {
             {
                 time: Date.now(),
                 zoneName: `${zone.name} · ${won ? 'Boss win' : 'Boss lose'}`,
-                monster: monster.name || zone.monster,
-                monsterId: monster.monsterId,
+                monster: bossTemplate?.name || bossInstance?.name || zone.monster,
+                bossId: bossTemplate?.bossId || bossInstance?.bossId,
+                bossInstanceId: bossInstance?.instanceId,
                 dropProfileId: reward.dropProfileId,
                 rewardPoints: reward.rewardPoints,
                 exp: won ? reward.exp : 0,
@@ -5354,19 +5452,38 @@ window.LobbyNeon = {
                 equipment: appliedReward.equipment,
                 soldEquipment: appliedReward.soldEquipment,
                 soldGold: appliedReward.soldGold,
+                damageRanking,
                 result: won ? 'win' : 'lose'
             },
             ...(profile.lootLog || [])
         ].slice(0, 12);
+        if (window.GameServices?.BossService?.appendBossLog) {
+            window.GameServices.BossService.appendBossLog(profile, {
+                boss: bossTemplate,
+                bossInstance,
+                won,
+                cost,
+                chance,
+                playerPower: playerPowerBefore,
+                bossPower,
+                reward,
+                damageRanking,
+                resolvedAt: Date.now()
+            }, appliedReward);
+        }
         if (won) await LobbyNeon.awardRpgExp(username, reward.rewardPoints, profile);
         LobbyNeon.state.rpgBossBattle = {
             zoneId: zone.id,
+            bossId: bossTemplate?.bossId || bossInstance?.bossId,
+            bossName: bossTemplate?.name || bossInstance?.name || zone.monster,
+            bossInstance,
             won,
             reward,
             cost,
             chance: Math.round(chance * 100),
             playerPower: playerPowerBefore,
             bossPower,
+            damageRanking,
             time: Date.now()
         };
         await LobbyNeon.saveMyRpgProfile(profile, data);
