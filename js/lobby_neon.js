@@ -28,6 +28,7 @@ window.LobbyNeon = {
         rpgAutoFarmInterval: null,
         rpgAutoFarm: false,
         rpgAutoFarmBusy: false,
+        rpgFarmSession: null,
         rpgMaxWildMonsters: 4,
         rpgLastWildSpawnAt: 0,
         rpgLastAutoSkinId: null,
@@ -5344,7 +5345,9 @@ window.LobbyNeon = {
             {
                 time: Date.now(),
                 zoneName: `${zone.name} · ${won ? 'Boss win' : 'Boss lose'}`,
-                monster: zone.monster,
+                monster: monster.name || zone.monster,
+                monsterId: monster.monsterId,
+                dropProfileId: reward.dropProfileId,
                 rewardPoints: reward.rewardPoints,
                 exp: won ? reward.exp : 0,
                 items: reward.items || {},
@@ -6638,10 +6641,23 @@ window.LobbyNeon = {
 
     getRpgUnlockedZones: () => {
         const level = Auth.currentUser?.level || 1;
+        if (window.GameServices?.MapService?.getUnlockedMaps) {
+            const maps = window.GameServices.MapService.getUnlockedMaps(level);
+            return maps.map(map => LobbyNeon.rpgZones[map.mapId]).filter(Boolean);
+        }
         return Object.values(LobbyNeon.rpgZones).filter(zone => level >= zone.minLevel);
     },
 
     getRpgAutoSpawnZone: () => {
+        if (window.GameServices?.MapService?.chooseRecommendedMap) {
+            const map = window.GameServices.MapService.chooseRecommendedMap({
+                level: Auth.currentUser?.level || 1,
+                combatPower: Number.MAX_SAFE_INTEGER,
+                selectedMapId: LobbyNeon.state.selectedRpgZone,
+                manual: LobbyNeon.state.rpgZoneManuallySelected
+            });
+            if (map && LobbyNeon.rpgZones[map.mapId]) return LobbyNeon.rpgZones[map.mapId];
+        }
         const unlocked = LobbyNeon.getRpgUnlockedZones().sort((a, b) => a.minLevel - b.minLevel);
         const selected = LobbyNeon.rpgZones[LobbyNeon.state.selectedRpgZone];
         if (LobbyNeon.state.rpgZoneManuallySelected && selected && unlocked.some(zone => zone.id === selected.id)) return selected;
@@ -6682,24 +6698,35 @@ window.LobbyNeon = {
             return null;
         }
         const point = LobbyNeon.getRpgRandomFarmPoint(nearPlayer);
-        const id = `wild_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-        const hp = 85 + zone.rewardPoints * 35 + Math.floor(Math.random() * 35);
-        const monster = {
-            id,
-            zoneId: zone.id,
-            x: point.x,
-            y: point.y,
-            targetX: point.x,
-            targetY: point.y,
-            hp,
-            maxHp: hp,
-            nextMoveAt: Date.now() + 600 + Math.random() * 1200,
-            lastDamage: 0,
-            lastHitAt: 0,
-            defeated: false,
-            claimed: false
-        };
-        LobbyNeon.state.rpgWildMonsters[id] = monster;
+        const map = window.GameServices?.MapService?.getMap ? window.GameServices.MapService.getMap(zone.id) : null;
+        const monster = window.GameServices?.MonsterService?.createMonsterInstance
+            ? window.GameServices.MonsterService.createMonsterInstance({
+                map,
+                mapId: zone.id,
+                legacyZone: zone,
+                point,
+                now: Date.now()
+            })
+            : (() => {
+                const fallbackId = `wild_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+                const hp = 85 + zone.rewardPoints * 35 + Math.floor(Math.random() * 35);
+                return {
+                    id: fallbackId,
+                    zoneId: zone.id,
+                    x: point.x,
+                    y: point.y,
+                    targetX: point.x,
+                    targetY: point.y,
+                    hp,
+                    maxHp: hp,
+                    nextMoveAt: Date.now() + 600 + Math.random() * 1200,
+                    lastDamage: 0,
+                    lastHitAt: 0,
+                    defeated: false,
+                    claimed: false
+                };
+            })();
+        LobbyNeon.state.rpgWildMonsters[monster.id] = monster;
         LobbyNeon.state.rpgLastWildSpawnAt = Date.now();
         LobbyNeon.renderRpgWildMonster(monster);
         LobbyNeon.updateRpgFarmHud();
@@ -6774,8 +6801,9 @@ window.LobbyNeon = {
         const renderKey = `${monster.defeated ? 1 : 0}|${isTargeted ? 1 : 0}|${hpPct}|${hitRecent ? Number(monster.lastHitAt || 0) : 0}`;
         if (el.dataset.renderKey !== renderKey) {
             el.dataset.renderKey = renderKey;
+            const monsterName = monster.name || zone.monster;
             el.innerHTML = `
-                <div class="rpg-world-name">${isTargeted ? '🎯 ' : ''}${zone.icon} ${LobbyNeon.escapeHtml(zone.monster)}</div>
+                <div class="rpg-world-name">${isTargeted ? '🎯 ' : ''}${zone.icon} ${LobbyNeon.escapeHtml(monsterName)}</div>
                 <div class="rpg-world-hp"><span style="width:${hpPct}%;"></span></div>
                 <div class="rpg-world-body">${LobbyNeon.getRpgMonsterSvg(zone.id, monster.defeated)}</div>
                 ${hitRecent ? `<div class="rpg-world-hit"></div><div class="rpg-world-damage">-${monster.lastDamage || 0}</div>` : ''}
@@ -6797,6 +6825,9 @@ window.LobbyNeon = {
 
     findNearestRpgWildMonster: (maxRange = Infinity) => {
         const pos = LobbyNeon.state.myPos || { x: 0, y: 0 };
+        if (window.GameServices?.FarmService?.findNearestMonster) {
+            return window.GameServices.FarmService.findNearestMonster(LobbyNeon.state.rpgWildMonsters || {}, pos, maxRange);
+        }
         let best = null;
         Object.values(LobbyNeon.state.rpgWildMonsters || {}).forEach(monster => {
             if (!monster || monster.defeated) return;
@@ -6886,6 +6917,10 @@ window.LobbyNeon = {
         }
         LobbyNeon.state.rpgAutoFarm = false;
         LobbyNeon.state.rpgAutoFarmBusy = false;
+        if (window.GameServices?.FarmService?.stopFarm && LobbyNeon.state.rpgFarmSession) {
+            window.GameServices.FarmService.stopFarm(LobbyNeon.state.rpgFarmSession, { now: Date.now() });
+        }
+        LobbyNeon.state.rpgFarmSession = null;
         LobbyNeon.updateRpgFarmHud();
         LobbyNeon.renderRpgSkillWheel();
     },
@@ -6903,6 +6938,13 @@ window.LobbyNeon = {
             return;
         }
         LobbyNeon.state.rpgAutoFarm = true;
+        if (window.GameServices?.FarmService?.startFarm) {
+            LobbyNeon.state.rpgFarmSession = window.GameServices.FarmService.startFarm({
+                ownerId: LobbyNeon.getRpgUsername(),
+                mapId: LobbyNeon.state.selectedRpgZone || 'training_forest',
+                now: Date.now()
+            });
+        }
         LobbyNeon.startRpgAutoFarm();
         LobbyNeon.updateRpgFarmHud();
         await LobbyNeon.renderRpgSkillWheel();
@@ -7009,28 +7051,46 @@ window.LobbyNeon = {
             setTimeout(() => userEl.classList.remove('rpg-world-fighting'), 820);
         }
 
-        const aoeRadius = Number(activeSkin.aoeRadius || 0);
-        const hitTargets = [target];
-        if (aoeRadius > 0) {
-            Object.values(LobbyNeon.state.rpgWildMonsters || {}).forEach(monster => {
-                if (!monster || monster.id === target.id || monster.defeated) return;
-                const dx = monster.x - target.x;
-                const dy = monster.y - target.y;
-                if (Math.sqrt(dx * dx + dy * dy) <= aoeRadius) hitTargets.push(monster);
+        let hitTargets = [];
+        let defeatedTargets = [];
+        if (window.GameServices?.FarmService?.resolveAttack) {
+            const farmResult = window.GameServices.FarmService.resolveAttack({
+                monsters: LobbyNeon.state.rpgWildMonsters || {},
+                targetId: target.id,
+                skill: activeSkin,
+                damage,
+                now: Date.now()
+            });
+            if (!farmResult.ok) return;
+            hitTargets = farmResult.hitTargets || [];
+            defeatedTargets = farmResult.defeatedTargets || [];
+            if (LobbyNeon.state.rpgFarmSession && window.GameServices?.FarmService?.tickFarm) {
+                window.GameServices.FarmService.tickFarm(LobbyNeon.state.rpgFarmSession, { now: Date.now() });
+            }
+        } else {
+            const aoeRadius = Number(activeSkin.aoeRadius || 0);
+            hitTargets = [target];
+            if (aoeRadius > 0) {
+                Object.values(LobbyNeon.state.rpgWildMonsters || {}).forEach(monster => {
+                    if (!monster || monster.id === target.id || monster.defeated) return;
+                    const dx = monster.x - target.x;
+                    const dy = monster.y - target.y;
+                    if (Math.sqrt(dx * dx + dy * dy) <= aoeRadius) hitTargets.push(monster);
+                });
+            }
+
+            defeatedTargets = [];
+            hitTargets.forEach((monster, index) => {
+                const hitDamage = index === 0 ? damage : Math.max(6, Math.round(damage * Number(activeSkin.aoeDamageRatio || 0.65)));
+                monster.hp = Math.max(0, monster.hp - hitDamage);
+                monster.lastDamage = hitDamage;
+                monster.lastHitAt = Date.now();
+                if (monster.hp <= 0 && !monster.claimed) {
+                    monster.defeated = true;
+                    defeatedTargets.push(monster);
+                }
             });
         }
-
-        const defeatedTargets = [];
-        hitTargets.forEach((monster, index) => {
-            const hitDamage = index === 0 ? damage : Math.max(6, Math.round(damage * Number(activeSkin.aoeDamageRatio || 0.65)));
-            monster.hp = Math.max(0, monster.hp - hitDamage);
-            monster.lastDamage = hitDamage;
-            monster.lastHitAt = Date.now();
-            if (monster.hp <= 0 && !monster.claimed) {
-                monster.defeated = true;
-                defeatedTargets.push(monster);
-            }
-        });
 
         for (const defeated of defeatedTargets) {
             await LobbyNeon.rewardRpgWildKill(defeated, profile, data, username, options);
@@ -7065,27 +7125,28 @@ window.LobbyNeon = {
     rewardRpgWildKill: async (monster, profile, data, username, options = {}) => {
         monster.claimed = true;
         const zone = LobbyNeon.rpgZones[monster.zoneId] || LobbyNeon.rpgZones.training_forest;
-        const rewardPoints = Math.max(1, zone.rewardPoints);
-        const exp = rewardPoints * (Auth.EXP_MULTIPLIER || 80);
-        const items = {
+        const map = window.GameServices?.MapService?.getMap ? window.GameServices.MapService.getMap(monster.mapId || zone.id) : null;
+        const baseReward = window.GameServices?.FarmService?.buildKillReward
+            ? window.GameServices.FarmService.buildKillReward({
+                monster,
+                map,
+                legacyZone: zone,
+                expMultiplier: Auth.EXP_MULTIPLIER || 80
+            })
+            : null;
+        const rewardPoints = Math.max(1, Number(baseReward?.rewardPoints || zone.rewardPoints));
+        const exp = Math.max(1, Number(baseReward?.exp || rewardPoints * (Auth.EXP_MULTIPLIER || 80)));
+        const items = baseReward?.items || {
             goldDust: 8 + zone.rewardPoints * 6,
             [zone.material]: 1
         };
-        const shardMap = {
-            training_forest: 'thunderShard',
-            ghost_cave: 'moonShard',
-            secret_realm: 'fireShard',
-            molten_keep: 'fireShard',
-            frost_peak: 'thunderShard',
-            abyss_gate: 'moonShard'
-        };
-        if (Math.random() < 0.12 + zone.rewardPoints * 0.04) {
-            items[shardMap[zone.id] || 'thunderShard'] = 1;
-        }
         const reward = {
             rewardPoints,
             exp,
             items,
+            monsterId: monster.monsterId,
+            monsterName: monster.name || zone.monster,
+            dropProfileId: baseReward?.dropProfileId || monster.dropProfileId,
             equipment: LobbyNeon.rollRpgEquipmentDrops(zone, profile, 'monster')
         };
         const appliedReward = LobbyNeon.applyRpgRewardToProfile(profile, reward);
@@ -7110,7 +7171,7 @@ window.LobbyNeon = {
         const shouldToast = !options.auto || Date.now() - (LobbyNeon.state.rpgLastAutoToastAt || 0) > 7000;
         if (shouldToast) {
             LobbyNeon.state.rpgLastAutoToastAt = Date.now();
-            Utils.showToast(`Hạ ${zone.monster}: +${exp} EXP · ${LobbyNeon.formatRpgReward(reward)}`, 'success');
+            Utils.showToast(`Ha ${reward.monsterName || zone.monster}: +${exp} EXP - ${LobbyNeon.formatRpgReward(reward)}`, 'success');
         }
         if (LobbyNeon.state.activeHubTab === 'rpg') LobbyNeon.renderRpgPanel();
     },
@@ -7196,6 +7257,9 @@ window.LobbyNeon = {
         }
         LobbyNeon.state.selectedRpgZone = zoneId;
         LobbyNeon.state.rpgZoneManuallySelected = true;
+        if (LobbyNeon.state.rpgFarmSession) {
+            LobbyNeon.state.rpgFarmSession.mapId = zoneId;
+        }
         LobbyNeon.state.selectedWildMonsterId = null;
         LobbyNeon.closeRpgMapOverlay();
         Object.keys(LobbyNeon.state.rpgWildMonsters || {}).forEach(id => {
