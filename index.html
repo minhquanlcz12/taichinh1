@@ -4,6 +4,11 @@
 <head>
     <script>
         window.onerror = function(message, source, lineno, colno, error) {
+            // Bỏ qua các lỗi phát sinh từ Extension trình duyệt (như ví crypto, chặn quảng cáo...)
+            if (source && (source.indexOf('chrome-extension:') !== -1 || source.indexOf('moz-extension:') !== -1)) {
+                return false;
+            }
+
             // Chỉ hiển thị bảng lỗi cho tài khoản Admin để nhân viên không bị hoang mang
             let isAdmin = false;
             try {

@@ -641,12 +641,17 @@ const Utils = {
         let allTasks = await DB.getWorkData();
         let tasks = (allTasks && allTasks.tasks) ? allTasks.tasks : [];
 
-        // 2. Lấy data thu chi trong ngày
+        // 2. Lấy data thu chi trong ngày & số dư quỹ công ty (CONGTY)
         let financeData = await DB.getFinanceData();
         let incomeToday = 0;
         let expenseToday = 0;
+        let congtyBalance = 0;
         if (financeData && financeData.transactions) {
             financeData.transactions.forEach(tx => {
+                if (tx.owner && tx.owner.toLowerCase() === 'congty') {
+                    if (tx.type === 'income') congtyBalance += parseFloat(tx.amount);
+                    else congtyBalance -= parseFloat(tx.amount);
+                }
                 if (tx.date === todayIso) {
                     if (tx.type === 'income') incomeToday += parseFloat(tx.amount);
                     else expenseToday += parseFloat(tx.amount);
@@ -662,7 +667,10 @@ const Utils = {
 
         const todayStr = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}-${String(new Date().getDate()).padStart(2,'0')}`;
         const checkedInUsers = allAtt.filter(r => r.dateStr === todayStr).map(r => r.username);
-        const missingUsers = accounts.map(a => a.username).filter(u => !checkedInUsers.includes(u) && u !== 'admin');
+        // Loại bỏ các tài khoản hệ thống khỏi danh sách vắng mặt
+        const missingUsers = accounts.filter(a => !Utils.isSystemAccount(a))
+            .map(a => a.username)
+            .filter(u => !checkedInUsers.includes(u));
 
         // Logic phân tích Task
         const pToday = Utils.getTodayString().split('/');
@@ -703,45 +711,85 @@ const Utils = {
         });
 
         // 4. Build tin nhắn Report
-        let msg = `<b>📊 BÁO CÁO TỔNG HỢP CUỐI NGÀY</b>\n\n`;
+        const displayDate = `${pToday[0]}/${pToday[1]}/${pToday[2]}`;
+        let msg = `<b>📊 BÁO CÁO TỔNG HỢP CUỐI NGÀY ( ${displayDate} )</b>\n\n`;
         msg += `<b>MẢNG 1: TÀI CHÍNH</b>\n`;
         msg += `+ Tổng Thu: <b>${Utils.formatCurrency(incomeToday)}</b>\n`;
-        msg += `- Tổng Chi: <b>${Utils.formatCurrency(expenseToday)}</b>\n\n`;
+        msg += `- Tổng Chi: <b>${Utils.formatCurrency(expenseToday)}</b>\n`;
+        msg += `💳 Quỹ công ty (CONGTY): <b>${Utils.formatCurrency(congtyBalance)}</b>\n\n`;
 
         msg += `<b>MẢNG 2: NHÂN SỰ</b>\n`;
         if (missingUsers.length > 0) {
-            msg += `❌ Vắng mặt (Khác): <b>${missingUsers.join(', ')}</b>\n\n`;
+            msg += `❌ Vắng mặt (Khác): <b>${missingUsers.map(u => Utils.getUserDisplayName(u) || u).join(', ')}</b>\n`;
         } else {
-            msg += `✅ 100% nhân sự đi làm đầy đủ!\n\n`;
+            msg += `✅ 100% nhân sự đi làm đầy đủ!\n`;
         }
 
-        // Mảng 2.5: Tổng hợp Nghỉ Phép trong chu kỳ lương hiện tại
+        // Tổng hợp số công và nghỉ phép trong chu kỳ lương hiện tại
+        let cycle = null;
+        let workedLines = [];
+        let leaveLines = [];
         try {
             if (typeof Attendance !== 'undefined' && typeof PayrollModule !== 'undefined') {
-                const allLeaves = await Attendance.loadLeaveData();
                 const cycleMonthStr = PayrollModule.getCurrentCycleMonthStr(new Date());
-                const cycle = PayrollModule.getCycleRange(cycleMonthStr);
+                cycle = PayrollModule.getCycleRange(cycleMonthStr);
                 const staffAccounts = accounts.filter(a => !Utils.isSystemAccount(a));
                 
-                let leaveLines = [];
+                staffAccounts.forEach(acc => {
+                    let onTimeDays = 0;
+                    let lateDays = 0;
+                    let lateExcusedDays = 0;
+                    
+                    allAtt.forEach(a => {
+                        if (a.username === acc.username && a.dateStr >= cycle.startStr && a.dateStr <= cycle.endStr) {
+                            const parts = a.dateStr.split('-');
+                            const isSunday = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2])).getDay() === 0;
+                            if (isSunday) return;
+                            
+                            const weight = a.type ? 0.5 : 1.0;
+                            if (a.status === 'on_time') onTimeDays += weight;
+                            else if (a.status === 'late_excused') lateExcusedDays += weight;
+                            else if (a.status === 'late') lateDays += weight;
+                        }
+                    });
+                    const totalWorked = onTimeDays + lateExcusedDays + lateDays;
+                    const displayName = Utils.getUserDisplayName(acc.username) || acc.username;
+                    workedLines.push(`- ${displayName}: <b>${totalWorked} công</b>`);
+                });
+
+                const allLeaves = await Attendance.loadLeaveData();
                 staffAccounts.forEach(acc => {
                     const leaveDays = PayrollModule.getUserCycleLeaveDays(allLeaves, acc.username, cycle, todayStr);
                     if (leaveDays > 0) {
                         const displayName = Utils.getUserDisplayName(acc.username) || acc.username;
-                        leaveLines.push(`- <b>${displayName}</b>: ${leaveDays} ngày`);
+                        leaveLines.push(`- ${displayName}: <b>${leaveDays} ngày</b>`);
                     }
                 });
-
-                msg += `<b>MẢNG 2.5: NGHỈ PHÉP (Chu kỳ ${cycle.startStr.slice(5)} → ${cycle.endStr.slice(5)})</b>\n`;
-                if (leaveLines.length > 0) {
-                    msg += `📋 Nghỉ phép đã duyệt:\n${leaveLines.join('\n')}\n`;
-                    msg += `<i>(Nghỉ phép được tính lương, đã phản ánh vào bảng lương)</i>\n\n`;
-                } else {
-                    msg += `✅ Chưa có ai nghỉ phép trong chu kỳ này.\n\n`;
-                }
             }
         } catch (e) {
-            console.warn('Lỗi tổng hợp nghỉ phép cho báo cáo:', e);
+            console.warn('Lỗi tổng hợp số công/nghỉ phép cho báo cáo:', e);
+        }
+
+        if (cycle && workedLines.length > 0) {
+            const startStrFormatted = `${cycle.startStr.split('-')[1]}-${cycle.startStr.split('-')[2]}`;
+            const endStrFormatted = `${cycle.endStr.split('-')[1]}-${cycle.endStr.split('-')[2]}`;
+            msg += `📊 <b>Số công lũy kế (Chu kỳ ${startStrFormatted} → ${endStrFormatted}):</b>\n`;
+            msg += workedLines.join('\n') + '\n\n';
+        } else {
+            msg += '\n';
+        }
+
+        // MẢNG 2.5: NGHỈ PHÉP
+        if (cycle) {
+            const startStrFormatted = `${cycle.startStr.split('-')[1]}-${cycle.startStr.split('-')[2]}`;
+            const endStrFormatted = `${cycle.endStr.split('-')[1]}-${cycle.endStr.split('-')[2]}`;
+            msg += `<b>MẢNG 2.5: NGHỈ PHÉP (Chu kỳ ${startStrFormatted} → ${endStrFormatted})</b>\n`;
+            if (leaveLines.length > 0) {
+                msg += `📋 Nghỉ phép đã duyệt:\n${leaveLines.join('\n')}\n`;
+                msg += `<i>(Nghỉ phép không được tính lương, đã phản ánh vào bảng lương)</i>\n\n`;
+            } else {
+                msg += `✅ Không có nhân sự nghỉ phép trong chu kỳ này.\n\n`;
+            }
         }
 
         msg += `<b>MẢNG 3: TIẾN ĐỘ THỰC THI (TASK)</b>\n`;

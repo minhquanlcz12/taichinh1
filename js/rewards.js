@@ -3,7 +3,7 @@ const RewardsModule = {
         { id: 'card_wfh', title: 'Làm Việc Tại Nhà', icon: 'fa-house-laptop', cost: 15, color: '#10b981', weight: 10, desc: 'Sử dụng để WFH 1 ngày không bị tính vắng.' },
         { id: 'card_late', title: 'Đi Muộn Miễn Phạt', icon: 'fa-clock', cost: 10, color: '#f59e0b', weight: 12, desc: 'Cứu cánh khi ngủ nướng, miễn phạt 1 lần đi muộn.' },
         { id: 'card_early', title: 'Về Sớm 1 Tiếng', icon: 'fa-person-running', cost: 8, color: '#3b82f6', weight: 15, desc: 'Xin sếp về sớm 1 chút để xử lý việc cá nhân.' },
-        { id: 'card_leave', title: 'Nghỉ Phép Thêm 1 Ngày', icon: 'fa-umbrella-beach', cost: 25, color: '#a855f7', weight: 8, desc: 'Có ngay 1 ngày phép hưởng nguyên lương.' },
+        { id: 'card_leave', title: 'Nghỉ Phép Thêm 1 Ngày', icon: 'fa-umbrella-beach', cost: 25, color: '#a855f7', weight: 8, desc: 'Có ngay 1 ngày phép (Không tính lương).' },
         { id: 'card_tea', title: '1 Lon Nước Ngọt 10k', icon: 'fa-glass-water', cost: 5, color: '#f43f5e', weight: 25, desc: 'Sếp bao 1 lon nước ngọt mát lạnh trị giá 10k.' },
         { id: 'card_rescue', title: 'Thánh Nhân Cứu Bồ', icon: 'fa-handshake-angle', cost: 5, color: '#ec4899', weight: 25, desc: 'Dùng để bảo lãnh/xoá án phạt đi muộn cho 1 NGƯỜI KHÁC (Tăng tình kết nghĩa anh em).' },
         { id: 'card_mystery', title: 'Quà Bất Ngờ', icon: 'fa-gift', cost: 30, color: '#ffd700', weight: 0, desc: 'Bóc bao nhận thẻ Đặc Quyền ngẫu nhiên. Tỷ lệ thẻ Cực hiếm (50đ) ~7%.' },

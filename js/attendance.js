@@ -1332,6 +1332,7 @@ const Attendance = {
         
         // Lấy lịch sử xin nghỉ
         const allLeaves = await Attendance.loadLeaveData();
+        const calendarHtml = Attendance.renderCalendarHtml(allData, allLeaves, user);
         const userLeaves = allLeaves.filter(l => Attendance.sameUser(l.username, user.username)).sort((a,b) => b.timestamp - a.timestamp);
         const RESET_DATE = '2026-06-10';
         let currentMeritDisplay = '?';
@@ -1482,6 +1483,7 @@ const Attendance = {
                         ${checkInHtml}
                     </div>
                     <div class="user-col">
+                        ${calendarHtml}
                         ${historyHtml}
                     </div>
                 </div>
@@ -1512,7 +1514,7 @@ const Attendance = {
         const securityHtml = await Attendance.renderAttendanceSecurityPanel(security);
         
         let adminHtml = `
-            <div class="glass-panel admin-cyber-box animate-cascade" style="padding: 24px; border: 1px solid rgba(100, 255, 218, 0.5); box-shadow: 0 0 10px rgba(100, 255, 218, 0.1);">
+            <div id="attendance-admin-board-card" class="glass-panel admin-cyber-box animate-cascade" style="padding: 24px; border: 1px solid rgba(100, 255, 218, 0.5); box-shadow: 0 0 10px rgba(100, 255, 218, 0.1);">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
                     <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
                         <h2 style="color: var(--primary); font-size: 18px; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; margin: 0;">
@@ -1533,6 +1535,7 @@ const Attendance = {
                         <button class="btn btn-outline" style="border-color: var(--primary); color: var(--primary); display: inline-flex; align-items: center; gap: 6px;" onclick="Attendance.showLateConfigModal()"><i class="fa-solid fa-gears"></i> Luật Đi Trễ</button>
                         <button class="btn btn-success" onclick="Attendance.exportAttendanceCSV()"><i class="fa-solid fa-file-excel" style="margin-right: 6px;"></i> Excel</button>
                         <button class="btn btn-outline" style="border-color: #f1c40f; color: #f1c40f;" onclick="Attendance.exportAttendancePDF()"><i class="fa-solid fa-file-pdf" style="margin-right: 6px;"></i> PDF</button>
+                        <button class="btn btn-outline" style="border-color: #0088cc; color: #0088cc;" onclick="Attendance.sendAttendanceSnapshotToTelegram()"><i class="fa-solid fa-camera" style="margin-right: 6px;"></i> Gửi Telegram</button>
                     </div>
                 </div>
 
@@ -2935,5 +2938,283 @@ const Attendance = {
             console.error(e);
             Utils.showToast("Lỗi xuất PDF tổng hợp", "error");
         });
+    },
+
+    sendAttendanceSnapshotToTelegram: async () => {
+        const board = document.getElementById('attendance-admin-board-card');
+        if (!board) {
+            Utils.showToast("Không tìm thấy bảng chấm công để chụp!", "error");
+            return;
+        }
+
+        if (typeof html2canvas === 'undefined') {
+            Utils.showToast("Đang tải thư viện chụp ảnh...", "info");
+            await new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        }
+
+        Utils.showToast("Đang tạo ảnh chụp bảng chấm công...", "info");
+        try {
+            const canvas = await html2canvas(board, {
+                backgroundColor: '#070914',
+                scale: 1.5,
+                useCORS: true,
+                logging: false
+            });
+
+            const base64Data = canvas.toDataURL('image/jpeg', 0.9);
+            const response = await fetch(base64Data);
+            const blob = await response.blob();
+
+            const token = app.state.settings?.tgToken;
+            const chatId = app.state.settings?.tgChatId;
+            if (!token || !chatId) {
+                Utils.showToast("Chưa cấu hình Telegram Bot Token hoặc Chat ID!", "error");
+                return;
+            }
+
+            Utils.showToast("Đang gửi ảnh lên Telegram...", "info");
+
+            const formData = new FormData();
+            formData.append('chat_id', chatId);
+            formData.append('photo', blob, 'bang_cham_cong.jpg');
+            
+            const selYear = Attendance.selectedYear;
+            const selMonth = Attendance.selectedMonth;
+            const caption = `📊 <b>BẢNG TỔNG HỢP CHẤM CÔNG THÁNG ${selMonth + 1}/${selYear}</b>\n👤 Xuất bởi Admin vào lúc: ${new Date().toLocaleTimeString('vi-VN')} ${Utils.getTodayString()}`;
+            
+            formData.append('caption', caption);
+            formData.append('parse_mode', 'HTML');
+
+            const url = `https://api.telegram.org/bot${token}/sendPhoto`;
+            const res = await fetch(url, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (res.ok) {
+                Utils.showToast("Đã gửi ảnh bảng chấm công lên Telegram thành công!", "success");
+            } else {
+                const errText = await res.text();
+                console.error("Telegram API Error:", errText);
+                Utils.showToast("Lỗi gửi Telegram: " + res.statusText, "error");
+            }
+        } catch (e) {
+            console.error("Lỗi chụp ảnh bảng chấm công:", e);
+            Utils.showToast("Không thể tạo ảnh chụp bảng chấm công", "error");
+        }
+    },
+
+    renderCalendarHtml: (allData, allLeaves, user) => {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = today.getMonth(); // 0-based
+        const monthNames = ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'];
+        
+        const firstDay = new Date(year, month, 1);
+        const startDayOfWeek = firstDay.getDay(); // 0 = Sun, 1 = Mon, ..., 6 = Sat
+        const emptyDaysBefore = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1;
+        const totalDaysInMonth = new Date(year, month + 1, 0).getDate();
+
+        let daysHtml = '';
+        
+        // Render empty cells for offset
+        for (let i = 0; i < emptyDaysBefore; i++) {
+            daysHtml += `<div class="calendar-day empty"></div>`;
+        }
+
+        // Render month days
+        for (let d = 1; d <= totalDaysInMonth; d++) {
+            const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+            
+            let status = 'none'; // none, on_time, late, late_excused, leave, absent, sunday
+            let tooltip = 'Chưa có ghi nhận';
+            
+            // Check leaves first
+            const isLeave = allLeaves.find(l => l.username === user.username && l.status === 'approved' && (l.startDate <= dateStr && l.endDate >= dateStr || l.date === dateStr));
+            if (isLeave) {
+                status = 'leave';
+                tooltip = `Nghỉ phép: ${isLeave.reason || 'Không lý do'}`;
+            } else {
+                const records = allData.filter(r => r.username === user.username && r.dateStr === dateStr);
+                if (records.length > 0) {
+                    const hasLate = records.some(r => r.status === 'late');
+                    const hasExcused = records.some(r => r.status === 'late_excused');
+                    if (hasLate) {
+                        status = 'late';
+                        tooltip = 'Đi muộn không phép';
+                    } else if (hasExcused) {
+                        status = 'late_excused';
+                        tooltip = 'Đi muộn có phép';
+                    } else {
+                        status = 'on_time';
+                        tooltip = 'Đúng giờ';
+                    }
+                } else {
+                    const dayDate = new Date(year, month, d);
+                    dayDate.setHours(0,0,0,0);
+                    const todayZero = new Date();
+                    todayZero.setHours(0,0,0,0);
+                    
+                    if (dayDate.getDay() === 0) {
+                        status = 'sunday';
+                        tooltip = 'Chủ nhật';
+                    } else if (dayDate < todayZero) {
+                        status = 'absent';
+                        tooltip = 'Vắng mặt';
+                    }
+                }
+            }
+
+            let statusIcon = '';
+            if (status === 'on_time') statusIcon = '✅';
+            else if (status === 'late') statusIcon = '❌';
+            else if (status === 'late_excused') statusIcon = '⏰';
+            else if (status === 'leave') statusIcon = '🌴';
+            else if (status === 'absent') statusIcon = '⚠️';
+
+            daysHtml += `
+                <div class="calendar-day ${status}" title="${d}/${month+1}/${year} - ${tooltip}">
+                    <span class="day-number">${d}</span>
+                    ${statusIcon ? `<span class="day-status-icon" style="font-size: 10px; margin-top: 2px;">${statusIcon}</span>` : ''}
+                </div>
+            `;
+        }
+
+        return `
+            <style>
+                .calendar-container {
+                    background: rgba(10, 15, 30, 0.7);
+                    border: 1px solid rgba(255,255,255,0.06);
+                    border-radius: 16px;
+                    padding: 20px;
+                    margin-bottom: 24px;
+                    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+                }
+                .calendar-grid {
+                    display: grid;
+                    grid-template-columns: repeat(7, 1fr);
+                    gap: 6px;
+                    margin-top: 12px;
+                }
+                .calendar-weekdays {
+                    display: grid;
+                    grid-template-columns: repeat(7, 1fr);
+                    gap: 6px;
+                    border-bottom: 1px dashed rgba(255,255,255,0.1);
+                    padding-bottom: 8px;
+                    text-align: center;
+                }
+                .weekday-lbl {
+                    font-size: 11px;
+                    font-weight: 800;
+                    color: #64ffda;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                }
+                .calendar-day {
+                    aspect-ratio: 1.1;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 8px;
+                    background: rgba(255,255,255,0.02);
+                    border: 1px solid rgba(255,255,255,0.04);
+                    font-size: 13px;
+                    font-weight: 500;
+                    color: #e2e8f0;
+                    transition: all 0.2s;
+                    position: relative;
+                }
+                .calendar-day:not(.empty):hover {
+                    background: rgba(255,255,255,0.08);
+                    border-color: rgba(255,255,255,0.15);
+                    transform: scale(1.05);
+                }
+                .calendar-day.empty {
+                    background: transparent;
+                    border: none;
+                }
+                .calendar-day.on_time {
+                    background: rgba(46, 204, 113, 0.1);
+                    border-color: rgba(46, 204, 113, 0.3);
+                    color: #2ecc71;
+                }
+                .calendar-day.late {
+                    background: rgba(231, 76, 60, 0.1);
+                    border-color: rgba(231, 76, 60, 0.3);
+                    color: #e74c3c;
+                }
+                .calendar-day.late_excused {
+                    background: rgba(0, 173, 181, 0.1);
+                    border-color: rgba(0, 173, 181, 0.3);
+                    color: #00adb5;
+                }
+                .calendar-day.leave {
+                    background: rgba(168, 85, 247, 0.1);
+                    border-color: rgba(168, 85, 247, 0.3);
+                    color: #a855f7;
+                }
+                .calendar-day.absent {
+                    background: rgba(243, 156, 18, 0.1);
+                    border-color: rgba(243, 156, 18, 0.3);
+                    color: #f39c12;
+                }
+                .calendar-day.sunday {
+                    color: rgba(255,255,255,0.2);
+                    background: rgba(255,255,255,0.01);
+                }
+                .day-number {
+                    font-size: 12px;
+                    font-weight: 700;
+                }
+                .calendar-legend {
+                    display: flex;
+                    justify-content: center;
+                    gap: 12px;
+                    margin-top: 15px;
+                    flex-wrap: wrap;
+                    font-size: 10px;
+                    color: var(--text-secondary);
+                    border-top: 1px solid rgba(255,255,255,0.05);
+                    padding-top: 10px;
+                }
+                .legend-item {
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
+                }
+            </style>
+            <div class="calendar-container">
+                <h4 style="margin: 0 0 12px; font-size: 14.5px; color: #64ffda; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-calendar-days"></i> Lịch Chấm Công ${monthNames[month]} ${year}
+                </h4>
+                <div class="calendar-weekdays">
+                    <div class="weekday-lbl">T2</div>
+                    <div class="weekday-lbl">T3</div>
+                    <div class="weekday-lbl">T4</div>
+                    <div class="weekday-lbl">T5</div>
+                    <div class="weekday-lbl">T6</div>
+                    <div class="weekday-lbl">T7</div>
+                    <div class="weekday-lbl" style="color: rgba(255,255,255,0.3);">CN</div>
+                </div>
+                <div class="calendar-grid">
+                    ${daysHtml}
+                </div>
+                <div class="calendar-legend">
+                    <div class="legend-item">✅ Đúng giờ</div>
+                    <div class="legend-item">⏰ Muộn phép</div>
+                    <div class="legend-item">❌ Muộn phạt</div>
+                    <div class="legend-item">🌴 Nghỉ phép</div>
+                    <div class="legend-item">⚠️ Vắng mặt</div>
+                </div>
+            </div>
+        `;
     }
 };

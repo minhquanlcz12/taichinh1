@@ -860,7 +860,10 @@ const WorkModule = {
         const task = WorkModule.data.tasks.find(t => t.id === id);
         if (!task) return;
         const currentUser = Auth.currentUser;
-        if (!currentUser || (currentUser.role !== 'admin' && task.owner !== currentUser.username)) {
+        if (!currentUser || (
+            currentUser.role !== 'admin' && 
+            (task.owner || '').toLowerCase().trim() !== (currentUser.username || '').toLowerCase().trim()
+        )) {
             Utils.showToast('Bạn không có quyền xóa công việc này!', 'error');
             return;
         }

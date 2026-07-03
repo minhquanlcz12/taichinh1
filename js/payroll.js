@@ -1301,7 +1301,7 @@ const PayrollModule = {
                                 logs.push({
                                     date: lDate,
                                     type: 'leave',
-                                    title: `Nghỉ phép có lương (${l.days || 1} ngày)`,
+                                    title: `Nghỉ phép không lương (${l.days || 1} ngày)`,
                                     desc: `Lý do: "${l.reason || 'Nghỉ phép năm'}"`,
                                     color: 'var(--primary)',
                                     icon: 'fa-bed'
@@ -1407,7 +1407,7 @@ const PayrollModule = {
                             <span style="color: var(--success);" title="Đúng giờ"><i class="fa-solid fa-check-circle"></i> ${onTimeDays}</span> &nbsp;|&nbsp; 
                             ${lateExcusedDays > 0 ? `<span style="color: #64ffda; font-weight: bold;" title="Muộn có phép"><i class="fa-regular fa-clock"></i> ${lateExcusedDays}</span> &nbsp;|&nbsp; ` : ''}
                             <span style="color: var(--warning);" title="Đi muộn không phép"><i class="fa-solid fa-clock"></i> ${lateCount}</span> &nbsp;|&nbsp; 
-                            <span style="color: var(--primary);" title="Nghỉ phép (Có lương)"><i class="fa-solid fa-bed"></i> ${approvedLeaveDays}</span>
+                            <span style="color: var(--primary);" title="Nghỉ phép (Không lương)"><i class="fa-solid fa-bed"></i> ${approvedLeaveDays}</span>
                         </td>
                         <td style="text-align: center; font-size: 13px;">
                             <span class="badge bg-success" title="Hoàn thành">${doneTasks} Done</span>
