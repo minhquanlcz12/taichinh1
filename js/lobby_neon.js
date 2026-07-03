@@ -4756,6 +4756,13 @@ window.LobbyNeon = {
             merged.stats[key] = Math.max(1, Number(merged.stats[key] || 1));
         });
         merged.statPoints = Math.max(0, Number(merged.statPoints || 0));
+        if (window.GameServices?.CharacterService?.hydrateProfile) {
+            window.GameServices.CharacterService.hydrateProfile(merged, {
+                username,
+                auth: window.Auth,
+                authUser: window.Auth?.currentUser
+            });
+        }
         return merged;
     },
 
@@ -5031,7 +5038,27 @@ window.LobbyNeon = {
         return parts.join(' · ') || 'Khong co vat pham';
     },
 
+    getRpgCharacterStats: (profile) => {
+        if (window.GameServices?.CharacterService?.calculateCharacterStats) {
+            return window.GameServices.CharacterService.calculateCharacterStats(profile, {
+                auth: window.Auth,
+                authUser: window.Auth?.currentUser
+            });
+        }
+        if (window.GameServices?.StatsService?.calculateCharacterStats) {
+            return window.GameServices.StatsService.calculateCharacterStats(profile, {
+                auth: window.Auth,
+                authUser: window.Auth?.currentUser
+            });
+        }
+        return null;
+    },
+
     getRpgPower: (profile) => {
+        const calculated = LobbyNeon.getRpgCharacterStats(profile);
+        if (calculated && Number.isFinite(Number(calculated.combatPower))) {
+            return Math.round(Number(calculated.combatPower));
+        }
         const level = Auth.currentUser?.level || 1;
         const stats = profile?.stats || {};
         const statPower = Number(stats.str || 0) * 34 + Number(stats.int || 0) * 36 + Number(stats.agi || 0) * 30 + Number(stats.vit || 0) * 42 + Number(stats.luck || 0) * 24;
@@ -5045,18 +5072,30 @@ window.LobbyNeon = {
         if (expResult?.leveled && profile) {
             const gainedLevels = Math.max(1, Number(expResult.newLevel || 1) - Number(expResult.oldLevel || 1));
             profile.statPoints = Number(profile.statPoints || 0) + gainedLevels * 3;
+            if (window.GameServices?.CharacterService?.hydrateProfile) {
+                window.GameServices.CharacterService.hydrateProfile(profile, {
+                    username,
+                    auth: window.Auth,
+                    authUser: window.Auth?.currentUser
+                });
+            }
             Utils.showToast(`Len cap ${expResult.newLevel}! +${gainedLevels * 3} diem chi so.`, 'success');
         }
         return expResult;
     },
 
-    getRpgStatMeta: () => ({
-        str: { label: 'Lực', icon: '💪', desc: 'Tăng sát thương vật lý, hợp Kiếm Tông.' },
-        int: { label: 'Pháp', icon: '🔮', desc: 'Tăng sát thương pháp thuật, hợp Pháp Tông.' },
-        agi: { label: 'Ảnh', icon: '🌙', desc: 'Tăng né/crit, hợp Ảnh Sát.' },
-        vit: { label: 'Thể', icon: '🛡️', desc: 'Tăng sống sót khi đánh boss.' },
-        luck: { label: 'May', icon: '🍀', desc: 'Tăng tỉ lệ rơi đồ hiếm.' }
-    }),
+    getRpgStatMeta: () => {
+        if (window.GameServices?.CharacterService?.getStatMeta) {
+            return window.GameServices.CharacterService.getStatMeta();
+        }
+        return {
+            str: { label: 'Luc', icon: 'STR', desc: 'Tang sat thuong vat ly.' },
+            int: { label: 'Phep', icon: 'ENE', desc: 'Tang sat thuong phep.' },
+            agi: { label: 'Nhanh', icon: 'AGI', desc: 'Tang ne tranh va chi mang.' },
+            vit: { label: 'The', icon: 'VIT', desc: 'Tang HP va phong thu.' },
+            luck: { label: 'May', icon: 'LUK', desc: 'Tang ti le roi do hiem.' }
+        };
+    },
 
     renderRpgStatsPanel: (profile) => {
         const meta = LobbyNeon.getRpgStatMeta();
@@ -5092,10 +5131,23 @@ window.LobbyNeon = {
             Utils.showToast('Chưa có điểm chỉ số. Lên cấp hoặc thắng boss để nhận thêm.', 'warning');
             return;
         }
-        profile.stats[statKey] = Number(profile.stats[statKey] || 1) + 1;
-        profile.statPoints = Number(profile.statPoints || 0) - 1;
+        if (window.GameServices?.CharacterService?.addStatPoint) {
+            const result = window.GameServices.CharacterService.addStatPoint(profile, statKey, 1);
+            if (!result.ok) {
+                Utils.showToast('Khong the cong diem chi so luc nay.', 'warning');
+                return;
+            }
+            window.GameServices.CharacterService.hydrateProfile(profile, {
+                username: LobbyNeon.getRpgUsername(),
+                auth: window.Auth,
+                authUser: window.Auth?.currentUser
+            });
+        } else {
+            profile.stats[statKey] = Number(profile.stats[statKey] || 1) + 1;
+            profile.statPoints = Number(profile.statPoints || 0) - 1;
+        }
         await LobbyNeon.saveMyRpgProfile(profile, data);
-        Utils.showToast(`Đã cộng +1 ${meta[statKey].label}.`, 'success');
+        Utils.showToast(`Da cong +1 ${meta[statKey]?.label || statKey}.`, 'success');
         LobbyNeon.renderRpgPanel();
     },
 
@@ -5106,23 +5158,36 @@ window.LobbyNeon = {
             Utils.showToast('Chưa có điểm chỉ số để tự cộng.', 'warning');
             return;
         }
-        const plans = {
-            kiem_tong: ['str', 'vit', 'agi', 'luck'],
-            phap_tong: ['int', 'luck', 'vit', 'agi'],
-            anh_sat: ['agi', 'luck', 'str', 'vit'],
-            thien_y: ['vit', 'int', 'luck', 'agi']
-        };
-        const plan = plans[profile.classId] || plans.kiem_tong;
-        let index = 0;
-        while (points > 0) {
-            const key = plan[index % plan.length];
-            profile.stats[key] = Number(profile.stats[key] || 1) + 1;
-            points--;
-            index++;
+        if (window.GameServices?.CharacterService?.autoAllocateStats) {
+            const result = window.GameServices.CharacterService.autoAllocateStats(profile);
+            if (!result.ok) {
+                Utils.showToast('Khong the tu cong diem luc nay.', 'warning');
+                return;
+            }
+            window.GameServices.CharacterService.hydrateProfile(profile, {
+                username: LobbyNeon.getRpgUsername(),
+                auth: window.Auth,
+                authUser: window.Auth?.currentUser
+            });
+        } else {
+            const plans = {
+                kiem_tong: ['str', 'vit', 'agi', 'luck'],
+                phap_tong: ['int', 'luck', 'vit', 'agi'],
+                anh_sat: ['agi', 'luck', 'str', 'vit'],
+                thien_y: ['vit', 'int', 'luck', 'agi']
+            };
+            const plan = plans[profile.classId] || plans.kiem_tong;
+            let index = 0;
+            while (points > 0) {
+                const key = plan[index % plan.length];
+                profile.stats[key] = Number(profile.stats[key] || 1) + 1;
+                points--;
+                index++;
+            }
+            profile.statPoints = 0;
         }
-        profile.statPoints = 0;
         await LobbyNeon.saveMyRpgProfile(profile, data);
-        Utils.showToast('Đã tự cộng điểm theo môn phái.', 'success');
+        Utils.showToast('Da tu cong diem theo mon phai.', 'success');
         LobbyNeon.renderRpgPanel();
     },
 
@@ -5134,11 +5199,13 @@ window.LobbyNeon = {
     },
 
     getRpgBossWinChance: (profile, zone) => {
+        const characterStats = LobbyNeon.getRpgCharacterStats(profile);
+        const totalStats = characterStats?.totalStats || {};
         const stats = profile?.stats || {};
         const playerPower = LobbyNeon.getRpgPower(profile);
         const bossPower = LobbyNeon.getRpgBossPower(zone);
-        const vitBonus = Number(stats.vit || 1) * 0.006;
-        const luckBonus = Number(stats.luck || 1) * 0.004;
+        const vitBonus = Number(totalStats.vitality || stats.vit || 1) * 0.006;
+        const luckBonus = Number(totalStats.luck || stats.luck || 1) * 0.004;
         const ratio = playerPower / Math.max(1, bossPower);
         return Math.max(0.12, Math.min(0.92, 0.26 + ratio * 0.36 + vitBonus + luckBonus));
     },
@@ -5308,16 +5375,19 @@ window.LobbyNeon = {
 
     getRpgSkillDamage: (profile, skin) => {
         const classCfg = LobbyNeon.rpgClasses[profile?.classId] || LobbyNeon.rpgClasses.kiem_tong;
-        const level = Auth.currentUser?.level || 1;
+        const characterStats = LobbyNeon.getRpgCharacterStats(profile);
+        const level = characterStats?.level || Auth.currentUser?.level || 1;
         const base = Number(skin?.damage || 32);
+        const totalStats = characterStats?.totalStats || {};
         const stats = profile?.stats || {};
         const mainStat = profile?.classId === 'phap_tong'
-            ? Number(stats.int || 1)
+            ? Number(totalStats.energy || stats.int || 1)
             : profile?.classId === 'anh_sat'
-                ? Number(stats.agi || 1)
-                : Number(stats.str || 1);
+                ? Number(totalStats.agility || stats.agi || 1)
+                : Number(totalStats.strength || stats.str || 1);
         const skinLevel = Math.max(1, Number(profile?.skinLevels?.[skin?.id] || 1));
-        return Math.max(12, Math.round(base + level * 4 + mainStat * 5 + (classCfg.expMult || 1) * 7 + (skinLevel - 1) * 8));
+        const serviceDamage = Number(characterStats?.derived?.damage || 0);
+        return Math.max(12, Math.round(base + level * 4 + mainStat * 5 + serviceDamage * 0.18 + (classCfg.expMult || 1) * 7 + (skinLevel - 1) * 8));
     },
 
     getRpgSkinCooldown: (skin) => Math.max(800, Number(skin?.cooldownMs || 1200)),
@@ -5749,15 +5819,17 @@ window.LobbyNeon = {
     renderRpgTopPanel: (profile) => {
         const classCfg = LobbyNeon.rpgClasses[profile.classId] || LobbyNeon.rpgClasses.kiem_tong;
         const equippedSkin = LobbyNeon.rpgSkins[profile.equippedSkin] || LobbyNeon.rpgSkins.basic;
-        const level = Auth.currentUser?.level || 1;
-        const exp = Auth.currentUser?.exp || 0;
-        const currentExp = Auth.getExpForLevel ? Auth.getExpForLevel(level) : 0;
-        const nextExp = Auth.getExpForLevel ? Auth.getExpForLevel(level + 1) : Math.max(1, exp + 1);
+        const characterStats = LobbyNeon.getRpgCharacterStats(profile);
+        const level = characterStats?.level || Auth.currentUser?.level || 1;
+        const exp = characterStats?.exp ?? Auth.currentUser?.exp ?? 0;
+        const currentExp = characterStats?.currentLevelExp ?? (Auth.getExpForLevel ? Auth.getExpForLevel(level) : 0);
+        const nextExp = characterStats?.nextExp ?? (Auth.getExpForLevel ? Auth.getExpForLevel(level + 1) : Math.max(1, exp + 1));
         const expInLevel = Math.max(0, exp - currentExp);
         const expNeeded = Math.max(1, nextExp - currentExp);
         const expPct = Math.max(0, Math.min(100, (expInLevel / expNeeded) * 100));
-        const hp = Math.round(1200 + Number(profile.stats?.vit || 1) * 280 + level * 120);
-        const mp = Math.round(700 + Number(profile.stats?.int || 1) * 210 + level * 82);
+        const hp = characterStats?.derived?.maxHp || Math.round(1200 + Number(profile.stats?.vit || 1) * 280 + level * 120);
+        const mp = characterStats?.derived?.maxMp || Math.round(700 + Number(profile.stats?.int || 1) * 210 + level * 82);
+        const power = characterStats?.combatPower || LobbyNeon.getRpgPower(profile);
         return `
             <div class="rpg-mu-top">
                 <div class="rpg-mu-identity">
@@ -5767,7 +5839,7 @@ window.LobbyNeon = {
                         <div class="rpg-mu-level">Lv. ${level} · ${equippedSkin.icon} ${LobbyNeon.escapeHtml(equippedSkin.name)}</div>
                     </div>
                 </div>
-                <div class="rpg-mu-power">LUC CHIEN ${LobbyNeon.getRpgPower(profile).toLocaleString('vi-VN')}</div>
+                <div class="rpg-mu-power">LUC CHIEN ${power.toLocaleString('vi-VN')}</div>
                 <div class="rpg-mu-bars">
                     <div class="rpg-mu-bar exp"><span style="width:${expPct}%;"></span><b>EXP ${expInLevel.toLocaleString('vi-VN')} / ${expNeeded.toLocaleString('vi-VN')} (${expPct.toFixed(1)}%)</b></div>
                     <div class="rpg-mu-bar hp"><span style="width:100%;"></span><b>HP ${hp.toLocaleString('vi-VN')} / ${hp.toLocaleString('vi-VN')}</b></div>
@@ -5898,10 +5970,16 @@ window.LobbyNeon = {
 
     renderRpgStatsPanel: (profile) => {
         const meta = LobbyNeon.getRpgStatMeta();
-        const stats = profile.stats || {};
+        const characterStats = LobbyNeon.getRpgCharacterStats(profile);
+        const stats = profile.stats || characterStats?.legacyStats || {};
         const points = Number(profile.statPoints || 0);
-        const power = LobbyNeon.getRpgPower(profile);
-        const effects = {
+        const power = characterStats?.combatPower || LobbyNeon.getRpgPower(profile);
+        const effects = characterStats?.derived ? {
+            damage: characterStats.derived.damage,
+            defense: characterStats.derived.defense,
+            crit: characterStats.derived.crit,
+            dodge: characterStats.derived.dodge
+        } : {
             damage: Math.round(Number(stats.str || 1) * 18 + Number(stats.int || 1) * 20),
             defense: Math.round(Number(stats.vit || 1) * 22 + Number(stats.agi || 1) * 8),
             crit: Math.min(65, Math.round(5 + Number(stats.agi || 1) * 1.2 + Number(stats.luck || 1) * .9)),
