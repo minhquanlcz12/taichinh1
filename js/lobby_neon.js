@@ -4669,6 +4669,8 @@ window.LobbyNeon = {
             basic: 1
         },
         equipmentBag: [],
+        inventorySlots: [],
+        itemLogs: [],
         autoSettings: {
             lootMinRarity: 'white',
             autoSellMaxRarity: 'none',
@@ -4726,6 +4728,8 @@ window.LobbyNeon = {
                     type: 'equipment'
                 }))
                 : [],
+            inventorySlots: Array.isArray(profile?.inventorySlots) ? profile.inventorySlots.slice(0, 120) : [],
+            itemLogs: Array.isArray(profile?.itemLogs) ? profile.itemLogs.slice(0, 80) : [],
             lootLog: Array.isArray(profile?.lootLog) ? profile.lootLog.slice(0, 12) : []
         };
         if (!LobbyNeon.rpgClasses[merged.classId]) merged.classId = 'kiem_tong';
@@ -4756,6 +4760,12 @@ window.LobbyNeon = {
             merged.stats[key] = Math.max(1, Number(merged.stats[key] || 1));
         });
         merged.statPoints = Math.max(0, Number(merged.statPoints || 0));
+        if (window.GameServices?.InventoryService?.ensureInventoryProfile) {
+            window.GameServices.InventoryService.ensureInventoryProfile(merged, {
+                username,
+                ownerId: username
+            });
+        }
         if (window.GameServices?.CharacterService?.hydrateProfile) {
             window.GameServices.CharacterService.hydrateProfile(merged, {
                 username,
@@ -4815,6 +4825,11 @@ window.LobbyNeon = {
     getRpgRarityRank: (rarity) => Number(LobbyNeon.rpgEquipmentRarities[rarity]?.rank || 0),
 
     getRpgEquipmentSaleValue: (item) => {
+        if (window.GameServices?.ItemService?.getSaleValue) {
+            return window.GameServices.ItemService.getSaleValue(item, {
+                getSaleValue: null
+            });
+        }
         const meta = LobbyNeon.rpgEquipmentRarities[item?.rarity] || LobbyNeon.rpgEquipmentRarities.white;
         return Math.max(1, Math.round(Number(meta.sale || 10) + Number(item?.power || 0) * 0.08 + Number(item?.levelReq || 1) * 2));
     },
@@ -4868,17 +4883,32 @@ window.LobbyNeon = {
         });
         const attrPower = attrLines.reduce((sum, line) => sum + Number(line.value || 0), 0);
         const power = Math.round(levelReq * 42 + Number(zone?.rewardPoints || 1) * 58 + rank * 92 + attrPower * 4);
-        return {
-            uid: `eq_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
+        const uid = `eq_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+        const rawItem = {
+            id: uid,
+            itemInstanceId: uid,
+            uid,
             type: 'equipment',
             slot: slot.id,
             slotLabel: slot.label,
+            itemType: 'equipment',
+            templateId: `${slot.id}_${rarity.id}_${levelReq}`,
+            ownerId: profile?.username || LobbyNeon.getRpgUsername(),
             icon: slot.icon,
             name: `${rarity.name} ${slot.label} ${classCfg.name || ''}`.trim(),
             rarity: rarity.id,
             rarityName: rarity.name,
             color: rarity.color,
+            level: 0,
             levelReq,
+            durability: 100,
+            maxDurability: 100,
+            hasLuck: Math.random() < Math.min(0.22, 0.04 + rank * 0.025),
+            hasSkill: slot.id === 'weapon' && Math.random() < Math.min(0.18, 0.03 + rank * 0.02),
+            excellentOptions: [],
+            socketOptions: [],
+            bindStatus: 'none',
+            locked: false,
             power,
             attrLines,
             source,
@@ -4886,6 +4916,12 @@ window.LobbyNeon = {
             zoneName: zone?.name || '',
             createdAt: Date.now()
         };
+        return window.GameServices?.ItemService?.normalizeItemInstance
+            ? window.GameServices.ItemService.normalizeItemInstance(rawItem, {
+                username: profile?.username || LobbyNeon.getRpgUsername(),
+                ownerId: profile?.username || LobbyNeon.getRpgUsername()
+            })
+            : rawItem;
     },
 
     rollRpgEquipmentDrops: (zone, profile, source = 'monster', options = {}) => {
@@ -4916,21 +4952,27 @@ window.LobbyNeon = {
 
     addRpgEquipmentDrop: (profile, item) => {
         if (!profile || !item) return { kept: false, sold: false, skipped: true, gold: 0, item };
+        const normalizedItem = window.GameServices?.ItemService?.normalizeItemInstance
+            ? window.GameServices.ItemService.normalizeItemInstance(item, {
+                username: profile.username || LobbyNeon.getRpgUsername(),
+                ownerId: profile.username || LobbyNeon.getRpgUsername()
+            })
+            : item;
         if (!Array.isArray(profile.equipmentBag)) profile.equipmentBag = [];
         if (!profile.inventory) profile.inventory = {};
         const settings = profile.autoSettings || {};
-        const rank = LobbyNeon.getRpgRarityRank(item.rarity);
+        const rank = LobbyNeon.getRpgRarityRank(normalizedItem.rarity);
         const minRank = LobbyNeon.getRpgRarityRank(settings.lootMinRarity || 'white') || 1;
         if (rank < minRank) {
-            return { kept: false, sold: false, skipped: true, gold: 0, item };
+            return { kept: false, sold: false, skipped: true, gold: 0, item: normalizedItem };
         }
         const sellRank = settings.autoSellMaxRarity === 'none' ? 0 : LobbyNeon.getRpgRarityRank(settings.autoSellMaxRarity);
         if (sellRank > 0 && rank <= sellRank) {
-            const gold = LobbyNeon.getRpgEquipmentSaleValue(item);
+            const gold = LobbyNeon.getRpgEquipmentSaleValue(normalizedItem);
             profile.inventory.goldDust = Number(profile.inventory.goldDust || 0) + gold;
-            return { kept: false, sold: true, skipped: false, gold, item };
+            return { kept: false, sold: true, skipped: false, gold, item: normalizedItem };
         }
-        profile.equipmentBag.unshift(item);
+        profile.equipmentBag.unshift(normalizedItem);
         let soldOverflow = 0;
         if (profile.equipmentBag.length > 120) {
             profile.equipmentBag.sort((a, b) => LobbyNeon.getRpgRarityRank(b.rarity) - LobbyNeon.getRpgRarityRank(a.rarity) || Number(b.power || 0) - Number(a.power || 0));
@@ -4938,7 +4980,7 @@ window.LobbyNeon = {
             soldOverflow = overflow.reduce((sum, eq) => sum + LobbyNeon.getRpgEquipmentSaleValue(eq), 0);
             profile.inventory.goldDust = Number(profile.inventory.goldDust || 0) + soldOverflow;
         }
-        return { kept: true, sold: false, skipped: false, gold: soldOverflow, item };
+        return { kept: true, sold: false, skipped: false, gold: soldOverflow, item: normalizedItem };
     },
 
     applyRpgRewardToProfile: (profile, reward) => {
@@ -4949,9 +4991,9 @@ window.LobbyNeon = {
         const result = { equipment: [], soldEquipment: [], skippedEquipment: [], soldGold: 0 };
         (reward?.equipment || reward?.equipmentDrops || []).forEach(item => {
             const applied = LobbyNeon.addRpgEquipmentDrop(profile, item);
-            if (applied.kept) result.equipment.push(item);
-            if (applied.sold) result.soldEquipment.push(item);
-            if (applied.skipped) result.skippedEquipment.push(item);
+            if (applied.kept) result.equipment.push(applied.item || item);
+            if (applied.sold) result.soldEquipment.push(applied.item || item);
+            if (applied.skipped) result.skippedEquipment.push(applied.item || item);
             result.soldGold += Number(applied.gold || 0);
         });
         return result;
@@ -5501,6 +5543,48 @@ window.LobbyNeon = {
     getRpgEquipmentSlots: (profile) => {
         const classCfg = LobbyNeon.rpgClasses[profile.classId] || LobbyNeon.rpgClasses.kiem_tong;
         const skin = LobbyNeon.rpgSkins[profile.equippedSkin] || LobbyNeon.rpgSkins.basic;
+        if (window.GameServices?.InventoryService?.getEquipmentSlotEntries) {
+            const serviceSlots = window.GameServices.InventoryService.getEquipmentSlotEntries(profile, {
+                username: profile.username || LobbyNeon.getRpgUsername(),
+                ownerId: profile.username || LobbyNeon.getRpgUsername()
+            });
+            const fallbackIcons = {
+                weapon: skin.icon,
+                offhand: 'SHD',
+                helm: classCfg.icon,
+                armor: 'ARM',
+                pants: 'PNT',
+                gloves: 'GLV',
+                boots: 'BOT',
+                wings: 'WNG',
+                pendant: 'PND',
+                ringLeft: 'R1',
+                ringRight: 'R2',
+                pet: 'PET'
+            };
+            const fallbackColors = {
+                weapon: skin.color,
+                helm: classCfg.color,
+                armor: '#ec4899',
+                pants: '#60a5fa',
+                gloves: '#a78bfa',
+                boots: '#38bdf8',
+                wings: '#22d3ee',
+                pendant: '#fbbf24',
+                ringLeft: '#f472b6',
+                ringRight: '#fb7185',
+                offhand: '#94a3b8',
+                pet: '#86efac'
+            };
+            return serviceSlots.map(slot => ({
+                ...slot,
+                icon: slot.icon || fallbackIcons[slot.id] || 'EQ',
+                color: slot.color || fallbackColors[slot.id] || '#94a3b8',
+                name: slot.name || (slot.id === 'weapon' ? skin.name : 'Chua trang bi'),
+                level: slot.item ? (slot.level || '') : '',
+                empty: !slot.item
+            }));
+        }
         const equipment = profile.equipment || {};
         const build = (id, label, icon, color, fallbackName) => {
             const item = equipment[id] || {};
@@ -5568,11 +5652,20 @@ window.LobbyNeon = {
         LobbyNeon.renderRpgPanel();
     },
 
+    findRpgEquipmentItem: (profile, itemId) => {
+        const id = String(itemId || '');
+        const getId = (item) => window.GameServices?.ItemService?.getItemId
+            ? window.GameServices.ItemService.getItemId(item)
+            : (item?.id || item?.itemInstanceId || item?.uid);
+        return (profile?.equipmentBag || []).find(eq => String(getId(eq)) === id || String(eq?.uid) === id)
+            || Object.values(profile?.equipment || {}).find(eq => String(getId(eq)) === id || String(eq?.uid) === id);
+    },
+
     selectRpgBagItem: async (key, showInfo = true) => {
         const { profile } = await LobbyNeon.getMyRpgProfile();
         if (String(key || '').startsWith('eq:')) {
             const uid = String(key).slice(3);
-            const item = (profile.equipmentBag || []).find(eq => eq.uid === uid);
+            const item = LobbyNeon.findRpgEquipmentItem(profile, uid);
             if (!item) return;
             LobbyNeon.state.rpgSelectedItemKey = key;
             LobbyNeon.state.rpgBagOpen = true;
@@ -5593,7 +5686,7 @@ window.LobbyNeon = {
 
     showRpgEquipmentInfo: async (uid) => {
         const { profile } = await LobbyNeon.getMyRpgProfile();
-        const item = (profile.equipmentBag || []).find(eq => eq.uid === uid) || Object.values(profile.equipment || {}).find(eq => eq?.uid === uid);
+        const item = LobbyNeon.findRpgEquipmentItem(profile, uid);
         if (!item) return;
         const rarity = LobbyNeon.rpgEquipmentRarities[item.rarity] || LobbyNeon.rpgEquipmentRarities.white;
         const attrs = (item.attrLines || []).map(line => `
@@ -5629,6 +5722,37 @@ window.LobbyNeon = {
 
     equipRpgEquipment: async (uid) => {
         const { data, profile } = await LobbyNeon.getMyRpgProfile();
+        if (window.GameServices?.InventoryService?.equipItem) {
+            const result = window.GameServices.InventoryService.equipItem(profile, uid, {
+                username: LobbyNeon.getRpgUsername(),
+                ownerId: LobbyNeon.getRpgUsername(),
+                level: Auth.currentUser?.level || 1
+            });
+            if (!result.ok) {
+                const messages = {
+                    not_in_bag: 'Khong tim thay trang bi trong tui.',
+                    locked_item: 'Trang bi dang khoa, khong the mac.',
+                    wrong_owner: 'Trang bi khong thuoc ve nhan vat nay.',
+                    invalid_slot: 'Slot trang bi khong hop le.',
+                    level_required: `Can cap ${result.requiredLevel || '?'} de mac mon nay.`
+                };
+                Utils.showToast(messages[result.reason] || 'Khong the mac trang bi luc nay.', 'warning');
+                return;
+            }
+            if (window.GameServices?.CharacterService?.hydrateProfile) {
+                window.GameServices.CharacterService.hydrateProfile(profile, {
+                    username: LobbyNeon.getRpgUsername(),
+                    auth: window.Auth,
+                    authUser: window.Auth?.currentUser
+                });
+            }
+            LobbyNeon.state.rpgSelectedItemKey = `eq:${result.item.uid || result.item.id}`;
+            await LobbyNeon.saveMyRpgProfile(profile, data);
+            Utils.showToast(`Da mac ${result.item.name}.`, 'success');
+            LobbyNeon.renderRpgPanel();
+            return;
+        }
+
         const bag = Array.isArray(profile.equipmentBag) ? profile.equipmentBag : [];
         const index = bag.findIndex(item => item.uid === uid);
         if (index < 0) {
@@ -5655,6 +5779,36 @@ window.LobbyNeon = {
 
     sellRpgEquipment: async (uid) => {
         const { data, profile } = await LobbyNeon.getMyRpgProfile();
+        if (window.GameServices?.InventoryService?.sellItem) {
+            const result = window.GameServices.InventoryService.sellItem(profile, uid, {
+                username: LobbyNeon.getRpgUsername(),
+                ownerId: LobbyNeon.getRpgUsername()
+            });
+            if (!result.ok) {
+                const messages = {
+                    not_in_bag: 'Khong tim thay trang bi trong tui.',
+                    locked_item: 'Trang bi dang khoa, khong the ban.',
+                    wrong_owner: 'Trang bi khong thuoc ve nhan vat nay.'
+                };
+                Utils.showToast(messages[result.reason] || 'Khong the ban trang bi luc nay.', 'warning');
+                return;
+            }
+            if (LobbyNeon.state.rpgSelectedItemKey === `eq:${uid}` || LobbyNeon.state.rpgSelectedItemKey === `eq:${result.item.uid}` || LobbyNeon.state.rpgSelectedItemKey === `eq:${result.item.id}`) {
+                LobbyNeon.state.rpgSelectedItemKey = null;
+            }
+            if (window.GameServices?.CharacterService?.hydrateProfile) {
+                window.GameServices.CharacterService.hydrateProfile(profile, {
+                    username: LobbyNeon.getRpgUsername(),
+                    auth: window.Auth,
+                    authUser: window.Auth?.currentUser
+                });
+            }
+            await LobbyNeon.saveMyRpgProfile(profile, data);
+            Utils.showToast(`Da ban ${result.item.name}, nhan +${result.gold.toLocaleString('vi-VN')} tinh kim.`, 'success');
+            LobbyNeon.renderRpgPanel();
+            return;
+        }
+
         const bag = Array.isArray(profile.equipmentBag) ? profile.equipmentBag : [];
         const index = bag.findIndex(item => item.uid === uid);
         if (index < 0) {
