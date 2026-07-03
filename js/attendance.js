@@ -3021,6 +3021,29 @@ const Attendance = {
         const emptyDaysBefore = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1;
         const totalDaysInMonth = new Date(year, month + 1, 0).getDate();
 
+        // Hàm hỗ trợ tính toán các ngày nghỉ phép thực tế trong chu kỳ (bỏ qua Chủ nhật)
+        const getLeaveDates = (startDateStr, days) => {
+            const dates = [];
+            let currentDate = new Date(startDateStr);
+            let daysRemaining = parseFloat(days) || 1.0;
+            
+            let securityCounter = 0; // Tránh vòng lặp vô hạn
+            while (daysRemaining > 0 && securityCounter < 30) {
+                securityCounter++;
+                const y = currentDate.getFullYear();
+                const m = String(currentDate.getMonth() + 1).padStart(2, '0');
+                const d = String(currentDate.getDate()).padStart(2, '0');
+                const dateStr = `${y}-${m}-${d}`;
+                
+                if (currentDate.getDay() !== 0) { // Bỏ qua Chủ nhật
+                    dates.push({ dateStr, weight: daysRemaining >= 1 ? 1.0 : 0.5 });
+                    daysRemaining -= 1.0;
+                }
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+            return dates;
+        };
+
         let daysHtml = '';
         
         // Render empty cells for offset
@@ -3032,16 +3055,55 @@ const Attendance = {
         for (let d = 1; d <= totalDaysInMonth; d++) {
             const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
             
-            let status = 'none'; // none, on_time, late, late_excused, leave, absent, sunday
+            let status = 'none'; // none, on_time, late, late_excused, leave, absent, sunday...
             let tooltip = 'Chưa có ghi nhận';
             
-            // Check leaves first
-            const isLeave = allLeaves.find(l => l && Attendance.sameUser(l.username, user.username) && l.status === 'approved' && (l.startDate <= dateStr && l.endDate >= dateStr || l.date === dateStr));
-            if (isLeave) {
+            // Lấy tất cả phép đã duyệt của user
+            const leavesForDate = (allLeaves || []).filter(l => 
+                l && 
+                Attendance.sameUser(l.username, user.username) && 
+                l.status === 'approved'
+            );
+            
+            let leaveWeight = 0;
+            let leaveReason = '';
+            leavesForDate.forEach(l => {
+                const covered = getLeaveDates(l.startDate, l.days);
+                const match = covered.find(c => c.dateStr === dateStr);
+                if (match) {
+                    leaveWeight += match.weight;
+                    leaveReason = l.reason || 'Nghỉ phép';
+                }
+            });
+
+            // Lấy dữ liệu điểm danh của ngày
+            const records = (allData || []).filter(r => r && Attendance.sameUser(r.username, user.username) && r.dateStr === dateStr);
+
+            if (leaveWeight >= 1.0) {
+                // Nghỉ phép cả ngày
                 status = 'leave';
-                tooltip = `Nghỉ phép: ${isLeave.reason || 'Không lý do'}`;
+                tooltip = `Nghỉ phép cả ngày: ${leaveReason}`;
+            } else if (leaveWeight > 0) {
+                // Nghỉ phép nửa ngày (0.5 ngày)
+                if (records.length > 0) {
+                    const hasLate = records.some(r => r.status === 'late');
+                    const hasExcused = records.some(r => r.status === 'late_excused');
+                    if (hasLate) {
+                        status = 'half_leave_late';
+                        tooltip = `Nghỉ nửa ngày (${leaveReason}) & Đi làm muộn`;
+                    } else if (hasExcused) {
+                        status = 'half_leave_late_excused';
+                        tooltip = `Nghỉ nửa ngày (${leaveReason}) & Đi muộn có phép`;
+                    } else {
+                        status = 'half_leave_on_time';
+                        tooltip = `Nghỉ nửa ngày (${leaveReason}) & Đi làm đúng giờ`;
+                    }
+                } else {
+                    status = 'half_leave_absent';
+                    tooltip = `Nghỉ nửa ngày (${leaveReason}) & Vắng mặt ca làm việc còn lại`;
+                }
             } else {
-                const records = allData.filter(r => r && Attendance.sameUser(r.username, user.username) && r.dateStr === dateStr);
+                // Ngày đi làm bình thường
                 if (records.length > 0) {
                     const hasLate = records.some(r => r.status === 'late');
                     const hasExcused = records.some(r => r.status === 'late_excused');
@@ -3077,11 +3139,15 @@ const Attendance = {
             else if (status === 'late_excused') statusIcon = '⏰';
             else if (status === 'leave') statusIcon = '🌴';
             else if (status === 'absent') statusIcon = '⚠️';
+            else if (status === 'half_leave_on_time') statusIcon = '✅🌴';
+            else if (status === 'half_leave_late') statusIcon = '❌🌴';
+            else if (status === 'half_leave_late_excused') statusIcon = '⏰🌴';
+            else if (status === 'half_leave_absent') statusIcon = '⚠️🌴';
 
             daysHtml += `
                 <div class="calendar-day ${status}" title="${d}/${month+1}/${year} - ${tooltip}">
                     <span class="day-number">${d}</span>
-                    ${statusIcon ? `<span class="day-status-icon" style="font-size: 10px; margin-top: 2px;">${statusIcon}</span>` : ''}
+                    ${statusIcon ? `<span class="day-status-icon" style="font-size: 9px; margin-top: 2px; font-weight: 700; letter-spacing: -1px;">${statusIcon}</span>` : ''}
                 </div>
             `;
         }
@@ -3170,6 +3236,26 @@ const Attendance = {
                     color: rgba(255,255,255,0.2);
                     background: rgba(255,255,255,0.01);
                 }
+                .calendar-day.half_leave_on_time {
+                    background: linear-gradient(135deg, rgba(46, 204, 113, 0.12) 50%, rgba(168, 85, 247, 0.12) 50%);
+                    border-color: rgba(168, 85, 247, 0.3);
+                    color: #2ecc71;
+                }
+                .calendar-day.half_leave_late {
+                    background: linear-gradient(135deg, rgba(231, 76, 60, 0.12) 50%, rgba(168, 85, 247, 0.12) 50%);
+                    border-color: rgba(168, 85, 247, 0.3);
+                    color: #e74c3c;
+                }
+                .calendar-day.half_leave_late_excused {
+                    background: linear-gradient(135deg, rgba(0, 173, 181, 0.12) 50%, rgba(168, 85, 247, 0.12) 50%);
+                    border-color: rgba(168, 85, 247, 0.3);
+                    color: #00adb5;
+                }
+                .calendar-day.half_leave_absent {
+                    background: linear-gradient(135deg, rgba(243, 156, 18, 0.12) 50%, rgba(168, 85, 247, 0.12) 50%);
+                    border-color: rgba(168, 85, 247, 0.3);
+                    color: #f39c12;
+                }
                 .day-number {
                     font-size: 12px;
                     font-weight: 700;
@@ -3177,7 +3263,7 @@ const Attendance = {
                 .calendar-legend {
                     display: flex;
                     justify-content: center;
-                    gap: 12px;
+                    gap: 10px;
                     margin-top: 15px;
                     flex-wrap: wrap;
                     font-size: 10px;
@@ -3213,6 +3299,7 @@ const Attendance = {
                     <div class="legend-item">❌ Muộn phạt</div>
                     <div class="legend-item">🌴 Nghỉ phép</div>
                     <div class="legend-item">⚠️ Vắng mặt</div>
+                    <div class="legend-item" style="border-left: 1px solid rgba(255,255,255,0.1); padding-left: 8px;">⚖️ Nửa công nửa phép</div>
                 </div>
             </div>
         `;
