@@ -3036,12 +3036,12 @@ const Attendance = {
             let tooltip = 'Chưa có ghi nhận';
             
             // Check leaves first
-            const isLeave = allLeaves.find(l => l.username === user.username && l.status === 'approved' && (l.startDate <= dateStr && l.endDate >= dateStr || l.date === dateStr));
+            const isLeave = allLeaves.find(l => l && Attendance.sameUser(l.username, user.username) && l.status === 'approved' && (l.startDate <= dateStr && l.endDate >= dateStr || l.date === dateStr));
             if (isLeave) {
                 status = 'leave';
                 tooltip = `Nghỉ phép: ${isLeave.reason || 'Không lý do'}`;
             } else {
-                const records = allData.filter(r => r.username === user.username && r.dateStr === dateStr);
+                const records = allData.filter(r => r && Attendance.sameUser(r.username, user.username) && r.dateStr === dateStr);
                 if (records.length > 0) {
                     const hasLate = records.some(r => r.status === 'late');
                     const hasExcused = records.some(r => r.status === 'late_excused');
