@@ -6121,6 +6121,7 @@ window.LobbyNeon = {
     showRpgBossBattleScene: (zone, battle) => {
         const map = document.getElementById('lobby-map');
         if (!map || !zone || !battle) return;
+        LobbyNeon.stopRpgAutoFarm();
         LobbyNeon.enterRpgCombatScene(zone.id, 'boss');
         document.querySelectorAll('.rpg-boss-scene').forEach(el => el.remove());
 
@@ -6845,7 +6846,7 @@ window.LobbyNeon = {
                     <div class="rpg-equip-grid">
                         ${slots.map(slot => `
                             <div class="rpg-equip-slot" style="--equip-color:${slot.color};">
-                                <div class="rpg-equip-icon">${LobbyNeon.renderRpgSlotGlyph(slot.id)}</div>
+                                <div class="rpg-equip-icon">${slot.id ? LobbyNeon.renderRpgSlotGlyph(slot.id) : slot.icon}</div>
                                 <div>
                                     <div class="rpg-equip-label">${slot.label}</div>
                                     <div class="rpg-equip-name">${LobbyNeon.escapeHtml(slot.name)}</div>
@@ -7665,6 +7666,7 @@ window.LobbyNeon = {
     },
 
     spawnRpgWildMonster: (zoneId = null, nearPlayer = false) => {
+        if (LobbyNeon.state.rpgSceneMode === 'boss') return null;
         const zones = LobbyNeon.getRpgUnlockedZones();
         if (!zones.length) return null;
         const zone = LobbyNeon.rpgZones[zoneId] || LobbyNeon.getRpgAutoSpawnZone() || LobbyNeon.rpgZones.training_forest;
@@ -7985,6 +7987,11 @@ window.LobbyNeon = {
             if (options.silent) return;
             Utils.showToast('Bạn cần chọn môn phái chính thức trước khi farm quái.', 'warning');
             LobbyNeon.openRpgHub();
+            return;
+        }
+        if (LobbyNeon.state.rpgSceneMode === 'boss') {
+            if (options.auto) LobbyNeon.stopRpgAutoFarm();
+            if (!options.silent) Utils.showToast('Dang trong Boss Arena, khong goi quai thuong.', 'info');
             return;
         }
 
@@ -8340,6 +8347,7 @@ window.LobbyNeon = {
         for (let i = 0; i < LobbyNeon.state.rpgMaxWildMonsters; i++) {
             LobbyNeon.spawnRpgWildMonster(zone.id, i === 0);
         }
+        LobbyNeon.startRpgWildMonsters();
         Utils.showToast(`Da vao ${zone.name}. Quai se doi sang ${zone.monster}.`, 'success');
         if (LobbyNeon.state.activeHubTab === 'rpg') LobbyNeon.renderRpgPanel();
         LobbyNeon.updateRpgFarmHud();
