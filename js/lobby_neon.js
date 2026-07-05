@@ -29,7 +29,7 @@ window.LobbyNeon = {
         rpgAutoFarm: false,
         rpgAutoFarmBusy: false,
         rpgFarmSession: null,
-        rpgMaxWildMonsters: 4,
+        rpgMaxWildMonsters: 3,
         rpgLastWildSpawnAt: 0,
         rpgLastAutoSkinId: null,
         rpgLastAutoToastAt: 0,
@@ -42,6 +42,8 @@ window.LobbyNeon = {
         rpgBagSortMode: 'rarity',
         rpgSelectedItemKey: null,
         rpgBossBattle: null,
+        rpgSceneMode: 'lobby',
+        rpgBossScene: null,
         marqueeInterval: null,
         unsubscribeMissions: null,
         notifiedMissionIds: new Set(),
@@ -213,6 +215,84 @@ window.LobbyNeon = {
             material: 'longAn',
             materialName: 'Long ấn',
             materialIcon: '🔥'
+        }
+    },
+
+    rpgEndgameZones: {
+        cache_tower: {
+            id: 'cache_tower',
+            name: 'Thap Cache Vo',
+            icon: 'T35',
+            monster: 'Golem Cache Vo',
+            color: '#14b8a6',
+            danger: 'Cap 35',
+            minLevel: 35,
+            staminaCost: 48,
+            rewardPoints: 16,
+            gold: 320,
+            material: 'daCuongHoa',
+            materialName: 'Da cuong hoa',
+            materialIcon: 'D'
+        },
+        ticket_desert: {
+            id: 'ticket_desert',
+            name: 'Sa Mac Ticket Chay',
+            icon: 'T55',
+            monster: 'Bo Cap Ticket Chay',
+            color: '#f59e0b',
+            danger: 'Cap 55',
+            minLevel: 55,
+            staminaCost: 56,
+            rewardPoints: 24,
+            gold: 520,
+            material: 'longAn',
+            materialName: 'Long an',
+            materialIcon: 'L'
+        },
+        night_build_forge: {
+            id: 'night_build_forge',
+            name: 'Ham Build Dem',
+            icon: 'T80',
+            monster: 'Phap Su Build Dem',
+            color: '#818cf8',
+            danger: 'Cap 80',
+            minLevel: 80,
+            staminaCost: 68,
+            rewardPoints: 36,
+            gold: 820,
+            material: 'longAn',
+            materialName: 'Long an',
+            materialIcon: 'L'
+        },
+        sprint_citadel: {
+            id: 'sprint_citadel',
+            name: 'Thien Thanh Sprint',
+            icon: 'T110',
+            monster: 'Thien Su Sprint',
+            color: '#38bdf8',
+            danger: 'Cap 110',
+            minLevel: 110,
+            staminaCost: 82,
+            rewardPoints: 52,
+            gold: 1250,
+            material: 'bossCore',
+            materialName: 'Loi Boss',
+            materialIcon: 'C'
+        },
+        core_kpi_sector: {
+            id: 'core_kpi_sector',
+            name: 'Vung Loi Sieu KPI',
+            icon: 'T135',
+            monster: 'Behemoth Sieu KPI',
+            color: '#ef4444',
+            danger: 'Cap 135',
+            minLevel: 135,
+            staminaCost: 100,
+            rewardPoints: 70,
+            gold: 1800,
+            material: 'bossCore',
+            materialName: 'Loi Boss',
+            materialIcon: 'C'
         }
     },
 
@@ -481,6 +561,10 @@ window.LobbyNeon = {
 
     init: () => {
         console.log("LobbyNeon initialized");
+        LobbyNeon.rpgZones = {
+            ...LobbyNeon.rpgZones,
+            ...(LobbyNeon.rpgEndgameZones || {})
+        };
     },
 
     // ========== ENTRY / EXIT ==========
@@ -535,9 +619,9 @@ window.LobbyNeon = {
         LobbyNeon.state.heartbeatInterval = setInterval(() => {
             LobbyNeon.syncMyPresence();
         }, 15000);
+        LobbyNeon.state.rpgSceneMode = 'lobby';
         LobbyNeon.startRpgWorldLoop();
-        LobbyNeon.startRpgWildMonsters();
-        LobbyNeon.applyRpgZoneTheme(LobbyNeon.rpgZones[LobbyNeon.state.selectedRpgZone] || LobbyNeon.rpgZones.training_forest);
+        LobbyNeon.applyRpgZoneTheme(null);
 
         const container = document.getElementById('lobby-map-container');
         if (container) {
@@ -582,6 +666,7 @@ window.LobbyNeon = {
         document.querySelectorAll('.rpg-wild-monster').forEach(el => el.remove());
         document.querySelectorAll('.rpg-map-overlay').forEach(el => el.remove());
         document.querySelectorAll('.rpg-map-projectile').forEach(el => el.remove());
+        document.querySelectorAll('.rpg-boss-scene').forEach(el => el.remove());
         document.querySelectorAll('.lobby-user-wrapper.rpg-world-fighting').forEach(el => el.classList.remove('rpg-world-fighting'));
         document.removeEventListener('keydown', LobbyNeon.handleLobbyKeydown);
         LobbyNeon.state.rpgMapOpen = false;
@@ -865,6 +950,54 @@ window.LobbyNeon = {
                     border-radius: 10px;
                     background: rgba(2,6,23,.72);
                     box-shadow: 0 0 24px color-mix(in srgb, var(--rpg-zone-color, #22d3ee) 26%, transparent);
+                }
+                #lobby-map[data-rpg-mode="combat"] video,
+                #lobby-map[data-rpg-mode="boss"] video {
+                    opacity: .18 !important;
+                    filter: saturate(.8) brightness(.55);
+                }
+                #lobby-map[data-rpg-mode="combat"]::before,
+                #lobby-map[data-rpg-mode="boss"]::before {
+                    content: "";
+                    position: absolute;
+                    inset: 0;
+                    z-index: 1;
+                    pointer-events: none;
+                    background:
+                        radial-gradient(circle at 18% 28%, color-mix(in srgb, var(--rpg-zone-color, #22d3ee) 34%, transparent), transparent 34%),
+                        radial-gradient(circle at 80% 15%, rgba(251,191,36,.16), transparent 30%),
+                        linear-gradient(180deg, rgba(2,6,23,.42), rgba(2,6,23,.88));
+                }
+                #lobby-map[data-rpg-mode="combat"] .lobby-click-ripple-layer,
+                #lobby-map[data-rpg-mode="boss"] .lobby-click-ripple-layer {
+                    background-image:
+                        linear-gradient(rgba(34,211,238,.07) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(34,211,238,.06) 1px, transparent 1px);
+                    background-size: 42px 42px;
+                    opacity: .72;
+                }
+                .rpg-scene-exit {
+                    position: absolute;
+                    left: 24px;
+                    top: 24px;
+                    z-index: 1102;
+                    border: 1px solid rgba(251,191,36,.48);
+                    border-radius: 10px;
+                    background: rgba(2,6,23,.78);
+                    color: #fde68a;
+                    font-size: 11px;
+                    font-weight: 1000;
+                    padding: 9px 12px;
+                    cursor: pointer;
+                    opacity: 0;
+                    transform: translateY(-8px);
+                    pointer-events: none;
+                    transition: opacity .2s ease, transform .2s ease;
+                }
+                .rpg-scene-exit.active {
+                    opacity: 1;
+                    transform: translateY(0);
+                    pointer-events: auto;
                 }
                 .rpg-grid {
                     display: grid;
@@ -1568,7 +1701,7 @@ window.LobbyNeon = {
                     position: absolute;
                     left: 50%;
                     bottom: 22px;
-                    transform: translateX(-50%);
+                    transform: translateX(-50%) translateY(14px);
                     z-index: 1100;
                     display: flex;
                     align-items: center;
@@ -1579,6 +1712,219 @@ window.LobbyNeon = {
                     border: 1.5px solid rgba(34, 211, 238, 0.34);
                     box-shadow: 0 0 22px rgba(34, 211, 238, 0.2);
                     backdrop-filter: blur(10px);
+                    opacity: 0;
+                    pointer-events: none;
+                    transition: opacity .2s ease, transform .2s ease;
+                }
+                .rpg-farm-hud.active {
+                    opacity: 1;
+                    pointer-events: auto;
+                    transform: translateX(-50%) translateY(0);
+                }
+                .rpg-boss-scene {
+                    position: absolute;
+                    inset: 90px 30px 84px;
+                    z-index: 1090;
+                    display: grid;
+                    grid-template-rows: auto 1fr auto;
+                    gap: 12px;
+                    padding: 18px;
+                    border: 1.5px solid color-mix(in srgb, var(--boss-color, #f59e0b) 64%, transparent);
+                    border-radius: 16px;
+                    background:
+                        radial-gradient(circle at 50% 18%, color-mix(in srgb, var(--boss-color, #f59e0b) 26%, transparent), transparent 32%),
+                        linear-gradient(180deg, rgba(2,6,23,.78), rgba(3,7,18,.92));
+                    box-shadow: inset 0 0 48px rgba(15,23,42,.74), 0 0 34px color-mix(in srgb, var(--boss-color, #f59e0b) 28%, transparent);
+                    backdrop-filter: blur(4px);
+                    overflow: hidden;
+                }
+                .rpg-boss-scene::before {
+                    content: "";
+                    position: absolute;
+                    inset: 0;
+                    background-image:
+                        linear-gradient(rgba(248,250,252,.06) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(248,250,252,.05) 1px, transparent 1px);
+                    background-size: 46px 46px;
+                    transform: perspective(520px) rotateX(58deg) translateY(44px);
+                    transform-origin: bottom;
+                    opacity: .42;
+                    pointer-events: none;
+                }
+                .rpg-boss-head,
+                .rpg-boss-loot-row {
+                    position: relative;
+                    z-index: 2;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 12px;
+                }
+                .rpg-boss-head h3 {
+                    margin: 0;
+                    color: #f8fafc;
+                    font-size: clamp(16px, 2vw, 24px);
+                    font-weight: 1000;
+                    letter-spacing: 0;
+                }
+                .rpg-boss-head span {
+                    color: #cbd5e1;
+                    font-size: 12px;
+                    font-weight: 800;
+                }
+                .rpg-boss-duel {
+                    position: relative;
+                    z-index: 2;
+                    display: grid;
+                    grid-template-columns: minmax(150px, 1fr) minmax(150px, .75fr) minmax(150px, 1fr);
+                    align-items: center;
+                    gap: clamp(10px, 3vw, 34px);
+                    min-height: 260px;
+                }
+                .rpg-boss-fighter {
+                    min-width: 0;
+                    display: grid;
+                    justify-items: center;
+                    gap: 8px;
+                }
+                .rpg-boss-fighter .rpg-player-sprite,
+                .rpg-boss-fighter .rpg-monster-svg {
+                    width: clamp(92px, 14vw, 150px);
+                    height: clamp(92px, 14vw, 150px);
+                    filter: drop-shadow(0 0 18px color-mix(in srgb, var(--boss-color, #22d3ee) 46%, transparent));
+                }
+                .rpg-boss-fighter.boss .rpg-monster-svg {
+                    transform: scale(1.1);
+                }
+                .rpg-boss-name {
+                    width: min(300px, 100%);
+                    display: flex;
+                    justify-content: space-between;
+                    gap: 8px;
+                    color: #f8fafc;
+                    font-size: 12px;
+                    font-weight: 1000;
+                }
+                .rpg-boss-hp {
+                    width: min(310px, 100%);
+                    height: 14px;
+                    padding: 2px;
+                    border: 1px solid rgba(248,250,252,.2);
+                    border-radius: 999px;
+                    background: rgba(2,6,23,.72);
+                    box-shadow: inset 0 0 12px rgba(0,0,0,.45);
+                    overflow: hidden;
+                }
+                .rpg-boss-hp span {
+                    display: block;
+                    width: 100%;
+                    height: 100%;
+                    border-radius: 999px;
+                    background: linear-gradient(90deg, #22c55e, #a3e635, #facc15);
+                    transition: width 2.2s cubic-bezier(.2,.82,.2,1);
+                }
+                .rpg-boss-fighter.boss .rpg-boss-hp span {
+                    background: linear-gradient(90deg, #ef4444, #f97316, #facc15);
+                }
+                .rpg-boss-action {
+                    min-height: 160px;
+                    position: relative;
+                    display: grid;
+                    place-items: center;
+                    color: #f8fafc;
+                    font-size: 13px;
+                    font-weight: 1000;
+                    text-align: center;
+                }
+                .rpg-boss-action::before,
+                .rpg-boss-action::after {
+                    content: "";
+                    position: absolute;
+                    left: 8%;
+                    right: 8%;
+                    top: 50%;
+                    height: 8px;
+                    border-radius: 999px;
+                    background: linear-gradient(90deg, transparent, var(--boss-color, #f59e0b), #fff, transparent);
+                    filter: drop-shadow(0 0 16px var(--boss-color, #f59e0b));
+                    animation: rpg-boss-slash 1.05s ease-in-out infinite;
+                }
+                .rpg-boss-action::after {
+                    transform: rotate(-18deg);
+                    animation-delay: .24s;
+                }
+                .rpg-boss-result {
+                    position: relative;
+                    z-index: 1;
+                    padding: 9px 12px;
+                    border-radius: 999px;
+                    border: 1px solid rgba(248,250,252,.18);
+                    background: rgba(2,6,23,.72);
+                    box-shadow: 0 0 20px rgba(0,0,0,.28);
+                }
+                .rpg-boss-loot-row {
+                    align-items: stretch;
+                    flex-wrap: wrap;
+                }
+                .rpg-boss-loot-title {
+                    color: #f8fafc;
+                    font-size: 12px;
+                    font-weight: 1000;
+                    min-width: 96px;
+                    display: grid;
+                    place-items: center start;
+                }
+                .rpg-boss-loot-list {
+                    flex: 1;
+                    min-width: 210px;
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 8px;
+                    align-items: center;
+                }
+                .rpg-boss-loot-chip {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 7px;
+                    min-height: 38px;
+                    padding: 7px 10px;
+                    border: 1px solid color-mix(in srgb, var(--loot-color, #22d3ee) 42%, transparent);
+                    border-radius: 10px;
+                    background: rgba(15,23,42,.72);
+                    color: #e2e8f0;
+                    font-size: 11px;
+                    font-weight: 900;
+                    box-shadow: 0 0 16px color-mix(in srgb, var(--loot-color, #22d3ee) 18%, transparent);
+                    opacity: 0;
+                    transform: translateY(8px) scale(.96);
+                    animation: rpg-boss-loot-in .36s ease forwards;
+                }
+                .rpg-boss-loot-chip .rpg-slot-glyph {
+                    width: 20px;
+                    height: 20px;
+                }
+                .rpg-boss-scene.finished .rpg-boss-action::before,
+                .rpg-boss-scene.finished .rpg-boss-action::after {
+                    animation-play-state: paused;
+                    opacity: .34;
+                }
+                @media (max-width: 760px) {
+                    .rpg-boss-scene {
+                        inset: 74px 10px 76px;
+                        padding: 12px;
+                    }
+                    .rpg-boss-duel {
+                        grid-template-columns: 1fr;
+                        gap: 10px;
+                    }
+                    .rpg-boss-action {
+                        min-height: 54px;
+                    }
+                    .rpg-boss-action::before,
+                    .rpg-boss-action::after {
+                        left: 22%;
+                        right: 22%;
+                    }
                 }
                 .rpg-skill-button {
                     border: none;
@@ -1825,6 +2171,7 @@ window.LobbyNeon = {
                     box-shadow: 0 0 16px color-mix(in srgb, var(--item-color, #22d3ee) 28%, transparent);
                 }
                 .rpg-bag-cell.has-item {
+                    overflow: visible;
                     border-color: color-mix(in srgb, var(--item-color, #22d3ee) 44%, rgba(148,163,184,.14));
                     background:
                         radial-gradient(circle at 50% 34%, color-mix(in srgb, var(--item-color, #22d3ee) 20%, transparent), transparent 68%),
@@ -1833,6 +2180,10 @@ window.LobbyNeon = {
                 .rpg-bag-icon {
                     font-size: 29px;
                     filter: drop-shadow(0 0 8px var(--item-color, #22d3ee));
+                }
+                .rpg-bag-icon .rpg-slot-glyph {
+                    margin: 0 auto;
+                    color: var(--item-color, #22d3ee);
                 }
                 .rpg-bag-qty {
                     position: absolute;
@@ -1844,6 +2195,53 @@ window.LobbyNeon = {
                     color: #fff;
                     font-size: 9px;
                     font-weight: 1000;
+                }
+                .rpg-hover-tip {
+                    position: absolute;
+                    left: 50%;
+                    bottom: calc(100% + 10px);
+                    width: min(260px, 72vw);
+                    transform: translateX(-50%) translateY(6px);
+                    opacity: 0;
+                    pointer-events: none;
+                    z-index: 40;
+                    border-radius: 10px;
+                    border: 1px solid color-mix(in srgb, var(--item-color, var(--equip-color, #22d3ee)) 46%, rgba(148,163,184,.22));
+                    background: rgba(2,6,23,.96);
+                    box-shadow: 0 16px 34px rgba(0,0,0,.46), 0 0 24px color-mix(in srgb, var(--item-color, var(--equip-color, #22d3ee)) 22%, transparent);
+                    padding: 10px;
+                    text-align: left;
+                    transition: opacity .14s ease, transform .14s ease;
+                }
+                .rpg-bag-cell:hover .rpg-hover-tip,
+                .rpg-mu-slot:hover .rpg-hover-tip {
+                    opacity: 1;
+                    transform: translateX(-50%) translateY(0);
+                }
+                .rpg-hover-tip b {
+                    display: block;
+                    color: var(--item-color, var(--equip-color, #22d3ee));
+                    font-size: 12px;
+                    line-height: 1.25;
+                    margin-bottom: 5px;
+                }
+                .rpg-hover-tip small {
+                    display: block;
+                    color: #cbd5e1;
+                    font-size: 10px;
+                    line-height: 1.35;
+                    margin-top: 4px;
+                }
+                .rpg-hover-tip .line {
+                    display: flex;
+                    justify-content: space-between;
+                    gap: 10px;
+                    color: #e2e8f0;
+                    font-size: 10px;
+                    line-height: 1.35;
+                    padding-top: 4px;
+                    margin-top: 4px;
+                    border-top: 1px solid rgba(148,163,184,.12);
                 }
                 .rpg-stat-grid {
                     display: grid;
@@ -2056,6 +2454,7 @@ window.LobbyNeon = {
                     display: grid;
                     place-items: center;
                     position: relative;
+                    overflow: visible;
                     color: #f8fafc;
                     box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 0 14px color-mix(in srgb, var(--equip-color, #22d3ee) 16%, transparent);
                 }
@@ -2069,6 +2468,97 @@ window.LobbyNeon = {
                 .rpg-mu-slot-icon {
                     font-size: 23px;
                     filter: drop-shadow(0 0 8px var(--equip-color, #22d3ee));
+                }
+                .rpg-slot-glyph {
+                    width: 26px;
+                    height: 26px;
+                    position: relative;
+                    display: block;
+                    color: var(--equip-color, #22d3ee);
+                    filter: drop-shadow(0 0 8px currentColor);
+                }
+                .rpg-slot-glyph::before,
+                .rpg-slot-glyph::after {
+                    content: "";
+                    position: absolute;
+                    background: currentColor;
+                    border-radius: 4px;
+                }
+                .rpg-slot-glyph.weapon::before {
+                    width: 5px;
+                    height: 27px;
+                    left: 12px;
+                    top: -1px;
+                    transform: rotate(42deg);
+                    box-shadow: 0 0 0 1px rgba(255,255,255,.2);
+                }
+                .rpg-slot-glyph.weapon::after {
+                    width: 18px;
+                    height: 5px;
+                    left: 4px;
+                    top: 17px;
+                    transform: rotate(42deg);
+                }
+                .rpg-slot-glyph.offhand::before,
+                .rpg-slot-glyph.shield::before {
+                    width: 22px;
+                    height: 24px;
+                    left: 2px;
+                    top: 1px;
+                    clip-path: polygon(50% 0, 94% 16%, 84% 75%, 50% 100%, 16% 75%, 6% 16%);
+                }
+                .rpg-slot-glyph.helm::before {
+                    width: 24px;
+                    height: 18px;
+                    left: 1px;
+                    top: 6px;
+                    border-radius: 14px 14px 6px 6px;
+                }
+                .rpg-slot-glyph.armor::before {
+                    width: 22px;
+                    height: 24px;
+                    left: 2px;
+                    top: 1px;
+                    clip-path: polygon(16% 0, 84% 0, 100% 28%, 78% 38%, 78% 100%, 22% 100%, 22% 38%, 0 28%);
+                }
+                .rpg-slot-glyph.pants::before,
+                .rpg-slot-glyph.glove::before,
+                .rpg-slot-glyph.gloves::before,
+                .rpg-slot-glyph.boots::before {
+                    width: 20px;
+                    height: 22px;
+                    left: 3px;
+                    top: 2px;
+                    border-radius: 7px 7px 4px 4px;
+                    transform: skewX(-8deg);
+                }
+                .rpg-slot-glyph.wing::before,
+                .rpg-slot-glyph.wings::before {
+                    width: 24px;
+                    height: 22px;
+                    left: 1px;
+                    top: 3px;
+                    clip-path: polygon(50% 100%, 0 8%, 42% 22%, 50% 0, 58% 22%, 100% 8%);
+                }
+                .rpg-slot-glyph.necklace::before,
+                .rpg-slot-glyph.pendant::before,
+                .rpg-slot-glyph.ring::before,
+                .rpg-slot-glyph.ringLeft::before,
+                .rpg-slot-glyph.ringRight::before {
+                    width: 22px;
+                    height: 22px;
+                    left: 2px;
+                    top: 2px;
+                    border: 5px solid currentColor;
+                    background: transparent;
+                    border-radius: 50%;
+                }
+                .rpg-slot-glyph.pet::before {
+                    width: 22px;
+                    height: 18px;
+                    left: 2px;
+                    top: 6px;
+                    border-radius: 50% 50% 42% 42%;
                 }
                 .rpg-mu-slot-level {
                     position: absolute;
@@ -2668,6 +3158,14 @@ window.LobbyNeon = {
                     18% { opacity: 1; }
                     100% { opacity: 0; transform: translate(calc(var(--travel-x, 0px) - 50%), calc(var(--travel-y, 0px) - 50%)) scale(.88) rotate(18deg); }
                 }
+                @keyframes rpg-boss-slash {
+                    0%, 100% { opacity: .24; transform: rotate(14deg) scaleX(.72); }
+                    42% { opacity: 1; transform: rotate(14deg) scaleX(1.15); }
+                    62% { opacity: .58; transform: rotate(14deg) scaleX(.92); }
+                }
+                @keyframes rpg-boss-loot-in {
+                    to { opacity: 1; transform: translateY(0) scale(1); }
+                }
                 @media (prefers-reduced-motion: reduce) {
                     .rpg-world-body,
                     .rpg-world-skill,
@@ -2824,6 +3322,7 @@ window.LobbyNeon = {
                     </button>
                     <div id="rpg-target-hint" class="rpg-target-hint">Đang dò quái...</div>
                 </div>
+                <button id="rpg-scene-exit" class="rpg-scene-exit" onclick="LobbyNeon.leaveRpgCombatScene()">Roi map</button>
                 <div id="rpg-skill-wheel" class="rpg-skill-wheel"></div>
 
                 <!-- Game Hub sliding side panel -->
@@ -3354,7 +3853,11 @@ window.LobbyNeon = {
                     LobbyNeon.selectRpgZone(value);
                     break;
                 case 'spawn-zone':
-                    LobbyNeon.spawnRpgWildMonster(value, true);
+                    if (LobbyNeon.state.rpgSceneMode === 'lobby') {
+                        await LobbyNeon.travelRpgZone(value);
+                    } else {
+                        LobbyNeon.spawnRpgWildMonster(value, true);
+                    }
                     break;
                 case 'travel-zone':
                     await LobbyNeon.travelRpgZone(value);
@@ -5162,17 +5665,33 @@ window.LobbyNeon = {
 
     awardRpgExp: async (username, rewardPoints, profile) => {
         const expResult = await Auth.addExpToUser(username, Number(rewardPoints || 0), { silentLevelUp: true });
+        try {
+            const keyFn = Auth.usernameKey || ((value) => String(value || '').toLowerCase());
+            const accounts = await Auth.getAccounts();
+            const account = accounts.find(acc => keyFn(acc?.username) === keyFn(username));
+            if (account && Auth.currentUser && keyFn(Auth.currentUser.username) === keyFn(username)) {
+                Auth.currentUser.exp = Number(account.exp || 0);
+                Auth.currentUser.level = Math.max(1, Number(account.level || 1));
+                if (Auth.currentUserKey) Utils.storage.set(Auth.currentUserKey, Auth.currentUser);
+            }
+            if (profile && account) {
+                profile.level = Math.max(1, Number(account.level || 1));
+                profile.exp = Number(account.exp || 0);
+            }
+        } catch (e) {
+            console.warn('sync rpg exp snapshot error:', e);
+        }
         if (expResult?.leveled && profile) {
             const gainedLevels = Math.max(1, Number(expResult.newLevel || 1) - Number(expResult.oldLevel || 1));
             profile.statPoints = Number(profile.statPoints || 0) + gainedLevels * 3;
-            if (window.GameServices?.CharacterService?.hydrateProfile) {
-                window.GameServices.CharacterService.hydrateProfile(profile, {
-                    username,
-                    auth: window.Auth,
-                    authUser: window.Auth?.currentUser
-                });
-            }
             Utils.showToast(`Len cap ${expResult.newLevel}! +${gainedLevels * 3} diem chi so.`, 'success');
+        }
+        if (profile && window.GameServices?.CharacterService?.hydrateProfile) {
+            window.GameServices.CharacterService.hydrateProfile(profile, {
+                username,
+                auth: window.Auth,
+                authUser: window.Auth?.currentUser
+            });
         }
         return expResult;
     },
@@ -5524,7 +6043,9 @@ window.LobbyNeon = {
             damageRanking,
             time: Date.now()
         };
+        LobbyNeon.state.rpgBossBattle.appliedReward = appliedReward;
         await LobbyNeon.saveMyRpgProfile(profile, data);
+        LobbyNeon.showRpgBossBattleScene(zone, LobbyNeon.state.rpgBossBattle);
         Utils.showToast(
             won
                 ? `Thắng boss: +${reward.exp} EXP · ${LobbyNeon.formatRpgReward(reward)}`
@@ -5542,6 +6063,136 @@ window.LobbyNeon = {
             console.warn('send rpg boss chat error:', e);
         }
         LobbyNeon.renderRpgPanel();
+    },
+
+    formatRpgBossSceneLoot: (reward = {}, appliedReward = {}) => {
+        const chips = [];
+        Object.entries(reward.items || {}).forEach(([key, qty]) => {
+            if (Number(qty || 0) <= 0) return;
+            const meta = LobbyNeon.getRpgItemMeta(key);
+            chips.push(`
+                <span class="rpg-boss-loot-chip" style="--loot-color:${meta.color || '#22d3ee'};">
+                    <span>${meta.icon || 'IT'}</span>
+                    <span>${LobbyNeon.escapeHtml(meta.name || key)} x${Number(qty || 0).toLocaleString('vi-VN')}</span>
+                </span>
+            `);
+        });
+
+        (appliedReward.equipment || reward.equipment || []).forEach(item => {
+            const rarity = LobbyNeon.rpgEquipmentRarities[item.rarity] || LobbyNeon.rpgEquipmentRarities.white;
+            chips.push(`
+                <span class="rpg-boss-loot-chip" style="--loot-color:${item.color || rarity.color};">
+                    ${LobbyNeon.renderRpgSlotGlyph(item.slot || 'equipment')}
+                    <span>${LobbyNeon.escapeHtml(item.name || 'Trang bi')} +${Number(item.power || 0).toLocaleString('vi-VN')}</span>
+                </span>
+            `);
+        });
+
+        (appliedReward.soldEquipment || []).forEach(item => {
+            const rarity = LobbyNeon.rpgEquipmentRarities[item.rarity] || LobbyNeon.rpgEquipmentRarities.white;
+            chips.push(`
+                <span class="rpg-boss-loot-chip" style="--loot-color:${item.color || rarity.color};">
+                    ${LobbyNeon.renderRpgSlotGlyph(item.slot || 'equipment')}
+                    <span>${LobbyNeon.escapeHtml(item.name || 'Trang bi')} da tu ban</span>
+                </span>
+            `);
+        });
+
+        if (Number(appliedReward.soldGold || 0) > 0) {
+            chips.push(`
+                <span class="rpg-boss-loot-chip" style="--loot-color:#facc15;">
+                    <span>TC</span>
+                    <span>Tu ban +${Number(appliedReward.soldGold || 0).toLocaleString('vi-VN')} tinh kim</span>
+                </span>
+            `);
+        }
+
+        if (!chips.length) {
+            return `
+                <span class="rpg-boss-loot-chip" style="--loot-color:#94a3b8;">
+                    <span>--</span>
+                    <span>Khong co vat pham roi</span>
+                </span>
+            `;
+        }
+        return chips.join('');
+    },
+
+    showRpgBossBattleScene: (zone, battle) => {
+        const map = document.getElementById('lobby-map');
+        if (!map || !zone || !battle) return;
+        LobbyNeon.enterRpgCombatScene(zone.id, 'boss');
+        document.querySelectorAll('.rpg-boss-scene').forEach(el => el.remove());
+
+        const scene = document.createElement('div');
+        scene.id = `rpg-boss-scene-${Date.now()}`;
+        scene.className = 'rpg-boss-scene';
+        scene.style.setProperty('--boss-color', zone.color || '#f59e0b');
+
+        const playerPower = Math.max(1, Number(battle.playerPower || 1));
+        const bossPower = Math.max(1, Number(battle.bossPower || 1));
+        const playerEndHp = battle.won
+            ? Math.max(28, Math.min(82, Math.round(54 + (playerPower / bossPower) * 12)))
+            : 0;
+        const bossEndHp = battle.won
+            ? 0
+            : Math.max(18, Math.min(76, Math.round(48 + (bossPower / playerPower) * 8)));
+        const playerName = Auth.currentUser?.username || 'Chibi';
+        const bossName = battle.bossName || zone.monster;
+        const resultText = battle.won ? 'Ha guc Boss' : 'Bi danh lui';
+
+        scene.innerHTML = `
+            <div class="rpg-boss-head">
+                <div>
+                    <h3>${LobbyNeon.escapeHtml(zone.name)} Boss Arena</h3>
+                    <span>${LobbyNeon.escapeHtml(bossName)} · Ti le ${Number(battle.chance || 0)}% · ton ${Number(battle.cost || 0)} the luc</span>
+                </div>
+                <span>${battle.won ? '+EXP va loot' : 'Nhan loot an ui'}</span>
+            </div>
+            <div class="rpg-boss-duel">
+                <div class="rpg-boss-fighter player">
+                    <div class="rpg-player-sprite">${LobbyNeon.getRpgPlayerBattleSvg()}</div>
+                    <div class="rpg-boss-name"><span>${LobbyNeon.escapeHtml(playerName)}</span><span>LC ${playerPower.toLocaleString('vi-VN')}</span></div>
+                    <div class="rpg-boss-hp"><span data-rpg-boss-player-hp></span></div>
+                    <small data-rpg-boss-player-label>HP 100%</small>
+                </div>
+                <div class="rpg-boss-action">
+                    <div class="rpg-boss-result" data-rpg-boss-result>Dang giao chien...</div>
+                </div>
+                <div class="rpg-boss-fighter boss">
+                    ${LobbyNeon.getRpgMonsterSvg(zone.id)}
+                    <div class="rpg-boss-name"><span>${LobbyNeon.escapeHtml(bossName)}</span><span>LC ${bossPower.toLocaleString('vi-VN')}</span></div>
+                    <div class="rpg-boss-hp"><span data-rpg-boss-enemy-hp></span></div>
+                    <small data-rpg-boss-enemy-label>HP 100%</small>
+                </div>
+            </div>
+            <div class="rpg-boss-loot-row">
+                <div class="rpg-boss-loot-title">Loot roi ra</div>
+                <div class="rpg-boss-loot-list" data-rpg-boss-loot></div>
+            </div>
+        `;
+        map.appendChild(scene);
+        LobbyNeon.state.rpgBossScene = scene.id;
+
+        const playerHpEl = scene.querySelector('[data-rpg-boss-player-hp]');
+        const enemyHpEl = scene.querySelector('[data-rpg-boss-enemy-hp]');
+        const playerLabel = scene.querySelector('[data-rpg-boss-player-label]');
+        const enemyLabel = scene.querySelector('[data-rpg-boss-enemy-label]');
+        const resultEl = scene.querySelector('[data-rpg-boss-result]');
+        const lootEl = scene.querySelector('[data-rpg-boss-loot]');
+
+        setTimeout(() => {
+            if (playerHpEl) playerHpEl.style.width = `${playerEndHp}%`;
+            if (enemyHpEl) enemyHpEl.style.width = `${bossEndHp}%`;
+            if (playerLabel) playerLabel.textContent = `HP ${playerEndHp}%`;
+            if (enemyLabel) enemyLabel.textContent = `HP ${bossEndHp}%`;
+        }, 120);
+
+        setTimeout(() => {
+            scene.classList.add('finished');
+            if (resultEl) resultEl.textContent = resultText;
+            if (lootEl) lootEl.innerHTML = LobbyNeon.formatRpgBossSceneLoot(battle.reward, battle.appliedReward || {});
+        }, 2350);
     },
 
     getRpgClassDefaultSkinId: (classId) => {
@@ -5611,6 +6262,44 @@ window.LobbyNeon = {
             bossCore: { name: 'Lõi Boss', icon: '🧿', color: '#fb7185', rarity: 'Huyền thoại', rarityRank: 4, type: 'rare', sale: 120, use: 'Vật phẩm hiếm rơi từ boss, dành cho nâng cấp cuối game. Có thể tách thành mảnh skin nếu đang thiếu nguyên liệu.', tip: 'Rơi ngẫu nhiên, không đảm bảo mỗi trận.' }
         };
         return meta[key] || { name: key, icon: '🎁', color: '#22d3ee', rarity: 'Lạ', rarityRank: 0, type: 'other', sale: 5, use: 'Vật phẩm chưa định danh.', tip: 'Có thể dùng trong bản cập nhật sau.' };
+    },
+
+    renderRpgSlotGlyph: (slotId) => {
+        const safe = String(slotId || 'equipment').replace(/[^a-zA-Z0-9_-]/g, '');
+        return `<span class="rpg-slot-glyph ${safe}" aria-hidden="true"></span>`;
+    },
+
+    renderRpgEquipmentTooltip: (item) => {
+        if (!item) return '<div class="rpg-hover-tip"><b>Chua trang bi</b><small>O nay dang trong.</small></div>';
+        const rarity = LobbyNeon.rpgEquipmentRarities[item.rarityId || item.rarity] || LobbyNeon.rpgEquipmentRarities.white;
+        const attrs = (item.attrLines || []).slice(0, 6).map(line => `
+            <span class="line"><span>${LobbyNeon.escapeHtml(line.label || line.key)}</span><strong>+${Number(line.value || 0).toLocaleString('vi-VN')}</strong></span>
+        `).join('');
+        return `
+            <div class="rpg-hover-tip" style="--item-color:${item.color || rarity.color};">
+                <b>${LobbyNeon.escapeHtml(item.name || 'Trang bi')}</b>
+                <small>${LobbyNeon.escapeHtml(rarity.name)} · ${LobbyNeon.escapeHtml(item.slotLabel || item.slot || '')} · Lv.${Number(item.levelReq || 1)}</small>
+                <span class="line"><span>Luc chien</span><strong>+${Number(item.power || 0).toLocaleString('vi-VN')}</strong></span>
+                <span class="line"><span>Cuong hoa</span><strong>+${Number(item.level ?? item.enhance ?? 0)}</strong></span>
+                <span class="line"><span>Do ben</span><strong>${Number(item.durability || 100)}/${Number(item.maxDurability || 100)}</strong></span>
+                ${attrs}
+                <small>Gia ban: ${LobbyNeon.getRpgEquipmentSaleValue(item).toLocaleString('vi-VN')} tinh kim</small>
+            </div>
+        `;
+    },
+
+    renderRpgInventoryTooltip: (item) => {
+        if (!item) return '';
+        return `
+            <div class="rpg-hover-tip" style="--item-color:${item.color || '#22d3ee'};">
+                <b>${LobbyNeon.escapeHtml(item.name || item.key)}</b>
+                <small>${LobbyNeon.escapeHtml(item.rarity || '')} · x${Number(item.qty || 0).toLocaleString('vi-VN')}</small>
+                <span class="line"><span>Nhom</span><strong>${LobbyNeon.escapeHtml(item.type || 'item')}</strong></span>
+                ${Number(item.sale || 0) > 0 ? `<span class="line"><span>Gia ban</span><strong>${Number(item.sale || 0).toLocaleString('vi-VN')}/cai</strong></span>` : ''}
+                <small>${LobbyNeon.escapeHtml(item.use || '')}</small>
+                <small>${LobbyNeon.escapeHtml(item.tip || '')}</small>
+            </div>
+        `;
     },
 
     showRpgItemInfo: (key, qty = 0) => {
@@ -6002,28 +6691,24 @@ window.LobbyNeon = {
             return;
         }
         const { data, profile } = await LobbyNeon.getMyRpgProfile();
-        const sellableKeys = Object.keys(profile.inventory || {}).filter(key => {
-            const item = LobbyNeon.getRpgItemMeta(key);
-            return Number(item.sale || 0) > 0 && ['material', 'other'].includes(item.type) && Number(profile.inventory[key] || 0) > 0;
-        });
-        if (!sellableKeys.length) {
-            Utils.showToast('Không có nguyên liệu thường nào để bán nhanh. Mảnh skin và Lõi Boss được giữ lại.', 'info');
+        if (selectedKey) {
+            const qty = Number(profile.inventory?.[selectedKey] || 0);
+            const item = LobbyNeon.getRpgItemMeta(selectedKey);
+            if (qty <= 0 || Number(item.sale || 0) <= 0) {
+                Utils.showToast('Vat pham dang chon khong ban nhanh duoc.', 'warning');
+                return;
+            }
+            const ok = confirm(`Ban ${item.name} x${qty} lay ${(qty * Number(item.sale || 0)).toLocaleString('vi-VN')} tinh kim?`);
+            if (!ok) return;
+            profile.inventory[selectedKey] = 0;
+            profile.inventory.goldDust = Number(profile.inventory.goldDust || 0) + qty * Number(item.sale || 0);
+            LobbyNeon.state.rpgSelectedItemKey = null;
+            await LobbyNeon.saveMyRpgProfile(profile, data);
+            Utils.showToast(`Da ban ${item.name} x${qty}.`, 'success');
+            LobbyNeon.renderRpgPanel();
             return;
         }
-        const ok = confirm('Bán nhanh sẽ bán 25% nguyên liệu thường, không bán mảnh skin/Lõi Boss. Tiếp tục?');
-        if (!ok) return;
-        let goldGain = 0;
-        sellableKeys.forEach(key => {
-            const item = LobbyNeon.getRpgItemMeta(key);
-            const qty = Number(profile.inventory[key] || 0);
-            const sold = Math.max(1, Math.floor(qty * 0.25));
-            profile.inventory[key] = Math.max(0, qty - sold);
-            goldGain += sold * Number(item.sale || 0);
-        });
-        profile.inventory.goldDust = Number(profile.inventory.goldDust || 0) + goldGain;
-        await LobbyNeon.saveMyRpgProfile(profile, data);
-        Utils.showToast(`Đã bán nhanh nguyên liệu, nhận +${goldGain.toLocaleString('vi-VN')} tinh kim.`, 'success');
-        LobbyNeon.renderRpgPanel();
+        Utils.showToast('Chon vat pham hoac trang bi trong tui truoc khi ban nhanh.', 'info');
     },
 
     upgradeRpgSelectedEquipment: async () => {
@@ -6160,7 +6845,7 @@ window.LobbyNeon = {
                     <div class="rpg-equip-grid">
                         ${slots.map(slot => `
                             <div class="rpg-equip-slot" style="--equip-color:${slot.color};">
-                                <div class="rpg-equip-icon">${slot.icon}</div>
+                                <div class="rpg-equip-icon">${LobbyNeon.renderRpgSlotGlyph(slot.id)}</div>
                                 <div>
                                     <div class="rpg-equip-label">${slot.label}</div>
                                     <div class="rpg-equip-name">${LobbyNeon.escapeHtml(slot.name)}</div>
@@ -6177,8 +6862,9 @@ window.LobbyNeon = {
                     <div class="rpg-bag-grid">
                         ${cells.map(item => item ? `
                             <button type="button" class="rpg-bag-cell has-item" title="${LobbyNeon.escapeHtml(item.name)} x${item.qty}" style="--item-color:${item.color};" onclick="LobbyNeon.showRpgItemInfo('${item.key}', ${item.qty})">
-                                <span class="rpg-bag-icon">${item.icon}</span>
+                                <span class="rpg-bag-icon">${item.type === 'equipment' ? LobbyNeon.renderRpgSlotGlyph(item.slot || 'equipment') : item.icon}</span>
                                 <span class="rpg-bag-qty">x${item.qty}</span>
+                                ${LobbyNeon.renderRpgInventoryTooltip(item)}
                             </button>
                         ` : `<div class="rpg-bag-cell"></div>`).join('')}
                     </div>
@@ -6266,8 +6952,9 @@ window.LobbyNeon = {
                             ${leftSlots.map(slot => `
                                 <div class="rpg-mu-slot ${slot.empty ? 'empty' : ''}" style="--equip-color:${slot.color};" title="${LobbyNeon.escapeHtml(slot.name)}">
                                     ${slot.level ? `<span class="rpg-mu-slot-level">${slot.level}</span>` : ''}
-                                    <span class="rpg-mu-slot-icon">${slot.icon}</span>
+                                    <span class="rpg-mu-slot-icon">${LobbyNeon.renderRpgSlotGlyph(slot.id)}</span>
                                     <span class="rpg-mu-slot-label">${LobbyNeon.escapeHtml(slot.label)}</span>
+                                    ${LobbyNeon.renderRpgEquipmentTooltip(slot.item)}
                                 </div>
                             `).join('')}
                         </div>
@@ -6278,8 +6965,9 @@ window.LobbyNeon = {
                             ${rightSlots.map(slot => `
                                 <div class="rpg-mu-slot ${slot.empty ? 'empty' : ''}" style="--equip-color:${slot.color};" title="${LobbyNeon.escapeHtml(slot.name)}">
                                     ${slot.level ? `<span class="rpg-mu-slot-level">${slot.level}</span>` : ''}
-                                    <span class="rpg-mu-slot-icon">${slot.icon}</span>
+                                    <span class="rpg-mu-slot-icon">${LobbyNeon.renderRpgSlotGlyph(slot.id)}</span>
                                     <span class="rpg-mu-slot-label">${LobbyNeon.escapeHtml(slot.label)}</span>
+                                    ${LobbyNeon.renderRpgEquipmentTooltip(slot.item)}
                                 </div>
                             `).join('')}
                         </div>
@@ -6305,15 +6993,16 @@ window.LobbyNeon = {
                             <div class="rpg-bag-grid">
                                 ${cells.map(item => item ? `
                                     <button type="button" class="rpg-bag-cell has-item ${selectedKey === item.key ? 'selected' : ''}" title="${LobbyNeon.escapeHtml(item.name)} x${item.qty}" style="--item-color:${item.color};" data-rpg-action="bag-select" data-rpg-value="${item.key}">
-                                        <span class="rpg-bag-icon">${item.icon}</span>
+                                        <span class="rpg-bag-icon">${item.type === 'equipment' ? LobbyNeon.renderRpgSlotGlyph(item.slot || 'equipment') : item.icon}</span>
                                         <span class="rpg-bag-qty">${item.type === 'equipment' ? `+${Number(item.power || 0)}` : `x${item.qty}`}</span>
+                                        ${item.type === 'equipment' ? LobbyNeon.renderRpgEquipmentTooltip(item) : LobbyNeon.renderRpgInventoryTooltip(item)}
                                     </button>
                                 ` : `<div class="rpg-bag-cell"></div>`).join('')}
                             </div>
                         ` : `<div class="rpg-bag-empty">Không có vật phẩm trong nhóm này.</div>`}
                         <div class="rpg-selected-item">
                             ${selectedItem ? `
-                                <span style="color:${selectedItem.color};">${selectedItem.icon}</span>
+                                <span style="color:${selectedItem.color};">${selectedItem.type === 'equipment' ? LobbyNeon.renderRpgSlotGlyph(selectedItem.slot || 'equipment') : selectedItem.icon}</span>
                                 <b>${LobbyNeon.escapeHtml(selectedItem.name)}</b>
                                 <small>x${selectedQty} · ${selectedItem.rarity} · ${LobbyNeon.escapeHtml(selectedItem.use)}</small>
                             ` : `
@@ -6820,6 +7509,13 @@ window.LobbyNeon = {
     renderRpgWorldCombatants: async () => {
         const map = document.getElementById('lobby-map');
         if (!map) return;
+        if (LobbyNeon.state.rpgSceneMode === 'lobby') {
+            document.querySelectorAll('.rpg-world-monster').forEach(el => el.remove());
+            document.querySelectorAll('.lobby-user-wrapper.rpg-world-fighting').forEach(el => {
+                el.classList.remove('rpg-world-fighting');
+            });
+            return;
+        }
 
         let data;
         try {
@@ -6972,6 +7668,11 @@ window.LobbyNeon = {
         const zones = LobbyNeon.getRpgUnlockedZones();
         if (!zones.length) return null;
         const zone = LobbyNeon.rpgZones[zoneId] || LobbyNeon.getRpgAutoSpawnZone() || LobbyNeon.rpgZones.training_forest;
+        if (LobbyNeon.state.rpgSceneMode === 'lobby') {
+            LobbyNeon.state.rpgSceneMode = 'combat';
+            LobbyNeon.state.selectedRpgZone = zone.id;
+            LobbyNeon.applyRpgZoneTheme(zone);
+        }
         if (zoneId && !zones.some(unlocked => unlocked.id === zone.id)) {
             Utils.showToast(`Bãi ${zone.name} cần cấp ${zone.minLevel}.`, 'warning');
             return null;
@@ -7013,6 +7714,7 @@ window.LobbyNeon = {
     },
 
     startRpgWildMonsters: () => {
+        if (LobbyNeon.state.rpgSceneMode !== 'combat') return;
         if (LobbyNeon.state.rpgWildInterval) clearInterval(LobbyNeon.state.rpgWildInterval);
         if (LobbyNeon.state.rpgHudInterval) clearInterval(LobbyNeon.state.rpgHudInterval);
         const targetCount = Number(LobbyNeon.state.rpgMaxWildMonsters || 4);
@@ -7186,7 +7888,7 @@ window.LobbyNeon = {
             } finally {
                 LobbyNeon.state.rpgAutoFarmBusy = false;
             }
-        }, 1450);
+        }, 950);
     },
 
     stopRpgAutoFarm: () => {
@@ -7216,11 +7918,15 @@ window.LobbyNeon = {
             LobbyNeon.openRpgHub();
             return;
         }
+        const preferredZone = LobbyNeon.state.rpgZoneManuallySelected
+            ? LobbyNeon.state.selectedRpgZone
+            : (LobbyNeon.getRpgAutoSpawnZone()?.id || LobbyNeon.state.selectedRpgZone || 'training_forest');
+        const zone = LobbyNeon.enterRpgCombatScene(preferredZone, 'combat');
         LobbyNeon.state.rpgAutoFarm = true;
         if (window.GameServices?.FarmService?.startFarm) {
             LobbyNeon.state.rpgFarmSession = window.GameServices.FarmService.startFarm({
                 ownerId: LobbyNeon.getRpgUsername(),
-                mapId: LobbyNeon.state.selectedRpgZone || 'training_forest',
+                mapId: zone.id,
                 now: Date.now()
             });
         }
@@ -7282,6 +7988,13 @@ window.LobbyNeon = {
             return;
         }
 
+        if (LobbyNeon.state.rpgSceneMode === 'lobby') {
+            const preferredZone = LobbyNeon.state.rpgZoneManuallySelected
+                ? LobbyNeon.state.selectedRpgZone
+                : (LobbyNeon.getRpgAutoSpawnZone()?.id || LobbyNeon.state.selectedRpgZone || 'training_forest');
+            LobbyNeon.enterRpgCombatScene(preferredZone, 'combat');
+        }
+
         let target = LobbyNeon.state.rpgWildMonsters?.[LobbyNeon.state.selectedWildMonsterId];
         if (!target || target.defeated) {
             target = LobbyNeon.findNearestRpgWildMonster(9999)?.monster;
@@ -7297,13 +8010,16 @@ window.LobbyNeon = {
             const approachX = Math.max(90, target.x - 118);
             const approachY = target.y + 10;
             await LobbyNeon.moveTo(approachX, approachY);
-            if (options.silent) {
+            LobbyNeon.state.myPos = { x: approachX, y: approachY };
+            if (options.silent && !options.auto) {
                 LobbyNeon.updateRpgFarmHud();
                 return;
             }
+            if (!options.auto) {
             Utils.showToast('Đã áp sát quái. Bấm SKILL lần nữa để tung chưởng.', 'info');
             LobbyNeon.updateRpgFarmHud();
             return;
+            }
         }
 
         const skin = LobbyNeon.rpgSkins[profile.equippedSkin] || LobbyNeon.rpgSkins[LobbyNeon.getRpgClassDefaultSkinId(profile.classId)] || LobbyNeon.rpgSkins.basic;
@@ -7529,9 +8245,68 @@ window.LobbyNeon = {
         document.getElementById('rpg-map-overlay')?.remove();
     },
 
+    enterRpgCombatScene: (zoneId = null, mode = 'combat') => {
+        const zone = LobbyNeon.rpgZones[zoneId] || LobbyNeon.rpgZones[LobbyNeon.state.selectedRpgZone] || LobbyNeon.rpgZones.training_forest;
+        LobbyNeon.state.rpgSceneMode = mode || 'combat';
+        LobbyNeon.state.selectedRpgZone = zone.id;
+        if (LobbyNeon.state.rpgSceneMode !== 'lobby') LobbyNeon.applyRpgZoneTheme(zone);
+        if (LobbyNeon.state.rpgSceneMode === 'combat') {
+            LobbyNeon.startRpgWildMonsters();
+        } else {
+            if (LobbyNeon.state.rpgWildInterval) {
+                clearInterval(LobbyNeon.state.rpgWildInterval);
+                LobbyNeon.state.rpgWildInterval = null;
+            }
+            if (LobbyNeon.state.rpgHudInterval) {
+                clearInterval(LobbyNeon.state.rpgHudInterval);
+                LobbyNeon.state.rpgHudInterval = null;
+            }
+            Object.keys(LobbyNeon.state.rpgWildMonsters || {}).forEach(id => document.getElementById(`rpg-wild-${id}`)?.remove());
+            LobbyNeon.state.rpgWildMonsters = {};
+        }
+        const hud = document.getElementById('rpg-farm-hud');
+        if (hud) hud.classList.toggle('active', LobbyNeon.state.rpgSceneMode === 'combat');
+        const exitBtn = document.getElementById('rpg-scene-exit');
+        if (exitBtn) exitBtn.classList.add('active');
+        return zone;
+    },
+
+    leaveRpgCombatScene: () => {
+        LobbyNeon.stopRpgAutoFarm();
+        if (LobbyNeon.state.rpgWildInterval) {
+            clearInterval(LobbyNeon.state.rpgWildInterval);
+            LobbyNeon.state.rpgWildInterval = null;
+        }
+        if (LobbyNeon.state.rpgHudInterval) {
+            clearInterval(LobbyNeon.state.rpgHudInterval);
+            LobbyNeon.state.rpgHudInterval = null;
+        }
+        Object.keys(LobbyNeon.state.rpgWildMonsters || {}).forEach(id => {
+            document.getElementById(`rpg-wild-${id}`)?.remove();
+        });
+        document.querySelectorAll('.rpg-world-monster, .rpg-map-projectile, .rpg-boss-scene').forEach(el => el.remove());
+        LobbyNeon.state.rpgWildMonsters = {};
+        LobbyNeon.state.selectedWildMonsterId = null;
+        LobbyNeon.state.rpgSceneMode = 'lobby';
+        LobbyNeon.state.rpgBossScene = null;
+        LobbyNeon.applyRpgZoneTheme(null);
+        LobbyNeon.updateRpgFarmHud();
+        const hud = document.getElementById('rpg-farm-hud');
+        if (hud) hud.classList.remove('active');
+        const exitBtn = document.getElementById('rpg-scene-exit');
+        if (exitBtn) exitBtn.classList.remove('active');
+    },
+
     applyRpgZoneTheme: (zone) => {
         const map = document.getElementById('lobby-map');
-        if (!map || !zone) return;
+        if (!map) return;
+        map.dataset.rpgMode = LobbyNeon.state.rpgSceneMode || 'lobby';
+        if (!zone) {
+            delete map.dataset.rpgZone;
+            delete map.dataset.rpgZoneName;
+            map.style.removeProperty('--rpg-zone-color');
+            return;
+        }
         map.dataset.rpgZone = zone.id;
         map.dataset.rpgZoneName = zone.name;
         map.style.setProperty('--rpg-zone-color', zone.color || '#22d3ee');
@@ -7547,6 +8322,7 @@ window.LobbyNeon = {
         }
         LobbyNeon.state.selectedRpgZone = zoneId;
         LobbyNeon.state.rpgZoneManuallySelected = true;
+        LobbyNeon.state.rpgSceneMode = 'combat';
         if (LobbyNeon.state.rpgFarmSession) {
             LobbyNeon.state.rpgFarmSession.mapId = zoneId;
         }
@@ -7557,6 +8333,8 @@ window.LobbyNeon = {
         });
         LobbyNeon.state.rpgWildMonsters = {};
         LobbyNeon.applyRpgZoneTheme(zone);
+        document.getElementById('rpg-farm-hud')?.classList.add('active');
+        document.getElementById('rpg-scene-exit')?.classList.add('active');
         const point = LobbyNeon.getRpgRandomFarmPoint(true);
         await LobbyNeon.moveTo(Math.max(90, point.x - 120), Math.max(160, point.y + 12));
         for (let i = 0; i < LobbyNeon.state.rpgMaxWildMonsters; i++) {
@@ -7577,7 +8355,7 @@ window.LobbyNeon = {
         }
         LobbyNeon.state.selectedRpgZone = zoneId;
         LobbyNeon.state.rpgZoneManuallySelected = true;
-        LobbyNeon.applyRpgZoneTheme(zone);
+        if (LobbyNeon.state.rpgSceneMode !== 'lobby') LobbyNeon.applyRpgZoneTheme(zone);
         Utils.showToast(`Đã chọn bãi farm: ${zone.name}. Quái mới sẽ ưu tiên map này.`, 'info');
         LobbyNeon.renderRpgPanel();
     },
@@ -7931,6 +8709,11 @@ window.LobbyNeon = {
         const reward = LobbyNeon.rollRpgReward(zone, Number(durationMin), profile);
         const combatSpot = LobbyNeon.getRpgCombatSpot(username);
         LobbyNeon.state.selectedRpgZone = zoneId;
+        LobbyNeon.state.rpgZoneManuallySelected = true;
+        LobbyNeon.state.rpgSceneMode = 'combat';
+        LobbyNeon.applyRpgZoneTheme(zone);
+        document.getElementById('rpg-farm-hud')?.classList.add('active');
+        document.getElementById('rpg-scene-exit')?.classList.add('active');
         profile.stamina -= cost;
         profile.totalHunts = Number(profile.totalHunts || 0) + 1;
         profile.activeHunt = {
@@ -8095,7 +8878,7 @@ window.LobbyNeon = {
                     </div>
                     ${levelLocked ? `<div class="rpg-muted" style="margin-top:8px; color:#fbbf24;">Cần cấp ${zone.minLevel} để vào ải này.</div>` : ''}
                     <button class="rpg-action-btn" style="width:100%; margin-top:8px;" ${disabled ? 'disabled' : ''} data-rpg-action="spawn-zone" data-rpg-value="${zone.id}">
-                        🧲 Gọi thêm quái gần tôi
+                        ${LobbyNeon.state.rpgSceneMode === 'lobby' ? 'Vao map chien dau' : 'Goi them quai gan toi'}
                     </button>
                 </div>
             `;

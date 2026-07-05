@@ -73,6 +73,51 @@
                 ],
                 equipment: { chance: 0.52, rarityWeight: normalEquipment }
             },
+            drop_cache_tower: {
+                dropProfileId: 'drop_cache_tower',
+                entries: [
+                    { itemTemplateId: 'goldDust', itemType: 'gold', chance: 1, quantity: [180, 360] },
+                    { itemTemplateId: 'daCuongHoa', itemType: 'material', chance: 1, quantity: [3, 5] },
+                    { itemTemplateId: 'thunderShard', itemType: 'material', chance: 0.6, quantity: [1, 2] }
+                ],
+                equipment: { chance: 0.58, rarityWeight: normalEquipment }
+            },
+            drop_ticket_desert: {
+                dropProfileId: 'drop_ticket_desert',
+                entries: [
+                    { itemTemplateId: 'goldDust', itemType: 'gold', chance: 1, quantity: [280, 540] },
+                    { itemTemplateId: 'longAn', itemType: 'material', chance: 1, quantity: [3, 5] },
+                    { itemTemplateId: 'fireShard', itemType: 'material', chance: 0.66, quantity: [1, 2] }
+                ],
+                equipment: { chance: 0.64, rarityWeight: normalEquipment }
+            },
+            drop_night_build_forge: {
+                dropProfileId: 'drop_night_build_forge',
+                entries: [
+                    { itemTemplateId: 'goldDust', itemType: 'gold', chance: 1, quantity: [420, 780] },
+                    { itemTemplateId: 'longAn', itemType: 'material', chance: 1, quantity: [4, 7] },
+                    { itemTemplateId: 'moonShard', itemType: 'material', chance: 0.72, quantity: [1, 3] }
+                ],
+                equipment: { chance: 0.7, rarityWeight: normalEquipment }
+            },
+            drop_sprint_citadel: {
+                dropProfileId: 'drop_sprint_citadel',
+                entries: [
+                    { itemTemplateId: 'goldDust', itemType: 'gold', chance: 1, quantity: [640, 1120] },
+                    { itemTemplateId: 'bossCore', itemType: 'material', chance: 0.28, quantity: [1, 1] },
+                    { itemTemplateId: 'daCuongHoa', itemType: 'material', chance: 1, quantity: [5, 9] }
+                ],
+                equipment: { chance: 0.76, rarityWeight: normalEquipment }
+            },
+            drop_core_kpi_sector: {
+                dropProfileId: 'drop_core_kpi_sector',
+                entries: [
+                    { itemTemplateId: 'goldDust', itemType: 'gold', chance: 1, quantity: [900, 1600] },
+                    { itemTemplateId: 'bossCore', itemType: 'material', chance: 0.42, quantity: [1, 2] },
+                    { itemTemplateId: 'longAn', itemType: 'material', chance: 1, quantity: [6, 10] }
+                ],
+                equipment: { chance: 0.82, rarityWeight: normalEquipment }
+            },
             boss_common: {
                 dropProfileId: 'boss_common',
                 entries: [
@@ -89,6 +134,24 @@
                     { itemTemplateId: 'longAn', itemType: 'material', chance: 0.7, quantity: [1, 3] }
                 ],
                 equipment: { chance: 0.72, rarityWeight: bossEquipment }
+            },
+            boss_elite: {
+                dropProfileId: 'boss_elite',
+                entries: [
+                    { itemTemplateId: 'goldDust', itemType: 'gold', chance: 1, quantity: [420, 1200] },
+                    { itemTemplateId: 'bossCore', itemType: 'material', chance: 0.38, quantity: [1, 2] },
+                    { itemTemplateId: 'longAn', itemType: 'material', chance: 0.85, quantity: [2, 5] }
+                ],
+                equipment: { chance: 0.84, rarityWeight: bossEquipment }
+            },
+            boss_ancient: {
+                dropProfileId: 'boss_ancient',
+                entries: [
+                    { itemTemplateId: 'goldDust', itemType: 'gold', chance: 1, quantity: [900, 2600] },
+                    { itemTemplateId: 'bossCore', itemType: 'material', chance: 0.58, quantity: [1, 3] },
+                    { itemTemplateId: 'longAn', itemType: 'material', chance: 1, quantity: [4, 8] }
+                ],
+                equipment: { chance: 0.92, rarityWeight: bossEquipment }
             }
         }
     };

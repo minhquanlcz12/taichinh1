@@ -76,6 +76,66 @@
                 basePower: 8600,
                 challengeCostMultiplier: 2.15,
                 rewardProfileId: 'boss_high'
+            },
+            cache_tyrant: {
+                bossId: 'cache_tyrant',
+                mapId: 'cache_tower',
+                name: 'Cache Tyrant',
+                level: 38,
+                hp: 12800,
+                attack: 760,
+                defense: 390,
+                basePower: 15000,
+                challengeCostMultiplier: 2.2,
+                rewardProfileId: 'boss_elite'
+            },
+            ticket_pharaoh: {
+                bossId: 'ticket_pharaoh',
+                mapId: 'ticket_desert',
+                name: 'Ticket Pharaoh',
+                level: 58,
+                hp: 21000,
+                attack: 1180,
+                defense: 650,
+                basePower: 30000,
+                challengeCostMultiplier: 2.3,
+                rewardProfileId: 'boss_elite'
+            },
+            build_archon: {
+                bossId: 'build_archon',
+                mapId: 'night_build_forge',
+                name: 'Build Archon',
+                level: 84,
+                hp: 36000,
+                attack: 1900,
+                defense: 1050,
+                basePower: 56000,
+                challengeCostMultiplier: 2.45,
+                rewardProfileId: 'boss_elite'
+            },
+            sprint_regent: {
+                bossId: 'sprint_regent',
+                mapId: 'sprint_citadel',
+                name: 'Sprint Regent',
+                level: 114,
+                hp: 62000,
+                attack: 3100,
+                defense: 1800,
+                basePower: 98000,
+                challengeCostMultiplier: 2.65,
+                rewardProfileId: 'boss_ancient'
+            },
+            core_monarch: {
+                bossId: 'core_monarch',
+                mapId: 'core_kpi_sector',
+                name: 'Core KPI Monarch',
+                level: 140,
+                hp: 95000,
+                attack: 4800,
+                defense: 2900,
+                basePower: 160000,
+                challengeCostMultiplier: 2.85,
+                rewardProfileId: 'boss_ancient'
             }
         }
     };

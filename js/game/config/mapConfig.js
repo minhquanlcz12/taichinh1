@@ -63,6 +63,56 @@
                 monsterSpawns: [{ monsterId: 'abyss_lordling', weight: 100 }],
                 bossSpawns: [{ bossId: 'abyss_executor', weight: 10 }],
                 legacy: { rewardPoints: 10, gold: 190, material: 'longAn' }
+            },
+            cache_tower: {
+                mapId: 'cache_tower',
+                name: 'Thap Cache Vo',
+                levelRequired: 35,
+                recommendedPower: 14000,
+                dropProfileId: 'drop_cache_tower',
+                monsterSpawns: [{ monsterId: 'cache_golem', weight: 100 }],
+                bossSpawns: [{ bossId: 'cache_tyrant', weight: 10 }],
+                legacy: { rewardPoints: 16, gold: 320, material: 'daCuongHoa' }
+            },
+            ticket_desert: {
+                mapId: 'ticket_desert',
+                name: 'Sa Mac Ticket Chay',
+                levelRequired: 55,
+                recommendedPower: 28000,
+                dropProfileId: 'drop_ticket_desert',
+                monsterSpawns: [{ monsterId: 'ticket_scarab', weight: 100 }],
+                bossSpawns: [{ bossId: 'ticket_pharaoh', weight: 10 }],
+                legacy: { rewardPoints: 24, gold: 520, material: 'longAn' }
+            },
+            night_build_forge: {
+                mapId: 'night_build_forge',
+                name: 'Ham Build Dem',
+                levelRequired: 80,
+                recommendedPower: 52000,
+                dropProfileId: 'drop_night_build_forge',
+                monsterSpawns: [{ monsterId: 'build_warlock', weight: 100 }],
+                bossSpawns: [{ bossId: 'build_archon', weight: 10 }],
+                legacy: { rewardPoints: 36, gold: 820, material: 'longAn' }
+            },
+            sprint_citadel: {
+                mapId: 'sprint_citadel',
+                name: 'Thien Thanh Sprint',
+                levelRequired: 110,
+                recommendedPower: 92000,
+                dropProfileId: 'drop_sprint_citadel',
+                monsterSpawns: [{ monsterId: 'sprint_seraph', weight: 100 }],
+                bossSpawns: [{ bossId: 'sprint_regent', weight: 10 }],
+                legacy: { rewardPoints: 52, gold: 1250, material: 'bossCore' }
+            },
+            core_kpi_sector: {
+                mapId: 'core_kpi_sector',
+                name: 'Vung Loi Sieu KPI',
+                levelRequired: 135,
+                recommendedPower: 150000,
+                dropProfileId: 'drop_core_kpi_sector',
+                monsterSpawns: [{ monsterId: 'core_behemoth', weight: 100 }],
+                bossSpawns: [{ bossId: 'core_monarch', weight: 10 }],
+                legacy: { rewardPoints: 70, gold: 1800, material: 'bossCore' }
             }
         }
     };
