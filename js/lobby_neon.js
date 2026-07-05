@@ -3395,6 +3395,9 @@ window.LobbyNeon = {
                 case 'boss-challenge':
                     await LobbyNeon.challengeRpgBoss(value);
                     break;
+                case 'quest-claim':
+                    await LobbyNeon.claimRpgQuest(value);
+                    break;
                 default:
                     break;
             }
@@ -4677,6 +4680,13 @@ window.LobbyNeon = {
         itemLogs: [],
         bossLogs: [],
         upgradeLogs: [],
+        questLogs: [],
+        questEventLog: [],
+        questState: {
+            quests: {},
+            achievements: [],
+            counters: {}
+        },
         autoSettings: {
             lootMinRarity: 'white',
             autoSellMaxRarity: 'none',
@@ -4738,6 +4748,12 @@ window.LobbyNeon = {
             itemLogs: Array.isArray(profile?.itemLogs) ? profile.itemLogs.slice(0, 80) : [],
             bossLogs: Array.isArray(profile?.bossLogs) ? profile.bossLogs.slice(0, 80) : [],
             upgradeLogs: Array.isArray(profile?.upgradeLogs) ? profile.upgradeLogs.slice(0, 120) : [],
+            questLogs: Array.isArray(profile?.questLogs) ? profile.questLogs.slice(0, 120) : [],
+            questEventLog: Array.isArray(profile?.questEventLog) ? profile.questEventLog.slice(0, 160) : [],
+            questState: {
+                ...defaults.questState,
+                ...((profile && profile.questState) || {})
+            },
             lootLog: Array.isArray(profile?.lootLog) ? profile.lootLog.slice(0, 12) : []
         };
         if (!LobbyNeon.rpgClasses[merged.classId]) merged.classId = 'kiem_tong';
@@ -4781,6 +4797,9 @@ window.LobbyNeon = {
                 authUser: window.Auth?.currentUser
             });
         }
+        if (window.GameServices?.QuestService?.ensureQuestState) {
+            window.GameServices.QuestService.ensureQuestState(merged);
+        }
         return merged;
     },
 
@@ -4809,6 +4828,9 @@ window.LobbyNeon = {
     saveMyRpgProfile: async (profile, data) => {
         const username = LobbyNeon.getRpgUsername();
         const nextData = data || await LobbyNeon.loadRpgData();
+        if (window.GameServices?.QuestService?.evaluateAchievements) {
+            window.GameServices.QuestService.evaluateAchievements(profile, { now: Date.now() });
+        }
         nextData.users[username] = {
             ...profile,
             username,
@@ -5476,6 +5498,17 @@ window.LobbyNeon = {
                 resolvedAt: Date.now()
             }, appliedReward);
         }
+        if (window.GameServices?.QuestService?.recordEvent) {
+            window.GameServices.QuestService.recordEvent(profile, {
+                type: 'boss_challenge',
+                mapId: zone.id,
+                bossId: bossTemplate?.bossId || bossInstance?.bossId,
+                won,
+                items: reward.items || {},
+                equipment: appliedReward.equipment,
+                now: Date.now()
+            });
+        }
         if (won) await LobbyNeon.awardRpgExp(username, reward.rewardPoints, profile);
         LobbyNeon.state.rpgBossBattle = {
             zoneId: zone.id,
@@ -6032,6 +6065,14 @@ window.LobbyNeon = {
                 authUser: window.Auth?.currentUser
             });
         }
+        if (result.success && window.GameServices?.QuestService?.recordEvent) {
+            window.GameServices.QuestService.recordEvent(profile, {
+                type: 'upgrade_success',
+                itemId,
+                toLevel: result.toLevel,
+                now: Date.now()
+            });
+        }
         await LobbyNeon.saveMyRpgProfile(profile, data);
         const chanceText = Math.round(Number(result.successRate || 0) * 100);
         Utils.showToast(
@@ -6474,6 +6515,70 @@ window.LobbyNeon = {
                 </button>
             </div>
         `;
+    },
+
+    formatRpgQuestReward: (reward = {}) => {
+        const parts = Object.entries(reward.items || {}).map(([key, qty]) => {
+            const item = LobbyNeon.getRpgItemMeta(key);
+            return `${item.icon} ${LobbyNeon.escapeHtml(item.name)} x${Number(qty || 0).toLocaleString('vi-VN')}`;
+        });
+        if (reward.rewardPoints) parts.push(`EXP x${Number(reward.rewardPoints || 0).toLocaleString('vi-VN')}`);
+        if (reward.statPoints) parts.push(`Diem chi so x${Number(reward.statPoints || 0).toLocaleString('vi-VN')}`);
+        return parts.join(' · ') || 'Khong co thuong';
+    },
+
+    renderRpgQuestPanel: (profile) => {
+        if (!window.GameServices?.QuestService?.listQuests) return '';
+        const quests = window.GameServices.QuestService.listQuests(profile, { now: Date.now() });
+        const achievements = profile.questState?.achievements || [];
+        const visible = quests.slice(0, 5);
+        return `
+            <div class="rpg-mu-panel">
+                <div class="rpg-mu-heading">
+                    <span>Nhiem vu RPG</span>
+                    <span class="rpg-chip">${achievements.length} thanh tuu</span>
+                </div>
+                <div class="rpg-unlock-grid">
+                    ${visible.map(quest => `
+                        <div class="rpg-unlock-row ${quest.canClaim ? 'done' : quest.claimed ? 'locked' : ''}">
+                            <span>${quest.group === 'weekly' ? 'W' : quest.group === 'milestone' ? 'M' : 'D'}</span>
+                            <div>
+                                <b>${LobbyNeon.escapeHtml(quest.title)}</b>
+                                <small>${quest.progress}/${quest.target} · ${LobbyNeon.formatRpgQuestReward(quest.reward)}</small>
+                                <div class="rpg-progress" style="margin-top:6px;"><span style="width:${quest.progressPct}%;"></span></div>
+                            </div>
+                            <button class="rpg-stat-add" ${quest.canClaim ? '' : 'disabled'} data-rpg-action="quest-claim" data-rpg-value="${quest.questId}">
+                                ${quest.claimed ? '✓' : '+'}
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    },
+
+    claimRpgQuest: async (questId) => {
+        if (!window.GameServices?.QuestService?.claimQuest) {
+            Utils.showToast('He thong nhiem vu RPG chua san sang.', 'warning');
+            return;
+        }
+        const { data, profile, username } = await LobbyNeon.getMyRpgProfile();
+        const result = window.GameServices.QuestService.claimQuest(profile, questId, { now: Date.now() });
+        if (!result.ok) {
+            const messages = {
+                missing_quest: 'Khong tim thay nhiem vu.',
+                not_complete: 'Nhiem vu chua du tien do.',
+                already_claimed: 'Nhiem vu nay da nhan thuong trong chu ky hien tai.'
+            };
+            Utils.showToast(messages[result.reason] || 'Chua the nhan thuong nhiem vu.', 'warning');
+            return;
+        }
+        if (result.reward?.rewardPoints) {
+            await LobbyNeon.awardRpgExp(username, result.reward.rewardPoints, profile);
+        }
+        await LobbyNeon.saveMyRpgProfile(profile, data);
+        Utils.showToast(`Da nhan ${result.quest.title}: ${LobbyNeon.formatRpgQuestReward(result.reward)}.`, 'success');
+        LobbyNeon.renderRpgPanel();
     },
 
     renderRpgUnlockPanel: () => {
@@ -7318,6 +7423,7 @@ window.LobbyNeon = {
             rewardPoints,
             exp,
             items,
+            mapId: baseReward?.mapId || monster.mapId || zone.id,
             monsterId: monster.monsterId,
             monsterName: monster.name || zone.monster,
             dropProfileId: baseReward?.dropProfileId || monster.dropProfileId,
@@ -7340,6 +7446,16 @@ window.LobbyNeon = {
             },
             ...(profile.lootLog || [])
         ].slice(0, 12);
+        if (window.GameServices?.QuestService?.recordEvent) {
+            window.GameServices.QuestService.recordEvent(profile, {
+                type: 'kill_monster',
+                mapId: reward.mapId,
+                monsterId: reward.monsterId,
+                items,
+                equipment: appliedReward.equipment,
+                now: Date.now()
+            });
+        }
         await LobbyNeon.awardRpgExp(username, rewardPoints, profile);
         await LobbyNeon.saveMyRpgProfile(profile, data);
         const shouldToast = !options.auto || Date.now() - (LobbyNeon.state.rpgLastAutoToastAt || 0) > 7000;
@@ -7775,6 +7891,14 @@ window.LobbyNeon = {
                 cost
             });
         }
+        if (window.GameServices?.QuestService?.recordEvent) {
+            window.GameServices.QuestService.recordEvent(profile, {
+                type: 'upgrade_success',
+                itemId: skinId,
+                toLevel: currentLevel + 1,
+                now: Date.now()
+            });
+        }
         await LobbyNeon.saveMyRpgProfile(profile, data);
         Utils.showToast(`Da nang ${skin.name} len cap ${currentLevel + 1}.`, 'success');
         LobbyNeon.renderRpgPanel();
@@ -7865,6 +7989,17 @@ window.LobbyNeon = {
             },
             ...(profile.lootLog || [])
         ].slice(0, 12);
+        if (window.GameServices?.QuestService?.recordEvent) {
+            window.GameServices.QuestService.recordEvent(profile, {
+                type: 'kill_monster',
+                mapId: zone.id,
+                monsterId: reward.monsterId,
+                count: Math.max(1, Math.round(Number(hunt.durationMin || 15) / 15)),
+                items: reward.items || {},
+                equipment: appliedReward.equipment,
+                now: Date.now()
+            });
+        }
         profile.activeHunt = null;
 
         await LobbyNeon.awardRpgExp(username, Number(reward.rewardPoints || 0), profile);
@@ -8028,6 +8163,8 @@ window.LobbyNeon = {
                 ${LobbyNeon.renderRpgStatsPanel(profile)}
 
                 ${LobbyNeon.renderRpgAutoSettingsPanel(profile)}
+
+                ${LobbyNeon.renderRpgQuestPanel(profile)}
 
                 <div class="rpg-card">
                     <p class="rpg-title">🎮 Nút skin chưởng nhanh</p>
