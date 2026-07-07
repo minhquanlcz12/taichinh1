@@ -513,7 +513,7 @@ const Attendance = {
                 let msg = `🚨 <b>[TỰ ĐỘNG PHẠT NGHỈ KHÔNG PHÉP]</b>\n`;
                 msg += `📅 Ngày: ${dateStr}\n\n`;
                 penalizedUsers.forEach(u => {
-                    msg += `• <b>${u.user}</b>: ${u.shift === 'morning' ? 'Sáng' : 'Chiều'} -> Phạt <b>-50,000đ</b>\n`;
+                    msg += `• <b>${u.user}</b>: ${u.shift === 'morning' ? 'Sáng' : 'Chiều'} -> Đề xuất phạt <b>-50,000đ</b> (chờ admin duyệt)\n`;
                 });
                 msg += `\n<i>Hệ thống tự động quét sau 1 tiếng quá giờ điểm danh quy định.</i>`;
                 Utils.notifyTelegram(msg);
@@ -683,7 +683,7 @@ const Attendance = {
                 </div>
                 <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.6; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px;">
                     <i class="fa-solid fa-circle-info" style="margin-right: 6px; color: var(--primary);"></i>
-                    Sau khi xác nhận, hệ thống sẽ tự động tạo bản ghi vắng, trừ quỹ phạt và công khai danh sách lên Telegram.
+                    Sau khi xác nhận, hệ thống sẽ tạo bản ghi vắng và tạo đề xuất phạt chờ admin duyệt trước khi tính vào lương.
                 </div>
             </div>
         `;
@@ -726,14 +726,14 @@ const Attendance = {
             let msg = `🚨 <b>[KẾT QUẢ QUÉT PHẠT NGHỈ KHÔNG PHÉP]</b>\n`;
             msg += `📅 Ngày: ${dateStr} (${shift === 'morning' ? 'Sáng' : 'Chiều'})\n`;
             msg += `👤 Người thực hiện: <b>${Auth.currentUser.username}</b>\n\n`;
-            msg += `<b>Danh sách xử phạt (-50,000đ/người):</b>\n`;
+            msg += `<b>Danh sách đề xuất phạt (-50,000đ/người, chờ duyệt lương):</b>\n`;
             penalizedUsers.forEach(u => {
                 msg += `• <b>${u}</b>\n`;
             });
-            msg += `\n<i>"Hệ thống đã tự động cập nhật dữ liệu tài chính."</i>`;
+            msg += `\n<i>"Hệ thống chỉ ghi nhận đề xuất phạt. Lương chỉ thay đổi sau khi admin duyệt trong bảng lương."</i>`;
             Utils.notifyTelegram(msg);
 
-            Utils.showToast(`Đã xử phạt ${penalizedUsers.length} nhân sự!`, "success");
+            Utils.showToast(`Đã tạo đề xuất phạt cho ${penalizedUsers.length} nhân sự!`, "success");
             return true;
         }, "XÁC NHẬN & PHẠT NGAY");
     },
@@ -1210,7 +1210,7 @@ const Attendance = {
                 badgeClass = 'late-excused';
             } else {
                 meritPts = -0.5;
-                statusText = `⏰ Muộn ${sessionRecord.lateMinutes}p (${sessionName}) — Phạt 20k & Trừ 0.5 Công đức`;
+                statusText = `⏰ Muộn ${sessionRecord.lateMinutes}p (${sessionName}) — Chờ duyệt phạt 20k & Trừ 0.5 Công đức`;
                 badgeClass = 'late';
             }
             checkInHtml = `
@@ -2093,7 +2093,7 @@ const Attendance = {
                     telegramMsg += `👤 <b>Nhân sự:</b> ${user.username}\n`;
                     telegramMsg += `⏰ <b>Thời gian:</b> ${now.toLocaleTimeString('vi-VN')} (${shiftName})\n`;
                     telegramMsg += `⏳ <b>Trạng thái:</b> Xin muộn ${requestedMinutes}p nhưng thực tế muộn ${lateMinutes}p (Quá hạn ${lateMinutes - requestedMinutes}p)\n`;
-                    telegramMsg += `💸 <b>Phạt vi phạm:</b> 20,000đ (Đã tự động trừ lương)\n`;
+                    telegramMsg += `💸 <b>Đề xuất phạt:</b> 20,000đ (chờ admin duyệt, chưa trừ lương)\n`;
                     telegramMsg += `📉 <b>Trừ công đức:</b> -0.5đ\n`;
                     telegramMsg += `${locStr}\n\n`;
                     telegramMsg += `<i>"Kỷ luật là sức mạnh! Đề nghị sếp ${user.username} rút kinh nghiệm sâu sắc."</i>`;
@@ -2105,7 +2105,7 @@ const Attendance = {
                 telegramMsg += `👤 <b>Nhân sự:</b> ${user.username}\n`;
                 telegramMsg += `⏰ <b>Thời gian:</b> ${now.toLocaleTimeString('vi-VN')} (${shiftName})\n`;
                 telegramMsg += `❗ <b>Tình trạng:</b> ĐI MUỘN KHÔNG PHÉP <b>${lateMinutes}</b> PHÚT\n`;
-                telegramMsg += `💸 <b>Phạt vi phạm:</b> 20,000đ (Đã tự động trừ lương)\n`;
+                telegramMsg += `💸 <b>Đề xuất phạt:</b> 20,000đ (chờ admin duyệt, chưa trừ lương)\n`;
                 telegramMsg += `📉 <b>Trừ công đức:</b> -1đ\n`;
                 telegramMsg += `${locStr}\n\n`;
                 telegramMsg += `<i>"Kỷ luật là sức mạnh! Đề nghị sếp ${user.username} rút kinh nghiệm sâu sắc."</i>`;

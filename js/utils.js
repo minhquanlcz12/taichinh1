@@ -720,76 +720,55 @@ const Utils = {
 
         msg += `<b>MẢNG 2: NHÂN SỰ</b>\n`;
         if (missingUsers.length > 0) {
-            msg += `❌ Vắng mặt (Khác): <b>${missingUsers.map(u => Utils.getUserDisplayName(u) || u).join(', ')}</b>\n`;
+            msg += `❌ Vắng mặt (Khác): <b>${missingUsers.map(u => Utils.getUserDisplayName(u) || u).join(', ')}</b>\n\n`;
         } else {
-            msg += `✅ 100% nhân sự đi làm đầy đủ!\n`;
+            msg += `✅ 100% nhân sự đi làm đầy đủ!\n\n`;
         }
 
-        // Tổng hợp số công và nghỉ phép trong chu kỳ lương hiện tại
-        let cycle = null;
-        let workedLines = [];
-        let leaveLines = [];
+        // Mảng 2.5: lương tạm tính trong kỳ lương hiện tại.
         try {
-            if (typeof Attendance !== 'undefined' && typeof PayrollModule !== 'undefined') {
+            if (typeof Attendance !== 'undefined' && typeof PayrollModule !== 'undefined' && typeof DB !== 'undefined') {
+                const allLeavesForPayroll = await Attendance.loadLeaveData();
                 const cycleMonthStr = PayrollModule.getCurrentCycleMonthStr(new Date());
-                cycle = PayrollModule.getCycleRange(cycleMonthStr);
+                const cycle = PayrollModule.getCycleRange(cycleMonthStr);
+                const workingDays = PayrollModule.getWorkingDaysInCycle(cycle.startDate, cycle.endDate);
+                const allSalaryAdvances = await DB.getSalaryAdvances();
+                const monthlyAdvances = PayrollModule.getCycleBucket(allSalaryAdvances, cycleMonthStr);
                 const staffAccounts = accounts.filter(a => !Utils.isSystemAccount(a));
-                
-                staffAccounts.forEach(acc => {
-                    let onTimeDays = 0;
-                    let lateDays = 0;
-                    let lateExcusedDays = 0;
-                    
-                    allAtt.forEach(a => {
-                        if (a.username === acc.username && a.dateStr >= cycle.startStr && a.dateStr <= cycle.endStr) {
-                            const parts = a.dateStr.split('-');
-                            const isSunday = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2])).getDay() === 0;
-                            if (isSunday) return;
-                            
-                            const weight = a.type ? 0.5 : 1.0;
-                            if (a.status === 'on_time') onTimeDays += weight;
-                            else if (a.status === 'late_excused') lateExcusedDays += weight;
-                            else if (a.status === 'late') lateDays += weight;
-                        }
-                    });
-                    const totalWorked = onTimeDays + lateExcusedDays + lateDays;
-                    const displayName = Utils.getUserDisplayName(acc.username) || acc.username;
-                    workedLines.push(`- ${displayName}: <b>${totalWorked} công</b>`);
-                });
+                const payrollLines = [];
+                const leaveLines = [];
 
-                const allLeaves = await Attendance.loadLeaveData();
-                staffAccounts.forEach(acc => {
-                    const leaveDays = PayrollModule.getUserCycleLeaveDays(allLeaves, acc.username, cycle, todayStr);
-                    if (leaveDays > 0) {
-                        const displayName = Utils.getUserDisplayName(acc.username) || acc.username;
-                        leaveLines.push(`- ${displayName}: <b>${leaveDays} ngày</b>`);
+                for (const acc of staffAccounts) {
+                    const displayName = Utils.getUserDisplayName(acc.username) || acc.username;
+                    const summary = PayrollModule.summarizeUserCycleAttendance(allAtt, allLeavesForPayroll, acc.username, cycle, todayStr);
+                    const salaryDays = PayrollModule.getAccruedSalaryDays(cycle, summary, new Date());
+                    const tempSalary = await PayrollModule.calculateUserSalary(acc.username, cycleMonthStr);
+                    const advance = parseFloat(PayrollModule.getUserValue(monthlyAdvances, acc.username, 0)) || 0;
+
+                    payrollLines.push(
+                        `- <b>${displayName}</b>: ${Utils.formatCurrency(tempSalary)} | Công ${salaryDays}/${workingDays} | Nghỉ phép ${summary.approvedLeaveDays || 0} | Không phép ${summary.absentUnexcusedDays || 0} | Tạm ứng ${Utils.formatCurrency(advance)}`
+                    );
+
+                    if ((summary.approvedLeaveDays || 0) > 0) {
+                        leaveLines.push(`- ${displayName}: <b>${summary.approvedLeaveDays} ngày</b>`);
                     }
-                });
+                }
+
+                msg += `<b>MẢNG 2.5: LƯƠNG TẠM TÍNH (Kỳ ${cycle.startStr.slice(5)} → ${cycle.endStr.slice(5)})</b>\n`;
+                msg += payrollLines.length > 0 ? `${payrollLines.join('\n')}\n` : `Chưa có nhân sự để tổng hợp lương.\n`;
+                msg += `<i>Lương tạm tính chỉ gồm khoản đã duyệt; thưởng/phạt chờ duyệt chưa tính vào thực lĩnh.</i>\n\n`;
+
+                msg += `<b>MẢNG 2.6: NGHỈ PHÉP (Chu kỳ ${cycle.startStr.slice(5)} → ${cycle.endStr.slice(5)})</b>\n`;
+                if (leaveLines.length > 0) {
+                    msg += `📋 Nghỉ phép đã duyệt:\n${leaveLines.join('\n')}\n`;
+                    msg += `<i>Nghỉ phép được theo dõi trong bảng lương.</i>\n\n`;
+                } else {
+                    msg += `✅ Không có nhân sự nghỉ phép trong chu kỳ này.\n\n`;
+                }
             }
         } catch (e) {
-            console.warn('Lỗi tổng hợp số công/nghỉ phép cho báo cáo:', e);
-        }
-
-        if (cycle && workedLines.length > 0) {
-            const startStrFormatted = `${cycle.startStr.split('-')[1]}-${cycle.startStr.split('-')[2]}`;
-            const endStrFormatted = `${cycle.endStr.split('-')[1]}-${cycle.endStr.split('-')[2]}`;
-            msg += `📊 <b>Số công lũy kế (Chu kỳ ${startStrFormatted} → ${endStrFormatted}):</b>\n`;
-            msg += workedLines.join('\n') + '\n\n';
-        } else {
-            msg += '\n';
-        }
-
-        // MẢNG 2.5: NGHỈ PHÉP
-        if (cycle) {
-            const startStrFormatted = `${cycle.startStr.split('-')[1]}-${cycle.startStr.split('-')[2]}`;
-            const endStrFormatted = `${cycle.endStr.split('-')[1]}-${cycle.endStr.split('-')[2]}`;
-            msg += `<b>MẢNG 2.5: NGHỈ PHÉP (Chu kỳ ${startStrFormatted} → ${endStrFormatted})</b>\n`;
-            if (leaveLines.length > 0) {
-                msg += `📋 Nghỉ phép đã duyệt:\n${leaveLines.join('\n')}\n`;
-                msg += `<i>(Nghỉ phép không được tính lương, đã phản ánh vào bảng lương)</i>\n\n`;
-            } else {
-                msg += `✅ Không có nhân sự nghỉ phép trong chu kỳ này.\n\n`;
-            }
+            console.warn('Lỗi tổng hợp lương/nghỉ phép cho báo cáo:', e);
+            msg += `⚠️ Không tổng hợp được lương tạm tính trong báo cáo hôm nay.\n\n`;
         }
 
         msg += `<b>MẢNG 3: TIẾN ĐỘ THỰC THI (TASK)</b>\n`;

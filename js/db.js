@@ -267,6 +267,56 @@ const DB = {
         return Utils.storage.get('backup_custom_bonuses', {});
     },
 
+    saveCustomBonusApprovals: async (approvalsObj) => {
+        try {
+            Utils.storage.set('backup_custom_bonus_approvals', approvalsObj);
+            await db.collection("system").doc("custom_bonus_approvals").set(approvalsObj);
+            return true;
+        } catch (e) {
+            console.error("Error saving custom bonus approvals:", e);
+            throw e;
+        }
+    },
+
+    getCustomBonusApprovals: async () => {
+        try {
+            const doc = await db.collection("system").doc("custom_bonus_approvals").get();
+            if (doc.exists && doc.data()) {
+                const data = doc.data();
+                Utils.storage.set('backup_custom_bonus_approvals', data);
+                return data;
+            }
+        } catch (e) {
+            console.error("Error getting custom bonus approvals:", e);
+        }
+        return Utils.storage.get('backup_custom_bonus_approvals', {});
+    },
+
+    saveLatePenaltyApprovals: async (approvalsObj) => {
+        try {
+            Utils.storage.set('backup_late_penalty_approvals', approvalsObj);
+            await db.collection("system").doc("late_penalty_approvals").set(approvalsObj);
+            return true;
+        } catch (e) {
+            console.error("Error saving late penalty approvals:", e);
+            throw e;
+        }
+    },
+
+    getLatePenaltyApprovals: async () => {
+        try {
+            const doc = await db.collection("system").doc("late_penalty_approvals").get();
+            if (doc.exists && doc.data()) {
+                const data = doc.data();
+                Utils.storage.set('backup_late_penalty_approvals', data);
+                return data;
+            }
+        } catch (e) {
+            console.error("Error getting late penalty approvals:", e);
+        }
+        return Utils.storage.get('backup_late_penalty_approvals', {});
+    },
+
     saveSalaryAdvances: async (advancesObj) => {
         try {
             Utils.storage.set('backup_salary_advances', advancesObj);

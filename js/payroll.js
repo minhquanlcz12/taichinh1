@@ -184,6 +184,8 @@ const PayrollModule = {
             const allCustomBonuses = await DB.getCustomBonuses();
             const allSalaryAdvances = await DB.getSalaryAdvances();
             const allBonusApprovals = await DB.getBonusApprovals();
+            const allCustomBonusApprovals = await DB.getCustomBonusApprovals();
+            const allLatePenaltyApprovals = await DB.getLatePenaltyApprovals();
 
             const backup = {
                 fromMonth: calendarMonth,
@@ -191,26 +193,34 @@ const PayrollModule = {
                 customBonuses: PayrollModule._clonePlain(allCustomBonuses),
                 salaryAdvances: PayrollModule._clonePlain(allSalaryAdvances),
                 bonusApprovals: PayrollModule._clonePlain(allBonusApprovals),
+                customBonusApprovals: PayrollModule._clonePlain(allCustomBonusApprovals),
+                latePenaltyApprovals: PayrollModule._clonePlain(allLatePenaltyApprovals),
                 backedUpAt: new Date().toISOString()
             };
 
             const movedCustomBonuses = PayrollModule._moveMisplacedPayrollBucket(allCustomBonuses, calendarMonth, cycleMonth);
             const movedSalaryAdvances = PayrollModule._moveMisplacedPayrollBucket(allSalaryAdvances, calendarMonth, cycleMonth);
             const movedBonusApprovals = PayrollModule._moveMisplacedPayrollBucket(allBonusApprovals, calendarMonth, cycleMonth);
+            const movedCustomBonusApprovals = PayrollModule._moveMisplacedPayrollBucket(allCustomBonusApprovals, calendarMonth, cycleMonth);
+            const movedLatePenaltyApprovals = PayrollModule._moveMisplacedPayrollBucket(allLatePenaltyApprovals, calendarMonth, cycleMonth);
 
-            if (movedCustomBonuses || movedSalaryAdvances || movedBonusApprovals) {
+            if (movedCustomBonuses || movedSalaryAdvances || movedBonusApprovals || movedCustomBonusApprovals || movedLatePenaltyApprovals) {
                 if (typeof Utils !== 'undefined' && Utils.storage) {
                     Utils.storage.set(`payroll_cycle_repair_backup_${Date.now()}`, backup);
                 }
                 if (movedCustomBonuses) await DB.saveCustomBonuses(allCustomBonuses);
                 if (movedSalaryAdvances) await DB.saveSalaryAdvances(allSalaryAdvances);
                 if (movedBonusApprovals) await DB.saveBonusApprovals(allBonusApprovals);
+                if (movedCustomBonusApprovals) await DB.saveCustomBonusApprovals(allCustomBonusApprovals);
+                if (movedLatePenaltyApprovals) await DB.saveLatePenaltyApprovals(allLatePenaltyApprovals);
                 console.log(`[Payroll] Restored early-cycle payroll buckets ${calendarMonth} -> ${cycleMonth}`, {
                     movedCustomBonuses,
                     movedSalaryAdvances,
-                    movedBonusApprovals
+                    movedBonusApprovals,
+                    movedCustomBonusApprovals,
+                    movedLatePenaltyApprovals
                 });
-                return { movedCustomBonuses, movedSalaryAdvances, movedBonusApprovals, fromMonth: calendarMonth, toMonth: cycleMonth };
+                return { movedCustomBonuses, movedSalaryAdvances, movedBonusApprovals, movedCustomBonusApprovals, movedLatePenaltyApprovals, fromMonth: calendarMonth, toMonth: cycleMonth };
             }
 
             return null;
@@ -939,7 +949,13 @@ const PayrollModule = {
             allCustomBonuses[monthStr][bonusKey] = val;
 
             await DB.saveCustomBonuses(allCustomBonuses);
-            Utils.showToast(`Đã lưu Thưởng/Phạt cho ${username}`, 'success');
+            const allApprovals = await DB.getCustomBonusApprovals();
+            if (!allApprovals[monthStr]) allApprovals[monthStr] = {};
+            const approvalKey = Object.keys(allApprovals[monthStr]).find(k => PayrollModule.sameUser(k, username)) || username;
+            allApprovals[monthStr][approvalKey] = val === 0 ? true : false;
+            await DB.saveCustomBonusApprovals(allApprovals);
+
+            Utils.showToast(`Đã lưu đề xuất Thưởng/Phạt cho ${username}. Chưa tính vào lương khi chưa duyệt.`, 'success');
             PayrollModule.calculateAndRenderBody();
         } catch (e) {
             console.error("Lỗi lưu thưởng/phạt:", e);
@@ -961,11 +977,62 @@ const PayrollModule = {
             allCustomBonuses[monthStr][bonusKey] = currentBonus - amount;
             
             await DB.saveCustomBonuses(allCustomBonuses);
-            console.log(`[System] Applied absent penalty of ${amount} to ${username}`);
+            const allApprovals = await DB.getCustomBonusApprovals();
+            if (!allApprovals[monthStr]) allApprovals[monthStr] = {};
+            const approvalKey = Object.keys(allApprovals[monthStr]).find(k => PayrollModule.sameUser(k, username)) || username;
+            allApprovals[monthStr][approvalKey] = (allCustomBonuses[monthStr][bonusKey] || 0) === 0 ? true : false;
+            await DB.saveCustomBonusApprovals(allApprovals);
+            console.log(`[System] Proposed absent penalty of ${amount} for ${username}; waiting admin approval`);
             return true;
         } catch (e) {
             console.error("Error applying absent penalty:", e);
             return false;
+        }
+    },
+
+    approveCustomBonus: async (username) => {
+        const monthStr = PayrollModule.currentMonth;
+        const allCustomBonuses = await DB.getCustomBonuses();
+        const monthlyBonuses = PayrollModule.getCycleBucket(allCustomBonuses, monthStr);
+        const amount = parseFloat(PayrollModule.getUserValue(monthlyBonuses, username, 0)) || 0;
+        if (!amount) {
+            Utils.showToast("Không có thưởng/phạt khác để duyệt.", "info");
+            return;
+        }
+
+        const confirmApprove = confirm(`Duyệt ${amount > 0 ? 'thưởng' : 'phạt'} ${Utils.formatCurrency(Math.abs(amount))} cho ${username} và tính vào lương?`);
+        if (!confirmApprove) return;
+
+        try {
+            const allApprovals = await DB.getCustomBonusApprovals();
+            if (!allApprovals[monthStr]) allApprovals[monthStr] = {};
+            const approvalKey = Object.keys(allApprovals[monthStr]).find(k => PayrollModule.sameUser(k, username)) || username;
+            allApprovals[monthStr][approvalKey] = true;
+            await DB.saveCustomBonusApprovals(allApprovals);
+            Utils.showToast(`Đã duyệt thưởng/phạt khác cho ${username}`, 'success');
+            PayrollModule.calculateAndRenderBody();
+        } catch (e) {
+            console.error("Lỗi duyệt thưởng/phạt khác:", e);
+            Utils.showToast("Chưa lưu được phê duyệt thưởng/phạt. Thử lại sau.", "error");
+        }
+    },
+
+    approveLatePenalty: async (username) => {
+        const confirmApprove = confirm(`Duyệt phạt đi muộn cho ${username} và tính vào lương kỳ này?`);
+        if (!confirmApprove) return;
+
+        try {
+            const monthStr = PayrollModule.currentMonth;
+            const allApprovals = await DB.getLatePenaltyApprovals();
+            if (!allApprovals[monthStr]) allApprovals[monthStr] = {};
+            const approvalKey = Object.keys(allApprovals[monthStr]).find(k => PayrollModule.sameUser(k, username)) || username;
+            allApprovals[monthStr][approvalKey] = true;
+            await DB.saveLatePenaltyApprovals(allApprovals);
+            Utils.showToast(`Đã duyệt phạt đi muộn cho ${username}`, 'success');
+            PayrollModule.calculateAndRenderBody();
+        } catch (e) {
+            console.error("Lỗi duyệt phạt đi muộn:", e);
+            Utils.showToast("Chưa lưu được phê duyệt phạt đi muộn. Thử lại sau.", "error");
         }
     },
 
@@ -984,6 +1051,8 @@ const PayrollModule = {
             const allCustomBonuses = await DB.getCustomBonuses();
             const allSalaryAdvances = await DB.getSalaryAdvances();
             const allBonusApprovals = await DB.getBonusApprovals();
+            const allCustomBonusApprovals = await DB.getCustomBonusApprovals();
+            const allLatePenaltyApprovals = await DB.getLatePenaltyApprovals();
             
             const cycle = PayrollModule.getCycleRange(monthStr);
             const workingDays = PayrollModule.getWorkingDaysInCycle(cycle.startDate, cycle.endDate);
@@ -993,8 +1062,12 @@ const PayrollModule = {
             const paidDays = PayrollModule.getAccruedSalaryDays(cycle, attendanceSummary);
             
             const attendancePay = paidDays * dailyRate;
-            const latePenaltyTotal = attendanceSummary.lateCount * PayrollModule.LATE_PENALTY;
-            const customBonus = parseFloat(PayrollModule.getCycleUserValue(allCustomBonuses, monthStr, username, 0)) || 0;
+            const latePenaltyCandidate = attendanceSummary.lateCount * PayrollModule.LATE_PENALTY;
+            const latePenaltyApproved = latePenaltyCandidate === 0 || PayrollModule.getCycleUserValue(allLatePenaltyApprovals, monthStr, username, false) === true;
+            const latePenaltyTotal = latePenaltyApproved ? latePenaltyCandidate : 0;
+            const customBonusProposal = parseFloat(PayrollModule.getCycleUserValue(allCustomBonuses, monthStr, username, 0)) || 0;
+            const customBonusApproved = customBonusProposal === 0 || PayrollModule.getCycleUserValue(allCustomBonusApprovals, monthStr, username, false) === true;
+            const customBonus = customBonusApproved ? customBonusProposal : 0;
             const advance = parseFloat(PayrollModule.getCycleUserValue(allSalaryAdvances, monthStr, username, 0)) || 0;
             const isApproved = PayrollModule.getCycleUserValue(allBonusApprovals, monthStr, username, false) === true;
             const punctualityBonusVal = (PayrollModule.isEligibleForPunctualityBonus(attendanceSummary) && isApproved) ? 200000 : 0;
@@ -1057,6 +1130,10 @@ const PayrollModule = {
             const monthlyBonuses = PayrollModule.getCycleBucket(allCustomBonuses, PayrollModule.currentMonth);
             const allSalaryAdvances = await DB.getSalaryAdvances();
             const monthlyAdvances = PayrollModule.getCycleBucket(allSalaryAdvances, PayrollModule.currentMonth);
+            const allCustomBonusApprovals = await DB.getCustomBonusApprovals();
+            const monthlyCustomBonusApprovals = PayrollModule.getCycleBucket(allCustomBonusApprovals, PayrollModule.currentMonth);
+            const allLatePenaltyApprovals = await DB.getLatePenaltyApprovals();
+            const monthlyLatePenaltyApprovals = PayrollModule.getCycleBucket(allLatePenaltyApprovals, PayrollModule.currentMonth);
 
             const cycle = PayrollModule.getCycleRange(PayrollModule.currentMonth);
             const workingDays = PayrollModule.getWorkingDaysInCycle(cycle.startDate, cycle.endDate);
@@ -1121,7 +1198,9 @@ const PayrollModule = {
                 const paidDays = PayrollModule.getAccruedSalaryDays(cycle, attendanceSummary, now);
                 
                 const attendancePay = paidDays * dailyRate;
-                const latePenaltyTotal = lateCount * PayrollModule.LATE_PENALTY;
+                const latePenaltyCandidate = lateCount * PayrollModule.LATE_PENALTY;
+                const latePenaltyApproved = latePenaltyCandidate === 0 || PayrollModule.getUserValue(monthlyLatePenaltyApprovals, username, false) === true;
+                const latePenaltyTotal = latePenaltyApproved ? latePenaltyCandidate : 0;
                 
                 // Thưởng chuyên cần: 200k nếu đi muộn 0 lần và có đi làm ít nhất 15 ngày
                 const eligibleForBonus = PayrollModule.isEligibleForPunctualityBonus(attendanceSummary);
@@ -1131,11 +1210,27 @@ const PayrollModule = {
                 const punctualityBonusVal = (eligibleForBonus && isApproved) ? 200000 : 0;
 
                 // Manual custom Bonus/Penalty
-                const customBonus = parseFloat(PayrollModule.getUserValue(monthlyBonuses, username, 0)) || 0;
+                const customBonusProposal = parseFloat(PayrollModule.getUserValue(monthlyBonuses, username, 0)) || 0;
+                const customBonusApproved = customBonusProposal === 0 || PayrollModule.getUserValue(monthlyCustomBonusApprovals, username, false) === true;
+                const customBonus = customBonusApproved ? customBonusProposal : 0;
                 const advance = parseFloat(PayrollModule.getUserValue(monthlyAdvances, username, 0)) || 0;
 
                 const netSalary = attendancePay + customBonus + punctualityBonusVal - latePenaltyTotal - advance;
                 const roundedNetSalary = Math.round(netSalary > 0 ? Math.round(netSalary / 1000) * 1000 : 0);
+                const customBonusStatusHtml = customBonusProposal !== 0
+                    ? (customBonusApproved
+                        ? `<div style="font-size:11px;color:#64ffda;margin-top:4px;"><i class="fa-solid fa-circle-check"></i> Thưởng/phạt khác đã duyệt</div>`
+                        : (currentUser.role === 'admin'
+                            ? `<button class="btn btn-primary" style="padding:3px 8px;font-size:11px;border-radius:4px;margin-top:5px;" onclick="PayrollModule.approveCustomBonus('${username}')"><i class="fa-solid fa-check"></i> Duyệt thưởng/phạt</button>`
+                            : `<div style="font-size:11px;color:var(--warning);margin-top:4px;"><i class="fa-solid fa-hourglass-half"></i> Thưởng/phạt chờ duyệt</div>`))
+                    : '';
+                const latePenaltyStatusHtml = latePenaltyCandidate > 0
+                    ? (latePenaltyApproved
+                        ? `<div class="penalty-text"><i class="fa-solid fa-circle-check"></i> Phạt muộn đã duyệt: -${Utils.formatCurrency(latePenaltyCandidate)}</div>`
+                        : (currentUser.role === 'admin'
+                            ? `<button class="btn btn-outline" style="border-color:var(--warning);color:var(--warning);padding:3px 8px;font-size:11px;border-radius:4px;margin-top:5px;" onclick="PayrollModule.approveLatePenalty('${username}')"><i class="fa-solid fa-gavel"></i> Duyệt phạt muộn (-${Utils.formatCurrency(latePenaltyCandidate)})</button>`
+                            : `<div class="penalty-text" style="color:var(--warning);"><i class="fa-solid fa-hourglass-half"></i> Phạt muộn chờ duyệt: -${Utils.formatCurrency(latePenaltyCandidate)}</div>`))
+                    : '';
 
                 // Setup Neon Border Theme based on role and success
                 let glowColor = '0, 229, 255'; // Cyan neon
@@ -1204,10 +1299,11 @@ const PayrollModule = {
                                 <div class="custom-bonus-section">
                                     ${currentUser.role === 'admin' ? 
                                     `<div class="admin-input-group" title="Sếp nhập thưởng phạt trực tiếp">
-                                        <input type="number" class="card-input" style="color: ${customBonus >= 0 ? '#10b981' : '#ef4444'};" value="${customBonus}" placeholder="0" onchange="PayrollModule.saveCustomBonus('${username}', this.value)">
+                                        <input type="number" class="card-input" style="color: ${customBonusProposal >= 0 ? '#10b981' : '#ef4444'};" value="${customBonusProposal}" placeholder="0" onchange="PayrollModule.saveCustomBonus('${username}', this.value)">
                                         <span class="currency-unit">đ</span>
                                     </div>` 
-                                    : `<strong class="bonus-value" style="color: ${customBonus >= 0 ? '#10b981' : '#ef4444'};">${customBonus > 0 ? '+' : ''}${Utils.formatCurrency(customBonus)}</strong>`}
+                                    : `<strong class="bonus-value" style="color: ${customBonusProposal >= 0 ? '#10b981' : '#ef4444'};">${customBonusProposal > 0 ? '+' : ''}${Utils.formatCurrency(customBonusProposal)}</strong>`}
+                                    ${customBonusStatusHtml}
                                     
                                     ${eligibleForBonus ? `
                                         <div class="punctuality-bonus-badge">
@@ -1220,7 +1316,7 @@ const PayrollModule = {
                                         </div>
                                     ` : ''}
                                     
-                                    ${latePenaltyTotal > 0 ? `<div class="penalty-text"><i class="fa-solid fa-triangle-exclamation"></i> Phạt muộn: -${Utils.formatCurrency(latePenaltyTotal)}</div>` : ''}
+                                    ${latePenaltyStatusHtml}
                                 </div>
 
                                 <div class="stat-group-title">Tạm ứng lương</div>
@@ -1415,8 +1511,9 @@ const PayrollModule = {
                         </td>
                         <td style="text-align: right; font-size: 13px;">
                             ${currentUser.role === 'admin' ? 
-                            `<div style="margin-bottom: 4px;"><input type="number" class="form-control" style="width: 100px; padding: 4px 8px; font-size: 13px; text-align: right; display: inline-block; color: ${customBonus >= 0 ? 'var(--success)' : 'var(--danger)'}; border-color: rgba(255,255,255,0.1);" value="${customBonus}" placeholder="0" onchange="PayrollModule.saveCustomBonus('${username}', this.value)"></div>` 
-                            : `<strong style="color: ${customBonus >= 0 ? 'var(--success)' : 'var(--danger)'};">${customBonus > 0 ? '+' : ''}${Utils.formatCurrency(customBonus)}</strong>`}
+                            `<div style="margin-bottom: 4px;"><input type="number" class="form-control" style="width: 100px; padding: 4px 8px; font-size: 13px; text-align: right; display: inline-block; color: ${customBonusProposal >= 0 ? 'var(--success)' : 'var(--danger)'}; border-color: rgba(255,255,255,0.1);" value="${customBonusProposal}" placeholder="0" onchange="PayrollModule.saveCustomBonus('${username}', this.value)"></div>`
+                            : `<strong style="color: ${customBonusProposal >= 0 ? 'var(--success)' : 'var(--danger)'};">${customBonusProposal > 0 ? '+' : ''}${Utils.formatCurrency(customBonusProposal)}</strong>`}
+                            ${customBonusStatusHtml}
                             
                             ${eligibleForBonus ? `
                                 <div style="margin-top: 4px;">
@@ -1429,7 +1526,7 @@ const PayrollModule = {
                                 </div>
                             ` : ''}
                             
-                            ${latePenaltyTotal > 0 ? `<div style="color: var(--danger); font-size: 11px; margin-top: 4px;">Phạt muộn: -${Utils.formatCurrency(latePenaltyTotal)}</div>` : ''}
+                            ${latePenaltyStatusHtml}
                         </td>
                         <td style="text-align: right; font-size: 13px;">
                             ${currentUser.role === 'admin' ? 
@@ -1671,6 +1768,10 @@ const PayrollModule = {
         const monthlyAdvances = PayrollModule.getCycleBucket(allSalaryAdvances, PayrollModule.currentMonth);
         const allBonusApprovals = await DB.getBonusApprovals();
         const monthlyApprovals = PayrollModule.getCycleBucket(allBonusApprovals, PayrollModule.currentMonth);
+        const allCustomBonusApprovals = await DB.getCustomBonusApprovals();
+        const monthlyCustomBonusApprovals = PayrollModule.getCycleBucket(allCustomBonusApprovals, PayrollModule.currentMonth);
+        const allLatePenaltyApprovals = await DB.getLatePenaltyApprovals();
+        const monthlyLatePenaltyApprovals = PayrollModule.getCycleBucket(allLatePenaltyApprovals, PayrollModule.currentMonth);
 
         const cycle = PayrollModule.getCycleRange(PayrollModule.currentMonth);
         const workingDays = PayrollModule.getWorkingDaysInCycle(cycle.startDate, cycle.endDate);
@@ -1693,12 +1794,16 @@ const PayrollModule = {
             const dailyRate = baseSalary / workingDays;
             const paidDays = PayrollModule.getAccruedSalaryDays(cycle, attendanceSummary, now);
             const attendancePay = paidDays * dailyRate;
-            const latePenaltyTotal = lateCount * PayrollModule.LATE_PENALTY;
+            const latePenaltyCandidate = lateCount * PayrollModule.LATE_PENALTY;
+            const latePenaltyApproved = latePenaltyCandidate === 0 || PayrollModule.getUserValue(monthlyLatePenaltyApprovals, username, false) === true;
+            const latePenaltyTotal = latePenaltyApproved ? latePenaltyCandidate : 0;
             const isApproved = PayrollModule.getUserValue(monthlyApprovals, username, false) === true;
             const punctualityBonusVal = (PayrollModule.isEligibleForPunctualityBonus(attendanceSummary) && isApproved) ? 200000 : 0;
             
             // Tìm thưởng/ứng không phân biệt hoa thường
-            const customBonus = parseFloat(PayrollModule.getUserValue(monthlyBonuses, username, 0)) || 0;
+            const customBonusProposal = parseFloat(PayrollModule.getUserValue(monthlyBonuses, username, 0)) || 0;
+            const customBonusApproved = customBonusProposal === 0 || PayrollModule.getUserValue(monthlyCustomBonusApprovals, username, false) === true;
+            const customBonus = customBonusApproved ? customBonusProposal : 0;
             
             const advance = parseFloat(PayrollModule.getUserValue(monthlyAdvances, username, 0)) || 0;
             
@@ -1714,9 +1819,11 @@ const PayrollModule = {
                 'Đi muộn không phép': lateDays,
                 'Nghỉ phép': approvedLeaveDays,
                 'Phạt muộn': -latePenaltyTotal,
+                'Phạt muộn chờ duyệt': latePenaltyApproved ? 0 : -latePenaltyCandidate,
                 'Tạm ứng': -advance,
                 'Thưởng chuyên cần': punctualityBonusVal,
-                'Thưởng/Phạt khác': customBonus,
+                'Thưởng/Phạt đã duyệt': customBonus,
+                'Thưởng/Phạt chờ duyệt': customBonusApproved ? 0 : customBonusProposal,
                 'Thực lĩnh': roundedNetSalary
             };
         });
@@ -1769,6 +1876,10 @@ const PayrollModule = {
             const monthlyBonuses = PayrollModule.getCycleBucket(allCustomBonuses, PayrollModule.currentMonth);
             const allSalaryAdvances = await DB.getSalaryAdvances();
             const monthlyAdvances = PayrollModule.getCycleBucket(allSalaryAdvances, PayrollModule.currentMonth);
+            const allCustomBonusApprovals = await DB.getCustomBonusApprovals();
+            const monthlyCustomBonusApprovals = PayrollModule.getCycleBucket(allCustomBonusApprovals, PayrollModule.currentMonth);
+            const allLatePenaltyApprovals = await DB.getLatePenaltyApprovals();
+            const monthlyLatePenaltyApprovals = PayrollModule.getCycleBucket(allLatePenaltyApprovals, PayrollModule.currentMonth);
 
             const cycle = PayrollModule.getCycleRange(PayrollModule.currentMonth);
             const workingDays = PayrollModule.getWorkingDaysInCycle(cycle.startDate, cycle.endDate);
@@ -1791,13 +1902,17 @@ const PayrollModule = {
             const absentDays = Math.max(0, workingDays - paidDays);
 
             const attendancePay = paidDays * dailyRate;
-            const latePenaltyTotal = lateCount * PayrollModule.LATE_PENALTY;
+            const latePenaltyCandidate = lateCount * PayrollModule.LATE_PENALTY;
+            const latePenaltyApproved = latePenaltyCandidate === 0 || PayrollModule.getUserValue(monthlyLatePenaltyApprovals, username, false) === true;
+            const latePenaltyTotal = latePenaltyApproved ? latePenaltyCandidate : 0;
             
             const eligibleForBonus = PayrollModule.isEligibleForPunctualityBonus(attendanceSummary);
             const isApproved = PayrollModule.getUserValue(monthlyApprovals, username, false) === true;
             const punctualityBonusVal = (eligibleForBonus && isApproved) ? 200000 : 0;
 
-            const customBonus = parseFloat(PayrollModule.getUserValue(monthlyBonuses, username, 0)) || 0;
+            const customBonusProposal = parseFloat(PayrollModule.getUserValue(monthlyBonuses, username, 0)) || 0;
+            const customBonusApproved = customBonusProposal === 0 || PayrollModule.getUserValue(monthlyCustomBonusApprovals, username, false) === true;
+            const customBonus = customBonusApproved ? customBonusProposal : 0;
             
             const advance = parseFloat(PayrollModule.getUserValue(monthlyAdvances, username, 0)) || 0;
 
@@ -1857,7 +1972,11 @@ const PayrollModule = {
                 advance,
                 lateCount,
                 latePenaltyTotal,
+                latePenaltyCandidate,
+                latePenaltyApproved,
                 customBonus,
+                customBonusProposal,
+                customBonusApproved,
                 punctualityBonusVal,
                 roundedNetSalary,
                 netSalary
@@ -1933,6 +2052,11 @@ const PayrollModule = {
                             <span>Thưởng khác:</span>
                             <span style="color: var(--success); font-weight: bold;">+${Utils.formatCurrency(customBonus > 0 ? customBonus : 0)}</span>
                         </div>
+                        ${customBonusProposal > 0 && !customBonusApproved ? `
+                        <div style="display: flex; justify-content: space-between; margin-top: 8px;">
+                            <span>Thưởng khác chờ duyệt:</span>
+                            <span style="color: var(--warning); font-weight: bold;">+${Utils.formatCurrency(customBonusProposal)}</span>
+                        </div>` : ''}
                     </div>
 
                     <!-- Chi tiết tạm tính & khấu trừ -->
@@ -1950,10 +2074,20 @@ const PayrollModule = {
                             <span>Phạt đi muộn (${lateCount} lần):</span>
                             <span style="color: var(--danger); font-weight: bold;">-${Utils.formatCurrency(latePenaltyTotal)}</span>
                         </div>
+                        ${latePenaltyCandidate > 0 && !latePenaltyApproved ? `
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span>Phạt đi muộn chờ duyệt:</span>
+                            <span style="color: var(--warning); font-weight: bold;">-${Utils.formatCurrency(latePenaltyCandidate)}</span>
+                        </div>` : ''}
                         <div style="display: flex; justify-content: space-between;">
                             <span>Khấu trừ khác:</span>
                             <span style="color: var(--danger); font-weight: bold;">-${Utils.formatCurrency(customBonus < 0 ? Math.abs(customBonus) : 0)}</span>
                         </div>
+                        ${customBonusProposal < 0 && !customBonusApproved ? `
+                        <div style="display: flex; justify-content: space-between; margin-top: 8px;">
+                            <span>Khấu trừ khác chờ duyệt:</span>
+                            <span style="color: var(--warning); font-weight: bold;">-${Utils.formatCurrency(Math.abs(customBonusProposal))}</span>
+                        </div>` : ''}
                     </div>
 
                     <!-- Thực lĩnh -->
@@ -2001,11 +2135,14 @@ const PayrollModule = {
 - Ngày chưa tính/không lương (${data.absentDays} ngày): ${Utils.formatCurrency(Math.round(data.absentDeduction))}
 - Trừ tiền đã tạm ứng: ${Utils.formatCurrency(data.advance)}
 - Phạt đi muộn (${data.lateCount} lần): ${Utils.formatCurrency(data.latePenaltyTotal)}
+- Phạt đi muộn chờ duyệt: ${Utils.formatCurrency(data.latePenaltyApproved ? 0 : data.latePenaltyCandidate)}
 - Khấu trừ khác: ${Utils.formatCurrency(data.customBonus < 0 ? Math.abs(data.customBonus) : 0)}
+- Khấu trừ khác chờ duyệt: ${Utils.formatCurrency(data.customBonusProposal < 0 && !data.customBonusApproved ? Math.abs(data.customBonusProposal) : 0)}
 
 🎁 CÁC KHOẢN CỘNG THÊM:
 - Thưởng chuyên cần: ${Utils.formatCurrency(data.punctualityBonusVal)}
 - Thưởng khác: ${Utils.formatCurrency(data.customBonus > 0 ? data.customBonus : 0)}
+- Thưởng khác chờ duyệt: ${Utils.formatCurrency(data.customBonusProposal > 0 && !data.customBonusApproved ? data.customBonusProposal : 0)}
 
 💰 SỐ TIỀN LƯƠNG THỰC LĨNH:
 - Công thức: (Lương ngày x Ngày tính lương) + Thưởng - Phạt - Tạm ứng
