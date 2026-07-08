@@ -41,7 +41,7 @@ const MusicPlayer = {
             { id: 'RgKAFK5djSk', title: 'See You Again', channel: 'Wiz Khalifa' },
         ],
         '🎧 Lofi & Chill': [
-            { id: 'jfKfPfyJRdk', title: 'Lofi Hip Hop Radio 📚', channel: 'Lofi Girl', live: true },
+            { id: 'X4VbdwhkE10', title: 'Lofi Hip Hop Radio 📚', channel: 'Lofi Girl', live: true },
             { id: 'rUxyKA_-grg', title: 'Lofi Sleep/Chill Radio 🌙', channel: 'Lofi Girl', live: true },
             { id: '4oStw0r33so', title: '3 Hour Lofi Mix', channel: 'Lofi Girl' },
         ],
@@ -105,7 +105,7 @@ const MusicPlayer = {
 
                         <!-- YouTube Player -->
                         <div id="yt-player-wrap" style="width:100%;aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:#000;border:1px solid rgba(255,255,255,0.06);box-shadow:0 8px 30px rgba(0,0,0,0.5);">
-                            <iframe id="yt-player" src="https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=0" style="width:100%;height:100%;border:none;" allow="autoplay;encrypted-media;picture-in-picture" allowfullscreen></iframe>
+                            <iframe id="yt-player" src="https://www.youtube.com/embed/X4VbdwhkE10?autoplay=0" style="width:100%;height:100%;border:none;" allow="autoplay;encrypted-media;picture-in-picture" allowfullscreen></iframe>
                         </div>
 
                         <!-- Now Playing Controls -->
@@ -125,7 +125,7 @@ const MusicPlayer = {
                                     <button id="yt-repeat-btn" onclick="MusicPlayer.toggleRepeat()" title="Lặp lại bài này" style="width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,0.15);background:transparent;color:rgba(255,255,255,0.4);cursor:pointer;font-size:13px;">
                                         <i class="fa-solid fa-repeat"></i>
                                     </button>
-                                    <a id="yt-open-link" href="https://www.youtube.com/watch?v=jfKfPfyJRdk" target="_blank" title="Mở YouTube" style="width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,0.15);background:transparent;color:rgba(255,255,255,0.6);display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:13px;">
+                                    <a id="yt-open-link" href="https://www.youtube.com/watch?v=X4VbdwhkE10" target="_blank" title="Mở YouTube" style="width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,0.15);background:transparent;color:rgba(255,255,255,0.6);display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:13px;">
                                         <i class="fa-solid fa-up-right-from-square"></i>
                                     </a>
                                 </div>
