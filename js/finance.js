@@ -143,16 +143,36 @@ const FinanceModule = {
     },
 
     addTransaction: async (type, amount, category, date, note) => {
+        let owner = 'admin';
+        if (Auth.currentUser) {
+            if (Auth.currentUser.role === 'admin') {
+                const filterEl = document.getElementById('finance-user-filter');
+                const selectedU = filterEl ? filterEl.value : 'all';
+                owner = (selectedU && selectedU !== 'all') ? FinanceModule.canonicalOwner(selectedU) : 'admin';
+            } else {
+                owner = FinanceModule.canonicalOwner(Auth.currentUser.username);
+            }
+        }
+
+        const txId = Utils.generateId();
         FinanceModule.data.transactions.push({
-            id: Utils.generateId(),
+            id: txId,
             type,
             amount: parseFloat(amount),
             category,
             date,
             note,
-            owner: FinanceModule.canonicalOwner(Auth.currentUser.username)
+            owner: owner
         });
         await FinanceModule.save();
+
+        const ownerKey = FinanceModule.ownerKey(owner);
+        if (ownerKey === 'congty') {
+            const typeStr = type === 'income' ? 'Thu' : 'Chi';
+            const icon = type === 'income' ? '💰' : '💸';
+            const msg = `${icon} <b>BIẾN ĐỘNG TÀI CHÍNH (CONGTY)</b>\n- Loại: <b>Thêm khoản ${typeStr}</b>\n- Số tiền: <b>${Utils.formatCurrency(amount)}</b>\n- Hạng mục: ${category}\n- Ghi chú: <i>${note || 'Không có'}</i>`;
+            Utils.notifyTelegram(msg);
+        }
     },
 
     getSummary: (transactionsToSummarize) => {
@@ -383,27 +403,7 @@ const FinanceModule = {
                 return false; // Prevent close
             }
 
-            FinanceModule.data.transactions.push({
-                id: Utils.generateId(),
-                type,
-                amount: parseFloat(amount),
-                category,
-                date,
-                note,
-                owner: Auth.currentUser ? FinanceModule.canonicalOwner(Auth.currentUser.username) : 'admin'
-            });
-
-            await FinanceModule.save();
-
-            if (Auth.currentUser) {
-                const uName = Auth.currentUser.username.toLowerCase().replace(/\s/g, '');
-                if (uName.includes('congty') || uName.includes('côngty')) {
-                    const typeStr = type === 'income' ? 'Thu' : 'Chi';
-                    const icon = type === 'income' ? '💰' : '💸';
-                    const msg = `${icon} <b>BIẾN ĐỘNG TÀI CHÍNH (CONGTY)</b>\n- Loại: <b>Thêm khoản ${typeStr}</b>\n- Số tiền: <b>${Utils.formatCurrency(amount)}</b>\n- Hạng mục: ${category}\n- Ghi chú: <i>${note || 'Không có'}</i>`;
-                    Utils.notifyTelegram(msg);
-                }
-            }
+            await FinanceModule.addTransaction(type, amount, category, date, note);
 
             Utils.showToast('Thêm giao dịch thành công!', 'success');
             return true; // OK to close
@@ -554,13 +554,11 @@ Admin đã CẤP QUYỀN sửa/xóa giao dịch cho bạn:
 
             await FinanceModule.save();
 
-            if (Auth.currentUser) {
-                const uName = Auth.currentUser.username.toLowerCase().replace(/\s/g, '');
-                if (uName.includes('congty') || uName.includes('côngty')) {
-                    const typeStr = type === 'income' ? 'Thu' : 'Chi';
-                    const msg = `✏️ <b>CẬP NHẬT TÀI CHÍNH (CONGTY)</b>\n- Vừa SỬA một khoản ${typeStr}\n- Số tiền mới: <b>${Utils.formatCurrency(amount)}</b>\n- Hạng mục mới: ${category}\n- Ghi chú: <i>${note || 'Không có'}</i>`;
-                    Utils.notifyTelegram(msg);
-                }
+            const oldOwnerKey = FinanceModule.ownerKey(tx.owner);
+            if (oldOwnerKey === 'congty') {
+                const typeStr = type === 'income' ? 'Thu' : 'Chi';
+                const msg = `✏️ <b>CẬP NHẬT TÀI CHÍNH (CONGTY)</b>\n- Vừa SỬA một khoản ${typeStr}\n- Số tiền mới: <b>${Utils.formatCurrency(amount)}</b>\n- Hạng mục mới: ${category}\n- Ghi chú: <i>${note || 'Không có'}</i>`;
+                Utils.notifyTelegram(msg);
             }
 
             Utils.showToast('Cập nhật giao dịch thành công!', 'success');
@@ -596,9 +594,9 @@ Admin đã CẤP QUYỀN sửa/xóa giao dịch cho bạn:
             FinanceModule.data.transactions = FinanceModule.data.transactions.filter(t => t.id !== id);
             await FinanceModule.save();
 
-            if (tx && Auth.currentUser) {
-                const uName = Auth.currentUser.username.toLowerCase().replace(/\s/g, '');
-                if (uName.includes('congty') || uName.includes('côngty')) {
+            if (tx) {
+                const txOwnerKey = FinanceModule.ownerKey(tx.owner);
+                if (txOwnerKey === 'congty') {
                     const typeStr = tx.type === 'income' ? 'Thu' : 'Chi';
                     const msg = `🗑️ <b>HỦY GIAO DỊCH (CONGTY)</b>\n- Vừa XÓA khoản ${typeStr} <b>${Utils.formatCurrency(tx.amount)}</b> thuộc: ${tx.category}`;
                     Utils.notifyTelegram(msg);

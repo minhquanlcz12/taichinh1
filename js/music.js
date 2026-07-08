@@ -8,6 +8,7 @@ const MusicPlayer = {
         '❤️ Yêu Thích': [
             { id: 'wDZEGbQRtRc', title: 'THU CUỐI - BẢN MỚI NHẤT || Deep House (AI Cover)', channel: 'Thu Cuối Chill' },
             { id: 'gIcrlDzgMIw', title: 'Ocean Drop (Official Lyric Video)', channel: '大飆飆' },
+            { id: '4L1gdEDaj3M', title: 'Đông Vừa Sang (Zenky Remix) - Như Việt', channel: 'Như Việt' },
         ],
         '🇻🇳 Nam Em': [
             { id: 'QDR-9wgkeu0', title: 'Áng Mây Sẽ Nở Hoa', channel: 'Nam Em Official' },
@@ -50,7 +51,7 @@ const MusicPlayer = {
             { id: 'qYnA9wWFHLI', title: 'Morning Positive Energy', channel: 'OCB Relax Music' },
         ],
         '🎵 EDM & NCS': [
-            { id: 'bM7SZ5SBzyY', title: 'Alan Walker - Faded', channel: 'Alan Walker' },
+            { id: '60ItHLz5WEA', title: 'Alan Walker - Faded', channel: 'Alan Walker' },
             { id: 'n1WpP7iowLc', title: 'Elektronomia - Sky High', channel: 'NCS' },
             { id: '36YnV9STBqc', title: 'Top 50 NCS Songs', channel: 'NCS' },
         ],
@@ -66,7 +67,7 @@ const MusicPlayer = {
             { id: '09R8_2nJtjg', title: 'Maroon 5 - Sugar', channel: 'Maroon 5' },
         ],
         '🎻 Classical': [
-            { id: 'VBmaJFPrRak', title: 'Bach — Best Of', channel: 'HALIDONMUSIC' },
+            { id: 'y8cfC-O-bZA', title: 'Bach: Cello Suite No. 1 in G major', channel: 'Netherlands Bach Society' },
             { id: 'g1uLrHq9TDg', title: 'Chopin — Classical Piano', channel: 'HALIDONMUSIC' },
             { id: 'sPlhKP0nZII', title: 'Beethoven — Moonlight Sonata', channel: 'Rousseau' },
         ],
@@ -275,6 +276,7 @@ const MusicPlayer = {
 
     // Optional search for finding more videos
     _apis: [
+        'https://api.piped.private.coffee',
         'https://pipedapi.kavin.rocks',
         'https://inv.nadeko.net',
     ],
