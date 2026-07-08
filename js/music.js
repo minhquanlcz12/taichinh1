@@ -9,6 +9,7 @@ const MusicPlayer = {
             { id: 'wDZEGbQRtRc', title: 'THU CUỐI - BẢN MỚI NHẤT || Deep House (AI Cover)', channel: 'Thu Cuối Chill' },
             { id: 'gIcrlDzgMIw', title: 'Ocean Drop (Official Lyric Video)', channel: '大飆飆' },
             { id: '4L1gdEDaj3M', title: 'Đông Vừa Sang (Zenky Remix) - Như Việt', channel: 'Như Việt' },
+            { id: 'XpY62G82-HI', title: 'Thương Lấy Phận Mình (Thazh x Đông Remix) - Thái Học', channel: 'Thái Học' },
         ],
         '🇻🇳 Nam Em': [
             { id: 'QDR-9wgkeu0', title: 'Áng Mây Sẽ Nở Hoa', channel: 'Nam Em Official' },
