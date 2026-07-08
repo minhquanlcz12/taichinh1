@@ -42,8 +42,6 @@ const MusicPlayer = {
             { id: 'RgKAFK5djSk', title: 'See You Again', channel: 'Wiz Khalifa' },
         ],
         '🎧 Lofi & Chill': [
-            { id: 'X4VbdwhkE10', title: 'Lofi Hip Hop Radio 📚', channel: 'Lofi Girl', live: true },
-            { id: 'rUxyKA_-grg', title: 'Lofi Sleep/Chill Radio 🌙', channel: 'Lofi Girl', live: true },
             { id: '4oStw0r33so', title: '3 Hour Lofi Mix', channel: 'Lofi Girl' },
         ],
         '🎹 Nhạc Không Lời': [
@@ -106,14 +104,14 @@ const MusicPlayer = {
 
                         <!-- YouTube Player -->
                         <div id="yt-player-wrap" style="width:100%;aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:#000;border:1px solid rgba(255,255,255,0.06);box-shadow:0 8px 30px rgba(0,0,0,0.5);">
-                            <iframe id="yt-player" src="https://www.youtube.com/embed/X4VbdwhkE10?autoplay=0" style="width:100%;height:100%;border:none;" allow="autoplay;encrypted-media;picture-in-picture" allowfullscreen></iframe>
+                            <iframe id="yt-player" src="https://www.youtube.com/embed/4oStw0r33so?autoplay=0" style="width:100%;height:100%;border:none;" allow="autoplay;encrypted-media;picture-in-picture" allowfullscreen></iframe>
                         </div>
 
                         <!-- Now Playing Controls -->
                         <div style="margin-top:10px;padding:10px 14px;border-radius:10px;background:rgba(231,76,60,0.08);border:1px solid rgba(231,76,60,0.15);">
                             <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
                                 <div style="min-width:0;flex:1;">
-                                    <p style="color:#fff;font-size:13px;font-weight:600;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="yt-now-title">Lofi Hip Hop Radio 📚</p>
+                                    <p style="color:#fff;font-size:13px;font-weight:600;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="yt-now-title">3 Hour Lofi Mix</p>
                                     <p style="color:rgba(255,255,255,0.4);font-size:11px;margin:2px 0 0;" id="yt-now-channel">Lofi Girl • Chọn thể loại bên phải để nghe</p>
                                 </div>
                                 <div style="display:flex;gap:6px;flex-shrink:0;">
@@ -126,7 +124,7 @@ const MusicPlayer = {
                                     <button id="yt-repeat-btn" onclick="MusicPlayer.toggleRepeat()" title="Lặp lại bài này" style="width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,0.15);background:transparent;color:rgba(255,255,255,0.4);cursor:pointer;font-size:13px;">
                                         <i class="fa-solid fa-repeat"></i>
                                     </button>
-                                    <a id="yt-open-link" href="https://www.youtube.com/watch?v=X4VbdwhkE10" target="_blank" title="Mở YouTube" style="width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,0.15);background:transparent;color:rgba(255,255,255,0.6);display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:13px;">
+                                    <a id="yt-open-link" href="https://www.youtube.com/watch?v=4oStw0r33so" target="_blank" title="Mở YouTube" style="width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,0.15);background:transparent;color:rgba(255,255,255,0.6);display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:13px;">
                                         <i class="fa-solid fa-up-right-from-square"></i>
                                     </a>
                                 </div>
